@@ -1,4 +1,4 @@
-package com.example.gazege.core.model
+package com.example.gazege.core.entities
 
 import java.util.Date
 
