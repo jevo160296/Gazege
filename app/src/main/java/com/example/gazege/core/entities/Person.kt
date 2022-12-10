@@ -1,3 +1,10 @@
 package com.example.gazege.core.entities
 
-data class Person(val id: Int, val name: String)
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
+data class Person(
+    @PrimaryKey(autoGenerate = true) val id: Int,
+    val name: String
+    )
