@@ -16,7 +16,7 @@ import com.example.gazege.core.entities.Transaction
     Person::class,
     Account::class,
     Transaction::class],
-    version = 2
+    version = 3
 )
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
