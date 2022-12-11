@@ -12,13 +12,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.PersonRecyclerView
 
 class MainActivity : ComponentActivity() {
     private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
-    private val repository: AppRepository by lazy { AppRepository(database.personDao()) }
+    private val repository: AppRepository by lazy { AppRepository(
+        personDao = database.personDao(),
+        accountDao = database.accountDao(),
+        transactionDao = database.transactionDao()
+    ) }
 
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModelFactory(repository)
@@ -32,6 +37,10 @@ class MainActivity : ComponentActivity() {
                 mainViewModel.allPerson.observe(this) { persons ->
                     persons?.let { personList = it }
                 }
+                var accountList by remember { mutableStateOf(emptyList<AccountAndOwner>())}
+                mainViewModel.allAccount.observe(this){ accounts ->
+                    accounts?.let{ accountList = it }
+                }
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -40,10 +49,10 @@ class MainActivity : ComponentActivity() {
                     Page(
                         personList,
                         addPerson = {
-                            mainViewModel.insert(it)
+                            mainViewModel.insertPerson(it)
                         },
                         delPerson = {
-                            mainViewModel.delete(it)
+                            mainViewModel.deletePerson(it)
                         }
                     )
                 }

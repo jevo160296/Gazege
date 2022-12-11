@@ -1,26 +1,39 @@
 package com.example.gazege.core
 
 import androidx.annotation.WorkerThread
+import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.PersonDao
+import com.example.gazege.core.dao.TransactionDao
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.flow.Flow
 
-class AppRepository(private val personDao: PersonDao) {
+class AppRepository(
+    private val personDao: PersonDao,
+    private val accountDao: AccountDao,
+    private val transactionDao: TransactionDao
+    ) {
 
     // Room executes all queries on a separate thread.
     // Observed Flow will notify the observer when the data has changed.
     val allPersons: Flow<List<Person>> = personDao.getAll()
+    val allAccounts: Flow<List<AccountAndOwner>> = accountDao.getAll()
+    val allTransactions: Flow<List<Transaction>> = transactionDao.getAll()
 
-    // By default Room runs suspend queries off the main thread, therefore, we don't need to
-    // implement anything else to ensure we're not doing long running database work
-    // off the main thread.
     @WorkerThread
-    suspend fun insert(person: Person) {
+    suspend fun insertPerson(person: Person) {
         personDao.insertAll(person)
     }
 
     @WorkerThread
-    suspend fun delete(person: Person){
+    suspend fun deletePerson(person: Person){
         personDao.delete(person)
+    }
+
+    @WorkerThread
+    suspend fun deleteAccount(account: Account){
+        accountDao.delete(account)
     }
 }

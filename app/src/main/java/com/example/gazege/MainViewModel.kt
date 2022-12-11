@@ -5,18 +5,25 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val repository: AppRepository): ViewModel() {
     val allPerson = repository.allPersons.asLiveData()
+    val allAccount = repository.allAccounts.asLiveData()
+    val allTransactions = repository.allTransactions.asLiveData()
 
-    fun insert(person: Person) = viewModelScope.launch {
-        repository.insert(person)
+    fun insertPerson(person: Person) = viewModelScope.launch {
+        repository.insertPerson(person)
     }
 
-    fun delete(person: Person) = viewModelScope.launch {
-        repository.delete(person)
+    fun deletePerson(person: Person) = viewModelScope.launch {
+        repository.deletePerson(person)
+    }
+
+    fun deleteAccount(account: Account) = viewModelScope.launch {
+        repository.deleteAccount(account)
     }
 }
 

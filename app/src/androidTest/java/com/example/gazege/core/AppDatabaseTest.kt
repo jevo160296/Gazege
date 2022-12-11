@@ -1,7 +1,9 @@
 package com.example.gazege.core
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -73,5 +75,57 @@ class AppDatabaseTest {
             "Error al eliminar personas.",
             allPersonsDeleted
         )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun addAndGetAccount() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database: AppDatabase = AppDatabase.getDatabase(appContext)
+
+        val persons = mutableListOf(*database.personDao().getAll().first().toTypedArray())
+        if(persons.size < 2){
+            val personsToAdd = arrayOf(
+                Person(id=0, name="Persona 1"),
+                Person(id=1, name="Persona 2")
+            )
+            database.personDao().insertAll(*personsToAdd)
+        }
+        persons.clear()
+        persons.addAll(database.personDao().getAll().first())
+        val initialAccounts = database.accountDao().getAll().first()
+        val accountsToAdd = arrayOf(
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name=""),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name=""),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name=""),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name=""),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name=""),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name=""),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name="")
+        )
+        database.accountDao().insertAll(*accountsToAdd)
+        val accounts = database.accountDao().getAll().first()
+        assert(initialAccounts.size + accountsToAdd.size == accounts.size)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun addAccountWithNonexistentPersonThrowsError() = runTest{
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database: AppDatabase = AppDatabase.getDatabase(appContext)
+
+        val persons = database.personDao().getAll().first()
+        val maxId = persons.maxOfOrNull { it.id ?: -1 } ?: -1
+
+        val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name="")
+        assertThrows(SQLiteConstraintException::class.java){
+            database.accountDao().insertAll(accountToAdd)
+        }
     }
 }
