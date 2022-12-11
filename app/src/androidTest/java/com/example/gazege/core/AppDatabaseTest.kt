@@ -88,9 +88,10 @@ class AppDatabaseTest {
 
         val persons = mutableListOf(*database.personDao().getAll().first().toTypedArray())
         if(persons.size < 2){
+            val maxId = database.personDao().getAll().first().maxOfOrNull { it.id ?: -1 } ?: -1
             val personsToAdd = arrayOf(
-                Person(id=0, name="Persona 1"),
-                Person(id=1, name="Persona 2")
+                Person(id=maxId + 1, name="Persona 1"),
+                Person(id=maxId + 2, name="Persona 2")
             )
             database.personDao().insertAll(*personsToAdd)
         }
@@ -98,19 +99,19 @@ class AppDatabaseTest {
         persons.addAll(database.personDao().getAll().first())
         val initialAccounts = database.accountDao().getAll().first()
         val accountsToAdd = arrayOf(
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name=""),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name=""),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name=""),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name=""),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name=""),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name=""),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name="")
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name="Cuenta4"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name="Cuenta5"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name="Cuenta6"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name="Cuenta7"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name="Cuenta8"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name="Cuenta9"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name="Cuenta10"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name="Cuenta11"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name="Cuenta12"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name="Cuenta13"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name="Cuenta14"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name="Cuenta15"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name="Cuenta16")
         )
         database.accountDao().insertAll(*accountsToAdd)
         val accounts = database.accountDao().getAll().first()
