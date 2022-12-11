@@ -9,5 +9,10 @@ data class TransactionAndSourceAccounts(
         parentColumn = "sourceId",
         entityColumn = "id"
     )
-    val account: Account
+    val sourceAccount: Account,
+    @Relation(
+        parentColumn = "destinationId",
+        entityColumn = "id"
+    )
+    val destinationAccount: Account
 )
