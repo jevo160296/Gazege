@@ -3,28 +3,34 @@ package com.example.gazege
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.gazege.core.AppDatabase
+import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.PersonRecyclerView
 
 class MainActivity : ComponentActivity() {
+    private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
+    private val repository: AppRepository by lazy { AppRepository(database.personDao()) }
+
+    private val mainViewModel: MainViewModel by viewModels {
+        MainViewModelFactory(repository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             GazegeTheme {
-                var personList by remember {
-                    mutableStateOf(
-                        listOf(
-                            Person(id = 0, name = "Persona1"),
-                            Person(id = 1, name = "Persona2")
-                        )
-                    )
+                var personList by remember {mutableStateOf(emptyList<Person>()) }
+                mainViewModel.allPerson.observe(this) { persons ->
+                    persons?.let { personList = it }
                 }
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -34,16 +40,10 @@ class MainActivity : ComponentActivity() {
                     Page(
                         personList,
                         addPerson = {
-                            personList =
-                                listOf(
-                                    *personList.toTypedArray(),
-                                    Person(id = personList.size + 1, name = "New Person")
-                                )
+                            mainViewModel.insert(it)
                         },
-                        delPerson = { deletingPerson ->
-                            personList = personList.filter {
-                                it != deletingPerson
-                            }
+                        delPerson = {
+                            mainViewModel.delete(it)
                         }
                     )
                 }

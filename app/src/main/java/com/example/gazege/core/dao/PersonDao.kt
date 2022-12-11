@@ -13,8 +13,8 @@ interface PersonDao {
     fun getAll(): Flow<List<Person>>
 
     @Insert
-    fun insertAll(vararg persons: Person)
+    suspend fun insertAll(vararg persons: Person)
 
     @Delete
-    fun delete(person: Person)
+    suspend fun delete(person: Person)
 }

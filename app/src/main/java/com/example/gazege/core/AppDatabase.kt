@@ -11,17 +11,16 @@ import com.example.gazege.core.entities.Person
 abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
 
-    companion object{
+    companion object {
         private var INSTANCE: AppDatabase? = null
         fun getDatabase(context: Context): AppDatabase {
-            if (INSTANCE == null) {
-                synchronized(this) {
-                    INSTANCE =
-                        Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
-                            .build()
-                }
+            return INSTANCE ?: synchronized(this) {
+                val instance =
+                    Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
+                        .build()
+                INSTANCE = instance
+                instance
             }
-            return INSTANCE!!
         }
     }
 }
