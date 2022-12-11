@@ -36,4 +36,9 @@ class AppRepository(
     suspend fun deleteAccount(account: Account){
         accountDao.delete(account)
     }
+
+    @WorkerThread
+    suspend fun insertAccount(account: Account){
+        accountDao.insertAll(account)
+    }
 }

@@ -22,6 +22,10 @@ class MainViewModel(private val repository: AppRepository): ViewModel() {
         repository.deletePerson(person)
     }
 
+    fun insertAccount(account: Account) = viewModelScope.launch {
+        repository.insertAccount(account)
+    }
+
     fun deleteAccount(account: Account) = viewModelScope.launch {
         repository.deleteAccount(account)
     }
