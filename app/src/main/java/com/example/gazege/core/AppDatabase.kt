@@ -1,10 +1,7 @@
 package com.example.gazege.core
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room.*
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.dao.TransactionDao
@@ -12,11 +9,15 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 
-@Database(entities = [
-    Person::class,
-    Account::class,
-    Transaction::class],
-    version = 2
+@Database(
+    entities = [
+        Person::class,
+        Account::class,
+        Transaction::class],
+    version = 3,
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3)
+    ]
 )
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {

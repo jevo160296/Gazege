@@ -44,11 +44,11 @@ private fun PreviewAccountList() {
         Person(name = "Persona4")
     )
     val accountList = personList.map { person ->
-        listOf(1, 2, 3, 4, 5).map{ index ->
+        listOf(1, 2, 3, 4, 5).map { index ->
             val account = Account(
                 name = "Cuenta$index",
                 ownerId = person.id ?: -1,
-                initial_balance = (person.id ?: -1).toDouble()*10 + index
+                initial_balance = (person.id ?: -1).toDouble() * 10 + index
             )
             AccountAndOwner(
                 account = account,
