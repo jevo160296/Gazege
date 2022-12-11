@@ -4,10 +4,7 @@ import androidx.annotation.WorkerThread
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.dao.TransactionDao
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.*
 import kotlinx.coroutines.flow.Flow
 
 class AppRepository(
@@ -20,7 +17,7 @@ class AppRepository(
     // Observed Flow will notify the observer when the data has changed.
     val allPersons: Flow<List<Person>> = personDao.getAll()
     val allAccounts: Flow<List<AccountAndOwner>> = accountDao.getAll()
-    val allTransactions: Flow<List<Transaction>> = transactionDao.getAll()
+    val allTransactions: Flow<List<TransactionAndSourceAccounts>> = transactionDao.getAll()
 
     @WorkerThread
     suspend fun insertPerson(person: Person) {

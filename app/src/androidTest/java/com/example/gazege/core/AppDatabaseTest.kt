@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -12,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.*
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -130,5 +132,67 @@ class AppDatabaseTest {
                 database.accountDao().insertAll(accountToAdd)
             }
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun addAndGetTransactions() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database: AppDatabase = AppDatabase.getDatabase(appContext)
+
+        val initialTransactions = database.transactionDao().getAll().first()
+        val initialAccounts = database.accountDao().getAll().first()
+        if(initialAccounts.size < 2){
+            val persons = database.personDao().getAll().first()
+            if(persons.isEmpty()){
+                database.personDao().insertAll(Person(name="Persona"))
+            }
+            val minId = database.personDao().getAll().first().minOfOrNull { it.id ?: 0 } ?: 0
+            val accountsToAdd = arrayOf(
+                Account(
+                    name = "Cuenta1",
+                    ownerId = minId,
+                    initial_balance = 1.0
+                ),
+                Account(
+                    name = "Cuenta2",
+                    ownerId = minId,
+                    initial_balance = 1.0
+                ),
+                Account(
+                    name = "Cuenta3",
+                    ownerId = minId,
+                    initial_balance = 1.0
+                )
+            )
+            database.accountDao().insertAll(*accountsToAdd)
+        }
+        val accounts = database.accountDao().getAll().first()
+        val transactionsToAdd = arrayOf(
+            Transaction(
+                amount = 10.0,
+                description = "Test",
+                sourceId = accounts[0].account.id ?: -1,
+                destinationId = accounts[1].account.id ?: -1,
+                date = Date()
+            ),
+            Transaction(
+                amount = 10.0,
+                description = "Test",
+                sourceId = accounts[1].account.id ?: -1,
+                destinationId = accounts[0].account.id ?: -1,
+                date = Date()
+            ),
+            Transaction(
+                amount = 10.0,
+                description = "Test",
+                sourceId = accounts[0].account.id ?: -1,
+                destinationId = accounts[1].account.id ?: -1,
+                date = Date()
+            )
+        )
+        database.transactionDao().insertAll(*transactionsToAdd)
+        val transactions = database.transactionDao().getAll().first()
+        assertEquals(initialTransactions.size + transactionsToAdd.size, transactions.size)
     }
 }
