@@ -10,7 +10,7 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val repository: AppRepository): ViewModel() {
+class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val allPerson = repository.allPersons.asLiveData()
     val allAccount = repository.allAccounts.asLiveData()
     val allTransactions = repository.allTransactions.asLiveData()
@@ -36,9 +36,9 @@ class MainViewModel(private val repository: AppRepository): ViewModel() {
     }
 }
 
-class MainViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory{
+class MainViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)){
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MainViewModel(repository) as T
         }

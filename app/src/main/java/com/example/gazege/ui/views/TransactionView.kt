@@ -20,8 +20,10 @@ private fun TransactionViewHolder(transaction: TransactionAndAccounts) {
 }
 
 @Composable
-fun TransactionRecyclerView(transactionList: List<TransactionAndAccounts>,
-                            modifier: Modifier = Modifier) {
+fun TransactionRecyclerView(
+    transactionList: List<TransactionAndAccounts>,
+    modifier: Modifier = Modifier
+) {
     RecyclerView(elements = transactionList, modifier = modifier) {
         TransactionViewHolder(transaction = it)
     }
@@ -30,16 +32,22 @@ fun TransactionRecyclerView(transactionList: List<TransactionAndAccounts>,
 @Preview(showBackground = true)
 @Composable
 private fun PreviewAccountItem() {
-    val person = Person(name="Person", id = 0)
-    val sourceAccount = Account(name="Account1", ownerId = person.id ?: -1,
-        initial_balance = 0.0)
-    val destinationAccount = Account(name="Account2", ownerId = person.id ?: -1,
-        initial_balance = 0.0)
-    val transaction = Transaction(amount = 0.0, description = "Trans", date = Date(),
-        destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1)
+    val person = Person(name = "Person", id = 0)
+    val sourceAccount = Account(
+        name = "Account1", ownerId = person.id ?: -1,
+        initial_balance = 0.0
+    )
+    val destinationAccount = Account(
+        name = "Account2", ownerId = person.id ?: -1,
+        initial_balance = 0.0
+    )
+    val transaction = Transaction(
+        amount = 0.0, description = "Trans", date = Date(),
+        destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1
+    )
     val transactionAndAccounts = TransactionAndAccounts(
         transaction = transaction, sourceAccount = sourceAccount,
-        destinationAccount=destinationAccount
+        destinationAccount = destinationAccount
     )
     TransactionViewHolder(transaction = transactionAndAccounts)
 }
@@ -54,11 +62,11 @@ private fun PreviewAccountList() {
         Person(name = "Persona4")
     )
     val accountList = personList.map { person ->
-        listOf(1, 2, 3, 4, 5).map{ index ->
+        listOf(1, 2, 3, 4, 5).map { index ->
             val account = Account(
                 name = "Cuenta$index",
                 ownerId = person.id ?: -1,
-                initial_balance = (person.id ?: -1).toDouble()*10 + index
+                initial_balance = (person.id ?: -1).toDouble() * 10 + index
             )
             AccountAndOwner(
                 account = account,

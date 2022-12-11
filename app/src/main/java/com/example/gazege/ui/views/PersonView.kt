@@ -14,7 +14,7 @@ private fun PersonViewHolder(person: Person) {
 
 @Composable
 fun PersonRecyclerView(personList: List<Person>, modifier: Modifier = Modifier) {
-    RecyclerView(elements = personList, modifier=modifier) {
+    RecyclerView(elements = personList, modifier = modifier) {
         PersonViewHolder(person = it)
     }
 }
