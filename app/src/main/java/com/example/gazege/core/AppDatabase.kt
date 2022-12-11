@@ -16,7 +16,10 @@ import com.example.gazege.core.entities.Transaction
     Person::class,
     Account::class,
     Transaction::class],
-    version = 3
+    version = 3,
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3)
+    ]
 )
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
