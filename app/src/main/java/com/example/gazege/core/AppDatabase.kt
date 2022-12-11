@@ -15,8 +15,9 @@ import com.example.gazege.core.entities.Transaction
 @Database(entities = [
     Person::class,
     Account::class,
-    Transaction::class], version = 1,
-    exportSchema = false)
+    Transaction::class],
+    version = 2
+)
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
@@ -29,6 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 val instance =
                     Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
+                        .fallbackToDestructiveMigrationFrom(1)
                         .build()
                 INSTANCE = instance
                 instance
