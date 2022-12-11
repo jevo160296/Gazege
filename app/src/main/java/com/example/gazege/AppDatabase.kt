@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.Person
 
-@Database(entities = [Person::class], version = 1)
+@Database(entities = [Person::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
 
