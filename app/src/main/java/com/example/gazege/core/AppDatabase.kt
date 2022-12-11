@@ -1,4 +1,4 @@
-package com.example.gazege
+package com.example.gazege.core
 
 import android.content.Context
 import androidx.room.Database
@@ -17,7 +17,7 @@ abstract class AppDatabase : RoomDatabase() {
             if (INSTANCE == null) {
                 synchronized(this) {
                     INSTANCE =
-                        Room.databaseBuilder(context,AppDatabase::class.java, "app_database")
+                        Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
                             .build()
                 }
             }
