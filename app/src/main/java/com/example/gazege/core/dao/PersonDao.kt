@@ -1,6 +1,6 @@
 package com.example.gazege.core.dao
 
-import android.app.Person
+import com.example.gazege.core.entities.Person
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
