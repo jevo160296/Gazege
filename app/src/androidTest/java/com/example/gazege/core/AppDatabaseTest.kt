@@ -7,6 +7,7 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -125,7 +126,9 @@ class AppDatabaseTest {
 
         val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name="")
         assertThrows(SQLiteConstraintException::class.java){
-            database.accountDao().insertAll(accountToAdd)
+            runBlocking {
+                database.accountDao().insertAll(accountToAdd)
+            }
         }
     }
 }
