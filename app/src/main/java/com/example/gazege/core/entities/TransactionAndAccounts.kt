@@ -3,7 +3,7 @@ package com.example.gazege.core.entities
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class TransactionAndSourceAccounts(
+data class TransactionAndAccounts(
     @Embedded val transaction: Transaction,
     @Relation(
         parentColumn = "sourceId",

@@ -6,12 +6,20 @@ import androidx.room.PrimaryKey
 import java.util.Date
 
 @Entity(
-    foreignKeys = [ForeignKey(
-        entity = Account::class,
-        parentColumns = ["id"],
-        childColumns = ["destinationId"],
-        onDelete = ForeignKey.CASCADE
-    )]
+    foreignKeys = [
+        ForeignKey(
+            entity = Account::class,
+            parentColumns = ["id"],
+            childColumns = ["destinationId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Account::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
 data class Transaction(
     @PrimaryKey(autoGenerate = true) val id: Int? = null,
@@ -20,4 +28,4 @@ data class Transaction(
     val sourceId: Int,
     val destinationId: Int,
     val date: Date
-    )
+)
