@@ -2,6 +2,7 @@ package com.example.gazege.ui.views
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.widgets.RecyclerView
@@ -12,8 +13,8 @@ private fun PersonViewHolder(person: Person) {
 }
 
 @Composable
-fun PersonRecyclerView(personList: List<Person>) {
-    RecyclerView(elements = personList) {
+fun PersonRecyclerView(personList: List<Person>, modifier: Modifier = Modifier) {
+    RecyclerView(elements = personList, modifier=modifier) {
         PersonViewHolder(person = it)
     }
 }
