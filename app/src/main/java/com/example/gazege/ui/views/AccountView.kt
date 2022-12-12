@@ -8,6 +8,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.RecyclerView
 
 @Composable
@@ -34,7 +35,7 @@ private fun PreviewAccountItem() {
     AccountViewHolder(account = accountAndOwner)
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountList() {
     val personList = listOf(
@@ -56,5 +57,7 @@ private fun PreviewAccountList() {
             )
         }
     }.flatten().sortedBy { it.account.id }
-    AccountRecyclerView(accountList = accountList)
+    GazegeTheme() {
+        AccountRecyclerView(accountList = accountList)
+    }
 }

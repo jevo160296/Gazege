@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Divider
@@ -24,32 +23,36 @@ fun <T> RecyclerView(
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(elements) { index, item ->
-            Surface(modifier = Modifier.clickable {
-                onItemTapped(item)
-            }) {
+            Surface(modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onItemTapped(item)
+                })
+            {
                 viewHolder(item)
             }
-            Divider()
+            if (index < elements.lastIndex) {
+                Divider()
+            }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 120, heightDp = 240)
 @Composable
-private fun RecyclerViewPreview(){
-    val elements = (0..30).map {
+private fun RecyclerViewPreview() {
+    val elements = (0..3).map {
         "Element $it"
     }
-    Column(modifier = Modifier
-        .width(120.dp)
-        .height(100.dp)) {
+    Column {
         RecyclerView(
             elements = elements,
             onItemTapped = {
                 println(it)
             }
         ) {
-            Text(text = it, modifier = Modifier.fillMaxWidth())
+            Text(text = it, modifier = Modifier.height(42.dp))
         }
     }
 }
