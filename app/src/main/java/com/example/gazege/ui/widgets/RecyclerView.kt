@@ -1,19 +1,55 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.Divider
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T> RecyclerView(
     modifier: Modifier = Modifier,
     elements: List<T>,
+    onItemTapped: (T) -> Unit = {},
     viewHolder: @Composable (T) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
-        items(elements) { item ->
-            viewHolder(item)
+        itemsIndexed(elements) { index, item ->
+            Surface(modifier = Modifier.clickable {
+                onItemTapped(item)
+            }) {
+                viewHolder(item)
+            }
+            Divider()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RecyclerViewPreview(){
+    val elements = (0..30).map {
+        "Element $it"
+    }
+    Column(modifier = Modifier
+        .width(120.dp)
+        .height(100.dp)) {
+        RecyclerView(
+            elements = elements,
+            onItemTapped = {
+                println(it)
+            }
+        ) {
+            Text(text = it, modifier = Modifier.fillMaxWidth())
         }
     }
 }
