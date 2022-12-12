@@ -34,6 +34,10 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun insertTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.insertTransaction(transaction)
     }
+
+    fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
+        repository.deleteTransaction(transaction)
+    }
 }
 
 class MainViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {

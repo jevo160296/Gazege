@@ -43,4 +43,9 @@ class AppRepository(
     suspend fun insertTransaction(transaction: Transaction) {
         transactionDao.insertAll(transaction)
     }
+
+    @WorkerThread
+    suspend fun deleteTransaction(transaction: Transaction) {
+        transactionDao.delete(transaction = transaction)
+    }
 }

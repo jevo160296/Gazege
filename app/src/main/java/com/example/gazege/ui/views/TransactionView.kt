@@ -1,30 +1,48 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.*
 import java.util.*
 
 @Composable
 private fun TransactionViewHolder(transaction: TransactionAndAccounts) {
-    Column {
-        Text(text = transaction.transaction.description)
-        Text(text = transaction.sourceAccount.name)
-        Text(text = transaction.destinationAccount.name)
-        Text(text = transaction.transaction.amount.toString())
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            Row {
+                SmallEmphasis(text = "Source account: ")
+                SmallBody(text = transaction.sourceAccount.name)
+            }
+            Row {
+                SmallEmphasis(text = "Destination account: ")
+                SmallBody(text = transaction.destinationAccount.name)
+            }
+            Row {
+                SmallEmphasis(text = "Description: ")
+                SmallBody(text = transaction.transaction.description)
+            }
+        }
+        Row(modifier = Modifier.align(Alignment.CenterVertically)) {
+            LargeEmphasis(text = "Amount: ")
+            LargeBody(text = transaction.transaction.amount.toString())
+        }
     }
 }
 
 @Composable
 fun TransactionRecyclerView(
     transactionList: List<TransactionAndAccounts>,
+    onItemTapped: (TransactionAndAccounts) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    RecyclerView(elements = transactionList, modifier = modifier) {
+    RecyclerView(elements = transactionList, onItemTapped = onItemTapped, modifier = modifier) {
         TransactionViewHolder(transaction = it)
     }
 }
@@ -92,5 +110,5 @@ private fun PreviewAccountList() {
             )
         }
     }.flatten()
-    TransactionRecyclerView(transactionList = transList)
+    TransactionRecyclerView(transactionList = transList, {})
 }
