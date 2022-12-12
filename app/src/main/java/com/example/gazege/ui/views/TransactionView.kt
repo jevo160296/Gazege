@@ -22,9 +22,10 @@ private fun TransactionViewHolder(transaction: TransactionAndAccounts) {
 @Composable
 fun TransactionRecyclerView(
     transactionList: List<TransactionAndAccounts>,
+    onItemTapped: (TransactionAndAccounts) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    RecyclerView(elements = transactionList, modifier = modifier) {
+    RecyclerView(elements = transactionList, onItemTapped = onItemTapped, modifier = modifier) {
         TransactionViewHolder(transaction = it)
     }
 }
@@ -92,5 +93,5 @@ private fun PreviewAccountList() {
             )
         }
     }.flatten()
-    TransactionRecyclerView(transactionList = transList)
+    TransactionRecyclerView(transactionList = transList, {})
 }

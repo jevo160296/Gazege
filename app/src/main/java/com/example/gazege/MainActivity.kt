@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surface
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     Page(
                         personList,
@@ -67,9 +67,15 @@ class MainActivity : ComponentActivity() {
                         addAccount = {
                             mainViewModel.insertAccount(it)
                         },
+                        delAccount = {
+                            mainViewModel.deleteAccount(it)
+                        },
                         transactionList,
                         addTransaction = {
                             mainViewModel.insertTransaction(it)
+                        },
+                        delTransaction = {
+                            mainViewModel.deleteTransaction(it)
                         }
                     )
                 }
@@ -85,8 +91,10 @@ fun Page(
     delPerson: (Person) -> Unit,
     accountList: List<AccountAndOwner>,
     addAccount: (Account) -> Unit,
+    delAccount: (Account) -> Unit,
     transactionList: List<TransactionAndAccounts>,
-    addTransaction: (Transaction) -> Unit
+    addTransaction: (Transaction) -> Unit,
+    delTransaction: (Transaction) -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
@@ -147,15 +155,22 @@ fun Page(
         Column(modifier = Modifier.padding(it)) {
             Column(modifier = Modifier.weight(1F)) {
                 Text("Personas", style = Typography.headlineMedium)
-                PersonRecyclerView(personList = personList)
+                PersonRecyclerView(personList = personList, onItemTapped = { person ->
+                    delPerson(person)
+                })
             }
             Column(modifier = Modifier.weight(1F)) {
                 Text("Cuentas", style = Typography.headlineMedium)
-                AccountRecyclerView(accountList = accountList)
+                AccountRecyclerView(accountList = accountList, onItemTapped = { accountAndOwner ->
+                    delAccount(accountAndOwner.account)
+                })
             }
             Column(modifier = Modifier.weight(1F)) {
                 Text("Transacciones", style = Typography.headlineMedium)
-                TransactionRecyclerView(transactionList = transactionList)
+                TransactionRecyclerView(transactionList = transactionList,
+                    onItemTapped = { transactionAndAccounts ->
+                        delTransaction(transactionAndAccounts.transaction)
+                    })
             }
         }
     }
@@ -199,7 +214,9 @@ fun DefaultPreview() {
             addAccount = {},
             delPerson = {},
             transactionList = transactions,
-            addTransaction = {}
+            addTransaction = {},
+            delAccount = {},
+            delTransaction = {}
         )
     }
 }

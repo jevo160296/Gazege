@@ -20,8 +20,10 @@ private fun AccountViewHolder(account: AccountAndOwner) {
 }
 
 @Composable
-fun AccountRecyclerView(accountList: List<AccountAndOwner>, modifier: Modifier = Modifier) {
-    RecyclerView(elements = accountList, modifier = modifier) {
+fun AccountRecyclerView(accountList: List<AccountAndOwner>,
+                        onItemTapped: (AccountAndOwner) -> Unit,
+                        modifier: Modifier = Modifier) {
+    RecyclerView(elements = accountList, onItemTapped = onItemTapped, modifier = modifier) {
         AccountViewHolder(account = it)
     }
 }
@@ -58,6 +60,6 @@ private fun PreviewAccountList() {
         }
     }.flatten().sortedBy { it.account.id }
     GazegeTheme() {
-        AccountRecyclerView(accountList = accountList)
+        AccountRecyclerView(accountList = accountList, onItemTapped = {})
     }
 }

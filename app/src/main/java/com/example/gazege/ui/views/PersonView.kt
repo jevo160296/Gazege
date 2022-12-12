@@ -13,8 +13,11 @@ private fun PersonViewHolder(person: Person) {
 }
 
 @Composable
-fun PersonRecyclerView(personList: List<Person>, modifier: Modifier = Modifier) {
-    RecyclerView(elements = personList, modifier = modifier) {
+fun PersonRecyclerView(
+    personList: List<Person>,
+    onItemTapped: (Person) -> Unit,
+    modifier: Modifier = Modifier) {
+    RecyclerView(elements = personList, modifier = modifier, onItemTapped = onItemTapped) {
         PersonViewHolder(person = it)
     }
 }
