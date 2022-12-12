@@ -152,7 +152,7 @@ fun Page(
             }
         }
     ) {
-        Column(modifier = Modifier.padding(it)) {
+        Column(modifier = Modifier.padding(it).padding(horizontal = 4.dp)) {
             Column(modifier = Modifier.weight(1F)) {
                 Text("Personas", style = Typography.headlineMedium)
                 PersonRecyclerView(personList = personList, onItemTapped = { person ->

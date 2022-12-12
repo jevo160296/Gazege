@@ -1,21 +1,33 @@
 package com.example.gazege.ui.views
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.SmallBody
+import com.example.gazege.ui.widgets.SmallEmphasis
 
 @Composable
 private fun AccountViewHolder(account: AccountAndOwner) {
-    Column {
-        Text(text = account.account.name)
-        Text(text = account.owner.name)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row{
+            SmallEmphasis(text = "Account:", modifier = Modifier.padding(end=4.dp))
+            SmallBody(text = account.account.name)
+        }
+        Row{
+            SmallEmphasis(text = "Owner:", modifier = Modifier.padding(end = 4.dp))
+            SmallBody(text = account.owner.name)
+        }
+
     }
 }
 
@@ -28,7 +40,7 @@ fun AccountRecyclerView(accountList: List<AccountAndOwner>,
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 240)
 @Composable
 private fun PreviewAccountItem() {
     val owner = Person(id = 0, name = "Persona")
