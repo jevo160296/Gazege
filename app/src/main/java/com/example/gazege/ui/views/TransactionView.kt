@@ -1,16 +1,45 @@
 package com.example.gazege.ui.views
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.widgets.*
 import java.util.*
 
+fun getTransactionSample(): List<TransactionAndAccounts> {
+    val accountList = getAccountSample()
+    var i = 0
+    val transList = accountList.map { source ->
+        accountList.map { destination ->
+            val transaction = Transaction(
+                amount = i * 10.0,
+                description = "Trans $i",
+                sourceId = source.account.id ?: -1,
+                destinationId = destination.account.id ?: -1,
+                date = Date()
+            )
+            i++
+            TransactionAndAccounts(
+                transaction,
+                source.account,
+                destination.account
+            )
+        }
+    }.flatten()
+    return transList
+}
+
 @Composable
-private fun TransactionViewHolder(transaction: TransactionAndAccounts) {
+private fun TransactionViewHolder(
+    transaction: TransactionAndAccounts
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.fillMaxWidth()
@@ -40,9 +69,17 @@ private fun TransactionViewHolder(transaction: TransactionAndAccounts) {
 fun TransactionRecyclerView(
     transactionList: List<TransactionAndAccounts>,
     onItemTapped: (TransactionAndAccounts) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    state: LazyListState
 ) {
-    RecyclerView(elements = transactionList, onItemTapped = onItemTapped, modifier = modifier) {
+    RecyclerView(
+        elements = transactionList,
+        onItemTapped = onItemTapped,
+        modifier = modifier,
+        itemHolderPaddingValues = itemHolderPaddingValues,
+        state = state
+    ) {
         TransactionViewHolder(transaction = it)
     }
 }
@@ -73,42 +110,6 @@ private fun PreviewAccountItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewAccountList() {
-    val personList = listOf(
-        Person(name = "Persona1"),
-        Person(name = "Persona2"),
-        Person(name = "Persona3"),
-        Person(name = "Persona4")
-    )
-    val accountList = personList.map { person ->
-        listOf(1, 2, 3, 4, 5).map { index ->
-            val account = Account(
-                name = "Cuenta$index",
-                ownerId = person.id ?: -1,
-                initial_balance = (person.id ?: -1).toDouble() * 10 + index
-            )
-            AccountAndOwner(
-                account = account,
-                owner = person
-            )
-        }
-    }.flatten().sortedBy { it.account.id }
-    var i = 0
-    val transList = accountList.map { source ->
-        accountList.map { destination ->
-            val transaction = Transaction(
-                amount = i * 10.0,
-                description = "Trans $i",
-                sourceId = source.account.id ?: -1,
-                destinationId = destination.account.id ?: -1,
-                date = Date()
-            )
-            i++
-            TransactionAndAccounts(
-                transaction,
-                source.account,
-                destination.account
-            )
-        }
-    }.flatten()
-    TransactionRecyclerView(transactionList = transList, {})
+    val transList = getTransactionSample()
+    TransactionRecyclerView(transactionList = transList, onItemTapped = {}, state = LazyListState())
 }

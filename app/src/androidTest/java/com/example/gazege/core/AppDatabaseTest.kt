@@ -23,7 +23,7 @@ import java.util.*
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseTest {
     @Test
-    fun createDataBase(){
+    fun createDataBase() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
         database.assertNotMainThread()
@@ -35,12 +35,12 @@ class AppDatabaseTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
         val initialPersons = database.personDao().getAll().first()
-        val maxId = initialPersons.maxOfOrNull { it.id?: 0 } ?: 0
+        val maxId = initialPersons.maxOfOrNull { it.id ?: 0 } ?: 0
         val personasIn = arrayListOf(
-            Person(id=maxId + 1, name="Persona1"),
-            Person(id=maxId + 2, name="Persona2")
+            Person(id = maxId + 1, name = "Persona1"),
+            Person(id = maxId + 2, name = "Persona2")
         )
-        val personasOut = with(database.personDao()){
+        val personasOut = with(database.personDao()) {
             this.insertAll(*personasIn.toTypedArray())
             this.getAll().first()
         }
@@ -56,12 +56,12 @@ class AppDatabaseTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
         val initialPersons = database.personDao().getAll().first()
-        val maxId = initialPersons.maxOfOrNull { it.id?: 0 } ?: 0
+        val maxId = initialPersons.maxOfOrNull { it.id ?: 0 } ?: 0
         val personasIn = arrayListOf(
-            Person(id=maxId + 1, name="Persona1"),
-            Person(id=maxId + 2, name="Persona2")
+            Person(id = maxId + 1, name = "Persona1"),
+            Person(id = maxId + 2, name = "Persona2")
         )
-        val personasOut = with(database.personDao()){
+        val personasOut = with(database.personDao()) {
             this.insertAll(*personasIn.toTypedArray())
             this.getAll().first()
         }
@@ -87,11 +87,11 @@ class AppDatabaseTest {
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
 
         val persons = mutableListOf(*database.personDao().getAll().first().toTypedArray())
-        if(persons.size < 2){
+        if (persons.size < 2) {
             val maxId = database.personDao().getAll().first().maxOfOrNull { it.id ?: -1 } ?: -1
             val personsToAdd = arrayOf(
-                Person(id=maxId + 1, name="Persona 1"),
-                Person(id=maxId + 2, name="Persona 2")
+                Person(id = maxId + 1, name = "Persona 1"),
+                Person(id = maxId + 2, name = "Persona 2")
             )
             database.personDao().insertAll(*personsToAdd)
         }
@@ -99,19 +99,19 @@ class AppDatabaseTest {
         persons.addAll(database.personDao().getAll().first())
         val initialAccounts = database.accountDao().getAll().first()
         val accountsToAdd = arrayOf(
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name="Cuenta4"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name="Cuenta5"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name="Cuenta6"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name="Cuenta7"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name="Cuenta8"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name="Cuenta9"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name="Cuenta10"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name="Cuenta11"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name="Cuenta12"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name="Cuenta13"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name="Cuenta14"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name="Cuenta15"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name="Cuenta16")
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name = "Cuenta4"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name = "Cuenta5"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name = "Cuenta6"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name = "Cuenta7"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name = "Cuenta8"),
+            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name = "Cuenta9"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name = "Cuenta10"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name = "Cuenta11"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name = "Cuenta12"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name = "Cuenta13"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name = "Cuenta14"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name = "Cuenta15"),
+            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name = "Cuenta16")
         )
         database.accountDao().insertAll(*accountsToAdd)
         val accounts = database.accountDao().getAll().first()
@@ -120,15 +120,15 @@ class AppDatabaseTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun addAccountWithNonexistentPersonThrowsError() = runTest{
+    fun addAccountWithNonexistentPersonThrowsError() = runTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
 
         val persons = database.personDao().getAll().first()
         val maxId = persons.maxOfOrNull { it.id ?: -1 } ?: -1
 
-        val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name="")
-        assertThrows(SQLiteConstraintException::class.java){
+        val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name = "")
+        assertThrows(SQLiteConstraintException::class.java) {
             runBlocking {
                 database.accountDao().insertAll(accountToAdd)
             }
@@ -143,10 +143,10 @@ class AppDatabaseTest {
 
         val initialTransactions = database.transactionDao().getAll().first()
         val initialAccounts = database.accountDao().getAll().first()
-        if(initialAccounts.size < 2){
+        if (initialAccounts.size < 2) {
             val persons = database.personDao().getAll().first()
-            if(persons.isEmpty()){
-                database.personDao().insertAll(Person(name="Persona"))
+            if (persons.isEmpty()) {
+                database.personDao().insertAll(Person(name = "Persona"))
             }
             val minId = database.personDao().getAll().first().minOfOrNull { it.id ?: 0 } ?: 0
             val accountsToAdd = arrayOf(
