@@ -1,6 +1,8 @@
 package com.example.gazege.ui.views
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -9,6 +11,15 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
+
+fun getPersonSample(): List<Person> {
+    return listOf(
+        Person(name = "Persona1"),
+        Person(name = "Persona2"),
+        Person(name = "Persona3"),
+        Person(name = "Persona4")
+    )
+}
 
 @Composable
 private fun PersonViewHolder(person: Person) {
@@ -22,8 +33,17 @@ private fun PersonViewHolder(person: Person) {
 fun PersonRecyclerView(
     personList: List<Person>,
     onItemTapped: (Person) -> Unit,
-    modifier: Modifier = Modifier) {
-    RecyclerView(elements = personList, modifier = modifier, onItemTapped = onItemTapped) {
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    state: LazyListState
+) {
+    RecyclerView(
+        elements = personList,
+        modifier = modifier,
+        onItemTapped = onItemTapped,
+        itemHolderPaddingValues = itemHolderPaddingValues,
+        state = state
+    ) {
         PersonViewHolder(person = it)
     }
 }
@@ -39,15 +59,10 @@ private fun PreviewPersonItem() {
 @Composable
 private fun PreviewPersonList() {
     GazegeTheme {
-        val personList = listOf(
-            Person(name = "Persona1"),
-            Person(name = "Persona2"),
-            Person(name = "Persona3"),
-            Person(name = "Persona4")
-        )
         RecyclerView(
-            elements = personList,
-            viewHolder = { person -> PersonViewHolder(person = person) }
+            elements = getPersonSample(),
+            viewHolder = { person -> PersonViewHolder(person = person) },
+            state = LazyListState()
         )
     }
 }

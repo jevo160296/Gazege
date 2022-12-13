@@ -4,28 +4,30 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.FabPosition
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.pages.AccountPage
+import com.example.gazege.ui.pages.PersonPage
+import com.example.gazege.ui.pages.TransactionPage
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
-import com.example.gazege.ui.theme.Typography
-import com.example.gazege.ui.views.AccountRecyclerView
-import com.example.gazege.ui.views.PersonRecyclerView
-import com.example.gazege.ui.views.TransactionRecyclerView
+import com.example.gazege.ui.views.getAccountSample
+import com.example.gazege.ui.views.getPersonSample
+import com.example.gazege.ui.views.getTransactionSample
 import java.util.*
 import kotlin.random.Random
 
@@ -50,9 +52,15 @@ class MainActivity : ComponentActivity() {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val transactionList by mainViewModel.allTransactions.observeAsState(emptyList())
+                var navStatus by remember { mutableStateOf(NavStatus.TRANSACCIONES) }
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .navigationBarsPadding(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Page(
@@ -76,12 +84,20 @@ class MainActivity : ComponentActivity() {
                         },
                         delTransaction = {
                             mainViewModel.deleteTransaction(it)
+                        },
+                        navStatus = navStatus,
+                        onNavStatusChanged = {
+                            navStatus = it
                         }
                     )
                 }
             }
         }
     }
+}
+
+enum class NavStatus {
+    PERSONS, CUENTAS, TRANSACCIONES
 }
 
 @Composable
@@ -94,48 +110,53 @@ fun Page(
     delAccount: (Account) -> Unit,
     transactionList: List<TransactionAndAccounts>,
     addTransaction: (Transaction) -> Unit,
-    delTransaction: (Transaction) -> Unit
+    delTransaction: (Transaction) -> Unit,
+    navStatus: NavStatus,
+    onNavStatusChanged: (NavStatus) -> Unit
 ) {
+    val transactionState = rememberLazyListState()
+    val accountState = rememberLazyListState()
+    val personState = rememberLazyListState()
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                val random = Random.nextInt(3)
-                val personAdd = random == 0
-                val transAdd = random == 1
-                val cuentaAdd = random == 2
-                val maxPersonasId = personList.maxOfOrNull { it.id ?: -1 } ?: -1
-                val maxAccountsId = accountList.maxOfOrNull { it.account.id ?: -1 } ?: -1
-                val maxTransactionsId =
-                    transactionList.maxOfOrNull { it.transaction.id ?: -1 } ?: -1
-                if (personAdd) {
-                    addPerson(Person(name = "Persona ${maxPersonasId + 1}"))
-                } else if (cuentaAdd && personList.isNotEmpty()) {
-                    val cantPersonas = personList.size
-                    val selectedPerson = Random.nextInt(cantPersonas)
-                    addAccount(
-                        Account(
-                            name = "Account ${maxAccountsId + 1}",
-                            initial_balance = 1.0,
-                            ownerId = personList[selectedPerson].id ?: -1
+                    val random = Random.nextInt(3)
+                    val personAdd = random == 0
+                    val transAdd = random == 1
+                    val cuentaAdd = random == 2
+                    val maxPersonasId = personList.maxOfOrNull { it.id ?: -1 } ?: -1
+                    val maxAccountsId = accountList.maxOfOrNull { it.account.id ?: -1 } ?: -1
+                    val maxTransactionsId =
+                        transactionList.maxOfOrNull { it.transaction.id ?: -1 } ?: -1
+                    if (personAdd) {
+                        addPerson(Person(name = "Persona ${maxPersonasId + 1}"))
+                    } else if (cuentaAdd && personList.isNotEmpty()) {
+                        val cantPersonas = personList.size
+                        val selectedPerson = Random.nextInt(cantPersonas)
+                        addAccount(
+                            Account(
+                                name = "Account ${maxAccountsId + 1}",
+                                initial_balance = 1.0,
+                                ownerId = personList[selectedPerson].id ?: -1
+                            )
                         )
-                    )
-                } else if (transAdd && accountList.size >= 2) {
-                    val cantAccounts = accountList.size
-                    val selectedSourceAccount = Random.nextInt(cantAccounts)
-                    val selectedDestinationAccount = Random.nextInt(cantAccounts)
-                    addTransaction(
-                        Transaction(
-                            amount = 0.0,
-                            description = "Trans ${maxTransactionsId + 1}",
-                            sourceId = accountList[selectedSourceAccount].account.id ?: -1,
-                            destinationId = accountList[selectedDestinationAccount].account.id
-                                ?: -1,
-                            date = Date()
+                    } else if (transAdd && accountList.size >= 2) {
+                        val cantAccounts = accountList.size
+                        val selectedSourceAccount = Random.nextInt(cantAccounts)
+                        val selectedDestinationAccount = Random.nextInt(cantAccounts)
+                        addTransaction(
+                            Transaction(
+                                amount = 0.0,
+                                description = "Trans ${maxTransactionsId + 1}",
+                                sourceId = accountList[selectedSourceAccount].account.id ?: -1,
+                                destinationId = accountList[selectedDestinationAccount].account.id
+                                    ?: -1,
+                                date = Date()
+                            )
                         )
-                    )
-                }
-            },
+                    }
+                },
                 shape = Shapes.small
             ) {
                 Icon(
@@ -145,68 +166,91 @@ fun Page(
             }
         },
         floatingActionButtonPosition = FabPosition.End,
-        isFloatingActionButtonDocked = true,
+        isFloatingActionButtonDocked = false,
+        backgroundColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BottomAppBar {
-                Text(text = "Gazege", modifier = Modifier.padding(start=12.dp))
+            NavigationBar {
+                NavigationBarItem(
+                    selected = navStatus == NavStatus.CUENTAS,
+                    onClick = { onNavStatusChanged(NavStatus.CUENTAS) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(
+                                id = R.drawable.ic_baseline_account_balance_wallet_24
+                            ),
+                            contentDescription = "Accounts"
+                        )
+                    }
+                )
+                NavigationBarItem(
+                    selected = navStatus == NavStatus.TRANSACCIONES,
+                    onClick = { onNavStatusChanged(NavStatus.TRANSACCIONES) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_home_24),
+                            contentDescription = "Transactions"
+                        )
+                    }
+                )
+                NavigationBarItem(
+                    selected = navStatus == NavStatus.PERSONS,
+                    onClick = { onNavStatusChanged(NavStatus.PERSONS) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_person_24),
+                            contentDescription = "Persons"
+                        )
+                    }
+                )
             }
         }
     ) {
-        Column(modifier = Modifier.padding(it).padding(horizontal = 4.dp)) {
-            Column(modifier = Modifier.weight(1F)) {
-                Text("Personas", style = Typography.headlineMedium)
-                PersonRecyclerView(personList = personList, onItemTapped = { person ->
-                    delPerson(person)
-                })
-            }
-            Column(modifier = Modifier.weight(1F)) {
-                Text("Cuentas", style = Typography.headlineMedium)
-                AccountRecyclerView(accountList = accountList, onItemTapped = { accountAndOwner ->
-                    delAccount(accountAndOwner.account)
-                })
-            }
-            Column(modifier = Modifier.weight(1F)) {
-                Text("Transacciones", style = Typography.headlineMedium)
-                TransactionRecyclerView(transactionList = transactionList,
-                    onItemTapped = { transactionAndAccounts ->
-                        delTransaction(transactionAndAccounts.transaction)
-                    })
+        val paddingValues = it.let {
+            PaddingValues(
+                top = it.calculateTopPadding(),
+                bottom = it.calculateBottomPadding() + 90.dp,
+                start = it.calculateStartPadding(LocalLayoutDirection.current) + 8.dp,
+                end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
+            )
+        }
+        Column {
+            when (navStatus) {
+                NavStatus.TRANSACCIONES -> {
+                    TransactionPage(
+                        modifier = Modifier.weight(1F),
+                        transactionList = transactionList,
+                        itemHolderPaddingValues = paddingValues,
+                        state = transactionState
+                    ) { transaction -> delTransaction(transaction) }
+                }
+                NavStatus.CUENTAS -> {
+                    AccountPage(
+                        modifier = Modifier.weight(1F),
+                        accountList = accountList,
+                        itemHolderPaddingValues = paddingValues,
+                        state = accountState
+                    ) { account -> delAccount(account) }
+                }
+                NavStatus.PERSONS -> {
+                    PersonPage(
+                        modifier = Modifier.weight(1F),
+                        personList = personList,
+                        itemHolderPaddingValues = paddingValues,
+                        state = personState
+                    ) { person -> delPerson(person) }
+                }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    val personList = listOf(
-        Person(id = 0, name = "Persona 1"),
-        Person(id = 1, name = "Persona 2")
-    )
-    val accounts = personList.map { person ->
-        listOf(1, 2, 3, 4, 5).map { index ->
-            val account = Account(
-                name = "Cuenta $index - ${person.id}",
-                ownerId = person.id ?: -1,
-                initial_balance = 0.0
-            )
-            AccountAndOwner(account = account, owner = person)
-        }
-    }.flatten()
-    val transactions = accounts.map { sourceAccount ->
-        accounts.map { destinationAccount ->
-            TransactionAndAccounts(
-                Transaction(
-                    amount = 0.0, description = "Desc",
-                    sourceId = sourceAccount.account.id ?: -1,
-                    destinationId = destinationAccount.account.id ?: -1,
-                    date = Date()
-                ),
-                sourceAccount.account, destinationAccount.account
-            )
-        }
-    }.flatten()
-    GazegeTheme {
+    val personList = getPersonSample()
+    val accounts = getAccountSample()
+    val transactions = getTransactionSample()
+    GazegeTheme(darkTheme = true) {
         Page(
             personList = personList,
             accountList = accounts,
@@ -216,7 +260,9 @@ fun DefaultPreview() {
             transactionList = transactions,
             addTransaction = {},
             delAccount = {},
-            delTransaction = {}
+            delTransaction = {},
+            navStatus = NavStatus.TRANSACCIONES,
+            onNavStatusChanged = {}
         )
     }
 }

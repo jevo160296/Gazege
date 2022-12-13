@@ -93,9 +93,9 @@ fun GazegeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable
     )
 }
 
-@Preview
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun ThemePreview(){
+private fun ThemePreviewLight(){
     GazegeTheme {
         Scaffold(
             bottomBar = {
@@ -105,6 +105,27 @@ private fun ThemePreview(){
                         contentDescription = "")
                 }
             }
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.padding(it)) {
+                Text(text = "Surface", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun ThemePreviewDark(){
+    GazegeTheme(darkTheme = true) {
+        Scaffold(
+            bottomBar = {
+                BottomAppBar() {
+                    Image(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "")
+                }
+            },
+            backgroundColor = MaterialTheme.colorScheme.background
         ) {
             Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.padding(it)) {
                 Text(text = "Surface", color = MaterialTheme.colorScheme.onSurface)
