@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.FabPosition
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,6 +30,7 @@ import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.getAccountSample
 import com.example.gazege.ui.views.getPersonSample
 import com.example.gazege.ui.views.getTransactionSample
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.util.*
 import kotlin.random.Random
 
@@ -54,13 +57,29 @@ class MainActivity : ComponentActivity() {
                 val transactionList by mainViewModel.allTransactions.observeAsState(emptyList())
                 var navStatus by remember { mutableStateOf(NavStatus.TRANSACCIONES) }
                 // A surface container using the 'background' color from the theme
+
+                val systemUiController = rememberSystemUiController()
+                val useDarkIcons = !isSystemInDarkTheme()
+
+                DisposableEffect(systemUiController, useDarkIcons) {
+                    // Update all of the system bar colors to be transparent, and use
+                    // dark icons if we're in light theme
+                    systemUiController.setStatusBarColor(
+                        color = Color.Transparent,
+                        darkIcons = useDarkIcons
+                    )
+
+                    // setStatusBarColor() and setNavigationBarColor() also exist
+
+                    onDispose {}
+                }
+
                 Surface(
                     modifier =
                     Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
-                        .statusBarsPadding()
-                        .navigationBarsPadding(),
+                        .statusBarsPadding(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Page(
