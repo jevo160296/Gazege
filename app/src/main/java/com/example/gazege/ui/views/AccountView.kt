@@ -76,7 +76,7 @@ private fun PreviewAccountItem() {
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountList() {
-    GazegeTheme() {
+    GazegeTheme {
         AccountRecyclerView(
             accountList = getAccountSample(), onItemTapped = {},
             state = LazyListState()

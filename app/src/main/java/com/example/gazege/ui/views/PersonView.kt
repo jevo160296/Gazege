@@ -23,7 +23,7 @@ fun getPersonSample(): List<Person> {
 
 @Composable
 private fun PersonViewHolder(person: Person) {
-    Row{
+    Row {
         SmallEmphasis(text = "Name: ")
         SmallBody(text = person.name)
     }

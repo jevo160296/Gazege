@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.compose.*
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -95,14 +94,15 @@ fun GazegeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun ThemePreviewLight(){
+private fun ThemePreviewLight() {
     GazegeTheme {
         Scaffold(
             bottomBar = {
-                BottomAppBar() {
+                BottomAppBar {
                     Image(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "")
+                        contentDescription = ""
+                    )
                 }
             }
         ) {
@@ -115,14 +115,15 @@ private fun ThemePreviewLight(){
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun ThemePreviewDark(){
+private fun ThemePreviewDark() {
     GazegeTheme(darkTheme = true) {
         Scaffold(
             bottomBar = {
-                BottomAppBar() {
+                BottomAppBar {
                     Image(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "")
+                        contentDescription = ""
+                    )
                 }
             },
             backgroundColor = MaterialTheme.colorScheme.background

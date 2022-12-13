@@ -20,13 +20,13 @@ fun AccountPage(
     accountList: List<AccountAndOwner>,
     state: LazyListState,
     delAccount: (Account) -> Unit
-){
+) {
     Column(modifier = modifier) {
         MediumHeadline(text = "Cuentas")
         AccountRecyclerView(
             accountList = accountList,
             onItemTapped = { accountAndOwner ->
-            delAccount(accountAndOwner.account)
+                delAccount(accountAndOwner.account)
             },
             itemHolderPaddingValues = itemHolderPaddingValues,
             state = state
@@ -40,8 +40,8 @@ fun AccountPage(
     heightDp = 640
 )
 @Composable
-private fun Preview(){
+private fun Preview() {
     GazegeTheme(darkTheme = true) {
-        AccountPage(accountList = getAccountSample(), state = LazyListState()){}
+        AccountPage(accountList = getAccountSample(), state = LazyListState()) {}
     }
 }

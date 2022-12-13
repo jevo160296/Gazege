@@ -1,4 +1,5 @@
-package com.example.compose
+package com.example.gazege.ui.theme
+
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFFA42494)
@@ -27,7 +28,6 @@ val md_theme_light_outline = Color(0xFF80747B)
 val md_theme_light_inverseOnSurface = Color(0xFFD6F6FF)
 val md_theme_light_inverseSurface = Color(0xFF00363F)
 val md_theme_light_inversePrimary = Color(0xFFFFACEA)
-val md_theme_light_shadow = Color(0xFF000000)
 val md_theme_light_surfaceTint = Color(0xFFA42494)
 val md_theme_light_outlineVariant = Color(0xFFD2C2CA)
 val md_theme_light_scrim = Color(0xFF000000)
@@ -58,10 +58,8 @@ val md_theme_dark_outline = Color(0xFF9B8D94)
 val md_theme_dark_inverseOnSurface = Color(0xFF001F25)
 val md_theme_dark_inverseSurface = Color(0xFFA6EEFF)
 val md_theme_dark_inversePrimary = Color(0xFFA42494)
-val md_theme_dark_shadow = Color(0xFF000000)
 val md_theme_dark_surfaceTint = Color(0xFFFFACEA)
 val md_theme_dark_outlineVariant = Color(0xFF4F444A)
 val md_theme_dark_scrim = Color(0xFF000000)
 
 
-val seed = Color(0xFF8C007F)
