@@ -1,5 +1,6 @@
 package com.example.gazege
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,12 +76,17 @@ class MainActivity : ComponentActivity() {
                     onDispose {}
                 }
 
+                var modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
+
+                if(LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                    modifier = modifier.navigationBarsPadding()
+                }
+
                 Surface(
-                    modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .statusBarsPadding(),
+                    modifier = modifier,
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Page(
