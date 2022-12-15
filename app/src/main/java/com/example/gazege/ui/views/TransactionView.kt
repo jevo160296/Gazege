@@ -43,6 +43,7 @@ private fun TransactionViewHolder(
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
@@ -59,8 +60,11 @@ private fun TransactionViewHolder(
                 SmallBody(text = transaction.transaction.description)
             }
         }
-        Row(modifier = Modifier.align(Alignment.CenterVertically)) {
-            LargeEmphasis(text = "Amount: ")
+        Column(
+            modifier = Modifier.align(Alignment.CenterVertically),
+            horizontalAlignment = Alignment.End
+        ) {
+            SmallEmphasis(text = "Amount")
             LargeBody(text = doubleToString(transaction.transaction.amount))
         }
     }

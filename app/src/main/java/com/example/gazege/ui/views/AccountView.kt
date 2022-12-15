@@ -3,6 +3,7 @@ package com.example.gazege.ui.views
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,7 +53,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
 
 @Composable
 private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
-    Row{
+    Row(verticalAlignment = Alignment.CenterVertically){
         Column(modifier = Modifier.weight(1F)) {
             Row {
                 SmallEmphasis(text = "Account:", modifier = Modifier.padding(end = 4.dp))
@@ -64,9 +65,12 @@ private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
             }
 
         }
-        LargeEmphasis(text = "Total ")
-        LargeBody(text = doubleToString(account.getTotal())
-        )
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            SmallEmphasis(text = "Total ")
+            LargeBody(text = doubleToString(account.getTotal()))
+        }
     }
 }
 

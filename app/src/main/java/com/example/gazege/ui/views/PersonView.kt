@@ -1,16 +1,16 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
-import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
 
@@ -34,14 +34,22 @@ fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
 
 @Composable
 private fun PersonViewHolder(person: PersonWithAccounts) {
-    Row {
-        Row{
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(1F)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start
+        ) {
             SmallEmphasis(text = "Name: ")
-            SmallBody(text = person.person.name)
+            LargeBody(text = person.person.name)
         }
-        Row{
-            SmallEmphasis(text = "Total: ")
-            SmallBody(text = doubleToString(person.getTotal()))
+        Column(
+            horizontalAlignment = Alignment.End
+        ){
+            SmallEmphasis(text = "Total")
+            LargeBody(text = doubleToString(person.getTotal()))
         }
     }
 }
