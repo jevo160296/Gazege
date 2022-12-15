@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.AccountRecyclerView
 import com.example.gazege.ui.views.getAccountSample
@@ -17,7 +17,7 @@ import com.example.gazege.ui.widgets.MediumHeadline
 fun AccountPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    accountList: List<AccountAndOwner>,
+    accountList: List<AccountAndOwnerWithTransactions>,
     state: LazyListState,
     delAccount: (Account) -> Unit
 ) {

@@ -28,7 +28,7 @@ import com.example.gazege.ui.pages.TransactionPage
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.getAccountSample
-import com.example.gazege.ui.views.getPersonSample
+import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.util.*
@@ -121,10 +121,10 @@ enum class NavStatus {
 
 @Composable
 fun Page(
-    personList: List<Person>,
+    personList: List<PersonWithAccounts>,
     addPerson: (Person) -> Unit,
     delPerson: (Person) -> Unit,
-    accountList: List<AccountAndOwner>,
+    accountList: List<AccountAndOwnerWithTransactions>,
     addAccount: (Account) -> Unit,
     delAccount: (Account) -> Unit,
     transactionList: List<TransactionAndAccounts>,
@@ -144,7 +144,7 @@ fun Page(
                     val personAdd = random == 0
                     val transAdd = random == 1
                     val cuentaAdd = random == 2
-                    val maxPersonasId = personList.maxOfOrNull { it.id ?: -1 } ?: -1
+                    val maxPersonasId = personList.maxOfOrNull { it.person.id ?: -1 } ?: -1
                     val maxAccountsId = accountList.maxOfOrNull { it.account.id ?: -1 } ?: -1
                     val maxTransactionsId =
                         transactionList.maxOfOrNull { it.transaction.id ?: -1 } ?: -1
@@ -157,7 +157,7 @@ fun Page(
                             Account(
                                 name = "Account ${maxAccountsId + 1}",
                                 initial_balance = 1.0,
-                                ownerId = personList[selectedPerson].id ?: -1
+                                ownerId = personList[selectedPerson].person.id ?: -1
                             )
                         )
                     } else if (transAdd && accountList.size >= 2) {
@@ -166,7 +166,7 @@ fun Page(
                         val selectedDestinationAccount = Random.nextInt(cantAccounts)
                         addTransaction(
                             Transaction(
-                                amount = 0.0,
+                                amount = Random.nextDouble(0.0, 200.0),
                                 description = "Trans ${maxTransactionsId + 1}",
                                 sourceId = accountList[selectedSourceAccount].account.id ?: -1,
                                 destinationId = accountList[selectedDestinationAccount].account.id
@@ -232,32 +232,27 @@ fun Page(
                 end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
             )
         }
-        Column {
-            when (navStatus) {
-                NavStatus.TRANSACCIONES -> {
-                    TransactionPage(
-                        modifier = Modifier.weight(1F),
-                        transactionList = transactionList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = transactionState
-                    ) { transaction -> delTransaction(transaction) }
-                }
-                NavStatus.CUENTAS -> {
-                    AccountPage(
-                        modifier = Modifier.weight(1F),
-                        accountList = accountList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = accountState
-                    ) { account -> delAccount(account) }
-                }
-                NavStatus.PERSONS -> {
-                    PersonPage(
-                        modifier = Modifier.weight(1F),
-                        personList = personList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = personState
-                    ) { person -> delPerson(person) }
-                }
+        when (navStatus) {
+            NavStatus.TRANSACCIONES -> {
+                TransactionPage(
+                    transactionList = transactionList,
+                    itemHolderPaddingValues = paddingValues,
+                    state = transactionState
+                ) { transaction -> delTransaction(transaction) }
+            }
+            NavStatus.CUENTAS -> {
+                AccountPage(
+                    accountList = accountList,
+                    itemHolderPaddingValues = paddingValues,
+                    state = accountState
+                ) { account -> delAccount(account) }
+            }
+            NavStatus.PERSONS -> {
+                PersonPage(
+                    personList = personList,
+                    itemHolderPaddingValues = paddingValues,
+                    state = personState
+                ) { person -> delPerson(person) }
             }
         }
     }
@@ -266,7 +261,7 @@ fun Page(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    val personList = getPersonSample()
+    val personList = getPersonWithAccountsSample()
     val accounts = getAccountSample()
     val transactions = getTransactionSample()
     GazegeTheme(darkTheme = true) {

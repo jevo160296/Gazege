@@ -15,8 +15,8 @@ class AppRepository(
 
     // Room executes all queries on a separate thread.
     // Observed Flow will notify the observer when the data has changed.
-    val allPersons: Flow<List<Person>> = personDao.getAll()
-    val allAccounts: Flow<List<AccountAndOwner>> = accountDao.getAll()
+    val allPersons: Flow<List<PersonWithAccounts>> = personDao.getAll()
+    val allAccounts: Flow<List<AccountAndOwnerWithTransactions>> = accountDao.getAll()
     val allTransactions: Flow<List<TransactionAndAccounts>> = transactionDao.getAll()
 
     @WorkerThread

@@ -7,15 +7,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.PersonRecyclerView
+import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.widgets.MediumHeadline
 
 @Composable
 fun PersonPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    personList: List<Person>,
+    personList: List<PersonWithAccounts>,
     state: LazyListState,
     onPersonDeleted: (Person) -> Unit
 ) {
@@ -23,7 +25,7 @@ fun PersonPage(
         MediumHeadline(text = "Persons")
         PersonRecyclerView(
             personList = personList, onItemTapped = {
-                onPersonDeleted(it)
+                onPersonDeleted(it.person)
             }, itemHolderPaddingValues = itemHolderPaddingValues, state = state
         )
     }
@@ -34,9 +36,7 @@ fun PersonPage(
 fun DefaultPreview() {
     GazegeTheme {
         PersonPage(
-            personList = listOf(
-                Person(name = "Persona 1"), Person(name = "Persona 2")
-            ), state = LazyListState()
+            personList = getPersonWithAccountsSample(), state = LazyListState()
         ) {}
     }
 }

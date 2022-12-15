@@ -10,6 +10,7 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.widgets.*
 import java.util.*
 
@@ -60,7 +61,7 @@ private fun TransactionViewHolder(
         }
         Row(modifier = Modifier.align(Alignment.CenterVertically)) {
             LargeEmphasis(text = "Amount: ")
-            LargeBody(text = transaction.transaction.amount.toString())
+            LargeBody(text = doubleToString(transaction.transaction.amount))
         }
     }
 }
