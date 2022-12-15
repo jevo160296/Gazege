@@ -17,7 +17,7 @@ import java.util.*
 fun getPersonSample(): List<Person>{
     return (1..4).map {
         Person(
-            name = "Person %".format(it)
+            name = "Person $it"
         )
     }
 }
