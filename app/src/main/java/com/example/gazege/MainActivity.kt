@@ -233,7 +233,7 @@ fun Page(
     ) {
         val paddingValues = it.let {
             PaddingValues(
-                top = it.calculateTopPadding(),
+                top = it.calculateTopPadding() + 8.dp,
                 bottom = it.calculateBottomPadding() + 90.dp,
                 start = it.calculateStartPadding(LocalLayoutDirection.current) + 8.dp,
                 end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
