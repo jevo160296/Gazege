@@ -14,6 +14,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -57,9 +58,10 @@ class MainActivity : ComponentActivity() {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val transactionList by mainViewModel.allTransactions.observeAsState(emptyList())
-                var navStatus by remember { mutableStateOf(NavStatus.TRANSACCIONES) }
+                var navPosition: NavPosition by rememberSaveable {
+                    mutableStateOf(NavPosition.TRANSACCIONES)
+                }
                 // A surface container using the 'background' color from the theme
-
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
 
@@ -111,19 +113,15 @@ class MainActivity : ComponentActivity() {
                         delTransaction = {
                             mainViewModel.deleteTransaction(it)
                         },
-                        navStatus = navStatus,
+                        navPosition = navPosition,
                         onNavStatusChanged = {
-                            navStatus = it
+                            navPosition = it
                         }
                     )
                 }
             }
         }
     }
-}
-
-enum class NavStatus {
-    PERSONS, CUENTAS, TRANSACCIONES
 }
 
 @Composable
@@ -137,8 +135,8 @@ fun Page(
     transactionList: List<TransactionAndAccounts>,
     addTransaction: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
-    navStatus: NavStatus,
-    onNavStatusChanged: (NavStatus) -> Unit
+    navPosition: NavPosition,
+    onNavStatusChanged: (NavPosition) -> Unit
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
@@ -197,8 +195,8 @@ fun Page(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = navStatus == NavStatus.CUENTAS,
-                    onClick = { onNavStatusChanged(NavStatus.CUENTAS) },
+                    selected = navPosition == NavPosition.CUENTAS,
+                    onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
                     icon = {
                         Icon(
                             painter = painterResource(
@@ -209,8 +207,8 @@ fun Page(
                     }
                 )
                 NavigationBarItem(
-                    selected = navStatus == NavStatus.TRANSACCIONES,
-                    onClick = { onNavStatusChanged(NavStatus.TRANSACCIONES) },
+                    selected = navPosition == NavPosition.TRANSACCIONES,
+                    onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_baseline_home_24),
@@ -219,8 +217,8 @@ fun Page(
                     }
                 )
                 NavigationBarItem(
-                    selected = navStatus == NavStatus.PERSONS,
-                    onClick = { onNavStatusChanged(NavStatus.PERSONS) },
+                    selected = navPosition == NavPosition.PERSONS,
+                    onClick = { onNavStatusChanged(NavPosition.PERSONS) },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_baseline_person_24),
@@ -239,22 +237,22 @@ fun Page(
                 end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
             )
         }
-        when (navStatus) {
-            NavStatus.TRANSACCIONES -> {
+        when (navPosition) {
+            NavPosition.TRANSACCIONES -> {
                 TransactionPage(
                     transactionList = transactionList,
                     itemHolderPaddingValues = paddingValues,
                     state = transactionState
                 ) { transaction -> delTransaction(transaction) }
             }
-            NavStatus.CUENTAS -> {
+            NavPosition.CUENTAS -> {
                 AccountPage(
                     accountList = accountList,
                     itemHolderPaddingValues = paddingValues,
                     state = accountState
                 ) { account -> delAccount(account) }
             }
-            NavStatus.PERSONS -> {
+            NavPosition.PERSONS -> {
                 PersonPage(
                     personList = personList,
                     itemHolderPaddingValues = paddingValues,
@@ -282,7 +280,7 @@ fun DefaultPreview() {
             addTransaction = {},
             delAccount = {},
             delTransaction = {},
-            navStatus = NavStatus.TRANSACCIONES,
+            navPosition = NavPosition.TRANSACCIONES,
             onNavStatusChanged = {}
         )
     }

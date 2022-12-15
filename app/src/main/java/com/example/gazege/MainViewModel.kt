@@ -10,6 +10,10 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.launch
 
+enum class NavPosition {
+    PERSONS, CUENTAS, TRANSACCIONES
+}
+
 class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val allPerson = repository.allPersons.asLiveData()
     val allAccount = repository.allAccounts.asLiveData()
