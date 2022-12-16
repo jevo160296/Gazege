@@ -7,11 +7,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -53,8 +59,7 @@ class MainActivity : ComponentActivity() {
                     // Update all of the system bar colors to be transparent, and use
                     // dark icons if we're in light theme
                     systemUiController.setStatusBarColor(
-                        color = Color.Transparent,
-                        darkIcons = useDarkIcons
+                        color = Color.Transparent, darkIcons = useDarkIcons
                     )
 
                     // setStatusBarColor() and setNavigationBarColor() also exist
@@ -67,41 +72,39 @@ class MainActivity : ComponentActivity() {
                     .background(MaterialTheme.colorScheme.background)
                     .statusBarsPadding()
 
-                if(LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     modifier = modifier.navigationBarsPadding()
                 }
 
                 Surface(
-                    modifier = modifier,
-                    color = MaterialTheme.colorScheme.background
+                    modifier = modifier, color = MaterialTheme.colorScheme.background
                 ) {
                     MainFragment(
                         personList,
                         addPerson = {
-                            mainViewModel.insertPerson(it)
-                        },
+                        mainViewModel.insertPerson(it)
+                    },
                         delPerson = {
-                            mainViewModel.deletePerson(it)
-                        },
+                        mainViewModel.deletePerson(it)
+                    },
                         accountList,
                         addAccount = {
-                            mainViewModel.insertAccount(it)
-                        },
+                        mainViewModel.insertAccount(it)
+                    },
                         delAccount = {
-                            mainViewModel.deleteAccount(it)
-                        },
+                        mainViewModel.deleteAccount(it)
+                    },
                         transactionList,
                         addTransaction = {
-                            mainViewModel.insertTransaction(it)
-                        },
+                        mainViewModel.insertTransaction(it)
+                    },
                         delTransaction = {
-                            mainViewModel.deleteTransaction(it)
-                        },
+                        mainViewModel.deleteTransaction(it)
+                    },
                         navPosition = navPosition,
                         onNavStatusChanged = {
-                            navPosition = it
-                        }
-                    )
+                        navPosition = it
+                    })
                 }
             }
         }
