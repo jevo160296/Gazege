@@ -15,9 +15,9 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.pages.AccountPage
-import com.example.gazege.ui.pages.PersonPage
-import com.example.gazege.ui.pages.TransactionPage
+import com.example.gazege.ui.views.AccountPage
+import com.example.gazege.ui.views.PersonPage
+import com.example.gazege.ui.views.TransactionPage
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.getAccountSample

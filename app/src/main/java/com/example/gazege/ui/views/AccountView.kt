@@ -75,7 +75,7 @@ private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
 }
 
 @Composable
-fun AccountRecyclerView(
+private fun AccountRecyclerView(
     accountList: List<AccountAndOwnerWithTransactions>,
     onItemTapped: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
@@ -90,6 +90,27 @@ fun AccountRecyclerView(
         state = state
     ) {
         AccountViewHolder(account = it)
+    }
+}
+
+@Composable
+fun AccountPage(
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    accountList: List<AccountAndOwnerWithTransactions>,
+    state: LazyListState,
+    delAccount: (Account) -> Unit
+) {
+    Column(modifier = modifier) {
+        MediumHeadline(text = "Cuentas")
+        AccountRecyclerView(
+            accountList = accountList,
+            onItemTapped = { accountAndOwner ->
+                delAccount(accountAndOwner.account)
+            },
+            itemHolderPaddingValues = itemHolderPaddingValues,
+            state = state
+        )
     }
 }
 
@@ -131,5 +152,17 @@ private fun PreviewAccountList() {
             accountList = getAccountSample(), onItemTapped = {},
             state = LazyListState()
         )
+    }
+}
+
+@Preview(
+    showBackground = true,
+    widthDp = 320,
+    heightDp = 640
+)
+@Composable
+private fun PreviewPage() {
+    GazegeTheme(darkTheme = false) {
+        AccountPage(accountList = getAccountSample(), state = LazyListState()) {}
     }
 }
