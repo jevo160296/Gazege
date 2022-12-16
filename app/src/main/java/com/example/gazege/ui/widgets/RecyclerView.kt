@@ -1,19 +1,20 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
 import androidx.compose.material3.Card
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> RecyclerView(
     modifier: Modifier = Modifier,
@@ -58,10 +59,10 @@ fun <T> RecyclerView(
                 modifier =
                 Modifier
                     .padding(paddingValues)
-                    .fillMaxWidth()
-                    .clickable {
-                        onItemTapped(item)
-                    }
+                    .fillMaxWidth(),
+                onClick = {
+                    onItemTapped(item)
+                }
             )
             {
                 Box(modifier = Modifier.padding(4.dp)) {
@@ -83,7 +84,7 @@ private fun RecyclerViewPreview() {
             RecyclerView(
                 elements = elements,
                 onItemTapped = {
-                    println(it)
+                    println("Item tapped $it")
                 },
                 itemHolderPaddingValues = PaddingValues(10.dp),
                 state = LazyListState()
