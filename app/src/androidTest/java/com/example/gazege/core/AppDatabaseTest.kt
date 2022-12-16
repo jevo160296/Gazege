@@ -35,7 +35,7 @@ class AppDatabaseTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
         val initialPersons = database.personDao().getAll().first()
-        val maxId = initialPersons.maxOfOrNull { it.id ?: 0 } ?: 0
+        val maxId = initialPersons.maxOfOrNull { it.person.id ?: 0 } ?: 0
         val personasIn = arrayListOf(
             Person(id = maxId + 1, name = "Persona1"),
             Person(id = maxId + 2, name = "Persona2")
@@ -56,7 +56,7 @@ class AppDatabaseTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
         val initialPersons = database.personDao().getAll().first()
-        val maxId = initialPersons.maxOfOrNull { it.id ?: 0 } ?: 0
+        val maxId = initialPersons.maxOfOrNull { it.person.id ?: 0 } ?: 0
         val personasIn = arrayListOf(
             Person(id = maxId + 1, name = "Persona1"),
             Person(id = maxId + 2, name = "Persona2")
@@ -67,13 +67,13 @@ class AppDatabaseTest {
         }
         assertTrue(
             "Error al añadir personas, no se puede probar esta función",
-            personasOut.containsAll(personasIn)
+            personasOut.map{it.person}.containsAll(personasIn)
         )
         personasIn.forEach {
             database.personDao().delete(it)
         }
         val remainingPersons = database.personDao().getAll().first()
-        val allPersonsDeleted = !remainingPersons.containsAll(personasIn)
+        val allPersonsDeleted = !remainingPersons.map{it.person}.containsAll(personasIn)
         assertTrue(
             "Error al eliminar personas.",
             allPersonsDeleted
@@ -88,7 +88,9 @@ class AppDatabaseTest {
 
         val persons = mutableListOf(*database.personDao().getAll().first().toTypedArray())
         if (persons.size < 2) {
-            val maxId = database.personDao().getAll().first().maxOfOrNull { it.id ?: -1 } ?: -1
+            val maxId = database.personDao().getAll().first().maxOfOrNull {
+                it.person.id ?: -1
+            } ?: -1
             val personsToAdd = arrayOf(
                 Person(id = maxId + 1, name = "Persona 1"),
                 Person(id = maxId + 2, name = "Persona 2")
@@ -99,19 +101,19 @@ class AppDatabaseTest {
         persons.addAll(database.personDao().getAll().first())
         val initialAccounts = database.accountDao().getAll().first()
         val accountsToAdd = arrayOf(
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name = "Cuenta4"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name = "Cuenta5"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name = "Cuenta6"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name = "Cuenta7"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name = "Cuenta8"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name = "Cuenta9"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name = "Cuenta10"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name = "Cuenta11"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name = "Cuenta12"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name = "Cuenta13"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name = "Cuenta14"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name = "Cuenta15"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name = "Cuenta16")
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.0, name = "Cuenta4"),
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.1, name = "Cuenta5"),
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.2, name = "Cuenta6"),
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.3, name = "Cuenta7"),
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.4, name = "Cuenta8"),
+            Account(ownerId = persons[0].person.id ?: -1, initial_balance = 0.5, name = "Cuenta9"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.0, name = "Cuenta10"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.1, name = "Cuenta11"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.2, name = "Cuenta12"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.3, name = "Cuenta13"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.4, name = "Cuenta14"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.5, name = "Cuenta15"),
+            Account(ownerId = persons[1].person.id ?: -1, initial_balance = 1.6, name = "Cuenta16")
         )
         database.accountDao().insertAll(*accountsToAdd)
         val accounts = database.accountDao().getAll().first()
@@ -125,7 +127,7 @@ class AppDatabaseTest {
         val database: AppDatabase = AppDatabase.getDatabase(appContext)
 
         val persons = database.personDao().getAll().first()
-        val maxId = persons.maxOfOrNull { it.id ?: -1 } ?: -1
+        val maxId = persons.maxOfOrNull { it.person.id ?: -1 } ?: -1
 
         val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name = "")
         assertThrows(SQLiteConstraintException::class.java) {
@@ -148,7 +150,7 @@ class AppDatabaseTest {
             if (persons.isEmpty()) {
                 database.personDao().insertAll(Person(name = "Persona"))
             }
-            val minId = database.personDao().getAll().first().minOfOrNull { it.id ?: 0 } ?: 0
+            val minId = database.personDao().getAll().first().minOfOrNull { it.person.id ?: 0 } ?: 0
             val accountsToAdd = arrayOf(
                 Account(
                     name = "Cuenta1",
