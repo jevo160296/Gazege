@@ -14,38 +14,28 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.personSaver
 import com.example.gazege.ui.theme.GazegeTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonForm(
     person: Person = Person(name=""),
     onPersonChanged: (Person) -> Unit
 ) {
     Column {
-        PersonFormFields(person) {
-            onPersonChanged(it)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PersonFormFields(
-    person: Person,
-    onPersonChanged: (Person) -> Unit
-) {
-    TextField(
-        value = person.name,
-        onValueChange = {
-            onPersonChanged(
-                person.copy(name = it)
+        TextField(
+            value = person.name,
+            onValueChange = {
+                onPersonChanged(
+                    person.copy(name = it)
+                )
+            },
+            label = { Text("Nombre") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done
             )
-        },
-        label = { Text("Nombre") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Done
         )
-    )
+    }
 }
 
 
