@@ -11,25 +11,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.Person
+import com.example.gazege.ui.savers.personSaver
 import com.example.gazege.ui.theme.GazegeTheme
 
 @Composable
 fun PersonForm(
-    person: Person? = null,
-    onPersonAdd: (Person) -> Unit
+    person: Person = Person(name=""),
+    onPersonChanged: (Person) -> Unit
 ) {
-    var name by rememberSaveable {
-        mutableStateOf(person?.name ?: "")
-    }
-    val modifiedPerson = person?.copy(name = name) ?: Person(name = name)
     Column {
-        PersonFormFields(name) {
-            name = it
-        }
-        Button(onClick = {
-            onPersonAdd(modifiedPerson)
-        }) {
-            Text("Save")
+        PersonFormFields(person) {
+            onPersonChanged(it)
         }
     }
 }
@@ -37,13 +29,15 @@ fun PersonForm(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonFormFields(
-    name: String,
-    onNameChanged: (String) -> Unit
+    person: Person,
+    onPersonChanged: (Person) -> Unit
 ) {
     TextField(
-        value = name,
+        value = person.name,
         onValueChange = {
-            onNameChanged(it)
+            onPersonChanged(
+                person.copy(name = it)
+            )
         },
         label = { Text("Nombre") },
         singleLine = true,
@@ -62,7 +56,9 @@ private fun Preview() {
         var showSnackbar by rememberSaveable {
             mutableStateOf(false)
         }
-        var persona by remember<MutableState<Person?>> {
+        var person by rememberSaveable(
+            stateSaver = personSaver
+        ) {
             mutableStateOf(Person(1, "Persona inicial"))
         }
         Column(
@@ -70,14 +66,17 @@ private fun Preview() {
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            PersonForm(persona) {
-                println("Persona agregada: $it")
-                persona = it
+            PersonForm(person) {
+                person = it
+            }
+            Button(onClick = {
                 showSnackbar = true
+            }) {
+                Text("Save")
             }
             if (showSnackbar) {
                 Snackbar {
-                    Text("Persona agregada: $persona", color = SnackbarDefaults.contentColor)
+                    Text("Persona agregada: $person", color = SnackbarDefaults.contentColor)
                 }
             }
         }
