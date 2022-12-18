@@ -12,8 +12,8 @@ interface AccountDao {
     fun getAll(): Flow<List<AccountAndOwnerWithTransactions>>
 
     @Insert
-    suspend fun insertAll(vararg accounts: Account)
+    suspend fun insertAll(vararg accounts: Account): List<Long>
 
     @Delete
-    suspend fun delete(account: Account)
+    suspend fun delete(account: Account): Int
 }
