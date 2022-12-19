@@ -8,13 +8,13 @@ import kotlinx.parcelize.Parcelize
 data class PartialPerson(
     var id: Int? = null,
     var name: String? = null
-)
+): PartialEntity<Person>
 {
-    fun isComplete(): Boolean{
+    override fun isComplete(): Boolean{
         return name != null
     }
 
-    fun toFull(): Person {
+    override fun toFull(): Person {
         if(isComplete()){
             return Person(
                 id = id,
@@ -31,7 +31,14 @@ data class PartialPerson(
 data class ParcelablePerson(
     val id: Int?,
     val name: String?
-) : Parcelable
+) : Parcelable {
+    fun toPartial(): PartialPerson {
+        return PartialPerson(
+            id = id,
+            name = name
+        )
+    }
+}
 
 val personSaver = Saver<PartialPerson, ParcelablePerson>(
     save = { state ->

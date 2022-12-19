@@ -2,7 +2,9 @@ package com.example.gazege.ui.savers
 
 import android.os.Parcelable
 import androidx.compose.runtime.saveable.Saver
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.Person
 import kotlinx.parcelize.Parcelize
 
 data class PartialAccount (
@@ -10,16 +12,16 @@ data class PartialAccount (
     var name: String? = null,
     var ownerId: Int? = null,
     var initial_balance: Double? = 0.0
-)
+): PartialEntity<Account>
 {
-    fun isComplete(): Boolean{
+    override fun isComplete(): Boolean{
         return name != null
                 && name!!.isNotBlank()
                 && ownerId != null
                 && initial_balance != null
     }
 
-    fun toFull(): Account {
+    override fun toFull(): Account {
         if(isComplete()){
             return Account(
                 id = id,
@@ -37,13 +39,13 @@ data class PartialAccount (
 data class PartialAccountAndOwner (
     var account: PartialAccount = PartialAccount(),
     var owner: Person? = null
-)
+): PartialEntity<AccountAndOwner>
 {
-    fun isComplete(): Boolean{
+    override fun isComplete(): Boolean{
         return account.isComplete() && owner != null
     }
 
-    fun toFull(): AccountAndOwner {
+    override fun toFull(): AccountAndOwner {
         if(isComplete()){
             return AccountAndOwner(
                 account = account.toFull(),
@@ -57,38 +59,52 @@ data class PartialAccountAndOwner (
 }
 
 @Parcelize
+data class ParcelableAccount(
+    var id: Int?,
+    var name: String?,
+    var ownerId: Int?,
+    var initial_balance: Double?
+): Parcelable
+{
+    fun toPartial(): PartialAccount{
+        return PartialAccount(
+            id = id,
+            name = name,
+            ownerId = ownerId,
+            initial_balance = initial_balance
+        )
+    }
+}
+
+@Parcelize
 data class ParcelableAccountAndOwner(
-    val account_id: Int?,
-    val account_name: String?,
-    val account_ownerId: Int?,
-    val account_initial_balance: Double?,
-    val owner_id: Int?,
-    val owner_name: String?
+    val account: ParcelableAccount,
+    val owner: ParcelablePerson?
 ) : Parcelable
 
 val accountAndOwnerSaver = Saver<PartialAccountAndOwner, ParcelableAccountAndOwner>(
     save = { state ->
         ParcelableAccountAndOwner(
-            account_id = state.account.id,
-            account_name = state.account.name,
-            account_ownerId = state.account.ownerId,
-            account_initial_balance = state.account.initial_balance,
-            owner_id = state.owner?.id,
-            owner_name = state.owner?.name
+            account = ParcelableAccount(
+                id = state.account.id,
+                name = state.account.name,
+                ownerId = state.account.ownerId,
+                initial_balance = state.account.initial_balance
+            ),
+            owner = if(state.owner != null){
+                ParcelablePerson(
+                    id = state.owner?.id,
+                    name = state.owner?.name
+                )
+            } else {
+                null
+            }
         )
     },
     restore = {
         PartialAccountAndOwner(
-            account = PartialAccount(
-                it.account_id,
-                it.account_name,
-                it.account_ownerId,
-                it.account_initial_balance
-            ),
-            owner = if(it.owner_name != null) Person(
-                it.owner_id,
-                it.owner_name
-            ) else null
+            account = it.account.toPartial(),
+            owner = it.owner?.toPartial()?.toFull()
         )
     }
 )
