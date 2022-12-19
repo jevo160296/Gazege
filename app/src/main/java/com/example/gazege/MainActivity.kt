@@ -21,9 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
+import com.example.gazege.ui.fragments.PersonFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -51,6 +56,7 @@ class MainActivity : ComponentActivity() {
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
                 }
+                val navController = rememberNavController()
                 // A surface container using the 'background' color from the theme
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
@@ -78,33 +84,65 @@ class MainActivity : ComponentActivity() {
 
                 Surface(
                     modifier = modifier, color = MaterialTheme.colorScheme.background
-                ) {
-                    MainFragment(
-                        personList,
-                        addPerson = {
-                        mainViewModel.insertPerson(it)
-                    },
-                        delPerson = {
-                        mainViewModel.deletePerson(it)
-                    },
-                        accountList,
-                        addAccount = {
-                        mainViewModel.insertAccount(it)
-                    },
-                        delAccount = {
-                        mainViewModel.deleteAccount(it)
-                    },
-                        transactionList,
-                        addTransaction = {
-                        mainViewModel.insertTransaction(it)
-                    },
-                        delTransaction = {
-                        mainViewModel.deleteTransaction(it)
-                    },
-                        navPosition = navPosition,
-                        onNavStatusChanged = {
-                        navPosition = it
-                    })
+                ){
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main",
+                    ){
+                        composable("main"){
+                            MainFragment(
+                                personList,
+                                onAddPersonRequested = {
+                                    navController.navigate("addPerson")
+                                },
+                                delPerson = {
+                                    mainViewModel.deletePerson(it)
+                                },
+                                accountList,
+                                onAddAccountRequested = {
+                                    navController.navigate(
+                                        route = "addAccount"
+                                    )
+                                },
+                                delAccount = {
+                                    mainViewModel.deleteAccount(it)
+                                },
+                                transactionList,
+                                onAddTransactionRequested = {
+
+                                },
+                                delTransaction = {
+                                    mainViewModel.deleteTransaction(it)
+                                },
+                                navPosition = navPosition,
+                                onNavStatusChanged = {
+                                    navPosition = it
+                                })
+                        }
+                        composable("addAccount"){
+                            AccountFormFragment(
+                                personList = personList
+                                    .map {
+                                         it.person
+                                },
+                                onPersonAddRequested = {
+                                    navController.navigate("addPerson")
+                                                       },
+                                onAccountAndOwnerAdd = {
+                                    mainViewModel.insertAccount(it)
+                                    navController.navigateUp()
+                                }
+                            )
+                        }
+                        composable("addPerson"){
+                            PersonFormFragment(
+                                onPersonAddRequested = {
+                                    mainViewModel.insertPerson(it)
+                                    navController.navigateUp()
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -2,12 +2,12 @@ package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.Scaffold
+import androidx.compose.material.ScaffoldState
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -18,27 +18,141 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.Person
-import com.example.gazege.ui.savers.accountAndOwnerSaver
+import com.example.gazege.core.entities.*
+import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PersonForm(
+fun PersonFormFragment(
     modifier: Modifier = Modifier,
     person: Person? = null,
-    onPersonChanged: (Person) -> Unit
+    onPersonAddRequested: (Person) -> Unit
 ) {
-    val name = person?.name ?: ""
+    var personState by rememberSaveable(
+        stateSaver = personSaver
+    ) {
+        mutableStateOf(
+            if(person != null){
+                PartialPerson(
+                id = person.id,
+                name = person.name
+            )
+            } else {
+                PartialPerson()
+            }
+        )
+    }
+    Form(
+        onSaveClicked = {
+            val fullPerson = personState.toFull()
+            onPersonAddRequested(fullPerson)
+        },
+        isSavedButtonEnabled = true
+    ) {
+        PersonForm(
+            person = personState,
+            onPersonChanged = {
+                personState = it
+            }
+        )
+    }
+}
+
+@Composable
+fun AccountFormFragment(
+    modifier: Modifier = Modifier,
+    accountAndOwner: AccountAndOwner? = null,
+    personList: List<Person>,
+    onPersonAddRequested: () -> Unit,
+    onAccountAndOwnerAdd: (Account) -> Unit
+){
+    var accountAndOwnerState by rememberSaveable(
+        stateSaver = accountAndOwnerSaver
+    ) {
+        mutableStateOf(
+            if(accountAndOwner != null){
+                PartialAccountAndOwner(
+                    account = accountAndOwner.account.let{
+                        PartialAccount(
+                            id = it.id,
+                            name = it.name,
+                            ownerId = it.ownerId,
+                            initial_balance = it.initial_balance
+                        )
+                    },
+                    owner = accountAndOwner.owner
+                )
+            }
+            else{
+                PartialAccountAndOwner()
+            }
+        )
+    }
+    val completeState = accountAndOwnerState.isComplete()
+    Form(
+        modifier = modifier,
+        onSaveClicked = {
+            val fullAccountAndOwner = accountAndOwnerState.toFull()
+            onAccountAndOwnerAdd(fullAccountAndOwner.account)
+        },
+        isSavedButtonEnabled = completeState
+    ) {
+        AccountAndOwnerForm(
+            accountAndOwner = accountAndOwnerState,
+            personList = personList,
+            onPersonAddRequested = onPersonAddRequested,
+            onAccountAndOwnerChanged = {
+                accountAndOwnerState = it
+            }
+        )
+    }
+}
+
+@Composable
+private fun Form(
+    modifier: Modifier = Modifier,
+    onSaveClicked: () -> Unit,
+    isSavedButtonEnabled: Boolean,
+    content: @Composable () -> Unit){
+    Scaffold(
+        modifier = modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+            .imePadding(),
+        floatingActionButton = {
+            if(isSavedButtonEnabled){
+                FloatingActionButton(
+                    onClick = onSaveClicked,
+
+                    ){
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_round_check_24),
+                        contentDescription = ""
+                    )
+                }
+            }
+            }) {
+        Column(modifier = Modifier.padding(it)) {
+            content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PersonForm(
+    modifier: Modifier = Modifier,
+    person: PartialPerson,
+    onPersonChanged: (PartialPerson) -> Unit
+) {
+    val name = person.name ?: ""
     Column(modifier = modifier) {
         TextField(
             value = name,
             onValueChange = {
                 onPersonChanged(
-                    person?.copy(name = it) ?: Person(name = it)
+                    person.copy(name = it)
                 )
             },
             label = { Text("Nombre") },
@@ -53,30 +167,24 @@ fun PersonForm(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountAndOwnerForm(
+private fun AccountAndOwnerForm(
     modifier: Modifier = Modifier,
-    accountAndOwner: AccountAndOwner? = null,
+    accountAndOwner: PartialAccountAndOwner,
     personList: List<Person>,
-    onAccountAndOwnerChanged: (AccountAndOwner) -> Unit
+    onPersonAddRequested: () -> Unit,
+    onAccountAndOwnerChanged: (PartialAccountAndOwner) -> Unit
 ) {
-    val id: Int? = accountAndOwner?.account?.id
-    val name: String = accountAndOwner?.account?.name ?: ""
-    val owner: Person? = accountAndOwner?.owner ?: personList.firstOrNull()
+    val name: String = accountAndOwner.account.name ?: ""
+    val selectedOwner: Person? = accountAndOwner.owner
     Column(modifier = modifier) {
         TextField(
             value = name,
             onValueChange = {
-                if (owner?.id != null) {
-                    onAccountAndOwnerChanged(
-                        AccountAndOwner(
-                            account = Account(
-                                id = id, name = it, initial_balance = 0.0,
-                                ownerId = owner.id
-                            ),
-                            owner = owner
-                        )
-                    )
-                }
+                onAccountAndOwnerChanged(
+                    accountAndOwner.copy().apply {
+                        account = account.copy(name=it)
+                    }
+                )
             },
             label = { Text("Nombre") },
             singleLine = true,
@@ -85,30 +193,31 @@ fun AccountAndOwnerForm(
                 imeAction = ImeAction.Done
             )
         )
-        if (owner?.id != null) {
+        if (personList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            Box {
+            ExposedDropdownMenuBox(
+                expanded = dropDownExpanded,
+                onExpandedChange = {
+                    dropDownExpanded = !dropDownExpanded
+                }
+            ) {
                 TextField(
-                    value = owner.name,
+                    modifier = Modifier.menuAnchor(),
+                    value = selectedOwner?.name ?: "",
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = {
-                        IconButton(onClick = { dropDownExpanded = true }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_round_arrow_drop_down_24),
-                                contentDescription = ""
-                            )
-                        }
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     },
                     label = { Text("Owner") },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors()
                 )
-                DropdownMenu(
+                ExposedDropdownMenu(
                     expanded = dropDownExpanded,
-                    onDismissRequest = {
-                        dropDownExpanded = false
-                    }) {
+                    onDismissRequest = { dropDownExpanded = false }
+                ) {
                     personList.map {
                         DropdownMenuItem(
                             text = {Text(it.name)},
@@ -116,18 +225,21 @@ fun AccountAndOwnerForm(
                                 dropDownExpanded = false
                                 if(it.id != null){
                                     onAccountAndOwnerChanged(
-                                        AccountAndOwner(
-                                            account = Account(
-                                                id = id, name = name, initial_balance = 0.0,
-                                                ownerId = it.id
-                                            ),
+                                        accountAndOwner.copy().apply{
                                             owner = it
-                                        )
+                                            account = account.copy(ownerId = it.id)
+                                        }
                                     )
                                 }
-                            })
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
                     }
                 }
+            }
+        } else{
+            OutlinedButton(onClick = onPersonAddRequested) {
+                Text("New person")
             }
         }
     }
@@ -136,19 +248,30 @@ fun AccountAndOwnerForm(
 @Preview(widthDp = 320, heightDp = 400, showBackground = true)
 @Composable
 private fun Preview() {
+    val formTypes = object {
+        val Account = 0
+        val Transaction = 1
+        val Person = 2
+    }
     GazegeTheme {
-        val personList = (0..10).map {
+        val personList = (5..10).map {
             Person(it, "Person $it")
         }
-        val owner = personList.first()
+        var formType by rememberSaveable {
+            mutableStateOf(formTypes.Account)
+        }
+        var person by rememberSaveable(
+            stateSaver = personSaver
+        ) {
+            mutableStateOf(
+                PartialPerson()
+            )
+        }
         var accountAndOwner by rememberSaveable(
             stateSaver = accountAndOwnerSaver
         ) {
             mutableStateOf(
-                AccountAndOwner(
-                    Account(name = "", ownerId = owner.id ?: -1, initial_balance = 0.0),
-                    owner
-                )
+                PartialAccountAndOwner()
             )
         }
         val scaffoldState: ScaffoldState = rememberScaffoldState()
@@ -162,10 +285,21 @@ private fun Preview() {
             floatingActionButton = {
                 FloatingActionButton(onClick = {
                     scope.launch {
-                        val accountAndOwnerAdded = accountAndOwner
-                        scaffoldState.snackbarHostState.showSnackbar(
-                            "Added $accountAndOwnerAdded"
-                        )
+                        when(formType){
+                            formTypes.Person -> {
+                                val personAdded = person
+                                scaffoldState.snackbarHostState.showSnackbar(
+                                    "Added $personAdded"
+                                )
+                            }
+                            formTypes.Account -> {
+                                val accountAndOwnerAdded = accountAndOwner
+                                scaffoldState.snackbarHostState.showSnackbar(
+                                    "Added $accountAndOwnerAdded"
+                                )
+                            }
+                            formTypes.Transaction -> TODO()
+                        }
                     }
                 }) {
                     Icon(
@@ -175,12 +309,28 @@ private fun Preview() {
                 }
             }
         ) {
-            AccountAndOwnerForm(
-                modifier = Modifier.padding(it),
-                accountAndOwner = accountAndOwner,
-                personList = personList
-            ) { changedAccount ->
-                accountAndOwner = changedAccount
+            when(formType){
+                formTypes.Person -> {
+                    PersonForm(
+                        modifier = Modifier.padding(it),
+                        person = person
+                    ){ changedPerson ->
+                        person = changedPerson
+                    }
+                }
+                formTypes.Account -> {
+                    AccountAndOwnerForm(
+                        modifier = Modifier.padding(it),
+                        accountAndOwner = accountAndOwner,
+                        personList = personList,
+                        onPersonAddRequested = {
+                            formType = formTypes.Person
+                        }
+                    ) { changedAccount ->
+                        accountAndOwner = changedAccount
+                    }
+                }
+                else -> {}
             }
         }
     }
