@@ -3,8 +3,6 @@ package com.example.gazege.ui.fragments
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Scaffold
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,10 +19,10 @@ import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
-import kotlinx.coroutines.launch
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.TextField
 import java.util.*
 import kotlin.math.roundToInt
-import com.example.gazege.ui.widgets.TextField
 
 @Composable
 fun PersonFormFragment(
@@ -53,7 +51,8 @@ fun PersonFormFragment(
             val fullPerson = personState.toFull()
             onPersonAddRequested(fullPerson)
         },
-        isSavedButtonEnabled = true
+        isSavedButtonEnabled = true,
+        title = "Person"
     ) {
         PersonForm(
             contentPadding = contentPadding,
@@ -105,7 +104,8 @@ fun AccountFormFragment(
             val fullAccountAndOwner = accountAndOwnerState.toFull()
             onAccountAndOwnerAdd(fullAccountAndOwner.account)
         },
-        isSavedButtonEnabled = completeState
+        isSavedButtonEnabled = completeState,
+        title = "Account"
     ) {
         AccountAndOwnerForm(
             contentPadding = contentPadding,
@@ -159,6 +159,7 @@ fun TransactionFormFragment(
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
+        title = "Transaction",
         onSaveClicked = {
             val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
             onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
@@ -182,6 +183,7 @@ private fun Form(
     modifier: Modifier = Modifier,
     onSaveClicked: () -> Unit,
     isSavedButtonEnabled: Boolean,
+    title: String,
     content: @Composable () -> Unit){
     Scaffold(
         modifier = modifier
@@ -202,6 +204,7 @@ private fun Form(
             }
             }) {
         Column(modifier = Modifier.padding(it)) {
+            MediumHeadline(title)
             content()
         }
     }
@@ -495,88 +498,54 @@ private fun Preview() {
         val Person = 2
     }
     GazegeTheme {
-        val personList = (5..10).map {
-            Person(it, "Person $it")
+        var personList by rememberSaveable {
+            mutableStateOf(
+                (5..10).map {
+                    Person(it, "Person $it")
+                }
+            )
+        }
+        var accountList by rememberSaveable {
+            mutableStateOf(
+                arrayOf(
+                    Account(name="Cuenta1", ownerId = 1, initial_balance = 0.0)
+            ))
         }
         var formType by rememberSaveable {
             mutableStateOf(formTypes.Person)
         }
-        var person by rememberSaveable(
-            stateSaver = personSaver
-        ) {
-            mutableStateOf(
-                PartialPerson()
-            )
-        }
-        var accountAndOwner by rememberSaveable(
-            stateSaver = accountAndOwnerSaver
-        ) {
-            mutableStateOf(
-                PartialAccountAndOwner()
-            )
-        }
-        val scaffoldState: ScaffoldState = rememberScaffoldState()
-        val scope = rememberCoroutineScope()
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .imePadding(),
-            scaffoldState = scaffoldState,
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    scope.launch {
-                        when(formType){
-                            formTypes.Person -> {
-                                val personAdded = person
-                                scaffoldState.snackbarHostState.showSnackbar(
-                                    "Added $personAdded"
-                                )
-                            }
-                            formTypes.Account -> {
-                                val accountAndOwnerAdded = accountAndOwner
-                                scaffoldState.snackbarHostState.showSnackbar(
-                                    "Added $accountAndOwnerAdded"
-                                )
-                            }
-                            formTypes.Transaction -> TODO()
-                        }
+        when(formType){
+            formTypes.Person -> {
+                PersonFormFragment(
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            it
+                        )
+                        formType = formTypes.Transaction
+                        formType = formTypes.Account
                     }
-                }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_round_check_24),
-                        contentDescription = ""
-                    )
-                }
+                )
             }
-        ) {
-            when(formType){
-                formTypes.Person -> {
-                    PersonForm(
-                        modifier = Modifier.padding(it),
-                        contentPadding = PaddingValues(8.dp),
-                        itemSpacing = 8.dp,
-                        person = person
-                    ){ changedPerson ->
-                        person = changedPerson
+            formTypes.Account -> {
+                AccountFormFragment(
+                    personList = personList,
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            Person(1, "Nueva persona")
+                        )
+                        formType = formTypes.Person
+                                           },
+                    onAccountAndOwnerAdd = {
+                        accountList = arrayOf(
+                            *accountList,
+                            Account(name="Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                        )
                     }
-                }
-                formTypes.Account -> {
-                    AccountAndOwnerForm(
-                        modifier = Modifier.padding(it),
-                        contentPadding = PaddingValues(8.dp),
-                        itemSpacing = 8.dp,
-                        accountAndOwner = accountAndOwner,
-                        personList = personList,
-                        onPersonAddRequested = {
-                            formType = formTypes.Person
-                        }
-                    ) { changedAccount ->
-                        accountAndOwner = changedAccount
-                    }
-                }
-                else -> {}
+                )
             }
+            else -> {}
         }
     }
 }
