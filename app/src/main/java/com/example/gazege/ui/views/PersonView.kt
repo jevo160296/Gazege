@@ -10,6 +10,7 @@ import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
@@ -55,7 +56,7 @@ private fun PersonViewHolder(person: PersonWithAccounts) {
 }
 
 @Composable
-fun PersonRecyclerView(
+private fun PersonRecyclerView(
     personList: List<PersonWithAccounts>,
     onItemTapped: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
@@ -70,6 +71,24 @@ fun PersonRecyclerView(
         state = state
     ) {
         PersonViewHolder(person = it)
+    }
+}
+
+@Composable
+fun PersonPage(
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    personList: List<PersonWithAccounts>,
+    state: LazyListState,
+    onPersonDeleted: (Person) -> Unit
+) {
+    Column(modifier = modifier) {
+        MediumHeadline(text = "Persons")
+        PersonRecyclerView(
+            personList = personList, onItemTapped = {
+                onPersonDeleted(it.person)
+            }, itemHolderPaddingValues = itemHolderPaddingValues, state = state
+        )
     }
 }
 
@@ -117,5 +136,15 @@ private fun PreviewPersonList() {
             viewHolder = { person -> PersonViewHolder(person = person) },
             state = LazyListState()
         )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 420, heightDp = 620)
+@Composable
+private fun PreviewPersonPage() {
+    GazegeTheme {
+        PersonPage(
+            personList = getPersonWithAccountsSample(), state = LazyListState()
+        ) {}
     }
 }

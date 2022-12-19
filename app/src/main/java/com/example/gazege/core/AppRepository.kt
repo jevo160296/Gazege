@@ -40,6 +40,11 @@ class AppRepository(
     }
 
     @WorkerThread
+    suspend fun insertAccountAndOwner(account: AccountAndOwner){
+        accountDao.insert(account)
+    }
+
+    @WorkerThread
     suspend fun insertTransaction(transaction: Transaction) {
         transactionDao.insertAll(transaction)
     }

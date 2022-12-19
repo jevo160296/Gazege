@@ -11,6 +11,7 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.*
 import java.util.*
 
@@ -71,7 +72,7 @@ private fun TransactionViewHolder(
 }
 
 @Composable
-fun TransactionRecyclerView(
+private fun TransactionRecyclerView(
     transactionList: List<TransactionAndAccounts>,
     onItemTapped: (TransactionAndAccounts) -> Unit,
     modifier: Modifier = Modifier,
@@ -89,9 +90,27 @@ fun TransactionRecyclerView(
     }
 }
 
+@Composable
+fun TransactionPage(
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    transactionList: List<TransactionAndAccounts>,
+    state: LazyListState,
+    delTransaction: (Transaction) -> Unit
+) {
+    Column(modifier = modifier) {
+        MediumHeadline("Transacciones")
+        TransactionRecyclerView(
+            transactionList = transactionList, onItemTapped = { transactionAndAccounts ->
+                delTransaction(transactionAndAccounts.transaction)
+            }, itemHolderPaddingValues = itemHolderPaddingValues, state = state
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun PreviewAccountItem() {
+private fun PreviewTransactionItem() {
     val person = Person(name = "Person", id = 0)
     val sourceAccount = Account(
         name = "Account1", ownerId = person.id ?: -1,
@@ -114,7 +133,15 @@ private fun PreviewAccountItem() {
 
 @Preview(showBackground = true)
 @Composable
-private fun PreviewAccountList() {
+private fun PreviewTransactionList() {
     val transList = getTransactionSample()
     TransactionRecyclerView(transactionList = transList, onItemTapped = {}, state = LazyListState())
+}
+
+@Preview(showBackground = true, widthDp = 320, heightDp = 640)
+@Composable
+private fun PreviewTransactionPage() {
+    GazegeTheme(darkTheme = true) {
+        TransactionPage(transactionList = getTransactionSample(), state = LazyListState()) {}
+    }
 }
