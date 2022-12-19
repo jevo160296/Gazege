@@ -29,6 +29,7 @@ import com.example.gazege.core.AppRepository
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
+import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -109,7 +110,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 transactionList,
                                 onAddTransactionRequested = {
-
+                                    navController.navigate(route="addTransaction")
                                 },
                                 delTransaction = {
                                     mainViewModel.deleteTransaction(it)
@@ -138,6 +139,16 @@ class MainActivity : ComponentActivity() {
                             PersonFormFragment(
                                 onPersonAddRequested = {
                                     mainViewModel.insertPerson(it)
+                                    navController.navigateUp()
+                                }
+                            )
+                        }
+                        composable("addTransaction"){
+                            TransactionFormFragment(
+                                accountList = accountList.map { it.account },
+                                onAccountAddRequested = { navController.navigate("addAccount") },
+                                onTransactionAndAccountsAdd = {
+                                    mainViewModel.insertTransaction(it)
                                     navController.navigateUp()
                                 }
                             )

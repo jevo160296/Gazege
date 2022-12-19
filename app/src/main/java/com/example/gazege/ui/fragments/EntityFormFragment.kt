@@ -6,10 +6,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -22,6 +18,8 @@ import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
 import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.math.roundToInt
 
 @Composable
 fun PersonFormFragment(
@@ -104,6 +102,59 @@ fun AccountFormFragment(
             onPersonAddRequested = onPersonAddRequested,
             onAccountAndOwnerChanged = {
                 accountAndOwnerState = it
+            }
+        )
+    }
+}
+
+@Composable
+fun TransactionFormFragment(
+    modifier: Modifier = Modifier,
+    transactionAndAccounts: TransactionAndAccounts? = null,
+    accountList: List<Account>,
+    onAccountAddRequested: () -> Unit,
+    onTransactionAndAccountsAdd: (Transaction) -> Unit
+){
+    var transactionAndAccountsState by rememberSaveable(
+        stateSaver = transactionSaver
+    ) {
+        mutableStateOf(
+            if(transactionAndAccounts != null){
+                PartialTransactionAndAccounts(
+                    transaction = transactionAndAccounts.transaction.let{
+                        PartialTransaction(
+                            id = it.id,
+                            amount = it.amount,
+                            description = it.description,
+                            sourceId = it.sourceId,
+                            destinationId = it.destinationId,
+                            date = it.date
+                        )
+                    },
+                    sourceAccount = transactionAndAccounts.sourceAccount,
+                    destinationAccount = transactionAndAccounts.destinationAccount
+                )
+            }
+            else{
+                PartialTransactionAndAccounts()
+            }
+        )
+    }
+    val completeState = transactionAndAccountsState.isComplete()
+    Form(
+        modifier = modifier,
+        isSavedButtonEnabled = completeState,
+        onSaveClicked = {
+            val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
+            onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
+        }
+    ){
+        TransactionAndAccountsForm(
+            transactionAndAccounts = transactionAndAccountsState,
+            accountList = accountList,
+            onAccountAddRequested = onAccountAddRequested,
+            onTransactionAndAccountsChanged = {
+                transactionAndAccountsState = it
             }
         )
     }
@@ -240,6 +291,169 @@ private fun AccountAndOwnerForm(
         } else{
             OutlinedButton(onClick = onPersonAddRequested) {
                 Text("New person")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TransactionAndAccountsForm(
+    modifier: Modifier = Modifier,
+    transactionAndAccounts: PartialTransactionAndAccounts,
+    accountList: List<Account>,
+    onAccountAddRequested: () -> Unit,
+    onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit
+) {
+    val amount = (transactionAndAccounts.transaction.amount ?: 0.0).roundToInt().toString()
+    val description = transactionAndAccounts.transaction.description ?: ""
+    val selectedSource = transactionAndAccounts.sourceAccount
+    val selectedDestination = transactionAndAccounts.destinationAccount
+    val sourceAccountsList = accountList.filter {
+        it != selectedDestination
+    }
+    val destinationAccountsList = accountList.filter {
+        it != selectedSource
+    }
+    val date = transactionAndAccounts.transaction.date
+    if(date == null){
+        onTransactionAndAccountsChanged(
+            transactionAndAccounts.copy().apply{
+                transaction = transaction.copy(date = Date())
+            }
+        )
+    }
+    Column(modifier = modifier) {
+        TextField(
+            value = amount,
+            onValueChange = {
+                onTransactionAndAccountsChanged(
+                    transactionAndAccounts.copy().apply {
+                        transaction = transaction.copy(amount= it.toDouble())
+                    }
+                )
+            },
+            label = { Text("Amount") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            )
+        )
+        TextField(
+            value = description,
+            onValueChange = {
+                onTransactionAndAccountsChanged(
+                    transactionAndAccounts.copy().apply {
+                        transaction = transaction.copy(description = it)
+                    }
+                )
+            },
+            label = { Text(text = "Description") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            )
+        )
+        if (sourceAccountsList.isNotEmpty()){
+            var dropDownExpanded by rememberSaveable {
+                mutableStateOf(false)
+            }
+            ExposedDropdownMenuBox(
+                expanded = dropDownExpanded,
+                onExpandedChange = {
+                    dropDownExpanded = !dropDownExpanded
+                }
+            ) {
+                TextField(
+                    modifier = Modifier.menuAnchor(),
+                    value = selectedSource?.name ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+                    },
+                    label = { Text("Owner") },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors()
+                )
+                ExposedDropdownMenu(
+                    expanded = dropDownExpanded,
+                    onDismissRequest = { dropDownExpanded = false }
+                ) {
+                    sourceAccountsList.map {
+                        DropdownMenuItem(
+                            text = {Text(it.name)},
+                            onClick = {
+                                dropDownExpanded = false
+                                if(it.id != null){
+                                    onTransactionAndAccountsChanged(
+                                        transactionAndAccounts.copy().apply{
+                                            sourceAccount = it
+                                            transaction = transaction.copy(sourceId = it.id)
+                                        }
+                                    )
+                                }
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
+                    }
+                }
+            }
+        }
+        else{
+            OutlinedButton(onClick = onAccountAddRequested) {
+                Text("New account")
+            }
+        }
+        if (destinationAccountsList.isNotEmpty()){
+            var dropDownExpanded by rememberSaveable {
+                mutableStateOf(false)
+            }
+            ExposedDropdownMenuBox(
+                expanded = dropDownExpanded,
+                onExpandedChange = {
+                    dropDownExpanded = !dropDownExpanded
+                }
+            ) {
+                TextField(
+                    modifier = Modifier.menuAnchor(),
+                    value = selectedDestination?.name ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+                    },
+                    label = { Text("Owner") },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors()
+                )
+                ExposedDropdownMenu(
+                    expanded = dropDownExpanded,
+                    onDismissRequest = { dropDownExpanded = false }
+                ) {
+                    destinationAccountsList.map {
+                        DropdownMenuItem(
+                            text = {Text(it.name)},
+                            onClick = {
+                                dropDownExpanded = false
+                                if(it.id != null){
+                                    onTransactionAndAccountsChanged(
+                                        transactionAndAccounts.copy().apply{
+                                            destinationAccount = it
+                                            transaction = transaction.copy(destinationId = it.id)
+                                        }
+                                    )
+                                }
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
+                    }
+                }
+            }
+        }
+        else{
+            OutlinedButton(onClick = onAccountAddRequested) {
+                Text("New account")
             }
         }
     }
