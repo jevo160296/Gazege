@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -122,6 +124,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("addAccount"){
                             AccountFormFragment(
+                                contentPadding = PaddingValues(8.dp),
+                                itemSpacing = 8.dp,
                                 personList = personList
                                     .map {
                                          it.person
@@ -137,6 +141,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("addPerson"){
                             PersonFormFragment(
+                                contentPadding = PaddingValues(8.dp),
+                                itemSpacing = 8.dp,
                                 onPersonAddRequested = {
                                     mainViewModel.insertPerson(it)
                                     navController.navigateUp()
@@ -145,6 +151,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("addTransaction"){
                             TransactionFormFragment(
+                                contentPadding = PaddingValues(8.dp),
+                                itemSpacing = 8.dp,
                                 accountList = accountList.map { it.account },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {

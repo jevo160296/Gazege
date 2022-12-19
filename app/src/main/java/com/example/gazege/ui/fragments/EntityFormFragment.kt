@@ -13,17 +13,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.theme.Shapes
+import com.example.gazege.ui.widgets.ButtonField
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.math.roundToInt
+import com.example.gazege.ui.widgets.TextField
 
 @Composable
 fun PersonFormFragment(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     person: Person? = null,
     onPersonAddRequested: (Person) -> Unit
 ) {
@@ -49,6 +56,8 @@ fun PersonFormFragment(
         isSavedButtonEnabled = true
     ) {
         PersonForm(
+            contentPadding = contentPadding,
+            itemSpacing = itemSpacing,
             person = personState,
             onPersonChanged = {
                 personState = it
@@ -60,6 +69,8 @@ fun PersonFormFragment(
 @Composable
 fun AccountFormFragment(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     accountAndOwner: AccountAndOwner? = null,
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
@@ -97,6 +108,8 @@ fun AccountFormFragment(
         isSavedButtonEnabled = completeState
     ) {
         AccountAndOwnerForm(
+            contentPadding = contentPadding,
+            itemSpacing = itemSpacing,
             accountAndOwner = accountAndOwnerState,
             personList = personList,
             onPersonAddRequested = onPersonAddRequested,
@@ -110,6 +123,8 @@ fun AccountFormFragment(
 @Composable
 fun TransactionFormFragment(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     transactionAndAccounts: TransactionAndAccounts? = null,
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
@@ -150,6 +165,8 @@ fun TransactionFormFragment(
         }
     ){
         TransactionAndAccountsForm(
+            contentPadding = contentPadding,
+            itemSpacing = itemSpacing,
             transactionAndAccounts = transactionAndAccountsState,
             accountList = accountList,
             onAccountAddRequested = onAccountAddRequested,
@@ -175,7 +192,7 @@ private fun Form(
             if(isSavedButtonEnabled){
                 FloatingActionButton(
                     onClick = onSaveClicked,
-
+                    shape = Shapes.small
                     ){
                     Icon(
                         painter = painterResource(id = R.drawable.ic_round_check_24),
@@ -190,15 +207,18 @@ private fun Form(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PersonForm(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     person: PartialPerson,
     onPersonChanged: (PartialPerson) -> Unit
 ) {
     val name = person.name ?: ""
-    Column(modifier = modifier) {
+    Column(modifier = modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+    ) {
         TextField(
             value = name,
             onValueChange = {
@@ -220,6 +240,8 @@ private fun PersonForm(
 @Composable
 private fun AccountAndOwnerForm(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     accountAndOwner: PartialAccountAndOwner,
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
@@ -227,7 +249,9 @@ private fun AccountAndOwnerForm(
 ) {
     val name: String = accountAndOwner.account.name ?: ""
     val selectedOwner: Person? = accountAndOwner.owner
-    Column(modifier = modifier) {
+    Column(modifier = modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+    ) {
         TextField(
             value = name,
             onValueChange = {
@@ -241,7 +265,7 @@ private fun AccountAndOwnerForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Next
             )
         )
         if (personList.isNotEmpty()) {
@@ -289,7 +313,7 @@ private fun AccountAndOwnerForm(
                 }
             }
         } else{
-            OutlinedButton(onClick = onPersonAddRequested) {
+            ButtonField(onClick = onPersonAddRequested) {
                 Text("New person")
             }
         }
@@ -300,6 +324,8 @@ private fun AccountAndOwnerForm(
 @Composable
 private fun TransactionAndAccountsForm(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    itemSpacing: Dp = 0.dp,
     transactionAndAccounts: PartialTransactionAndAccounts,
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
@@ -323,7 +349,8 @@ private fun TransactionAndAccountsForm(
             }
         )
     }
-    Column(modifier = modifier) {
+    Column(modifier = modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
         TextField(
             value = amount,
             onValueChange = {
@@ -374,7 +401,7 @@ private fun TransactionAndAccountsForm(
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     },
-                    label = { Text("Owner") },
+                    label = { Text("Source account") },
                     colors = ExposedDropdownMenuDefaults.textFieldColors()
                 )
                 ExposedDropdownMenu(
@@ -402,7 +429,7 @@ private fun TransactionAndAccountsForm(
             }
         }
         else{
-            OutlinedButton(onClick = onAccountAddRequested) {
+            ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
@@ -424,7 +451,7 @@ private fun TransactionAndAccountsForm(
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     },
-                    label = { Text("Owner") },
+                    label = { Text("Destination account") },
                     colors = ExposedDropdownMenuDefaults.textFieldColors()
                 )
                 ExposedDropdownMenu(
@@ -452,7 +479,7 @@ private fun TransactionAndAccountsForm(
             }
         }
         else{
-            OutlinedButton(onClick = onAccountAddRequested) {
+            ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
@@ -472,7 +499,7 @@ private fun Preview() {
             Person(it, "Person $it")
         }
         var formType by rememberSaveable {
-            mutableStateOf(formTypes.Account)
+            mutableStateOf(formTypes.Person)
         }
         var person by rememberSaveable(
             stateSaver = personSaver
@@ -527,6 +554,8 @@ private fun Preview() {
                 formTypes.Person -> {
                     PersonForm(
                         modifier = Modifier.padding(it),
+                        contentPadding = PaddingValues(8.dp),
+                        itemSpacing = 8.dp,
                         person = person
                     ){ changedPerson ->
                         person = changedPerson
@@ -535,6 +564,8 @@ private fun Preview() {
                 formTypes.Account -> {
                     AccountAndOwnerForm(
                         modifier = Modifier.padding(it),
+                        contentPadding = PaddingValues(8.dp),
+                        itemSpacing = 8.dp,
                         accountAndOwner = accountAndOwner,
                         personList = personList,
                         onPersonAddRequested = {
