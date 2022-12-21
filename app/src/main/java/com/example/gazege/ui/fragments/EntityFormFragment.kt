@@ -20,9 +20,10 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
+import java.math.BigDecimal
 import java.util.*
-import kotlin.math.roundToInt
 
 @Composable
 fun PersonFormFragment(
@@ -334,7 +335,7 @@ private fun TransactionAndAccountsForm(
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit
 ) {
-    val amount = (transactionAndAccounts.transaction.amount ?: 0.0).roundToInt().toString()
+    val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSource = transactionAndAccounts.sourceAccount
     val selectedDestination = transactionAndAccounts.destinationAccount
@@ -354,7 +355,7 @@ private fun TransactionAndAccountsForm(
     }
     Column(modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
-        TextField(
+        NumberField(
             value = amount,
             onValueChange = {
                 onTransactionAndAccountsChanged(
