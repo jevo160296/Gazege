@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,9 @@ interface PersonDao {
 
     @Insert
     suspend fun insertAll(vararg persons: Person): List<Long>
+
+    @Update
+    suspend fun update(person: Person)
 
     @Delete
     suspend fun delete(person: Person): Int
