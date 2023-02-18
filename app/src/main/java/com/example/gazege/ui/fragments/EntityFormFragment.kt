@@ -37,18 +37,18 @@ fun PersonFormFragment(
         stateSaver = personSaver
     ) {
         mutableStateOf(
-            if(person != null){
+            if (person != null) {
                 PartialPerson(
-                id = person.id,
-                name = person.name
-            )
+                    id = person.id,
+                    name = person.name
+                )
             } else {
                 PartialPerson()
             }
         )
     }
     Form(
-        modifier=modifier,
+        modifier = modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
             onPersonAddRequested(fullPerson)
@@ -76,14 +76,14 @@ fun AccountFormFragment(
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
     onAccountAndOwnerAdd: (Account) -> Unit
-){
+) {
     var accountAndOwnerState by rememberSaveable(
         stateSaver = accountAndOwnerSaver
     ) {
         mutableStateOf(
-            if(accountAndOwner != null){
+            if (accountAndOwner != null) {
                 PartialAccountAndOwner(
-                    account = accountAndOwner.account.let{
+                    account = accountAndOwner.account.let {
                         PartialAccount(
                             id = it.id,
                             name = it.name,
@@ -93,8 +93,7 @@ fun AccountFormFragment(
                     },
                     owner = accountAndOwner.owner
                 )
-            }
-            else{
+            } else {
                 PartialAccountAndOwner()
             }
         )
@@ -131,14 +130,14 @@ fun TransactionFormFragment(
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit
-){
+) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
     ) {
         mutableStateOf(
-            if(transactionAndAccounts != null){
+            if (transactionAndAccounts != null) {
                 PartialTransactionAndAccounts(
-                    transaction = transactionAndAccounts.transaction.let{
+                    transaction = transactionAndAccounts.transaction.let {
                         PartialTransaction(
                             id = it.id,
                             amount = it.amount,
@@ -151,8 +150,7 @@ fun TransactionFormFragment(
                     sourceAccount = transactionAndAccounts.sourceAccount,
                     destinationAccount = transactionAndAccounts.destinationAccount
                 )
-            }
-            else{
+            } else {
                 PartialTransactionAndAccounts()
             }
         )
@@ -166,7 +164,7 @@ fun TransactionFormFragment(
             val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
             onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
         }
-    ){
+    ) {
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
@@ -186,25 +184,26 @@ private fun Form(
     onSaveClicked: () -> Unit,
     isSavedButtonEnabled: Boolean,
     title: String,
-    content: @Composable () -> Unit){
+    content: @Composable () -> Unit
+) {
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
         floatingActionButton = {
-            if(isSavedButtonEnabled){
+            if (isSavedButtonEnabled) {
                 FloatingActionButton(
                     onClick = onSaveClicked,
                     shape = Shapes.small
-                    ){
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_round_check_24),
                         contentDescription = ""
                     )
                 }
             }
-            }) {
+        }) {
         Column(modifier = Modifier.padding(it)) {
             MediumHeadline(title)
             content()
@@ -221,7 +220,8 @@ private fun PersonForm(
     onPersonChanged: (PartialPerson) -> Unit
 ) {
     val name = person.name ?: ""
-    Column(modifier = modifier.padding(contentPadding),
+    Column(
+        modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         TextField(
@@ -254,7 +254,8 @@ private fun AccountAndOwnerForm(
 ) {
     val name: String = accountAndOwner.account.name ?: ""
     val selectedOwner: Person? = accountAndOwner.owner
-    Column(modifier = modifier.padding(contentPadding),
+    Column(
+        modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         TextField(
@@ -262,7 +263,7 @@ private fun AccountAndOwnerForm(
             onValueChange = {
                 onAccountAndOwnerChanged(
                     accountAndOwner.copy().apply {
-                        account = account.copy(name=it)
+                        account = account.copy(name = it)
                     }
                 )
             },
@@ -300,12 +301,12 @@ private fun AccountAndOwnerForm(
                 ) {
                     personList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onAccountAndOwnerChanged(
-                                        accountAndOwner.copy().apply{
+                                        accountAndOwner.copy().apply {
                                             owner = it
                                             account = account.copy(ownerId = it.id)
                                         }
@@ -317,7 +318,7 @@ private fun AccountAndOwnerForm(
                     }
                 }
             }
-        } else{
+        } else {
             ButtonField(onClick = onPersonAddRequested) {
                 Text("New person")
             }
@@ -347,21 +348,23 @@ private fun TransactionAndAccountsForm(
         it != selectedSource
     }
     val date = transactionAndAccounts.transaction.date
-    if(date == null){
+    if (date == null) {
         onTransactionAndAccountsChanged(
-            transactionAndAccounts.copy().apply{
+            transactionAndAccounts.copy().apply {
                 transaction = transaction.copy(date = Date())
             }
         )
     }
-    Column(modifier = modifier.padding(contentPadding),
-        verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
+    Column(
+        modifier = modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+    ) {
         NumberField(
             value = amount,
             onValueChange = {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(amount= it.toDouble())
+                        transaction = transaction.copy(amount = it.toDouble())
                     }
                 )
             },
@@ -388,7 +391,7 @@ private fun TransactionAndAccountsForm(
                 imeAction = ImeAction.Next
             )
         )
-        if (sourceAccountsList.isNotEmpty()){
+        if (sourceAccountsList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -415,12 +418,12 @@ private fun TransactionAndAccountsForm(
                 ) {
                     sourceAccountsList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply{
+                                        transactionAndAccounts.copy().apply {
                                             sourceAccount = it
                                             transaction = transaction.copy(sourceId = it.id)
                                         }
@@ -432,13 +435,12 @@ private fun TransactionAndAccountsForm(
                     }
                 }
             }
-        }
-        else{
+        } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
-        if (destinationAccountsList.isNotEmpty()){
+        if (destinationAccountsList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -465,12 +467,12 @@ private fun TransactionAndAccountsForm(
                 ) {
                     destinationAccountsList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply{
+                                        transactionAndAccounts.copy().apply {
                                             destinationAccount = it
                                             transaction = transaction.copy(destinationId = it.id)
                                         }
@@ -482,8 +484,7 @@ private fun TransactionAndAccountsForm(
                     }
                 }
             }
-        }
-        else{
+        } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
@@ -499,7 +500,7 @@ private fun PreviewLight() {
         val Transaction = 1
         val Person = 2
     }
-    GazegeTheme{
+    GazegeTheme {
         var personList by rememberSaveable {
             mutableStateOf(
                 (5..10).map {
@@ -510,74 +511,14 @@ private fun PreviewLight() {
         var accountList by rememberSaveable {
             mutableStateOf(
                 arrayOf(
-                    Account(name="Cuenta1", ownerId = 1, initial_balance = 0.0)
-            ))
-        }
-        var formType by rememberSaveable {
-            mutableStateOf(formTypes.Person)
-        }
-        when(formType){
-            formTypes.Person -> {
-                PersonFormFragment(
-                    onPersonAddRequested = {
-                        personList = listOf(
-                            *personList.toTypedArray(),
-                            it
-                        )
-                        formType = formTypes.Transaction
-                        formType = formTypes.Account
-                    }
+                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
                 )
-            }
-            formTypes.Account -> {
-                AccountFormFragment(
-                    personList = personList,
-                    onPersonAddRequested = {
-                        personList = listOf(
-                            *personList.toTypedArray(),
-                            Person(1, "Nueva persona")
-                        )
-                        formType = formTypes.Person
-                                           },
-                    onAccountAndOwnerAdd = {
-                        accountList = arrayOf(
-                            *accountList,
-                            Account(name="Nueva cuenta", ownerId = 1, initial_balance = 0.0)
-                        )
-                    }
-                )
-            }
-            else -> {}
-        }
-    }
-}
-
-@Preview(widthDp = 320, heightDp = 400, showBackground = true)
-@Composable
-private fun PreviewDark() {
-    val formTypes = object {
-        val Account = 0
-        val Transaction = 1
-        val Person = 2
-    }
-    GazegeTheme(darkTheme = true){
-        var personList by rememberSaveable {
-            mutableStateOf(
-                (5..10).map {
-                    Person(it, "Person $it")
-                }
             )
         }
-        var accountList by rememberSaveable {
-            mutableStateOf(
-                arrayOf(
-                    Account(name="Cuenta1", ownerId = 1, initial_balance = 0.0)
-                ))
-        }
         var formType by rememberSaveable {
             mutableStateOf(formTypes.Person)
         }
-        when(formType){
+        when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
                     onPersonAddRequested = {
@@ -603,7 +544,69 @@ private fun PreviewDark() {
                     onAccountAndOwnerAdd = {
                         accountList = arrayOf(
                             *accountList,
-                            Account(name="Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                            Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                        )
+                    }
+                )
+            }
+            else -> {}
+        }
+    }
+}
+
+@Preview(widthDp = 320, heightDp = 400, showBackground = true)
+@Composable
+private fun PreviewDark() {
+    val formTypes = object {
+        val Account = 0
+        val Transaction = 1
+        val Person = 2
+    }
+    GazegeTheme(darkTheme = true) {
+        var personList by rememberSaveable {
+            mutableStateOf(
+                (5..10).map {
+                    Person(it, "Person $it")
+                }
+            )
+        }
+        var accountList by rememberSaveable {
+            mutableStateOf(
+                arrayOf(
+                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
+                )
+            )
+        }
+        var formType by rememberSaveable {
+            mutableStateOf(formTypes.Person)
+        }
+        when (formType) {
+            formTypes.Person -> {
+                PersonFormFragment(
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            it
+                        )
+                        formType = formTypes.Transaction
+                        formType = formTypes.Account
+                    }
+                )
+            }
+            formTypes.Account -> {
+                AccountFormFragment(
+                    personList = personList,
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            Person(1, "Nueva persona")
+                        )
+                        formType = formTypes.Person
+                    },
+                    onAccountAndOwnerAdd = {
+                        accountList = arrayOf(
+                            *accountList,
+                            Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)
                         )
                     }
                 )
