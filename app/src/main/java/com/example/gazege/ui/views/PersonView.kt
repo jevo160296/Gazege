@@ -58,7 +58,8 @@ private fun PersonViewHolder(person: PersonWithAccounts) {
 @Composable
 private fun PersonRecyclerView(
     personList: List<PersonWithAccounts>,
-    onItemTapped: (PersonWithAccounts) -> Unit,
+    delPerson: (PersonWithAccounts) -> Unit,
+    editPerson: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
@@ -66,7 +67,8 @@ private fun PersonRecyclerView(
     RecyclerView(
         elements = personList,
         modifier = modifier,
-        onItemTapped = onItemTapped,
+        onItemTapped = editPerson,
+        onItemLongPressed = delPerson,
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
@@ -79,15 +81,18 @@ fun PersonPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     personList: List<PersonWithAccounts>,
-    state: LazyListState,
-    onPersonDeleted: (Person) -> Unit
+    delPerson: (Person) -> Unit,
+    editPerson: (Person) -> Unit,
+    state: LazyListState
 ) {
     Column(modifier = modifier) {
         MediumHeadline(text = "Persons")
         PersonRecyclerView(
-            personList = personList, onItemTapped = {
-                onPersonDeleted(it.person)
-            }, itemHolderPaddingValues = itemHolderPaddingValues, state = state
+            personList = personList,
+            delPerson = {delPerson(it.person)},
+            editPerson = {editPerson(it.person)},
+            itemHolderPaddingValues = itemHolderPaddingValues,
+            state = state
         )
     }
 }
@@ -144,7 +149,10 @@ private fun PreviewPersonList() {
 private fun PreviewPersonPage() {
     GazegeTheme {
         PersonPage(
-            personList = getPersonWithAccountsSample(), state = LazyListState()
-        ) {}
+            personList = getPersonWithAccountsSample(),
+            state = LazyListState(),
+            editPerson = {},
+            delPerson = {}
+        )
     }
 }

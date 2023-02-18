@@ -77,14 +77,16 @@ private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
 @Composable
 private fun AccountRecyclerView(
     accountList: List<AccountAndOwnerWithTransactions>,
-    onItemTapped: (AccountAndOwnerWithTransactions) -> Unit,
+    delAccount: (AccountAndOwnerWithTransactions) -> Unit,
+    editAccount: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
 ) {
     RecyclerView(
         elements = accountList,
-        onItemTapped = onItemTapped,
+        onItemTapped = delAccount,
+        onItemLongPressed = editAccount,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
@@ -99,15 +101,15 @@ fun AccountPage(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     accountList: List<AccountAndOwnerWithTransactions>,
     state: LazyListState,
-    delAccount: (Account) -> Unit
+    delAccount: (Account) -> Unit,
+    editAccount: (Account) -> Unit
 ) {
     Column(modifier = modifier) {
         MediumHeadline(text = "Cuentas")
         AccountRecyclerView(
             accountList = accountList,
-            onItemTapped = { accountAndOwner ->
-                delAccount(accountAndOwner.account)
-            },
+            delAccount = {delAccount(it.account)},
+            editAccount = {editAccount(it.account)},
             itemHolderPaddingValues = itemHolderPaddingValues,
             state = state
         )
@@ -149,7 +151,9 @@ private fun PreviewAccountItem() {
 private fun PreviewAccountList() {
     GazegeTheme {
         AccountRecyclerView(
-            accountList = getAccountSample(), onItemTapped = {},
+            accountList = getAccountSample(),
+            delAccount = {},
+            editAccount = {},
             state = LazyListState()
         )
     }
@@ -163,6 +167,11 @@ private fun PreviewAccountList() {
 @Composable
 private fun PreviewPage() {
     GazegeTheme(darkTheme = false) {
-        AccountPage(accountList = getAccountSample(), state = LazyListState()) {}
+        AccountPage(
+            accountList = getAccountSample(),
+            state = LazyListState(),
+            editAccount = {},
+            delAccount = {}
+        )
     }
 }

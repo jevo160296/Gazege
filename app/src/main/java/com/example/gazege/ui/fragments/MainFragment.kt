@@ -202,36 +202,42 @@ fun MainFragment(
                     TransactionPage(
                         transactionList = transactionList,
                         itemHolderPaddingValues = paddingValues,
-                        state = transactionState
-                    ) { transaction ->
-                        action = { delTransaction(transaction) }
-                        nombreItem = "la transacción"
-                        scope.launch { sheetState.show() }
-                    }
+                        state = transactionState,
+                        delTransaction = { transaction ->
+                            action = { delTransaction(transaction) }
+                            nombreItem = "la transacción"
+                            scope.launch { sheetState.show() }
+                        },
+                        editTransaction = onEditTransactionRequested
+                    )
                 }
                 NavPosition.CUENTAS -> {
                     AccountPage(
                         accountList = accountList,
                         itemHolderPaddingValues = paddingValues,
-                        state = accountState
-                    ) { account ->
-                        action = { delAccount(account) }
-                        nombreItem =
-                            "la cuenta ${account.name} y sus transacciones asociadas"
-                        scope.launch { sheetState.show() }
-                    }
+                        state = accountState,
+                        delAccount = { account ->
+                            action = { delAccount(account) }
+                            nombreItem =
+                                "la cuenta ${account.name} y sus transacciones asociadas"
+                            scope.launch { sheetState.show() }
+                        },
+                        editAccount = onEditAccountRequested
+                    )
                 }
                 NavPosition.PERSONS -> {
                     PersonPage(
                         personList = personList,
                         itemHolderPaddingValues = paddingValues,
-                        state = personState
-                    ) { person ->
-                        action = { delPerson(person) }
-                        nombreItem =
-                            "la persona ${person.name} sus cuentas y transacciones asociadas"
-                        scope.launch { sheetState.show() }
-                    }
+                        state = personState,
+                        delPerson = { person ->
+                            action = { delPerson(person) }
+                            nombreItem =
+                                "la persona ${person.name} sus cuentas y transacciones asociadas"
+                            scope.launch { sheetState.show() }
+                        },
+                        editPerson = onEditPersonRequested
+                    )
                 }
             }
         }
