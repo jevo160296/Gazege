@@ -1,3 +1,5 @@
+@file:Suppress("UNUSED_PARAMETER")
+
 package com.example.gazege.ui.widgets
 
 import android.icu.text.DecimalFormat
