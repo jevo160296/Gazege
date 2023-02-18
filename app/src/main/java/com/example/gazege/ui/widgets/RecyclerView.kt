@@ -1,26 +1,31 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> RecyclerView(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     elements: List<T>,
     onItemTapped: (T) -> Unit = {},
+    onItemLongPressed: (T) -> Unit = {},
     state: LazyListState,
     viewHolder: @Composable (T) -> Unit
 ) {
@@ -60,9 +65,8 @@ fun <T> RecyclerView(
                 Modifier
                     .padding(paddingValues)
                     .fillMaxWidth(),
-                onClick = {
-                    onItemTapped(item)
-                }
+                onClick = { onItemTapped(item) },
+                onLongClick = { onItemLongPressed(item) }
             )
             {
                 Box(modifier = Modifier.padding(4.dp)) {

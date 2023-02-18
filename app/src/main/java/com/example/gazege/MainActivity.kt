@@ -15,6 +15,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -26,11 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
@@ -98,20 +102,21 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main") {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+                            val snackbarHostState = SnackbarHostState()
                             MainFragment(
                                 personList,
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
                                 delPerson = { mainViewModel.deletePerson(it) },
-                                accountList,
+                                accountList = accountList,
                                 onAddAccountRequested = {
                                     navController.navigate(
                                         route = "addAccount"
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                transactionList,
+                                transactionList = transactionList,
                                 onAddTransactionRequested = {
                                     navController.navigate(route = "addTransaction")
                                 },
@@ -120,7 +125,17 @@ class MainActivity : ComponentActivity() {
                                 onNavStatusChanged = {
                                     navPosition = it
                                 },
-                                sheetState = sheetState
+                                sheetState = sheetState,
+                                onEditTransactionRequested = {
+                                    navController.navigate("editTransaction/${it.id}")
+                                },
+                                onEditPersonRequested = {
+                                    navController.navigate("editPerson/${it.id}")
+                                },
+                                onEditAccountRequested = {
+                                    navController.navigate(route = "editAccount/${it.id}")
+                                },
+                                snackbarHostState = snackbarHostState
                             )
                         }
                         composable("addAccount") {
@@ -140,6 +155,31 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+                        composable(
+                            "editAccount/{accountId}",
+                            arguments = listOf(navArgument("accountId") { type = NavType.IntType })
+                        ) { navStack ->
+                            val accountId = navStack.arguments?.getInt("accountId")
+                            val selectedAccountAndOwner = mainViewModel
+                                .allAccount
+                                .value
+                                ?.firstOrNull { it.account.id == accountId }
+                                ?.let {
+                                    AccountAndOwner(
+                                        account = it.account,
+                                        owner = it.owner
+                                    )
+                                }
+                            AccountFormFragment(
+                                personList = personList.map { it.person },
+                                onPersonAddRequested = { navController.navigate("addPerson") },
+                                onAccountAndOwnerAdd = {
+                                    mainViewModel.updateAccount(it)
+                                    navController.navigateUp()
+                                },
+                                accountAndOwner = selectedAccountAndOwner
+                            )
+                        }
                         composable("addPerson") {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
@@ -148,6 +188,26 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.insertPerson(it)
                                     navController.navigateUp()
                                 }
+                            )
+                        }
+                        composable(
+                            "editPerson/{personId}",
+                            arguments = listOf(navArgument("personId") { type = NavType.IntType })
+                        ) { navBack ->
+                            val personId = navBack.arguments?.getInt("personId")
+                            val selectedPerson = mainViewModel
+                                .allPerson
+                                .value
+                                ?.firstOrNull { it.person.id == personId }
+                                ?.person
+                            PersonFormFragment(
+                                contentPadding = PaddingValues(8.dp),
+                                itemSpacing = 8.dp,
+                                onPersonAddRequested = {
+                                    mainViewModel.updatePerson(it)
+                                    navController.navigateUp()
+                                },
+                                person = selectedPerson
                             )
                         }
                         composable("addTransaction") {
@@ -160,6 +220,29 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.insertTransaction(it)
                                     navController.navigateUp()
                                 }
+                            )
+                        }
+                        composable(
+                            "editTransaction/{transactionId}",
+                            arguments = listOf(navArgument("transactionId") {
+                                type = NavType.IntType
+                            })
+                        ) { navBackStackEntry ->
+                            val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
+                            val selectedTransactionAndAccounts = mainViewModel
+                                .allTransactions
+                                .value
+                                ?.firstOrNull { it.transaction.id == transactionId }
+                            TransactionFormFragment(
+                                contentPadding = PaddingValues(8.dp),
+                                itemSpacing = 8.dp,
+                                accountList = accountList.map { it.account },
+                                onAccountAddRequested = { navController.navigate("addAccount") },
+                                onTransactionAndAccountsAdd = {
+                                    mainViewModel.updateTransaction(it)
+                                    navController.navigateUp()
+                                },
+                                transactionAndAccounts = selectedTransactionAndAccounts
                             )
                         }
                     }

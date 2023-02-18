@@ -25,6 +25,11 @@ class AppRepository(
     }
 
     @WorkerThread
+    suspend fun updatePerson(person: Person){
+        personDao.update(person)
+    }
+
+    @WorkerThread
     suspend fun deletePerson(person: Person) {
         personDao.delete(person)
     }
@@ -40,13 +45,18 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertAccountAndOwner(account: AccountAndOwner){
-        accountDao.insert(account)
+    suspend fun updateAccount(account: Account){
+        accountDao.update(account)
     }
 
     @WorkerThread
     suspend fun insertTransaction(transaction: Transaction) {
         transactionDao.insertAll(transaction)
+    }
+
+    @WorkerThread
+    suspend fun updateTransaction(transaction: Transaction){
+        transactionDao.update(transaction)
     }
 
     @WorkerThread
