@@ -7,16 +7,28 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -33,7 +45,9 @@ import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.theme.Shapes
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
@@ -49,6 +63,7 @@ class MainActivity : ComponentActivity() {
         MainViewModelFactory(repository)
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -87,59 +102,119 @@ class MainActivity : ComponentActivity() {
 
                 Surface(
                     modifier = modifier, color = MaterialTheme.colorScheme.background
-                ){
+                ) {
                     NavHost(
                         navController = navController,
                         startDestination = "main",
-                    ){
-                        composable("main"){
-                            MainFragment(
-                                personList,
-                                onAddPersonRequested = {
-                                    navController.navigate("addPerson")
-                                },
-                                delPerson = {
-                                    mainViewModel.deletePerson(it)
-                                },
-                                accountList,
-                                onAddAccountRequested = {
-                                    navController.navigate(
-                                        route = "addAccount"
-                                    )
-                                },
-                                delAccount = {
-                                    mainViewModel.deleteAccount(it)
-                                },
-                                transactionList,
-                                onAddTransactionRequested = {
-                                    navController.navigate(route="addTransaction")
-                                },
-                                delTransaction = {
-                                    mainViewModel.deleteTransaction(it)
-                                },
-                                navPosition = navPosition,
-                                onNavStatusChanged = {
-                                    navPosition = it
-                                })
+                    ) {
+                        composable("main") {
+                            val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+                            val scope = rememberCoroutineScope()
+                            var action by remember {
+                                mutableStateOf({})
+                            }
+                            var nombreItem by remember {
+                                mutableStateOf("")
+                            }
+                            ModalBottomSheetLayout(
+                                sheetState = sheetState,
+                                sheetShape = Shapes.medium,
+                                sheetContent = {
+                                    Column(
+                                        Modifier.navigationBarsPadding()
+                                    ) {
+                                        Text(
+                                            text = "Confirmar eliminación",
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                        Text(
+                                            text = "¿Confirma la eliminación de $nombreItem?"
+                                        )
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            TextButton(
+                                                onClick = {
+                                                    action()
+                                                    action = {}
+                                                    nombreItem = ""
+                                                    scope.launch { sheetState.hide() }
+                                                }) {
+                                                Text(
+                                                    text = "Si"
+                                                )
+                                            }
+                                            TextButton(
+                                                onClick = {
+                                                    action = {}
+                                                    nombreItem = ""
+                                                    scope.launch { sheetState.hide() }
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = "No"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }) {
+                                MainFragment(
+                                    personList,
+                                    onAddPersonRequested = {
+                                        navController.navigate("addPerson")
+                                    },
+                                    delPerson = {
+                                        action = { mainViewModel.deletePerson(it) }
+                                        nombreItem =
+                                            "la persona ${it.name} sus cuentas y transacciones asociadas"
+                                        scope.launch { sheetState.show() }
+                                    },
+                                    accountList,
+                                    onAddAccountRequested = {
+                                        navController.navigate(
+                                            route = "addAccount"
+                                        )
+                                    },
+                                    delAccount = {
+                                        action = { mainViewModel.deleteAccount(it) }
+                                        nombreItem =
+                                            "la cuenta ${it.name} y sus transacciones asociadas"
+                                        scope.launch { sheetState.show() }
+                                    },
+                                    transactionList,
+                                    onAddTransactionRequested = {
+                                        navController.navigate(route = "addTransaction")
+                                    },
+                                    delTransaction = {
+                                        action = { mainViewModel.deleteTransaction(it) }
+                                        nombreItem = "la transacción"
+                                        scope.launch { sheetState.show() }
+                                    },
+                                    navPosition = navPosition,
+                                    onNavStatusChanged = {
+                                        navPosition = it
+                                    })
+                            }
                         }
-                        composable("addAccount"){
+                        composable("addAccount") {
                             AccountFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 personList = personList
                                     .map {
-                                         it.person
-                                },
+                                        it.person
+                                    },
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
-                                                       },
+                                },
                                 onAccountAndOwnerAdd = {
                                     mainViewModel.insertAccount(it)
                                     navController.navigateUp()
                                 }
                             )
                         }
-                        composable("addPerson"){
+                        composable("addPerson") {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
@@ -149,7 +224,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable("addTransaction"){
+                        composable("addTransaction") {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
