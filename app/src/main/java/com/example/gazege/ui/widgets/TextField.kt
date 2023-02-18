@@ -1,3 +1,5 @@
+@file:Suppress("UNUSED_PARAMETER")
+
 package com.example.gazege.ui.widgets
 
 import android.icu.text.DecimalFormat
@@ -241,8 +243,13 @@ private fun TextFieldPreview() {
         var number by remember {
             mutableStateOf(BigDecimal(0))
         }
+        var valor by remember {
+            mutableStateOf("Valor1")
+        }
         Column {
-            TextField(value = "Valor1", onValueChange = {})
+            TextField(value = valor, onValueChange = {
+                valor = it
+            })
             NumberField(value = number, onValueChange = {
                 number = it
             })

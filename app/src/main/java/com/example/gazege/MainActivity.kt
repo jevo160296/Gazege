@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
@@ -49,6 +52,7 @@ class MainActivity : ComponentActivity() {
         MainViewModelFactory(repository)
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -87,59 +91,56 @@ class MainActivity : ComponentActivity() {
 
                 Surface(
                     modifier = modifier, color = MaterialTheme.colorScheme.background
-                ){
+                ) {
                     NavHost(
                         navController = navController,
                         startDestination = "main",
-                    ){
-                        composable("main"){
+                    ) {
+                        composable("main") {
+                            val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
                             MainFragment(
                                 personList,
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                delPerson = {
-                                    mainViewModel.deletePerson(it)
-                                },
+                                delPerson = { mainViewModel.deletePerson(it) },
                                 accountList,
                                 onAddAccountRequested = {
                                     navController.navigate(
                                         route = "addAccount"
                                     )
                                 },
-                                delAccount = {
-                                    mainViewModel.deleteAccount(it)
-                                },
+                                delAccount = { mainViewModel.deleteAccount(it) },
                                 transactionList,
                                 onAddTransactionRequested = {
-                                    navController.navigate(route="addTransaction")
+                                    navController.navigate(route = "addTransaction")
                                 },
-                                delTransaction = {
-                                    mainViewModel.deleteTransaction(it)
-                                },
+                                delTransaction = { mainViewModel.deleteTransaction(it) },
                                 navPosition = navPosition,
                                 onNavStatusChanged = {
                                     navPosition = it
-                                })
+                                },
+                                sheetState = sheetState
+                            )
                         }
-                        composable("addAccount"){
+                        composable("addAccount") {
                             AccountFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 personList = personList
                                     .map {
-                                         it.person
-                                },
+                                        it.person
+                                    },
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
-                                                       },
+                                },
                                 onAccountAndOwnerAdd = {
                                     mainViewModel.insertAccount(it)
                                     navController.navigateUp()
                                 }
                             )
                         }
-                        composable("addPerson"){
+                        composable("addPerson") {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
@@ -149,7 +150,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable("addTransaction"){
+                        composable("addTransaction") {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
