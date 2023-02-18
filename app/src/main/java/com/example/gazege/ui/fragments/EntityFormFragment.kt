@@ -493,13 +493,13 @@ private fun TransactionAndAccountsForm(
 
 @Preview(widthDp = 320, heightDp = 400, showBackground = true)
 @Composable
-private fun Preview() {
+private fun PreviewLight() {
     val formTypes = object {
         val Account = 0
         val Transaction = 1
         val Person = 2
     }
-    GazegeTheme {
+    GazegeTheme{
         var personList by rememberSaveable {
             mutableStateOf(
                 (5..10).map {
@@ -539,6 +539,67 @@ private fun Preview() {
                         )
                         formType = formTypes.Person
                                            },
+                    onAccountAndOwnerAdd = {
+                        accountList = arrayOf(
+                            *accountList,
+                            Account(name="Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                        )
+                    }
+                )
+            }
+            else -> {}
+        }
+    }
+}
+
+@Preview(widthDp = 320, heightDp = 400, showBackground = true)
+@Composable
+private fun PreviewDark() {
+    val formTypes = object {
+        val Account = 0
+        val Transaction = 1
+        val Person = 2
+    }
+    GazegeTheme(darkTheme = true){
+        var personList by rememberSaveable {
+            mutableStateOf(
+                (5..10).map {
+                    Person(it, "Person $it")
+                }
+            )
+        }
+        var accountList by rememberSaveable {
+            mutableStateOf(
+                arrayOf(
+                    Account(name="Cuenta1", ownerId = 1, initial_balance = 0.0)
+                ))
+        }
+        var formType by rememberSaveable {
+            mutableStateOf(formTypes.Person)
+        }
+        when(formType){
+            formTypes.Person -> {
+                PersonFormFragment(
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            it
+                        )
+                        formType = formTypes.Transaction
+                        formType = formTypes.Account
+                    }
+                )
+            }
+            formTypes.Account -> {
+                AccountFormFragment(
+                    personList = personList,
+                    onPersonAddRequested = {
+                        personList = listOf(
+                            *personList.toTypedArray(),
+                            Person(1, "Nueva persona")
+                        )
+                        formType = formTypes.Person
+                    },
                     onAccountAndOwnerAdd = {
                         accountList = arrayOf(
                             *accountList,
