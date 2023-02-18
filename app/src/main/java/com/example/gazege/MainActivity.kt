@@ -174,7 +174,8 @@ class MainActivity : ComponentActivity() {
                                 personList = personList.map { it.person },
                                 onPersonAddRequested = { navController.navigate("addPerson") },
                                 onAccountAndOwnerAdd = {
-
+                                    mainViewModel.updateAccount(it)
+                                    navController.navigateUp()
                                 },
                                 accountAndOwner = selectedAccountAndOwner
                             )
@@ -203,7 +204,8 @@ class MainActivity : ComponentActivity() {
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = {
-
+                                    mainViewModel.updatePerson(it)
+                                    navController.navigateUp()
                                 },
                                 person = selectedPerson
                             )
@@ -237,6 +239,8 @@ class MainActivity : ComponentActivity() {
                                 accountList = accountList.map { it.account },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
+                                    mainViewModel.updateTransaction(it)
+                                    navController.navigateUp()
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts
                             )
