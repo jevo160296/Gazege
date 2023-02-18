@@ -1,12 +1,20 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
+import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
@@ -15,7 +23,7 @@ import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
 
-fun getPersonSample(): List<Person>{
+fun getPersonSample(): List<Person> {
     return (1..4).map {
         Person(
             name = "Person $it"
@@ -48,7 +56,7 @@ private fun PersonViewHolder(person: PersonWithAccounts) {
         }
         Column(
             horizontalAlignment = Alignment.End
-        ){
+        ) {
             SmallEmphasis(text = "Total")
             LargeBody(text = doubleToString(person.getTotal()))
         }
@@ -89,8 +97,8 @@ fun PersonPage(
         MediumHeadline(text = "Persons")
         PersonRecyclerView(
             personList = personList,
-            delPerson = {delPerson(it.person)},
-            editPerson = {editPerson(it.person)},
+            delPerson = { delPerson(it.person) },
+            editPerson = { editPerson(it.person) },
             itemHolderPaddingValues = itemHolderPaddingValues,
             state = state
         )
@@ -101,7 +109,7 @@ fun PersonPage(
 @Composable
 private fun PreviewPersonItem() {
     val person = Person(name = "Persona")
-    val account = Account(name="Acc", ownerId = 0, initial_balance = 0.0)
+    val account = Account(name = "Acc", ownerId = 0, initial_balance = 0.0)
     val personWithAccounts = PersonWithAccounts(
         person = person,
         accounts = (0..10).map {

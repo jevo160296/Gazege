@@ -1,6 +1,9 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,7 +16,11 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.SmallBody
+import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
 
 fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
@@ -30,16 +37,16 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                 owner = person,
                 inTransactions = (1..100).map { trans_index ->
                     Transaction(
-                        amount=(index * trans_index).toDouble(),
+                        amount = (index * trans_index).toDouble(),
                         description = "",
                         sourceId = 2,
                         destinationId = index,
                         date = Date()
                     )
                 },
-                outTransactions = (1..40).map{ trans_index ->
+                outTransactions = (1..40).map { trans_index ->
                     Transaction(
-                        amount=(index * trans_index/(index + trans_index)).toDouble(),
+                        amount = (index * trans_index / (index + trans_index)).toDouble(),
                         description = "",
                         sourceId = index,
                         destinationId = 3,
@@ -53,7 +60,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
 
 @Composable
 private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
-    Row(verticalAlignment = Alignment.CenterVertically){
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1F)) {
             Row {
                 SmallEmphasis(text = "Account:", modifier = Modifier.padding(end = 4.dp))
@@ -108,8 +115,8 @@ fun AccountPage(
         MediumHeadline(text = "Cuentas")
         AccountRecyclerView(
             accountList = accountList,
-            delAccount = {delAccount(it.account)},
-            editAccount = {editAccount(it.account)},
+            delAccount = { delAccount(it.account) },
+            editAccount = { editAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
             state = state
         )
@@ -126,16 +133,16 @@ private fun PreviewAccountItem() {
         account = account,
         inTransactions = (1..100).map { trans_index ->
             Transaction(
-                amount=(1 * trans_index).toDouble(),
+                amount = (1 * trans_index).toDouble(),
                 description = "",
                 sourceId = 2,
                 destinationId = 1,
                 date = Date()
             )
         },
-        outTransactions = (1..40).map{ trans_index ->
+        outTransactions = (1..40).map { trans_index ->
             Transaction(
-                amount=(1 * trans_index/(1 + trans_index)).toDouble(),
+                amount = (1 * trans_index / (1 + trans_index)).toDouble(),
                 description = "",
                 sourceId = 1,
                 destinationId = 3,

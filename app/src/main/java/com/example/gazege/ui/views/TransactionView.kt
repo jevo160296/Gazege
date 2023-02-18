@@ -1,6 +1,10 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,7 +16,11 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.SmallBody
+import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
 
 fun getTransactionSample(): List<TransactionAndAccounts> {
@@ -148,7 +156,8 @@ private fun PreviewTransactionList() {
         transactionList = transList,
         editTransaction = {},
         delTransaction = {},
-        state = LazyListState())
+        state = LazyListState()
+    )
 }
 
 @Preview(showBackground = true, widthDp = 320, heightDp = 640)
