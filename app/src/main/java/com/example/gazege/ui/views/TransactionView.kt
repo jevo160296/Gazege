@@ -1,6 +1,10 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,7 +16,11 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.SmallBody
+import com.example.gazege.ui.widgets.SmallEmphasis
 import java.util.*
 
 fun getTransactionSample(): List<TransactionAndAccounts> {
@@ -74,14 +82,16 @@ private fun TransactionViewHolder(
 @Composable
 private fun TransactionRecyclerView(
     transactionList: List<TransactionAndAccounts>,
-    onItemTapped: (TransactionAndAccounts) -> Unit,
+    editTransaction: (TransactionAndAccounts) -> Unit,
+    delTransaction: (TransactionAndAccounts) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
 ) {
     RecyclerView(
         elements = transactionList,
-        onItemTapped = onItemTapped,
+        onItemTapped = editTransaction,
+        onItemLongPressed = delTransaction,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
@@ -95,15 +105,22 @@ fun TransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     transactionList: List<TransactionAndAccounts>,
+    delTransaction: (Transaction) -> Unit,
+    editTransaction: (Transaction) -> Unit,
     state: LazyListState,
-    delTransaction: (Transaction) -> Unit
 ) {
     Column(modifier = modifier) {
         MediumHeadline("Transacciones")
         TransactionRecyclerView(
-            transactionList = transactionList, onItemTapped = { transactionAndAccounts ->
+            transactionList = transactionList,
+            editTransaction = { transactionAndAccounts ->
+                editTransaction(transactionAndAccounts.transaction)
+            },
+            delTransaction = { transactionAndAccounts ->
                 delTransaction(transactionAndAccounts.transaction)
-            }, itemHolderPaddingValues = itemHolderPaddingValues, state = state
+            },
+            itemHolderPaddingValues = itemHolderPaddingValues,
+            state = state
         )
     }
 }
@@ -135,13 +152,23 @@ private fun PreviewTransactionItem() {
 @Composable
 private fun PreviewTransactionList() {
     val transList = getTransactionSample()
-    TransactionRecyclerView(transactionList = transList, onItemTapped = {}, state = LazyListState())
+    TransactionRecyclerView(
+        transactionList = transList,
+        editTransaction = {},
+        delTransaction = {},
+        state = LazyListState()
+    )
 }
 
 @Preview(showBackground = true, widthDp = 320, heightDp = 640)
 @Composable
 private fun PreviewTransactionPage() {
     GazegeTheme(darkTheme = true) {
-        TransactionPage(transactionList = getTransactionSample(), state = LazyListState()) {}
+        TransactionPage(
+            transactionList = getTransactionSample(),
+            state = LazyListState(),
+            editTransaction = {},
+            delTransaction = {}
+        )
     }
 }

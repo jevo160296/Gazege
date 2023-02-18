@@ -26,6 +26,9 @@ interface AccountDao {
         return insertAll(accountToInsert).first()
     }
 
+    @Update
+    suspend fun update(account: Account)
+
     @Delete
     suspend fun delete(account: Account): Int
 }
