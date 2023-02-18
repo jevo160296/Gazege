@@ -48,6 +48,7 @@ fun PersonFormFragment(
         )
     }
     Form(
+        modifier=modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
             onPersonAddRequested(fullPerson)
