@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
@@ -98,20 +99,21 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main") {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+                            val snackbarHostState = SnackbarHostState()
                             MainFragment(
                                 personList,
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
                                 delPerson = { mainViewModel.deletePerson(it) },
-                                accountList,
+                                accountList = accountList,
                                 onAddAccountRequested = {
                                     navController.navigate(
                                         route = "addAccount"
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                transactionList,
+                                transactionList= transactionList,
                                 onAddTransactionRequested = {
                                     navController.navigate(route = "addTransaction")
                                 },
@@ -120,7 +122,11 @@ class MainActivity : ComponentActivity() {
                                 onNavStatusChanged = {
                                     navPosition = it
                                 },
-                                sheetState = sheetState
+                                sheetState = sheetState,
+                                onEditTransactionRequested = {},
+                                onEditPersonRequested = {},
+                                onEditAccountRequested = {},
+                                snackbarHostState = snackbarHostState
                             )
                         }
                         composable("addAccount") {

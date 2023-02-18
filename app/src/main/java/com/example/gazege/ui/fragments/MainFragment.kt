@@ -90,16 +90,20 @@ fun ModalSheetContent(
 fun MainFragment(
     personList: List<PersonWithAccounts>,
     onAddPersonRequested: () -> Unit,
+    onEditPersonRequested: (Person) -> Unit,
     delPerson: (Person) -> Unit,
     accountList: List<AccountAndOwnerWithTransactions>,
     onAddAccountRequested: () -> Unit,
+    onEditAccountRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
     transactionList: List<TransactionAndAccounts>,
     onAddTransactionRequested: () -> Unit,
+    onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
     onNavStatusChanged: (NavPosition) -> Unit,
-    sheetState: ModalBottomSheetState
+    sheetState: ModalBottomSheetState,
+    snackbarHostState: SnackbarHostState
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
@@ -180,7 +184,11 @@ fun MainFragment(
                             )
                         })
                 }
-            }) {
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            }
+        ) {
             val paddingValues = it.let {
                 PaddingValues(
                     top = it.calculateTopPadding() + 8.dp,
@@ -232,11 +240,11 @@ fun MainFragment(
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ModalSheetContent(){
+fun ModalSheetContent() {
     GazegeTheme(darkTheme = true) {
         ModalSheetContent(
-            onSiClicked = {  },
-            onNoClicked = {  },
+            onSiClicked = { },
+            onNoClicked = { },
             titleText = "Título",
             bodyText = "Body"
         )
@@ -250,21 +258,68 @@ fun DefaultPreview() {
     val personList = getPersonWithAccountsSample()
     val accounts = getAccountSample()
     val transactions = getTransactionSample()
-    val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Expanded)
+    val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val scope = rememberCoroutineScope()
+    var navPosition by remember {
+        mutableStateOf(NavPosition.TRANSACCIONES)
+    }
     GazegeTheme(darkTheme = true) {
+        val snackbarHostState = SnackbarHostState()
         MainFragment(
             personList = personList,
             accountList = accounts,
-            onAddPersonRequested = {},
-            onAddAccountRequested = {},
-            delPerson = {},
+            onAddPersonRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Add person requested.")
+                }
+            },
+            onAddAccountRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Add account requested.")
+                }
+            },
+            delPerson = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Delete person requested")
+                }
+            },
             transactionList = transactions,
-            onAddTransactionRequested = {},
-            delAccount = {},
-            delTransaction = {},
-            navPosition = NavPosition.TRANSACCIONES,
-            onNavStatusChanged = {},
-            sheetState = sheetState
+            onAddTransactionRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Add transaction requested")
+                }
+            },
+            delAccount = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Del account ${it.name}")
+                }
+            },
+            delTransaction = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Del transaction ${it.amount}")
+                }
+            },
+            navPosition = navPosition,
+            onNavStatusChanged = {
+                navPosition = it
+            },
+            sheetState = sheetState,
+            onEditAccountRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Edit account ${it.name}")
+                }
+            },
+            onEditPersonRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Edit person ${it.name}")
+                }
+            },
+            onEditTransactionRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
+                }
+            },
+            snackbarHostState = snackbarHostState
         )
     }
 }
