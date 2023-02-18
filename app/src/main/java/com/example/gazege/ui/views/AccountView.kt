@@ -92,8 +92,8 @@ private fun AccountRecyclerView(
 ) {
     RecyclerView(
         elements = accountList,
-        onItemTapped = delAccount,
-        onItemLongPressed = editAccount,
+        onItemTapped = editAccount,
+        onItemLongPressed = delAccount,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
