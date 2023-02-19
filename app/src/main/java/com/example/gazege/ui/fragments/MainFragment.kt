@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FabPosition
@@ -52,6 +53,8 @@ fun ModalSheetContent(
         Modifier
             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
             .navigationBarsPadding()
+            .padding(horizontal = 8.dp)
+            .padding(top = 8.dp)
     ) {
         Text(
             text = titleText,
@@ -233,7 +236,7 @@ fun MainFragment(
                         delPerson = { person ->
                             action = { delPerson(person) }
                             nombreItem =
-                                "la persona ${person.name} sus cuentas y transacciones asociadas"
+                                "${person.name} sus cuentas y transacciones asociadas"
                             scope.launch { sheetState.show() }
                         },
                         editPerson = onEditPersonRequested
