@@ -191,6 +191,7 @@ private fun Form(
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
+        backgroundColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (isSavedButtonEnabled) {
                 FloatingActionButton(
