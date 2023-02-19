@@ -1,5 +1,7 @@
 package com.example.gazege.ui.fragments
 
+import android.app.DatePickerDialog
+import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Scaffold
@@ -7,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +26,7 @@ import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
 import java.math.BigDecimal
+import java.text.DateFormat
 import java.util.*
 
 @Composable
@@ -37,17 +41,18 @@ fun PersonFormFragment(
         stateSaver = personSaver
     ) {
         mutableStateOf(
-            if(person != null){
+            if (person != null) {
                 PartialPerson(
-                id = person.id,
-                name = person.name
-            )
+                    id = person.id,
+                    name = person.name
+                )
             } else {
                 PartialPerson()
             }
         )
     }
     Form(
+        modifier = modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
             onPersonAddRequested(fullPerson)
@@ -75,14 +80,14 @@ fun AccountFormFragment(
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
     onAccountAndOwnerAdd: (Account) -> Unit
-){
+) {
     var accountAndOwnerState by rememberSaveable(
         stateSaver = accountAndOwnerSaver
     ) {
         mutableStateOf(
-            if(accountAndOwner != null){
+            if (accountAndOwner != null) {
                 PartialAccountAndOwner(
-                    account = accountAndOwner.account.let{
+                    account = accountAndOwner.account.let {
                         PartialAccount(
                             id = it.id,
                             name = it.name,
@@ -92,8 +97,7 @@ fun AccountFormFragment(
                     },
                     owner = accountAndOwner.owner
                 )
-            }
-            else{
+            } else {
                 PartialAccountAndOwner()
             }
         )
@@ -130,14 +134,14 @@ fun TransactionFormFragment(
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit
-){
+) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
     ) {
         mutableStateOf(
-            if(transactionAndAccounts != null){
+            if (transactionAndAccounts != null) {
                 PartialTransactionAndAccounts(
-                    transaction = transactionAndAccounts.transaction.let{
+                    transaction = transactionAndAccounts.transaction.let {
                         PartialTransaction(
                             id = it.id,
                             amount = it.amount,
@@ -150,8 +154,7 @@ fun TransactionFormFragment(
                     sourceAccount = transactionAndAccounts.sourceAccount,
                     destinationAccount = transactionAndAccounts.destinationAccount
                 )
-            }
-            else{
+            } else {
                 PartialTransactionAndAccounts()
             }
         )
@@ -165,7 +168,7 @@ fun TransactionFormFragment(
             val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
             onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
         }
-    ){
+    ) {
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
@@ -185,25 +188,27 @@ private fun Form(
     onSaveClicked: () -> Unit,
     isSavedButtonEnabled: Boolean,
     title: String,
-    content: @Composable () -> Unit){
+    content: @Composable () -> Unit
+) {
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
+        backgroundColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            if(isSavedButtonEnabled){
+            if (isSavedButtonEnabled) {
                 FloatingActionButton(
                     onClick = onSaveClicked,
                     shape = Shapes.small
-                    ){
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_round_check_24),
                         contentDescription = ""
                     )
                 }
             }
-            }) {
+        }) {
         Column(modifier = Modifier.padding(it)) {
             MediumHeadline(title)
             content()
@@ -220,7 +225,8 @@ private fun PersonForm(
     onPersonChanged: (PartialPerson) -> Unit
 ) {
     val name = person.name ?: ""
-    Column(modifier = modifier.padding(contentPadding),
+    Column(
+        modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         TextField(
@@ -253,7 +259,8 @@ private fun AccountAndOwnerForm(
 ) {
     val name: String = accountAndOwner.account.name ?: ""
     val selectedOwner: Person? = accountAndOwner.owner
-    Column(modifier = modifier.padding(contentPadding),
+    Column(
+        modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         TextField(
@@ -261,7 +268,7 @@ private fun AccountAndOwnerForm(
             onValueChange = {
                 onAccountAndOwnerChanged(
                     accountAndOwner.copy().apply {
-                        account = account.copy(name=it)
+                        account = account.copy(name = it)
                     }
                 )
             },
@@ -299,12 +306,12 @@ private fun AccountAndOwnerForm(
                 ) {
                     personList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onAccountAndOwnerChanged(
-                                        accountAndOwner.copy().apply{
+                                        accountAndOwner.copy().apply {
                                             owner = it
                                             account = account.copy(ownerId = it.id)
                                         }
@@ -316,7 +323,7 @@ private fun AccountAndOwnerForm(
                     }
                 }
             }
-        } else{
+        } else {
             ButtonField(onClick = onPersonAddRequested) {
                 Text("New person")
             }
@@ -345,22 +352,26 @@ private fun TransactionAndAccountsForm(
     val destinationAccountsList = accountList.filter {
         it != selectedSource
     }
-    val date = transactionAndAccounts.transaction.date
-    if(date == null){
+    val date = transactionAndAccounts.transaction.date ?: Date()
+    if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
-            transactionAndAccounts.copy().apply{
-                transaction = transaction.copy(date = Date())
+            transactionAndAccounts.copy().apply {
+                transaction = transaction.copy(date = date)
             }
         )
     }
-    Column(modifier = modifier.padding(contentPadding),
-        verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
+    val calendarNow = Calendar.getInstance()
+    calendarNow.time = date
+    Column(
+        modifier = modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+    ) {
         NumberField(
             value = amount,
             onValueChange = {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(amount= it.toDouble())
+                        transaction = transaction.copy(amount = it.toDouble())
                     }
                 )
             },
@@ -387,7 +398,7 @@ private fun TransactionAndAccountsForm(
                 imeAction = ImeAction.Next
             )
         )
-        if (sourceAccountsList.isNotEmpty()){
+        if (sourceAccountsList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -414,12 +425,12 @@ private fun TransactionAndAccountsForm(
                 ) {
                     sourceAccountsList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply{
+                                        transactionAndAccounts.copy().apply {
                                             sourceAccount = it
                                             transaction = transaction.copy(sourceId = it.id)
                                         }
@@ -431,13 +442,12 @@ private fun TransactionAndAccountsForm(
                     }
                 }
             }
-        }
-        else{
+        } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
-        if (destinationAccountsList.isNotEmpty()){
+        if (destinationAccountsList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -464,12 +474,12 @@ private fun TransactionAndAccountsForm(
                 ) {
                     destinationAccountsList.map {
                         DropdownMenuItem(
-                            text = {Text(it.name)},
+                            text = { Text(it.name) },
                             onClick = {
                                 dropDownExpanded = false
-                                if(it.id != null){
+                                if (it.id != null) {
                                     onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply{
+                                        transactionAndAccounts.copy().apply {
                                             destinationAccount = it
                                             transaction = transaction.copy(destinationId = it.id)
                                         }
@@ -481,24 +491,122 @@ private fun TransactionAndAccountsForm(
                     }
                 }
             }
-        }
-        else{
+        } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
+        }
+        val datePickerDialog = DatePickerDialog(
+            LocalContext.current, { _: DatePicker, year: Int, month: Int, day: Int ->
+                val calendar = Calendar.getInstance()
+                calendar.set(year, month, day)
+                onTransactionAndAccountsChanged(
+                    transactionAndAccounts.copy().apply {
+                        transaction = transaction.copy(
+                            date = calendar.time
+                        )
+                    }
+                )
+            },
+            calendarNow.get(Calendar.YEAR),
+            calendarNow.get(Calendar.MONTH),
+            calendarNow.get(Calendar.DAY_OF_MONTH)
+        )
+        var expanded by rememberSaveable {
+            mutableStateOf(false)
+        }
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = {
+                expanded = !expanded
+                if (expanded) {
+                    datePickerDialog.show()
+                }
+            }
+        ) {
+            TextField(
+                modifier = Modifier.menuAnchor(),
+                value = DateFormat.getDateInstance().format(date),
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                label = { Text("Date") },
+                colors = ExposedDropdownMenuDefaults.textFieldColors()
+            )
         }
     }
 }
 
 @Preview(widthDp = 320, heightDp = 400, showBackground = true)
 @Composable
-private fun Preview() {
+private fun PreviewLight() {
     val formTypes = object {
         val Account = 0
         val Transaction = 1
         val Person = 2
     }
     GazegeTheme {
+        val personList by rememberSaveable {
+            mutableStateOf(
+                (5..10).map {
+                    Person(it, "Person $it")
+                }
+            )
+        }
+        val accountList by rememberSaveable {
+            mutableStateOf(
+                arrayOf(
+                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
+                )
+            )
+        }
+        var formType by rememberSaveable {
+            mutableStateOf(formTypes.Person)
+        }
+        when (formType) {
+            formTypes.Person -> {
+                PersonFormFragment(
+                    onPersonAddRequested = {
+                        formType = formTypes.Account
+                    }
+                )
+            }
+            formTypes.Account -> {
+                AccountFormFragment(
+                    personList = personList,
+                    onPersonAddRequested = {
+
+                    },
+                    onAccountAndOwnerAdd = {
+                        formType = formTypes.Transaction
+                    }
+                )
+            }
+            formTypes.Transaction -> {
+                TransactionFormFragment(
+                    accountList = accountList.toList(),
+                    onAccountAddRequested = {  },
+                    onTransactionAndAccountsAdd = {
+                        formType = formTypes.Person
+                    }
+                )
+            }
+            else -> {}
+        }
+    }
+}
+
+@Preview(widthDp = 320, heightDp = 400, showBackground = true)
+@Composable
+private fun PreviewDark() {
+    val formTypes = object {
+        val Account = 0
+        val Transaction = 1
+        val Person = 2
+    }
+    GazegeTheme(darkTheme = true) {
         var personList by rememberSaveable {
             mutableStateOf(
                 (5..10).map {
@@ -509,13 +617,14 @@ private fun Preview() {
         var accountList by rememberSaveable {
             mutableStateOf(
                 arrayOf(
-                    Account(name="Cuenta1", ownerId = 1, initial_balance = 0.0)
-            ))
+                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
+                )
+            )
         }
         var formType by rememberSaveable {
             mutableStateOf(formTypes.Person)
         }
-        when(formType){
+        when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
                     onPersonAddRequested = {
@@ -537,11 +646,11 @@ private fun Preview() {
                             Person(1, "Nueva persona")
                         )
                         formType = formTypes.Person
-                                           },
+                    },
                     onAccountAndOwnerAdd = {
                         accountList = arrayOf(
                             *accountList,
-                            Account(name="Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                            Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)
                         )
                     }
                 )

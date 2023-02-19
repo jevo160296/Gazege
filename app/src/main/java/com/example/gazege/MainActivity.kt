@@ -172,6 +172,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             AccountFormFragment(
                                 personList = personList.map { it.person },
+                                itemSpacing = 8.dp,
+                                contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
                                 onAccountAndOwnerAdd = {
                                     mainViewModel.updateAccount(it)
