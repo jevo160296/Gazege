@@ -21,7 +21,7 @@ import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
-import java.util.*
+import java.time.LocalDate
 
 fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
     return getPersonSample().map { person ->
@@ -41,7 +41,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                         description = "",
                         sourceId = 2,
                         destinationId = index,
-                        date = Date()
+                        date = LocalDate.now()
                     )
                 },
                 outTransactions = (1..40).map { trans_index ->
@@ -50,7 +50,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                         description = "",
                         sourceId = index,
                         destinationId = 3,
-                        date = Date()
+                        date = LocalDate.now()
                     )
                 }
             )
@@ -137,7 +137,7 @@ private fun PreviewAccountItem() {
                 description = "",
                 sourceId = 2,
                 destinationId = 1,
-                date = Date()
+                date = LocalDate.now()
             )
         },
         outTransactions = (1..40).map { trans_index ->
@@ -146,7 +146,7 @@ private fun PreviewAccountItem() {
                 description = "",
                 sourceId = 1,
                 destinationId = 3,
-                date = Date()
+                date = LocalDate.now()
             )
         }
     )

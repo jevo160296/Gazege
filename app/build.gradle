@@ -14,8 +14,9 @@ android {
         applicationId "com.example.gazege"
         minSdk 29
         targetSdk 32
-        versionCode 11
-        versionName '0.0.11'
+        versionCode 12
+        versionName '0.0.12'
+        versionNameSuffix 'alpha'
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -33,7 +34,6 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
-        versionNameSuffix 'alpha'
     }
 
     buildTypes {

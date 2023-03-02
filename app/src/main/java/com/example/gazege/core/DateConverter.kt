@@ -1,16 +1,22 @@
 package com.example.gazege.core
 
 import androidx.room.TypeConverter
-import java.util.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 class DateConverter {
     @TypeConverter
-    fun toDate(dateLong: Long?): Date? {
-        return dateLong?.let { Date(it) }
+    fun toDate(dateLong: Long?): LocalDate? {
+        val instant = dateLong?.let { Instant.ofEpochMilli(it) }
+        return instant?.atOffset(ZoneOffset.ofHours(-5))?.toLocalDate()
     }
 
     @TypeConverter
-    fun fromDate(date: Date?): Long? {
-        return date?.time
+    fun fromDate(date: LocalDate?): Long? {
+        return date
+            ?.atStartOfDay()
+            ?.toInstant(ZoneOffset.ofHours(-5))
+            ?.toEpochMilli()
     }
 }

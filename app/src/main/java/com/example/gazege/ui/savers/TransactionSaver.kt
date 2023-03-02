@@ -6,7 +6,7 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import kotlinx.parcelize.Parcelize
-import java.util.*
+import java.time.LocalDate
 
 data class PartialTransaction(
     var id: Int? = null,
@@ -14,7 +14,7 @@ data class PartialTransaction(
     var description: String? = null,
     var sourceId: Int? = null,
     var destinationId: Int? = null,
-    var date: Date? = null
+    var date: LocalDate? = null
 ): PartialEntity<Transaction>
 {
     override fun isComplete(): Boolean {
@@ -77,7 +77,7 @@ data class ParcelableTransaction(
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,
-    var date: Date?
+    var date: LocalDate?
 ): Parcelable {
     fun toPartial(): PartialTransaction {
         return PartialTransaction(
