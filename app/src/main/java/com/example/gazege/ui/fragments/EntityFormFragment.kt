@@ -23,6 +23,7 @@ import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
@@ -33,7 +34,7 @@ fun PersonFormFragment(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     person: Person? = null,
-    onPersonAddRequested: (Person) -> Unit
+    onPersonAddRequested: (Person) -> Boolean
 ) {
     var personState by rememberSaveable(
         stateSaver = personSaver
@@ -49,14 +50,22 @@ fun PersonFormFragment(
             }
         )
     }
+    val snackbarHostState = SnackbarHostState()
+    val coroutineScope = rememberCoroutineScope()
     Form(
         modifier = modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
-            onPersonAddRequested(fullPerson)
+            val added = onPersonAddRequested(fullPerson)
+            if(!added){
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Error, nombre repetido")
+                }
+            }
         },
         isSavedButtonEnabled = true,
-        title = "Person"
+        title = "Person",
+        snackbarHostState = snackbarHostState
     ) {
         PersonForm(
             contentPadding = contentPadding,
@@ -191,6 +200,7 @@ private fun Form(
     onSaveClicked: () -> Unit,
     isSavedButtonEnabled: Boolean,
     title: String,
+    snackbarHostState: SnackbarHostState? = null,
     content: @Composable () -> Unit
 ) {
     Scaffold(
@@ -198,6 +208,13 @@ private fun Form(
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
+        snackbarHost = {
+            if(snackbarHostState == null){
+                androidx.compose.material.SnackbarHost(hostState = it)
+            }else{
+                SnackbarHost(hostState = snackbarHostState)
+            }
+        },
         backgroundColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (isSavedButtonEnabled) {
@@ -539,6 +556,7 @@ private fun PreviewLight() {
                 PersonFormFragment(
                     onPersonAddRequested = {
                         formType = formTypes.Account
+                        true
                     }
                 )
             }
@@ -603,6 +621,7 @@ private fun PreviewDark() {
                         )
                         formType = formTypes.Transaction
                         formType = formTypes.Account
+                        true
                     }
                 )
             }

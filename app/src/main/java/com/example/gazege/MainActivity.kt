@@ -187,8 +187,12 @@ class MainActivity : ComponentActivity() {
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = {
-                                    mainViewModel.insertPerson(it)
-                                    navController.navigateUp()
+                                    val sePuedeAgregar = it.name !in personList.map { persona -> persona.person.name }
+                                    if(sePuedeAgregar){
+                                        mainViewModel.insertPerson(it)
+                                        navController.navigateUp()
+                                    }
+                                    sePuedeAgregar
                                 }
                             )
                         }
@@ -206,8 +210,12 @@ class MainActivity : ComponentActivity() {
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = {
-                                    mainViewModel.updatePerson(it)
-                                    navController.navigateUp()
+                                    val sePuedeEditar = it.name !in personList.map { persona -> persona.person.name }
+                                    if(sePuedeEditar){
+                                        mainViewModel.updatePerson(it)
+                                        navController.navigateUp()
+                                    }
+                                    sePuedeEditar
                                 },
                                 person = selectedPerson
                             )
