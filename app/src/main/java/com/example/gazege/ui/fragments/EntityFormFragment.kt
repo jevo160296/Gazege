@@ -175,6 +175,11 @@ fun TransactionFormFragment(
             onAccountAddRequested = onAccountAddRequested,
             onTransactionAndAccountsChanged = {
                 transactionAndAccountsState = it
+            },
+            onDateChanged = {
+                transactionAndAccountsState = transactionAndAccountsState.copy().apply {
+                    transaction = this.transaction.copy(date = it)
+                }
             }
         )
     }
@@ -338,7 +343,8 @@ private fun TransactionAndAccountsForm(
     transactionAndAccounts: PartialTransactionAndAccounts,
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit
+    onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit,
+    onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
     val description = transactionAndAccounts.transaction.description ?: ""
@@ -496,11 +502,7 @@ private fun TransactionAndAccountsForm(
         DatePicker(
             value = date,
             onValueChange = {
-                onTransactionAndAccountsChanged(
-                    transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(date = it)
-                    }
-                )
+                onDateChanged(it)
             }
         )
     }
