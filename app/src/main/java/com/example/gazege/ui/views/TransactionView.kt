@@ -21,7 +21,7 @@ import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
-import java.util.*
+import java.time.LocalDate
 
 fun getTransactionSample(): List<TransactionAndAccounts> {
     val accountList = getAccountSample()
@@ -33,7 +33,7 @@ fun getTransactionSample(): List<TransactionAndAccounts> {
                 description = "Trans $i",
                 sourceId = source.account.id ?: -1,
                 destinationId = destination.account.id ?: -1,
-                date = Date()
+                date = LocalDate.now()
             )
             i++
             TransactionAndAccounts(
@@ -138,7 +138,7 @@ private fun PreviewTransactionItem() {
         initial_balance = 0.0
     )
     val transaction = Transaction(
-        amount = 0.0, description = "Trans", date = Date(),
+        amount = 0.0, description = "Trans", date = LocalDate.now(),
         destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1
     )
     val transactionAndAccounts = TransactionAndAccounts(

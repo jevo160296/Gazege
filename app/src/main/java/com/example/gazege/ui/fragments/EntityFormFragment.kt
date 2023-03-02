@@ -1,7 +1,5 @@
 package com.example.gazege.ui.fragments
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Scaffold
@@ -9,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,11 +19,12 @@ import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
+import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
 import java.math.BigDecimal
-import java.text.DateFormat
+import java.time.LocalDate
 import java.util.*
 
 @Composable
@@ -352,7 +350,7 @@ private fun TransactionAndAccountsForm(
     val destinationAccountsList = accountList.filter {
         it != selectedSource
     }
-    val date = transactionAndAccounts.transaction.date ?: Date()
+    val date: LocalDate = transactionAndAccounts.transaction.date ?: LocalDate.now()
     if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
             transactionAndAccounts.copy().apply {
@@ -360,8 +358,6 @@ private fun TransactionAndAccountsForm(
             }
         )
     }
-    val calendarNow = Calendar.getInstance()
-    calendarNow.time = date
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
@@ -496,46 +492,17 @@ private fun TransactionAndAccountsForm(
                 Text("New account")
             }
         }
-        val datePickerDialog = DatePickerDialog(
-            LocalContext.current, { _: DatePicker, year: Int, month: Int, day: Int ->
-                val calendar = Calendar.getInstance()
-                calendar.set(year, month, day)
+
+        DatePicker(
+            value = date,
+            onValueChange = {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(
-                            date = calendar.time
-                        )
+                        transaction = transaction.copy(date = it)
                     }
                 )
-            },
-            calendarNow.get(Calendar.YEAR),
-            calendarNow.get(Calendar.MONTH),
-            calendarNow.get(Calendar.DAY_OF_MONTH)
-        )
-        var expanded by rememberSaveable {
-            mutableStateOf(false)
-        }
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = {
-                expanded = !expanded
-                if (expanded) {
-                    datePickerDialog.show()
-                }
             }
-        ) {
-            TextField(
-                modifier = Modifier.menuAnchor(),
-                value = DateFormat.getDateInstance().format(date),
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                label = { Text("Date") },
-                colors = ExposedDropdownMenuDefaults.textFieldColors()
-            )
-        }
+        )
     }
 }
 
@@ -563,7 +530,7 @@ private fun PreviewLight() {
             )
         }
         var formType by rememberSaveable {
-            mutableStateOf(formTypes.Person)
+            mutableStateOf(formTypes.Transaction)
         }
         when (formType) {
             formTypes.Person -> {
