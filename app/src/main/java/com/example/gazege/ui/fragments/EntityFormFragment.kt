@@ -23,7 +23,6 @@ import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
-import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
@@ -34,7 +33,7 @@ fun PersonFormFragment(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     person: Person? = null,
-    onPersonAddRequested: (Person) -> Boolean
+    onPersonAddRequested: (Person, SnackbarHostState) -> Unit
 ) {
     var personState by rememberSaveable(
         stateSaver = personSaver
@@ -51,17 +50,12 @@ fun PersonFormFragment(
         )
     }
     val snackbarHostState = SnackbarHostState()
-    val coroutineScope = rememberCoroutineScope()
+    rememberCoroutineScope()
     Form(
         modifier = modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
-            val added = onPersonAddRequested(fullPerson)
-            if(!added){
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Error, nombre repetido")
-                }
-            }
+            onPersonAddRequested(fullPerson, snackbarHostState)
         },
         isSavedButtonEnabled = true,
         title = "Person",
@@ -554,9 +548,8 @@ private fun PreviewLight() {
         when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
-                    onPersonAddRequested = {
+                    onPersonAddRequested = { _, _ ->
                         formType = formTypes.Account
-                        true
                     }
                 )
             }
@@ -614,14 +607,13 @@ private fun PreviewDark() {
         when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
-                    onPersonAddRequested = {
+                    onPersonAddRequested = { it, _ ->
                         personList = listOf(
                             *personList.toTypedArray(),
                             it
                         )
                         formType = formTypes.Transaction
                         formType = formTypes.Account
-                        true
                     }
                 )
             }

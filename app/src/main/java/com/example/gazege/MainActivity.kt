@@ -21,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import com.example.gazege.ui.fragments.PersonFormFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
+                val coroutineScope = rememberCoroutineScope()
 
                 DisposableEffect(systemUiController, useDarkIcons) {
                     // Update all of the system bar colors to be transparent, and use
@@ -186,13 +189,17 @@ class MainActivity : ComponentActivity() {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                onPersonAddRequested = {
-                                    val sePuedeAgregar = it.name !in personList.map { persona -> persona.person.name }
+                                onPersonAddRequested = { person, snackBarHostSate ->
+                                    val namesList = personList.map { persona -> persona.person.name }
+                                    val sePuedeAgregar = person.name !in namesList
                                     if(sePuedeAgregar){
-                                        mainViewModel.insertPerson(it)
+                                        mainViewModel.insertPerson(person)
                                         navController.navigateUp()
+                                    }else{
+                                        coroutineScope.launch {
+                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
+                                        }
                                     }
-                                    sePuedeAgregar
                                 }
                             )
                         }
@@ -209,13 +216,17 @@ class MainActivity : ComponentActivity() {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                onPersonAddRequested = {
-                                    val sePuedeEditar = it.name !in personList.map { persona -> persona.person.name }
+                                onPersonAddRequested = { person, snackBarHostSate ->
+                                    val namesList = personList.map { persona -> persona.person.name }
+                                    val sePuedeEditar = person.name !in namesList
                                     if(sePuedeEditar){
-                                        mainViewModel.updatePerson(it)
+                                        mainViewModel.updatePerson(person)
                                         navController.navigateUp()
+                                    }else{
+                                        coroutineScope.launch {
+                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
+                                        }
                                     }
-                                    sePuedeEditar
                                 },
                                 person = selectedPerson
                             )
