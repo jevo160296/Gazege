@@ -21,7 +21,7 @@ import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
-import java.util.*
+import java.time.LocalDate
 
 fun getPersonSample(): List<Person> {
     return (1..4).map {
@@ -121,7 +121,7 @@ private fun PreviewPersonItem() {
                         description = "Trans",
                         sourceId = 1,
                         destinationId = 2,
-                        date = Date()
+                        date = LocalDate.now()
                     )
                 },
                 inTransactions = (1..4).map {
@@ -130,7 +130,7 @@ private fun PreviewPersonItem() {
                         description = "Trans2",
                         sourceId = 1,
                         destinationId = 2,
-                        date = Date()
+                        date = LocalDate.now()
                     )
                 },
                 owner = person

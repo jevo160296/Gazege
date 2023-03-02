@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
 import java.util.*
 
 /**
@@ -177,21 +178,21 @@ class AppDatabaseTest {
                 description = "Test",
                 sourceId = accounts[0].account.id ?: -1,
                 destinationId = accounts[1].account.id ?: -1,
-                date = Date()
+                date = LocalDate.now()
             ),
             Transaction(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[1].account.id ?: -1,
                 destinationId = accounts[0].account.id ?: -1,
-                date = Date()
+                date = LocalDate.now()
             ),
             Transaction(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[0].account.id ?: -1,
                 destinationId = accounts[1].account.id ?: -1,
-                date = Date()
+                date = LocalDate.now()
             )
         )
         database.transactionDao().insertAll(*transactionsToAdd)
