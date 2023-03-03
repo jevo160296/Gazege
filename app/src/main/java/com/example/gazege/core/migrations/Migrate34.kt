@@ -4,6 +4,39 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 class Migrate34: Migration(3, 4){
+    private fun personNameDuplicated(database: SupportSQLiteDatabase): Boolean{
+        val query = database.query("""
+            WITH
+            counts AS
+            (
+            SELECT name, COUNT(*) as cant
+            FROM person
+            GROUP BY name
+            )
+            SELECT MAX(cant)
+            FROM counts;
+        """.trimIndent())
+        query.moveToFirst()
+        val maxCant = query.getInt(0)
+        return maxCant >= 2
+    }
+
+    private fun accountDuplicated(database: SupportSQLiteDatabase): Boolean{
+        val query = database.query("""
+            WITH counts AS
+            (
+            SELECT name, ownerId, COUNT(*) as cant
+            FROM account
+            GROUP BY name, ownerId
+            )
+            SELECT MAX(cant)
+            FROM counts
+        """.trimIndent())
+        query.moveToFirst()
+        val maxCant = query.getInt(0)
+        return maxCant >= 2
+    }
+
     private fun migratePerson(database: SupportSQLiteDatabase) {
         database.beginTransaction()
         try{
@@ -34,7 +67,6 @@ class Migrate34: Migration(3, 4){
             database.execSQL("""
             DELETE FROM person;
         """.trimIndent())
-            database.execSQL("CREATE UNIQUE INDEX index_Person_name ON person(name);")
             database.execSQL("""
                 INSERT INTO person (id, name)
                 SELECT id, name
@@ -45,6 +77,10 @@ class Migrate34: Migration(3, 4){
         } finally {
             database.endTransaction()
         }
+    }
+
+    private fun createIndexForPerson(database: SupportSQLiteDatabase){
+        database.execSQL("CREATE UNIQUE INDEX index_Person_name ON person(name);")
     }
 
     private fun migrateAccounts(database: SupportSQLiteDatabase){
@@ -80,7 +116,6 @@ class Migrate34: Migration(3, 4){
             database.execSQL("""
             DELETE FROM account;
         """.trimIndent())
-            database.execSQL("CREATE UNIQUE INDEX index_Account_name_ownerId ON account(name, ownerId);")
             database.execSQL("""
                 INSERT INTO account (id, name, ownerId, initial_balance)
                 SELECT id, name, ownerId, initial_balance
@@ -93,9 +128,19 @@ class Migrate34: Migration(3, 4){
         }
     }
 
+    private fun createIndexForAccounts(database: SupportSQLiteDatabase){
+        database.execSQL("CREATE UNIQUE INDEX index_Account_name_ownerId ON account(name, ownerId);")
+    }
+
     override fun migrate(database: SupportSQLiteDatabase) {
-        migratePerson(database)
-        migrateAccounts(database)
+        while(personNameDuplicated(database)){
+            migratePerson(database)
+        }
+        createIndexForPerson(database)
+        while(accountDuplicated(database)){
+            migrateAccounts(database)
+        }
+        createIndexForAccounts(database)
     }
 
 }
