@@ -50,7 +50,6 @@ fun PersonFormFragment(
         )
     }
     val snackbarHostState = SnackbarHostState()
-    rememberCoroutineScope()
     Form(
         modifier = modifier,
         onSaveClicked = {
@@ -80,7 +79,7 @@ fun AccountFormFragment(
     accountAndOwner: AccountAndOwner? = null,
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
-    onAccountAndOwnerAdd: (Account) -> Unit
+    onAccountAndOwnerAdd: (Account, SnackbarHostState) -> Unit
 ) {
     var accountAndOwnerState by rememberSaveable(
         stateSaver = accountAndOwnerSaver
@@ -104,13 +103,15 @@ fun AccountFormFragment(
         )
     }
     val completeState = accountAndOwnerState.isComplete()
+    val snackbarHostState = SnackbarHostState()
     Form(
         modifier = modifier,
         onSaveClicked = {
             val fullAccountAndOwner = accountAndOwnerState.toFull()
-            onAccountAndOwnerAdd(fullAccountAndOwner.account)
+            onAccountAndOwnerAdd(fullAccountAndOwner.account, snackbarHostState)
         },
         isSavedButtonEnabled = completeState,
+        snackbarHostState = snackbarHostState,
         title = "Account"
     ) {
         AccountAndOwnerForm(
@@ -203,9 +204,9 @@ private fun Form(
             .systemBarsPadding()
             .imePadding(),
         snackbarHost = {
-            if(snackbarHostState == null){
+            if (snackbarHostState == null) {
                 androidx.compose.material.SnackbarHost(hostState = it)
-            }else{
+            } else {
                 SnackbarHost(hostState = snackbarHostState)
             }
         },
@@ -559,7 +560,7 @@ private fun PreviewLight() {
                     onPersonAddRequested = {
 
                     },
-                    onAccountAndOwnerAdd = {
+                    onAccountAndOwnerAdd = { _, _ ->
                         formType = formTypes.Transaction
                     }
                 )
@@ -567,7 +568,7 @@ private fun PreviewLight() {
             formTypes.Transaction -> {
                 TransactionFormFragment(
                     accountList = accountList.toList(),
-                    onAccountAddRequested = {  },
+                    onAccountAddRequested = { },
                     onTransactionAndAccountsAdd = {
                         formType = formTypes.Person
                     }
@@ -627,7 +628,7 @@ private fun PreviewDark() {
                         )
                         formType = formTypes.Person
                     },
-                    onAccountAndOwnerAdd = {
+                    onAccountAndOwnerAdd = { _, _ ->
                         accountList = arrayOf(
                             *accountList,
                             Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)

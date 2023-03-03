@@ -152,9 +152,27 @@ class MainActivity : ComponentActivity() {
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                onAccountAndOwnerAdd = {
-                                    mainViewModel.insertAccount(it)
-                                    navController.navigateUp()
+                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                    val accountOwnerIdList = accountList.map {
+                                        Pair(it.account.name, it.account.ownerId)
+                                    }
+                                    val accountOwnerId = Pair(account.name, account.ownerId)
+                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.insertAccount(account, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostState.showSnackbar("Error añadiento cuenta $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -178,9 +196,27 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
-                                onAccountAndOwnerAdd = {
-                                    mainViewModel.updateAccount(it)
-                                    navController.navigateUp()
+                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                    val accountOwnerIdList = accountList.map {
+                                        Pair(it.account.name, it.account.ownerId)
+                                    }
+                                    val accountOwnerId = Pair(account.name, account.ownerId)
+                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.updateAccount(account, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
+                                        }
+                                    }
                                 },
                                 accountAndOwner = selectedAccountAndOwner
                             )
@@ -190,12 +226,20 @@ class MainActivity : ComponentActivity() {
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
-                                    val namesList = personList.map { persona -> persona.person.name }
+                                    val namesList =
+                                        personList.map { persona -> persona.person.name }
                                     val sePuedeAgregar = person.name !in namesList
-                                    if(sePuedeAgregar){
-                                        mainViewModel.insertPerson(person)
-                                        navController.navigateUp()
-                                    }else{
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.insertPerson(person, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostSate.showSnackbar("Error agregando a la persona: $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
                                         coroutineScope.launch {
                                             snackBarHostSate.showSnackbar("Error, nombre repetido.")
                                         }
@@ -217,12 +261,20 @@ class MainActivity : ComponentActivity() {
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
-                                    val namesList = personList.map { persona -> persona.person.name }
+                                    val namesList =
+                                        personList.map { persona -> persona.person.name }
                                     val sePuedeEditar = person.name !in namesList
-                                    if(sePuedeEditar){
-                                        mainViewModel.updatePerson(person)
-                                        navController.navigateUp()
-                                    }else{
+                                    if (sePuedeEditar) {
+                                        mainViewModel.updatePerson(person, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostSate.showSnackbar("Error editando persona $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
                                         coroutineScope.launch {
                                             snackBarHostSate.showSnackbar("Error, nombre repetido.")
                                         }

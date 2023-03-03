@@ -8,10 +8,25 @@ import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES
+}
+
+fun CoroutineScope.safeLaunch(
+    onErrorAction: (Throwable) -> Unit,
+    launchBody: suspend () -> Unit
+): Job {
+    val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        onErrorAction(throwable)
+    }
+    return this.launch(coroutineExceptionHandler) {
+        launchBody.invoke()
+    }
 }
 
 class MainViewModel(private val repository: AppRepository) : ViewModel() {
@@ -19,25 +34,29 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val allAccount = repository.allAccounts.asLiveData()
     val allTransactions = repository.allTransactions.asLiveData()
 
-    fun insertPerson(person: Person) = viewModelScope.launch {
-        repository.insertPerson(person)
-    }
+    fun insertPerson(person: Person, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.insertPerson(person)
+        }
 
-    fun updatePerson(person: Person) = viewModelScope.launch {
-        repository.updatePerson(person)
-    }
+    fun updatePerson(person: Person, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.updatePerson(person)
+        }
 
     fun deletePerson(person: Person) = viewModelScope.launch {
         repository.deletePerson(person)
     }
 
-    fun insertAccount(account: Account) = viewModelScope.launch {
-        repository.insertAccount(account)
-    }
+    fun insertAccount(account: Account, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.insertAccount(account)
+        }
 
-    fun updateAccount(account: Account) = viewModelScope.launch {
-        repository.updateAccount(account)
-    }
+    fun updateAccount(account: Account, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.updateAccount(account)
+        }
 
     fun deleteAccount(account: Account) = viewModelScope.launch {
         repository.deleteAccount(account)
