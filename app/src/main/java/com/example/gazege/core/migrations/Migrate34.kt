@@ -74,7 +74,10 @@ class Migrate34: Migration(3, 4){
             """.trimIndent())
             database.execSQL("DROP TABLE person_bckp;")
             database.setTransactionSuccessful()
-        } finally {
+        } catch (e: Throwable){
+            throw e
+        }
+        finally {
             database.endTransaction()
         }
     }
@@ -123,7 +126,10 @@ class Migrate34: Migration(3, 4){
             """.trimIndent())
             database.execSQL("DROP TABLE account_bckp;")
             database.setTransactionSuccessful()
-        } finally {
+        } catch (e: Throwable){
+            throw e
+        }
+        finally {
             database.endTransaction()
         }
     }
