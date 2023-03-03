@@ -2,6 +2,7 @@ package com.example.gazege.core.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -10,7 +11,10 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["ownerId"],
         onDelete = ForeignKey.CASCADE
-    )]
+    )],
+    indices = [
+        Index(value=["name", "ownerId"], unique = true)
+    ]
 )
 data class Account(
     @PrimaryKey(autoGenerate = true) val id: Int? = null,

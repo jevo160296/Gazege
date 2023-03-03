@@ -8,13 +8,14 @@ import com.example.gazege.core.dao.TransactionDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.migrations.Migrate34
 
 @Database(
     entities = [
         Person::class,
         Account::class,
         Transaction::class],
-    version = 3,
+    version = 4,
     autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]
@@ -32,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance =
                     Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
                         .fallbackToDestructiveMigrationFrom(1)
+                        .addMigrations(Migrate34())
                         .build()
                 INSTANCE = instance
                 instance

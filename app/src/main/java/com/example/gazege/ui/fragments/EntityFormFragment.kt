@@ -33,7 +33,7 @@ fun PersonFormFragment(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     person: Person? = null,
-    onPersonAddRequested: (Person) -> Unit
+    onPersonAddRequested: (Person, SnackbarHostState) -> Unit
 ) {
     var personState by rememberSaveable(
         stateSaver = personSaver
@@ -49,14 +49,16 @@ fun PersonFormFragment(
             }
         )
     }
+    val snackbarHostState = SnackbarHostState()
     Form(
         modifier = modifier,
         onSaveClicked = {
             val fullPerson = personState.toFull()
-            onPersonAddRequested(fullPerson)
+            onPersonAddRequested(fullPerson, snackbarHostState)
         },
         isSavedButtonEnabled = true,
-        title = "Person"
+        title = "Person",
+        snackbarHostState = snackbarHostState
     ) {
         PersonForm(
             contentPadding = contentPadding,
@@ -77,7 +79,7 @@ fun AccountFormFragment(
     accountAndOwner: AccountAndOwner? = null,
     personList: List<Person>,
     onPersonAddRequested: () -> Unit,
-    onAccountAndOwnerAdd: (Account) -> Unit
+    onAccountAndOwnerAdd: (Account, SnackbarHostState) -> Unit
 ) {
     var accountAndOwnerState by rememberSaveable(
         stateSaver = accountAndOwnerSaver
@@ -101,13 +103,15 @@ fun AccountFormFragment(
         )
     }
     val completeState = accountAndOwnerState.isComplete()
+    val snackbarHostState = SnackbarHostState()
     Form(
         modifier = modifier,
         onSaveClicked = {
             val fullAccountAndOwner = accountAndOwnerState.toFull()
-            onAccountAndOwnerAdd(fullAccountAndOwner.account)
+            onAccountAndOwnerAdd(fullAccountAndOwner.account, snackbarHostState)
         },
         isSavedButtonEnabled = completeState,
+        snackbarHostState = snackbarHostState,
         title = "Account"
     ) {
         AccountAndOwnerForm(
@@ -191,6 +195,7 @@ private fun Form(
     onSaveClicked: () -> Unit,
     isSavedButtonEnabled: Boolean,
     title: String,
+    snackbarHostState: SnackbarHostState? = null,
     content: @Composable () -> Unit
 ) {
     Scaffold(
@@ -198,6 +203,13 @@ private fun Form(
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
+        snackbarHost = {
+            if (snackbarHostState == null) {
+                androidx.compose.material.SnackbarHost(hostState = it)
+            } else {
+                SnackbarHost(hostState = snackbarHostState)
+            }
+        },
         backgroundColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (isSavedButtonEnabled) {
@@ -537,7 +549,7 @@ private fun PreviewLight() {
         when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
-                    onPersonAddRequested = {
+                    onPersonAddRequested = { _, _ ->
                         formType = formTypes.Account
                     }
                 )
@@ -548,7 +560,7 @@ private fun PreviewLight() {
                     onPersonAddRequested = {
 
                     },
-                    onAccountAndOwnerAdd = {
+                    onAccountAndOwnerAdd = { _, _ ->
                         formType = formTypes.Transaction
                     }
                 )
@@ -556,7 +568,7 @@ private fun PreviewLight() {
             formTypes.Transaction -> {
                 TransactionFormFragment(
                     accountList = accountList.toList(),
-                    onAccountAddRequested = {  },
+                    onAccountAddRequested = { },
                     onTransactionAndAccountsAdd = {
                         formType = formTypes.Person
                     }
@@ -596,7 +608,7 @@ private fun PreviewDark() {
         when (formType) {
             formTypes.Person -> {
                 PersonFormFragment(
-                    onPersonAddRequested = {
+                    onPersonAddRequested = { it, _ ->
                         personList = listOf(
                             *personList.toTypedArray(),
                             it
@@ -616,7 +628,7 @@ private fun PreviewDark() {
                         )
                         formType = formTypes.Person
                     },
-                    onAccountAndOwnerAdd = {
+                    onAccountAndOwnerAdd = { _, _ ->
                         accountList = arrayOf(
                             *accountList,
                             Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)

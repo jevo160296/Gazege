@@ -21,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import com.example.gazege.ui.fragments.PersonFormFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
+                val coroutineScope = rememberCoroutineScope()
 
                 DisposableEffect(systemUiController, useDarkIcons) {
                     // Update all of the system bar colors to be transparent, and use
@@ -149,9 +152,27 @@ class MainActivity : ComponentActivity() {
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                onAccountAndOwnerAdd = {
-                                    mainViewModel.insertAccount(it)
-                                    navController.navigateUp()
+                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                    val accountOwnerIdList = accountList.map {
+                                        Pair(it.account.name, it.account.ownerId)
+                                    }
+                                    val accountOwnerId = Pair(account.name, account.ownerId)
+                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.insertAccount(account, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostState.showSnackbar("Error añadiento cuenta $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -175,9 +196,27 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
-                                onAccountAndOwnerAdd = {
-                                    mainViewModel.updateAccount(it)
-                                    navController.navigateUp()
+                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                    val accountOwnerIdList = accountList.map {
+                                        Pair(it.account.name, it.account.ownerId)
+                                    }
+                                    val accountOwnerId = Pair(account.name, account.ownerId)
+                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.updateAccount(account, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
+                                        }
+                                    }
                                 },
                                 accountAndOwner = selectedAccountAndOwner
                             )
@@ -186,9 +225,25 @@ class MainActivity : ComponentActivity() {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                onPersonAddRequested = {
-                                    mainViewModel.insertPerson(it)
-                                    navController.navigateUp()
+                                onPersonAddRequested = { person, snackBarHostSate ->
+                                    val namesList =
+                                        personList.map { persona -> persona.person.name }
+                                    val sePuedeAgregar = person.name !in namesList
+                                    if (sePuedeAgregar) {
+                                        mainViewModel.insertPerson(person, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostSate.showSnackbar("Error agregando a la persona: $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -205,9 +260,25 @@ class MainActivity : ComponentActivity() {
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                onPersonAddRequested = {
-                                    mainViewModel.updatePerson(it)
-                                    navController.navigateUp()
+                                onPersonAddRequested = { person, snackBarHostSate ->
+                                    val namesList =
+                                        personList.map { persona -> persona.person.name }
+                                    val sePuedeEditar = person.name !in namesList
+                                    if (sePuedeEditar) {
+                                        mainViewModel.updatePerson(person, onErrorAction = {
+                                            coroutineScope.launch {
+                                                snackBarHostSate.showSnackbar("Error editando persona $it")
+                                            }
+                                        }).invokeOnCompletion {
+                                            if (it == null) {
+                                                navController.navigateUp()
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
+                                        }
+                                    }
                                 },
                                 person = selectedPerson
                             )
