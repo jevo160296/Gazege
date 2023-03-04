@@ -1,5 +1,7 @@
 package com.example.gazege
 
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
@@ -12,6 +14,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES
@@ -30,9 +33,22 @@ fun CoroutineScope.safeLaunch(
 }
 
 class MainViewModel(private val repository: AppRepository) : ViewModel() {
-    val allPerson = repository.allPersons.asLiveData()
-    val allAccount = repository.allAccounts.asLiveData()
-    val allTransactions = repository.allTransactions.asLiveData()
+    private val initialRange = LocalDate.now().withDayOfMonth(1).let {
+        Pair(it, it.plusMonths(1L).minusDays(1L))
+    }
+    val range: MutableLiveData<Pair<LocalDate, LocalDate>> = MutableLiveData(initialRange)
+
+    val allPerson = repository.getPersons().asLiveData()
+    val allAccount = repository.getAccounts().asLiveData()
+    val allTransactions = Transformations.switchMap(
+        range
+    ) { range ->
+        repository.getTransactions(range.first, range.second).asLiveData()
+    }
+
+    fun updateRange(startDate: LocalDate, endDate: LocalDate) {
+        range.value = Pair(startDate, endDate)
+    }
 
     fun insertPerson(person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {

@@ -135,7 +135,8 @@ fun TransactionFormFragment(
     transactionAndAccounts: TransactionAndAccounts? = null,
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (Transaction) -> Unit
+    onTransactionAndAccountsAdd: (Transaction) -> Unit,
+    defaultDate: LocalDate = LocalDate.now()
 ) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
@@ -180,6 +181,7 @@ fun TransactionFormFragment(
             onTransactionAndAccountsChanged = {
                 transactionAndAccountsState = it
             },
+            defaultDate = defaultDate,
             onDateChanged = {
                 transactionAndAccountsState = transactionAndAccountsState.copy().apply {
                     transaction = this.transaction.copy(date = it)
@@ -356,6 +358,7 @@ private fun TransactionAndAccountsForm(
     accountList: List<Account>,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit,
+    defaultDate: LocalDate = LocalDate.now(),
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
@@ -368,7 +371,7 @@ private fun TransactionAndAccountsForm(
     val destinationAccountsList = accountList.filter {
         it != selectedSource
     }
-    val date: LocalDate = transactionAndAccounts.transaction.date ?: LocalDate.now()
+    val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
     if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
             transactionAndAccounts.copy().apply {

@@ -1,10 +1,27 @@
 package com.example.gazege.ui
 
-fun doubleToString(double: Double): String{
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+fun doubleToString(double: Double): String {
     return "$ %.0f".format(double)
 }
 
-fun stringToDouble(string: String): Double{
+enum class DateFormat {
+    YEARMONTHNAME,
+    DAYYEARMONTH
+}
+
+fun localDateToString(date: LocalDate, format: DateFormat): String {
+    val pattern = when (format) {
+        DateFormat.YEARMONTHNAME -> "yyyy-MMM"
+        DateFormat.DAYYEARMONTH -> "dd-yyyy-M"
+    }
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    return date.format(formatter)
+}
+
+fun stringToDouble(string: String): Double {
     return string.removePrefix("$ ").filter {
         it != "."[0]
     }.toDouble()

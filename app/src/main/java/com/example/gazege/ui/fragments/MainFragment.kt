@@ -1,6 +1,7 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DateFormat
+import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.AccountPage
@@ -41,6 +44,7 @@ import com.example.gazege.ui.views.getAccountSample
 import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun ModalSheetContent(
@@ -88,7 +92,7 @@ fun ModalSheetContent(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainFragment(
     personList: List<PersonWithAccounts>,
@@ -105,6 +109,8 @@ fun MainFragment(
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
     onNavStatusChanged: (NavPosition) -> Unit,
+    range: Pair<LocalDate, LocalDate>,
+    onRangeChanged: (LocalDate, LocalDate) -> Unit,
     sheetState: ModalBottomSheetState,
     snackbarHostState: SnackbarHostState
 ) {
@@ -190,6 +196,48 @@ fun MainFragment(
             },
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
+            },
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    actions = {
+                        IconButton(onClick = {
+                            val newRange = range.let {
+                                Pair(it.first.minusMonths(1L), it.second.minusMonths(1L))
+                            }
+                            onRangeChanged(newRange.first, newRange.second)
+                        }) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_arrow_left_24
+                                ), contentDescription = "Left"
+                            )
+                        }
+                        Text(
+                            localDateToString(range.first, DateFormat.YEARMONTHNAME),
+                            modifier = Modifier.clickable {
+                                val newRange = LocalDate.now().let {
+                                    Pair(
+                                        it.withDayOfMonth(1),
+                                        it.withDayOfMonth(1).plusMonths(1L).minusDays(1L)
+                                    )
+                                }
+                                onRangeChanged(newRange.first, newRange.second)
+                            })
+                        IconButton(onClick = {
+                            val newRange = range.let {
+                                Pair(it.first.plusMonths(1L), it.second.plusMonths(1L))
+                            }
+                            onRangeChanged(newRange.first, newRange.second)
+                        }) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_arrow_right_24
+                                ), contentDescription = "Right"
+                            )
+                        }
+                    }
+                )
             }
         ) {
             val paddingValues = it.let {
@@ -328,7 +376,9 @@ fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
                 }
             },
-            snackbarHostState = snackbarHostState
+            snackbarHostState = snackbarHostState,
+            onRangeChanged = { _, _ -> },
+            range = Pair(LocalDate.now(), LocalDate.now())
         )
     }
 }
