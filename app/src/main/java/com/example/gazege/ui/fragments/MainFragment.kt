@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.core.firstDayOfMonth
+import com.example.gazege.core.lastDayOfMonth
+import com.example.gazege.core.stableMinusMonths
+import com.example.gazege.core.stablePlusMonths
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
@@ -203,7 +207,10 @@ fun MainFragment(
                     actions = {
                         IconButton(onClick = {
                             val newRange = range.let {
-                                Pair(it.first.minusMonths(1L), it.second.minusMonths(1L))
+                                Pair(
+                                    stableMinusMonths(it.first, 1L),
+                                    stableMinusMonths(it.second, 1L)
+                                )
                             }
                             onRangeChanged(newRange.first, newRange.second)
                         }) {
@@ -218,15 +225,18 @@ fun MainFragment(
                             modifier = Modifier.clickable {
                                 val newRange = LocalDate.now().let {
                                     Pair(
-                                        it.withDayOfMonth(1),
-                                        it.withDayOfMonth(1).plusMonths(1L).minusDays(1L)
+                                        firstDayOfMonth(it),
+                                        lastDayOfMonth(it)
                                     )
                                 }
                                 onRangeChanged(newRange.first, newRange.second)
                             })
                         IconButton(onClick = {
                             val newRange = range.let {
-                                Pair(it.first.plusMonths(1L), it.second.plusMonths(1L))
+                                Pair(
+                                    stablePlusMonths(it.first, 1L),
+                                    stablePlusMonths(it.second, 1L)
+                                )
                             }
                             onRangeChanged(newRange.first, newRange.second)
                         }) {
