@@ -59,7 +59,11 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
 }
 
 @Composable
-private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
+private fun AccountViewHolder(
+    account: AccountAndOwnerWithTransactions,
+    startDate: LocalDate?,
+    endDate: LocalDate?
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1F)) {
             Row {
@@ -76,7 +80,7 @@ private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = "Total ")
-            LargeBody(text = doubleToString(account.getTotal()))
+            LargeBody(text = doubleToString(account.getTotal(startDate, endDate)))
         }
     }
 }
@@ -88,7 +92,9 @@ private fun AccountRecyclerView(
     editAccount: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState
+    state: LazyListState,
+    startDate: LocalDate?,
+    endDate: LocalDate?
 ) {
     RecyclerView(
         elements = accountList,
@@ -98,7 +104,7 @@ private fun AccountRecyclerView(
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
-        AccountViewHolder(account = it)
+        AccountViewHolder(account = it, startDate = startDate, endDate = endDate)
     }
 }
 
@@ -109,7 +115,9 @@ fun AccountPage(
     accountList: List<AccountAndOwnerWithTransactions>,
     state: LazyListState,
     delAccount: (Account) -> Unit,
-    editAccount: (Account) -> Unit
+    editAccount: (Account) -> Unit,
+    startDate: LocalDate?,
+    endDate: LocalDate?
 ) {
     Column(modifier = modifier) {
         MediumHeadline(text = "Cuentas")
@@ -118,7 +126,9 @@ fun AccountPage(
             delAccount = { delAccount(it.account) },
             editAccount = { editAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state
+            state = state,
+            startDate = startDate,
+            endDate = endDate
         )
     }
 }
@@ -150,7 +160,11 @@ private fun PreviewAccountItem() {
             )
         }
     )
-    AccountViewHolder(account = accountAndOwnerWithTransactions)
+    AccountViewHolder(
+        account = accountAndOwnerWithTransactions,
+        startDate = null,
+        endDate = null
+    )
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
@@ -161,7 +175,9 @@ private fun PreviewAccountList() {
             accountList = getAccountSample(),
             delAccount = {},
             editAccount = {},
-            state = LazyListState()
+            state = LazyListState(),
+            startDate = null,
+            endDate = null
         )
     }
 }
@@ -178,7 +194,9 @@ private fun PreviewPage() {
             accountList = getAccountSample(),
             state = LazyListState(),
             editAccount = {},
-            delAccount = {}
+            delAccount = {},
+            startDate = null,
+            endDate = null
         )
     }
 }

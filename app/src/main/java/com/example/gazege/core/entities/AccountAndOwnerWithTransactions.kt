@@ -3,6 +3,8 @@ package com.example.gazege.core.entities
 import androidx.room.Embedded
 import androidx.room.Ignore
 import androidx.room.Relation
+import com.example.gazege.core.dateBetween
+import java.time.LocalDate
 
 data class AccountAndOwnerWithTransactions(
     @Embedded val account: Account,
@@ -21,11 +23,28 @@ data class AccountAndOwnerWithTransactions(
         entityColumn = "destinationId"
     )
     val inTransactions: List<Transaction>,
-){
-    @Ignore private var total: Double = Double.NaN
-    fun getTotal(): Double {
-        if (total.isNaN()){
-            total = inTransactions.sumOf { it.amount } - outTransactions.sumOf { it.amount }
+) {
+    @Ignore
+    private var total: Double = Double.NaN
+
+    @Ignore
+    private var range: Pair<LocalDate?, LocalDate?>? = null
+
+    private fun calculateTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
+        val totalIn = inTransactions
+            .filter { dateBetween(it.date, startDate, endDate) }
+            .sumOf { it.amount }
+        val totalOut = outTransactions
+            .filter { dateBetween(it.date, startDate, endDate) }
+            .sumOf { it.amount }
+        return totalIn - totalOut
+    }
+
+    fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
+        val newRange = Pair(startDate, endDate)
+        if (total.isNaN() || range?.equals(newRange) == false) {
+            total = calculateTotal(startDate, endDate)
+            range = newRange
         }
         return total
     }

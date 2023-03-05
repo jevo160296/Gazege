@@ -283,7 +283,9 @@ fun MainFragment(
                                 "la cuenta ${account.name} y sus transacciones asociadas"
                             scope.launch { sheetState.show() }
                         },
-                        editAccount = onEditAccountRequested
+                        editAccount = onEditAccountRequested,
+                        startDate = range.first,
+                        endDate = range.second
                     )
                 }
                 NavPosition.PERSONS -> {
@@ -297,7 +299,9 @@ fun MainFragment(
                                 "${person.name} sus cuentas y transacciones asociadas"
                             scope.launch { sheetState.show() }
                         },
-                        editPerson = onEditPersonRequested
+                        editPerson = onEditPersonRequested,
+                        startDate = range.first,
+                        endDate = range.second
                     )
                 }
             }

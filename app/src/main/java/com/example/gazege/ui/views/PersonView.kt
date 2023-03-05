@@ -42,7 +42,11 @@ fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
 }
 
 @Composable
-private fun PersonViewHolder(person: PersonWithAccounts) {
+private fun PersonViewHolder(
+    person: PersonWithAccounts,
+    startDate: LocalDate?,
+    endDate: LocalDate?
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -58,7 +62,7 @@ private fun PersonViewHolder(person: PersonWithAccounts) {
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = "Total")
-            LargeBody(text = doubleToString(person.getTotal()))
+            LargeBody(text = doubleToString(person.getTotal(startDate, endDate)))
         }
     }
 }
@@ -70,7 +74,9 @@ private fun PersonRecyclerView(
     editPerson: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState
+    state: LazyListState,
+    startDate: LocalDate?,
+    endDate: LocalDate?
 ) {
     RecyclerView(
         elements = personList,
@@ -80,7 +86,7 @@ private fun PersonRecyclerView(
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
-        PersonViewHolder(person = it)
+        PersonViewHolder(person = it, startDate, endDate)
     }
 }
 
@@ -91,7 +97,9 @@ fun PersonPage(
     personList: List<PersonWithAccounts>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
-    state: LazyListState
+    state: LazyListState,
+    startDate: LocalDate?,
+    endDate: LocalDate?
 ) {
     Column(modifier = modifier) {
         MediumHeadline(text = "Persons")
@@ -100,7 +108,9 @@ fun PersonPage(
             delPerson = { delPerson(it.person) },
             editPerson = { editPerson(it.person) },
             itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state
+            state = state,
+            startDate = startDate,
+            endDate = endDate
         )
     }
 }
@@ -137,7 +147,7 @@ private fun PreviewPersonItem() {
             )
         }
     )
-    PersonViewHolder(person = personWithAccounts)
+    PersonViewHolder(person = personWithAccounts, startDate = null, endDate = null)
 }
 
 @Preview(showBackground = true)
@@ -146,7 +156,12 @@ private fun PreviewPersonList() {
     GazegeTheme {
         RecyclerView(
             elements = getPersonWithAccountsSample(),
-            viewHolder = { person -> PersonViewHolder(person = person) },
+            viewHolder = { person ->
+                PersonViewHolder(
+                    person = person, startDate = null,
+                    endDate = null
+                )
+            },
             state = LazyListState()
         )
     }
@@ -160,7 +175,9 @@ private fun PreviewPersonPage() {
             personList = getPersonWithAccountsSample(),
             state = LazyListState(),
             editPerson = {},
-            delPerson = {}
+            delPerson = {},
+            startDate = null,
+            endDate = null
         )
     }
 }
