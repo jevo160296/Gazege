@@ -328,7 +328,7 @@ class MainActivity : ComponentActivity() {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { it.account },
+                                accountList = accountList.map { AccountAndOwner(it.account, it.owner) },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.insertTransaction(it)
@@ -353,7 +353,7 @@ class MainActivity : ComponentActivity() {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { it.account },
+                                accountList = accountList.map { AccountAndOwner(it.account, it.owner) },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.updateTransaction(it)
