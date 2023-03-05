@@ -342,8 +342,8 @@ fun MainFragment(
                             scope.launch { sheetState.show() }
                         },
                         editAccount = onEditAccountRequested,
-                        startDate = range.first,
-                        endDate = range.second,
+                        startDate = null,
+                        endDate = null,
                         onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
@@ -359,8 +359,8 @@ fun MainFragment(
                             scope.launch { sheetState.show() }
                         },
                         editPerson = onEditPersonRequested,
-                        startDate = range.first,
-                        endDate = range.second,
+                        startDate = null,
+                        endDate = null,
                         onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
