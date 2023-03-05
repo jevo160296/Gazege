@@ -39,6 +39,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     val allPerson = repository.getPersons().asLiveData()
+    val principalPerson = Transformations.switchMap(allPerson) { persons ->
+        MutableLiveData(getPrincipalPerson(persons.map { it.person }))
+    }
     val allAccount = repository.getAccounts().asLiveData()
     val allTransactions = Transformations.switchMap(
         range
@@ -88,6 +91,18 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
 
     fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.deleteTransaction(transaction)
+    }
+
+    private fun getPrincipalPerson(personList: List<Person>): Person? {
+        return if (personList.isEmpty()) {
+            null
+        } else {
+            personList
+                .filter { it.importance != null }
+                .sortedBy { it.id }
+                .sortedBy { it.importance }
+                .firstOrNull()
+        }
     }
 }
 

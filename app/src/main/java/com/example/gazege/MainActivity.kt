@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
@@ -40,6 +39,7 @@ import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
+import com.example.gazege.ui.fragments.SettingsFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -74,6 +74,8 @@ class MainActivity : ComponentActivity() {
                         LocalDate.now()
                     )
                 )
+                val principalPersonState = mainViewModel.principalPerson.observeAsState()
+                val principalPerson = principalPersonState.value
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
                 }
@@ -171,7 +173,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onSettingsClicked = {
                                     navController.navigate("settings")
-                                }
+                                },
+                                principalPerson = principalPerson
                             )
                         }
                         composable("addAccount") {
@@ -362,11 +365,21 @@ class MainActivity : ComponentActivity() {
                         composable(
                             "settings"
                         ) {
-                            Button(onClick = {
-                                navController.navigateUp()
-                            }) {
-
-                            }
+                            SettingsFragment(
+                                personList = personList.map { it.person },
+                                principalPerson = principalPerson,
+                                onPrincipalPersonChanged = {
+                                    if (principalPerson != null) {
+                                        mainViewModel.updatePerson(
+                                            principalPerson.copy(importance = null)
+                                        ) {}
+                                    }
+                                    mainViewModel.updatePerson(it.copy(importance = 1)) {}
+                                },
+                                onNavigateUpRequested = {
+                                    navController.navigateUp()
+                                }
+                            )
                         }
                     }
                 }

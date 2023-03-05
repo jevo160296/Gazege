@@ -120,7 +120,8 @@ fun MainFragment(
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     sheetState: ModalBottomSheetState,
     snackbarHostState: SnackbarHostState,
-    onSettingsClicked: () -> Unit
+    onSettingsClicked: () -> Unit,
+    principalPerson: Person?
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
@@ -329,7 +330,9 @@ fun MainFragment(
                 }
                 NavPosition.CUENTAS -> {
                     AccountPage(
-                        accountList = accountList,
+                        accountList = accountList.filter { person ->
+                            person.owner.id == principalPerson?.id
+                        },
                         itemHolderPaddingValues = paddingValues,
                         state = accountState,
                         delAccount = { account ->
@@ -454,7 +457,8 @@ fun DefaultPreview() {
                 scope.launch {
                     snackbarHostState.showSnackbar("Settings clicked")
                 }
-            }
+            },
+            principalPerson = Person(name = "?")
         )
     }
 }
