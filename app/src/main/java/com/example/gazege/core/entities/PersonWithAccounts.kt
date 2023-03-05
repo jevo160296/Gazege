@@ -16,9 +16,15 @@ data class PersonWithAccounts(
 ) {
     @Ignore
     private var total: Double = Double.NaN
+
+    @Ignore
+    private var range: Pair<LocalDate?, LocalDate?>? = null
+
     fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
-        if (total.isNaN()) {
+        val newRange = Pair(startDate, endDate)
+        if (total.isNaN() || newRange != range) {
             total = accounts.sumOf { it.getTotal(startDate, endDate) }
+            range = newRange
         }
         return total
     }

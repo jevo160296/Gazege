@@ -42,7 +42,7 @@ data class AccountAndOwnerWithTransactions(
 
     fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
         val newRange = Pair(startDate, endDate)
-        if (total.isNaN() || range?.equals(newRange) == false) {
+        if (total.isNaN() || range != newRange) {
             total = calculateTotal(startDate, endDate)
             range = newRange
         }
