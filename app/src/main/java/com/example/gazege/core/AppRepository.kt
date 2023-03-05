@@ -30,8 +30,8 @@ class AppRepository(
     }
 
     fun getTransactions(
-        startDate: LocalDate,
-        endDate: LocalDate
+        startDate: LocalDate?,
+        endDate: LocalDate?
     ): Flow<List<TransactionAndAccounts>> {
         return transactionDao.getAll(startDate, endDate)
     }

@@ -128,16 +128,18 @@ class MainActivity : ComponentActivity() {
                                 delAccount = { mainViewModel.deleteAccount(it) },
                                 transactionList = transactionList,
                                 onAddTransactionRequested = {
+                                    val startDate = range.first
                                     val esMesActual =
-                                        range.first.withDayOfMonth(1) == LocalDate.now()
+                                        range.first?.withDayOfMonth(1) == LocalDate.now()
                                             .withDayOfMonth(1)
                                     val esMesPosterior =
-                                        range.first.withDayOfMonth(1) > LocalDate.now()
+                                        startDate != null &&
+                                                startDate.withDayOfMonth(1) > LocalDate.now()
                                             .withDayOfMonth(1)
-                                    val date = if (esMesActual) LocalDate.now() else
-                                        if (esMesPosterior) range.first.withDayOfMonth(1) else
-                                            range.first.withDayOfMonth(1).plusMonths(1L)
-                                                .minusDays(1L)
+                                    val date = if (esMesActual || startDate == null) LocalDate.now()
+                                    else if (esMesPosterior) startDate.withDayOfMonth(1) else
+                                        startDate.withDayOfMonth(1).plusMonths(1L)
+                                            .minusDays(1L)
                                     navController.navigate(route = "addTransaction/" +
                                             "${
                                                 date.let {

@@ -113,14 +113,22 @@ fun MainFragment(
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
     onNavStatusChanged: (NavPosition) -> Unit,
-    range: Pair<LocalDate, LocalDate>,
-    onRangeChanged: (LocalDate, LocalDate) -> Unit,
+    range: Pair<LocalDate?, LocalDate?>,
+    onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     sheetState: ModalBottomSheetState,
     snackbarHostState: SnackbarHostState
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
     val personState = rememberLazyListState()
+    val isFiltered = range.first != null || range.second != null
+    val startDate = range.first
+    val endDate = range.second
+    val dateString =
+        if (startDate == null && endDate == null) "Todo"
+        else if (startDate != null && endDate != null)
+            localDateToString(startDate, DateFormat.YEARMONTHNAME)
+        else "?"
 
     val scope = rememberCoroutineScope()
     var action by remember {
@@ -205,15 +213,18 @@ fun MainFragment(
                 TopAppBar(
                     title = {},
                     actions = {
-                        IconButton(onClick = {
-                            val newRange = range.let {
-                                Pair(
-                                    stableMinusMonths(it.first, 1L),
-                                    stableMinusMonths(it.second, 1L)
-                                )
-                            }
-                            onRangeChanged(newRange.first, newRange.second)
-                        }) {
+                        IconButton(
+                            onClick = {
+                                if (startDate != null && endDate != null) {
+                                    val newRange = Pair(
+                                        stableMinusMonths(startDate, 1L),
+                                        stableMinusMonths(endDate, 1L)
+                                    )
+                                    onRangeChanged(newRange.first, newRange.second)
+                                }
+                            },
+                            enabled = startDate != null && endDate != null
+                        ) {
                             Icon(
                                 painter = painterResource(
                                     id = R.drawable.round_arrow_left_24
@@ -221,7 +232,7 @@ fun MainFragment(
                             )
                         }
                         Text(
-                            localDateToString(range.first, DateFormat.YEARMONTHNAME),
+                            dateString,
                             modifier = Modifier.clickable {
                                 val newRange = LocalDate.now().let {
                                     Pair(
@@ -231,19 +242,38 @@ fun MainFragment(
                                 }
                                 onRangeChanged(newRange.first, newRange.second)
                             })
-                        IconButton(onClick = {
-                            val newRange = range.let {
-                                Pair(
-                                    stablePlusMonths(it.first, 1L),
-                                    stablePlusMonths(it.second, 1L)
-                                )
-                            }
-                            onRangeChanged(newRange.first, newRange.second)
-                        }) {
+                        IconButton(
+                            onClick = {
+                                if (startDate != null && endDate != null) {
+                                    val newRange = Pair(
+                                        stablePlusMonths(startDate, 1L),
+                                        stablePlusMonths(endDate, 1L)
+                                    )
+                                    onRangeChanged(newRange.first, newRange.second)
+                                }
+                            },
+                            enabled = startDate != null && endDate != null
+                        ) {
                             Icon(
                                 painter = painterResource(
                                     id = R.drawable.round_arrow_right_24
                                 ), contentDescription = "Right"
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                val newRange = Pair(
+                                    null,
+                                    null
+                                )
+                                onRangeChanged(newRange.first, newRange.second)
+                            },
+                            enabled = isFiltered
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_filter_list_off_24
+                                ), contentDescription = "Clear filters"
                             )
                         }
                     }

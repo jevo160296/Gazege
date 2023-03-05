@@ -49,5 +49,5 @@ fun firstDayOfMonth(date: LocalDate): LocalDate {
 }
 
 fun dateBetween(date: LocalDate, startDate: LocalDate?, endDate: LocalDate?): Boolean {
-    return date >= startDate && date <= endDate
+    return (startDate == null || date >= startDate) && (endDate == null || date <= endDate)
 }

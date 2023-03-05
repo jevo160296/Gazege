@@ -36,17 +36,17 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val initialRange = LocalDate.now().withDayOfMonth(1).let {
         Pair(it, it.plusMonths(1L).minusDays(1L))
     }
-    val range: MutableLiveData<Pair<LocalDate, LocalDate>> = MutableLiveData(initialRange)
+    val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     val allPerson = repository.getPersons().asLiveData()
     val allAccount = repository.getAccounts().asLiveData()
     val allTransactions = Transformations.switchMap(
         range
     ) { range ->
-        repository.getTransactions(range.first, range.second).asLiveData()
+        repository.getTransactions(range?.first, range?.second).asLiveData()
     }
 
-    fun updateRange(startDate: LocalDate, endDate: LocalDate) {
+    fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
         range.value = Pair(startDate, endDate)
     }
 
