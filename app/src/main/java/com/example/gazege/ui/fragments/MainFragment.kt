@@ -349,7 +349,9 @@ fun MainFragment(
                 }
                 NavPosition.PERSONS -> {
                     PersonPage(
-                        personList = personList,
+                        personList = personList.filter{ person ->
+                            person.person.id != principalPerson?.id
+                        },
                         itemHolderPaddingValues = paddingValues,
                         state = personState,
                         delPerson = { person ->
