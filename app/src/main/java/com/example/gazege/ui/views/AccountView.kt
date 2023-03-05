@@ -17,7 +17,6 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
@@ -117,10 +116,11 @@ fun AccountPage(
     delAccount: (Account) -> Unit,
     editAccount: (Account) -> Unit,
     startDate: LocalDate?,
-    endDate: LocalDate?
+    endDate: LocalDate?,
+    onTitleSetted: (String) -> Unit
 ) {
+    onTitleSetted("Cuentas")
     Column(modifier = modifier) {
-        MediumHeadline(text = "Cuentas")
         AccountRecyclerView(
             accountList = accountList,
             delAccount = { delAccount(it.account) },
@@ -196,7 +196,8 @@ private fun PreviewPage() {
             editAccount = {},
             delAccount = {},
             startDate = null,
-            endDate = null
+            endDate = null,
+            onTitleSetted = {}
         )
     }
 }

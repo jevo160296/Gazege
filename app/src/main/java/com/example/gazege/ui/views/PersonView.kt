@@ -18,7 +18,6 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
@@ -99,10 +98,11 @@ fun PersonPage(
     editPerson: (Person) -> Unit,
     state: LazyListState,
     startDate: LocalDate?,
-    endDate: LocalDate?
+    endDate: LocalDate?,
+    onTitleSetted: (String) -> Unit
 ) {
+    onTitleSetted("Persons")
     Column(modifier = modifier) {
-        MediumHeadline(text = "Persons")
         PersonRecyclerView(
             personList = personList,
             delPerson = { delPerson(it.person) },
@@ -177,7 +177,8 @@ private fun PreviewPersonPage() {
             editPerson = {},
             delPerson = {},
             startDate = null,
-            endDate = null
+            endDate = null,
+            onTitleSetted = {}
         )
     }
 }

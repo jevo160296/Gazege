@@ -24,7 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -47,6 +49,7 @@ import com.example.gazege.ui.views.TransactionPage
 import com.example.gazege.ui.views.getAccountSample
 import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
+import com.example.gazege.ui.widgets.MediumHeadline
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -96,7 +99,7 @@ fun ModalSheetContent(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainFragment(
     personList: List<PersonWithAccounts>,
@@ -116,7 +119,8 @@ fun MainFragment(
     range: Pair<LocalDate?, LocalDate?>,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     sheetState: ModalBottomSheetState,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    onSettingsClicked: () -> Unit
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
@@ -136,6 +140,9 @@ fun MainFragment(
     }
     var nombreItem by remember {
         mutableStateOf("")
+    }
+    var title: String by rememberSaveable {
+        mutableStateOf("Gazedge")
     }
 
     ModalBottomSheetLayout(
@@ -210,9 +217,26 @@ fun MainFragment(
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                TopAppBar(
-                    title = {},
-                    actions = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MediumHeadline(text = title)
+                        IconButton(onClick = onSettingsClicked) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.baseline_settings_24
+                                ), contentDescription = "Settings"
+                            )
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(
                             onClick = {
                                 if (startDate != null && endDate != null) {
@@ -277,7 +301,7 @@ fun MainFragment(
                             )
                         }
                     }
-                )
+                }
             }
         ) {
             val paddingValues = it.let {
@@ -299,7 +323,8 @@ fun MainFragment(
                             nombreItem = "la transacción"
                             scope.launch { sheetState.show() }
                         },
-                        editTransaction = onEditTransactionRequested
+                        editTransaction = onEditTransactionRequested,
+                        onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
                 NavPosition.CUENTAS -> {
@@ -315,7 +340,8 @@ fun MainFragment(
                         },
                         editAccount = onEditAccountRequested,
                         startDate = range.first,
-                        endDate = range.second
+                        endDate = range.second,
+                        onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
                 NavPosition.PERSONS -> {
@@ -331,7 +357,8 @@ fun MainFragment(
                         },
                         editPerson = onEditPersonRequested,
                         startDate = range.first,
-                        endDate = range.second
+                        endDate = range.second,
+                        onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
             }
@@ -422,7 +449,12 @@ fun DefaultPreview() {
             },
             snackbarHostState = snackbarHostState,
             onRangeChanged = { _, _ -> },
-            range = Pair(LocalDate.now(), LocalDate.now())
+            range = Pair(LocalDate.now(), LocalDate.now()),
+            onSettingsClicked = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Settings clicked")
+                }
+            }
         )
     }
 }

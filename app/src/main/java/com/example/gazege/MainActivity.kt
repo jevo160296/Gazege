@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
@@ -167,6 +168,9 @@ class MainActivity : ComponentActivity() {
                                 range = range,
                                 onRangeChanged = { startDate, endDate ->
                                     mainViewModel.updateRange(startDate, endDate)
+                                },
+                                onSettingsClicked = {
+                                    navController.navigate("settings")
                                 }
                             )
                         }
@@ -354,6 +358,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts
                             )
+                        }
+                        composable(
+                            "settings"
+                        ) {
+                            Button(onClick = {
+                                navController.navigateUp()
+                            }) {
+
+                            }
                         }
                     }
                 }
