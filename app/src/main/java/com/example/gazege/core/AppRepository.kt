@@ -4,8 +4,14 @@ import androidx.annotation.WorkerThread
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.dao.TransactionDao
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 class AppRepository(
     private val personDao: PersonDao,
@@ -15,9 +21,20 @@ class AppRepository(
 
     // Room executes all queries on a separate thread.
     // Observed Flow will notify the observer when the data has changed.
-    val allPersons: Flow<List<PersonWithAccounts>> = personDao.getAll()
-    val allAccounts: Flow<List<AccountAndOwnerWithTransactions>> = accountDao.getAll()
-    val allTransactions: Flow<List<TransactionAndAccounts>> = transactionDao.getAll()
+    fun getPersons(): Flow<List<PersonWithAccounts>> {
+        return personDao.getAll()
+    }
+
+    fun getAccounts(): Flow<List<AccountAndOwnerWithTransactions>> {
+        return accountDao.getAll()
+    }
+
+    fun getTransactions(
+        startDate: LocalDate?,
+        endDate: LocalDate?
+    ): Flow<List<TransactionAndAccounts>> {
+        return transactionDao.getAll(startDate, endDate)
+    }
 
     @WorkerThread
     suspend fun insertPerson(person: Person) {
@@ -25,7 +42,7 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updatePerson(person: Person){
+    suspend fun updatePerson(person: Person) {
         personDao.update(person)
     }
 
@@ -45,7 +62,7 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updateAccount(account: Account){
+    suspend fun updateAccount(account: Account) {
         accountDao.update(account)
     }
 
@@ -55,7 +72,7 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updateTransaction(transaction: Transaction){
+    suspend fun updateTransaction(transaction: Transaction) {
         transactionDao.update(transaction)
     }
 

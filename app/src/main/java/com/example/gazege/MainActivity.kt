@@ -39,10 +39,13 @@ import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
+import com.example.gazege.ui.fragments.SaldoActualSettings
+import com.example.gazege.ui.fragments.SettingsFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
@@ -66,6 +69,14 @@ class MainActivity : ComponentActivity() {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val transactionList by mainViewModel.allTransactions.observeAsState(emptyList())
+                val range by mainViewModel.range.observeAsState(
+                    Pair(
+                        LocalDate.now(),
+                        LocalDate.now()
+                    )
+                )
+                val principalPersonState = mainViewModel.principalPerson.observeAsState()
+                val principalPerson = principalPersonState.value
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
                 }
@@ -121,7 +132,25 @@ class MainActivity : ComponentActivity() {
                                 delAccount = { mainViewModel.deleteAccount(it) },
                                 transactionList = transactionList,
                                 onAddTransactionRequested = {
-                                    navController.navigate(route = "addTransaction")
+                                    val startDate = range.first
+                                    val esMesActual =
+                                        range.first?.withDayOfMonth(1) == LocalDate.now()
+                                            .withDayOfMonth(1)
+                                    val esMesPosterior =
+                                        startDate != null &&
+                                                startDate.withDayOfMonth(1) > LocalDate.now()
+                                            .withDayOfMonth(1)
+                                    val date = if (esMesActual || startDate == null) LocalDate.now()
+                                    else if (esMesPosterior) startDate.withDayOfMonth(1) else
+                                        startDate.withDayOfMonth(1).plusMonths(1L)
+                                            .minusDays(1L)
+                                    navController.navigate(route = "addTransaction/" +
+                                            "${
+                                                date.let {
+                                                    it.year * 10000 + it.monthValue * 100 + it.dayOfMonth
+                                                }
+                                            }"
+                                    )
                                 },
                                 delTransaction = { mainViewModel.deleteTransaction(it) },
                                 navPosition = navPosition,
@@ -138,7 +167,18 @@ class MainActivity : ComponentActivity() {
                                 onEditAccountRequested = {
                                     navController.navigate(route = "editAccount/${it.id}")
                                 },
-                                snackbarHostState = snackbarHostState
+                                snackbarHostState = snackbarHostState,
+                                range = range,
+                                onRangeChanged = { startDate, endDate ->
+                                    mainViewModel.updateRange(startDate, endDate)
+                                },
+                                onSettingsClicked = {
+                                    navController.navigate("settings")
+                                },
+                                principalPerson = principalPerson,
+                                onSaldoActualClick = {
+                                    navController.navigate("saldoActualSettings")
+                                }
                             )
                         }
                         composable("addAccount") {
@@ -181,10 +221,8 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("accountId") { type = NavType.IntType })
                         ) { navStack ->
                             val accountId = navStack.arguments?.getInt("accountId")
-                            val selectedAccountAndOwner = mainViewModel
-                                .allAccount
-                                .value
-                                ?.firstOrNull { it.account.id == accountId }
+                            val selectedAccountAndOwner = accountList
+                                .firstOrNull { it.account.id == accountId }
                                 ?.let {
                                     AccountAndOwner(
                                         account = it.account,
@@ -252,10 +290,8 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("personId") { type = NavType.IntType })
                         ) { navBack ->
                             val personId = navBack.arguments?.getInt("personId")
-                            val selectedPerson = mainViewModel
-                                .allPerson
-                                .value
-                                ?.firstOrNull { it.person.id == personId }
+                            val selectedPerson = personList
+                                .firstOrNull { it.person.id == personId }
                                 ?.person
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
@@ -283,16 +319,35 @@ class MainActivity : ComponentActivity() {
                                 person = selectedPerson
                             )
                         }
-                        composable("addTransaction") {
+                        composable(
+                            "addTransaction/{yearmonthday}",
+                            arguments = listOf(navArgument("yearmonthday") {
+                                type = NavType.IntType
+                            })
+                        ) { navBackStackEntry ->
+                            val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
+                                ?: LocalDate.now().let {
+                                    it.year * 100 + it.monthValue
+                                }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { it.account },
+                                accountList = accountList.map {
+                                    AccountAndOwner(
+                                        it.account,
+                                        it.owner
+                                    )
+                                },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.insertTransaction(it)
                                     navController.navigateUp()
-                                }
+                                },
+                                defaultDate = LocalDate.of(
+                                    yearMonthDay.div(10000),
+                                    yearMonthDay.mod(10000).div(100),
+                                    yearMonthDay.mod(100)
+                                )
                             )
                         }
                         composable(
@@ -302,14 +357,17 @@ class MainActivity : ComponentActivity() {
                             })
                         ) { navBackStackEntry ->
                             val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts = mainViewModel
-                                .allTransactions
-                                .value
-                                ?.firstOrNull { it.transaction.id == transactionId }
+                            val selectedTransactionAndAccounts = transactionList
+                                .firstOrNull { it.transaction.id == transactionId }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { it.account },
+                                accountList = accountList.map {
+                                    AccountAndOwner(
+                                        it.account,
+                                        it.owner
+                                    )
+                                },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.updateTransaction(it)
@@ -317,6 +375,28 @@ class MainActivity : ComponentActivity() {
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts
                             )
+                        }
+                        composable("settings") {
+                            SettingsFragment(
+                                personList = personList.map { it.person },
+                                principalPerson = principalPerson,
+                                onPrincipalPersonChanged = {
+                                    if (principalPerson != null) {
+                                        mainViewModel.updatePerson(
+                                            principalPerson.copy(importance = null)
+                                        ) {}
+                                    }
+                                    mainViewModel.updatePerson(it.copy(importance = 1)) {}
+                                },
+                                onNavigateUpRequested = {
+                                    navController.navigateUp()
+                                }
+                            )
+                        }
+                        composable("saldoActualSettings") {
+                            SaldoActualSettings(accountList.filter { it.owner.id == principalPerson?.id }) { account, nuevoEstado ->
+                                mainViewModel.updateAccount(account = account.copy(includedInTotal = nuevoEstado)) {}
+                            }
                         }
                     }
                 }

@@ -20,6 +20,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DatePicker
+import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
@@ -133,9 +134,10 @@ fun TransactionFormFragment(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     transactionAndAccounts: TransactionAndAccounts? = null,
-    accountList: List<Account>,
+    accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (Transaction) -> Unit
+    onTransactionAndAccountsAdd: (Transaction) -> Unit,
+    defaultDate: LocalDate = LocalDate.now()
 ) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
@@ -180,6 +182,7 @@ fun TransactionFormFragment(
             onTransactionAndAccountsChanged = {
                 transactionAndAccountsState = it
             },
+            defaultDate = defaultDate,
             onDateChanged = {
                 transactionAndAccountsState = transactionAndAccountsState.copy().apply {
                     transaction = this.transaction.copy(date = it)
@@ -346,29 +349,31 @@ private fun AccountAndOwnerForm(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TransactionAndAccountsForm(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     transactionAndAccounts: PartialTransactionAndAccounts,
-    accountList: List<Account>,
+    accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit,
+    defaultDate: LocalDate = LocalDate.now(),
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
     val description = transactionAndAccounts.transaction.description ?: ""
-    val selectedSource = transactionAndAccounts.sourceAccount
-    val selectedDestination = transactionAndAccounts.destinationAccount
+    val selectedSourceId = transactionAndAccounts.sourceAccount?.id
+    val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
+    val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
+    val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
     val sourceAccountsList = accountList.filter {
         it != selectedDestination
     }
     val destinationAccountsList = accountList.filter {
         it != selectedSource
     }
-    val date: LocalDate = transactionAndAccounts.transaction.date ?: LocalDate.now()
+    val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
     if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
             transactionAndAccounts.copy().apply {
@@ -416,45 +421,26 @@ private fun TransactionAndAccountsForm(
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            ExposedDropdownMenuBox(
-                expanded = dropDownExpanded,
-                onExpandedChange = {
-                    dropDownExpanded = !dropDownExpanded
-                }
-            ) {
-                TextField(
-                    modifier = Modifier.menuAnchor(),
-                    value = selectedSource?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
-                    },
-                    label = { Text("Source account") },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = dropDownExpanded,
-                    onDismissRequest = { dropDownExpanded = false }
-                ) {
-                    sourceAccountsList.map {
-                        DropdownMenuItem(
-                            text = { Text(it.name) },
-                            onClick = {
-                                dropDownExpanded = false
-                                if (it.id != null) {
-                                    onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply {
-                                            sourceAccount = it
-                                            transaction = transaction.copy(sourceId = it.id)
-                                        }
-                                    )
-                                }
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            DropDownMenu(
+                dropDownExpanded = dropDownExpanded,
+                onExpandedChange = { dropDownExpanded = !dropDownExpanded },
+                options = sourceAccountsList,
+                selectedItem = selectedSource,
+                itemToString = { it?.account?.name ?: "" },
+                onItemClick = {
+                    dropDownExpanded = false
+                    if (it.account.id != null) {
+                        onTransactionAndAccountsChanged(
+                            transactionAndAccounts.copy().apply {
+                                sourceAccount = it.account
+                                transaction = transaction.copy(sourceId = it.account.id)
+                            }
                         )
                     }
-                }
+                },
+                label = { Text("Source account") }
+            ) {
+                it.owner.name
             }
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -465,45 +451,28 @@ private fun TransactionAndAccountsForm(
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            ExposedDropdownMenuBox(
-                expanded = dropDownExpanded,
+            DropDownMenu(
+                dropDownExpanded = dropDownExpanded,
                 onExpandedChange = {
                     dropDownExpanded = !dropDownExpanded
-                }
-            ) {
-                TextField(
-                    modifier = Modifier.menuAnchor(),
-                    value = selectedDestination?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
-                    },
-                    label = { Text("Destination account") },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = dropDownExpanded,
-                    onDismissRequest = { dropDownExpanded = false }
-                ) {
-                    destinationAccountsList.map {
-                        DropdownMenuItem(
-                            text = { Text(it.name) },
-                            onClick = {
-                                dropDownExpanded = false
-                                if (it.id != null) {
-                                    onTransactionAndAccountsChanged(
-                                        transactionAndAccounts.copy().apply {
-                                            destinationAccount = it
-                                            transaction = transaction.copy(destinationId = it.id)
-                                        }
-                                    )
-                                }
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                },
+                options = destinationAccountsList,
+                selectedItem = selectedDestination,
+                itemToString = { it?.account?.name ?: "" },
+                onItemClick = {
+                    dropDownExpanded = false
+                    if (it.account.id != null) {
+                        onTransactionAndAccountsChanged(
+                            transactionAndAccounts.copy().apply {
+                                destinationAccount = it.account
+                                transaction = transaction.copy(destinationId = it.account.id)
+                            }
                         )
                     }
-                }
+                },
+                label = { Text("Destination account") }
+            ) {
+                it.owner.name
             }
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -536,13 +505,6 @@ private fun PreviewLight() {
                 }
             )
         }
-        val accountList by rememberSaveable {
-            mutableStateOf(
-                arrayOf(
-                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
-                )
-            )
-        }
         var formType by rememberSaveable {
             mutableStateOf(formTypes.Transaction)
         }
@@ -567,7 +529,7 @@ private fun PreviewLight() {
             }
             formTypes.Transaction -> {
                 TransactionFormFragment(
-                    accountList = accountList.toList(),
+                    accountList = listOf(),
                     onAccountAddRequested = { },
                     onTransactionAndAccountsAdd = {
                         formType = formTypes.Person

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +19,6 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
@@ -59,7 +60,11 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
 }
 
 @Composable
-private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
+private fun DefaultAccountViewHolder(
+    account: AccountAndOwnerWithTransactions,
+    startDate: LocalDate?,
+    endDate: LocalDate?
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1F)) {
             Row {
@@ -76,7 +81,7 @@ private fun AccountViewHolder(account: AccountAndOwnerWithTransactions) {
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = "Total ")
-            LargeBody(text = doubleToString(account.getTotal()))
+            LargeBody(text = doubleToString(account.getTotal(startDate, endDate)))
         }
     }
 }
@@ -88,7 +93,9 @@ private fun AccountRecyclerView(
     editAccount: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState
+    state: LazyListState,
+    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
+    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
 ) {
     RecyclerView(
         elements = accountList,
@@ -96,10 +103,10 @@ private fun AccountRecyclerView(
         onItemLongPressed = delAccount,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
-        state = state
-    ) {
-        AccountViewHolder(account = it)
-    }
+        state = state,
+        colorSelector = colorSelector,
+        viewHolder = viewHolder
+    )
 }
 
 @Composable
@@ -109,16 +116,29 @@ fun AccountPage(
     accountList: List<AccountAndOwnerWithTransactions>,
     state: LazyListState,
     delAccount: (Account) -> Unit,
-    editAccount: (Account) -> Unit
+    editAccount: (Account) -> Unit,
+    startDate: LocalDate?,
+    endDate: LocalDate?,
+    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit = {
+        DefaultAccountViewHolder(
+            account = it,
+            startDate = startDate,
+            endDate = endDate
+        )
+    },
+    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
+    onTitleSetted: (String) -> Unit
 ) {
+    onTitleSetted("Cuentas")
     Column(modifier = modifier) {
-        MediumHeadline(text = "Cuentas")
         AccountRecyclerView(
             accountList = accountList,
             delAccount = { delAccount(it.account) },
             editAccount = { editAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state
+            state = state,
+            colorSelector = colorSelector,
+            viewHolder = viewHolder
         )
     }
 }
@@ -150,7 +170,11 @@ private fun PreviewAccountItem() {
             )
         }
     )
-    AccountViewHolder(account = accountAndOwnerWithTransactions)
+    DefaultAccountViewHolder(
+        account = accountAndOwnerWithTransactions,
+        startDate = null,
+        endDate = null
+    )
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
@@ -162,7 +186,7 @@ private fun PreviewAccountList() {
             delAccount = {},
             editAccount = {},
             state = LazyListState()
-        )
+        ) {}
     }
 }
 
@@ -178,7 +202,9 @@ private fun PreviewPage() {
             accountList = getAccountSample(),
             state = LazyListState(),
             editAccount = {},
-            delAccount = {}
-        )
+            delAccount = {},
+            startDate = null,
+            endDate = null
+        ) {}
     }
 }

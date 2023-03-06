@@ -1,6 +1,7 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -32,6 +35,12 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.core.firstDayOfMonth
+import com.example.gazege.core.lastDayOfMonth
+import com.example.gazege.core.stableMinusMonths
+import com.example.gazege.core.stablePlusMonths
+import com.example.gazege.ui.DateFormat
+import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.AccountPage
@@ -40,7 +49,10 @@ import com.example.gazege.ui.views.TransactionPage
 import com.example.gazege.ui.views.getAccountSample
 import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.PersonMonthSummaryView
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun ModalSheetContent(
@@ -105,12 +117,25 @@ fun MainFragment(
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
     onNavStatusChanged: (NavPosition) -> Unit,
+    range: Pair<LocalDate?, LocalDate?>,
+    onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     sheetState: ModalBottomSheetState,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    onSettingsClicked: () -> Unit,
+    onSaldoActualClick: () -> Unit,
+    principalPerson: Person?
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberLazyListState()
     val personState = rememberLazyListState()
+    val isFiltered = range.first != null || range.second != null
+    val startDate = range.first
+    val endDate = range.second
+    val dateString =
+        if (startDate == null && endDate == null) "Todo"
+        else if (startDate != null && endDate != null)
+            localDateToString(startDate, DateFormat.YEARMONTHNAME)
+        else "?"
 
     val scope = rememberCoroutineScope()
     var action by remember {
@@ -118,6 +143,9 @@ fun MainFragment(
     }
     var nombreItem by remember {
         mutableStateOf("")
+    }
+    var title: String by rememberSaveable {
+        mutableStateOf("Gazedge")
     }
 
     ModalBottomSheetLayout(
@@ -190,6 +218,105 @@ fun MainFragment(
             },
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
+            },
+            topBar = {
+                val principalPersonWithAccounts = personList
+                    .firstOrNull { person -> person.person.id == principalPerson?.id }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MediumHeadline(text = title)
+                        IconButton(onClick = onSettingsClicked) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.baseline_settings_24
+                                ), contentDescription = "Settings"
+                            )
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = {
+                                if (startDate != null && endDate != null) {
+                                    val newRange = Pair(
+                                        stableMinusMonths(startDate, 1L),
+                                        stableMinusMonths(endDate, 1L)
+                                    )
+                                    onRangeChanged(newRange.first, newRange.second)
+                                }
+                            },
+                            enabled = startDate != null && endDate != null
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_arrow_left_24
+                                ), contentDescription = "Left"
+                            )
+                        }
+                        Text(
+                            dateString,
+                            modifier = Modifier.clickable {
+                                val newRange = LocalDate.now().let {
+                                    Pair(
+                                        firstDayOfMonth(it),
+                                        lastDayOfMonth(it)
+                                    )
+                                }
+                                onRangeChanged(newRange.first, newRange.second)
+                            })
+                        IconButton(
+                            onClick = {
+                                if (startDate != null && endDate != null) {
+                                    val newRange = Pair(
+                                        stablePlusMonths(startDate, 1L),
+                                        stablePlusMonths(endDate, 1L)
+                                    )
+                                    onRangeChanged(newRange.first, newRange.second)
+                                }
+                            },
+                            enabled = startDate != null && endDate != null
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_arrow_right_24
+                                ), contentDescription = "Right"
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                val newRange = Pair(
+                                    null,
+                                    null
+                                )
+                                onRangeChanged(newRange.first, newRange.second)
+                            },
+                            enabled = isFiltered
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.round_filter_list_off_24
+                                ), contentDescription = "Clear filters"
+                            )
+                        }
+                    }
+                    PersonMonthSummaryView(
+                        saldoActual = principalPersonWithAccounts?.getTotal(null, null) ?: 0.0,
+                        ingresos = principalPersonWithAccounts?.getIngresos(
+                            range.first,
+                            range.second
+                        ) ?: 0.0,
+                        egresos = principalPersonWithAccounts?.getEgresos(range.first, range.second)
+                            ?: 0.0,
+                        onSaldoActualClick = onSaldoActualClick
+                    )
+                }
             }
         ) {
             val paddingValues = it.let {
@@ -202,21 +329,26 @@ fun MainFragment(
             }
             when (navPosition) {
                 NavPosition.TRANSACCIONES -> {
-                    TransactionPage(
-                        transactionList = transactionList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = transactionState,
-                        delTransaction = { transaction ->
-                            action = { delTransaction(transaction) }
-                            nombreItem = "la transacción"
-                            scope.launch { sheetState.show() }
-                        },
-                        editTransaction = onEditTransactionRequested
-                    )
+                    Column {
+                        TransactionPage(
+                            transactionList = transactionList,
+                            itemHolderPaddingValues = paddingValues,
+                            state = transactionState,
+                            delTransaction = { transaction ->
+                                action = { delTransaction(transaction) }
+                                nombreItem = "la transacción"
+                                scope.launch { sheetState.show() }
+                            },
+                            editTransaction = onEditTransactionRequested,
+                            onTitleSetted = { newTitle -> title = newTitle }
+                        )
+                    }
                 }
                 NavPosition.CUENTAS -> {
                     AccountPage(
-                        accountList = accountList,
+                        accountList = accountList.filter { person ->
+                            person.owner.id == principalPerson?.id
+                        },
                         itemHolderPaddingValues = paddingValues,
                         state = accountState,
                         delAccount = { account ->
@@ -225,12 +357,16 @@ fun MainFragment(
                                 "la cuenta ${account.name} y sus transacciones asociadas"
                             scope.launch { sheetState.show() }
                         },
-                        editAccount = onEditAccountRequested
-                    )
+                        editAccount = onEditAccountRequested,
+                        startDate = null,
+                        endDate = null
+                    ) { newTitle -> title = newTitle }
                 }
                 NavPosition.PERSONS -> {
                     PersonPage(
-                        personList = personList,
+                        personList = personList.filter { person ->
+                            person.person.id != principalPerson?.id
+                        },
                         itemHolderPaddingValues = paddingValues,
                         state = personState,
                         delPerson = { person ->
@@ -239,7 +375,10 @@ fun MainFragment(
                                 "${person.name} sus cuentas y transacciones asociadas"
                             scope.launch { sheetState.show() }
                         },
-                        editPerson = onEditPersonRequested
+                        editPerson = onEditPersonRequested,
+                        startDate = null,
+                        endDate = null,
+                        onTitleSetted = { newTitle -> title = newTitle }
                     )
                 }
             }
@@ -328,7 +467,16 @@ fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
                 }
             },
-            snackbarHostState = snackbarHostState
+            snackbarHostState = snackbarHostState,
+            onRangeChanged = { _, _ -> },
+            range = Pair(LocalDate.now(), LocalDate.now()),
+            onSettingsClicked = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Settings clicked")
+                }
+            },
+            principalPerson = Person(name = "?"),
+            onSaldoActualClick = {}
         )
     }
 }

@@ -17,7 +17,6 @@ import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
@@ -108,9 +107,10 @@ fun TransactionPage(
     delTransaction: (Transaction) -> Unit,
     editTransaction: (Transaction) -> Unit,
     state: LazyListState,
+    onTitleSetted: (String) -> Unit
 ) {
+    onTitleSetted("Transacciones")
     Column(modifier = modifier) {
-        MediumHeadline("Transacciones")
         TransactionRecyclerView(
             transactionList = transactionList,
             editTransaction = { transactionAndAccounts ->
@@ -168,7 +168,8 @@ private fun PreviewTransactionPage() {
             transactionList = getTransactionSample(),
             state = LazyListState(),
             editTransaction = {},
-            delTransaction = {}
+            delTransaction = {},
+            onTitleSetted = {}
         )
     }
 }

@@ -31,10 +31,10 @@ fun DatePicker(
     val dialog = DatePickerDialog(
         LocalContext.current,
         { _, year, month, dayOfMonth ->
-            onValueChange(LocalDate.of(year, month, dayOfMonth))
+            onValueChange(LocalDate.of(year, month + 1, dayOfMonth))
         },
         date.year,
-        date.monthValue,
+        date.monthValue - 1,
         date.dayOfMonth,
     )
 
