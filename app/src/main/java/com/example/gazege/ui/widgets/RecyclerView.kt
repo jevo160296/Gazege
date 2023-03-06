@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -27,6 +29,7 @@ fun <T> RecyclerView(
     onItemTapped: (T) -> Unit = {},
     onItemLongPressed: (T) -> Unit = {},
     state: LazyListState,
+    colorSelector: @Composable (T) -> CardColors = { CardDefaults.cardColors() },
     viewHolder: @Composable (T) -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -66,7 +69,8 @@ fun <T> RecyclerView(
                     .padding(paddingValues)
                     .fillMaxWidth(),
                 onClick = { onItemTapped(item) },
-                onLongClick = { onItemLongPressed(item) }
+                onLongClick = { onItemLongPressed(item) },
+                colors = colorSelector(item)
             )
             {
                 Box(modifier = Modifier.padding(4.dp)) {

@@ -421,7 +421,7 @@ private fun TransactionAndAccountsForm(
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            DropDownMenu<AccountAndOwner>(
+            DropDownMenu(
                 dropDownExpanded = dropDownExpanded,
                 onExpandedChange = { dropDownExpanded = !dropDownExpanded },
                 options = sourceAccountsList,
@@ -471,7 +471,9 @@ private fun TransactionAndAccountsForm(
                     }
                 },
                 label = { Text("Destination account") }
-            )
+            ) {
+                it.owner.name
+            }
         } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")

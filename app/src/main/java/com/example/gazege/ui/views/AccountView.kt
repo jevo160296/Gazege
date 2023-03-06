@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +60,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
 }
 
 @Composable
-private fun AccountViewHolder(
+private fun DefaultAccountViewHolder(
     account: AccountAndOwnerWithTransactions,
     startDate: LocalDate?,
     endDate: LocalDate?
@@ -92,8 +94,8 @@ private fun AccountRecyclerView(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState,
-    startDate: LocalDate?,
-    endDate: LocalDate?
+    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
+    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
 ) {
     RecyclerView(
         elements = accountList,
@@ -101,10 +103,10 @@ private fun AccountRecyclerView(
         onItemLongPressed = delAccount,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
-        state = state
-    ) {
-        AccountViewHolder(account = it, startDate = startDate, endDate = endDate)
-    }
+        state = state,
+        colorSelector = colorSelector,
+        viewHolder = viewHolder
+    )
 }
 
 @Composable
@@ -117,6 +119,14 @@ fun AccountPage(
     editAccount: (Account) -> Unit,
     startDate: LocalDate?,
     endDate: LocalDate?,
+    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit = {
+        DefaultAccountViewHolder(
+            account = it,
+            startDate = startDate,
+            endDate = endDate
+        )
+    },
+    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
     onTitleSetted: (String) -> Unit
 ) {
     onTitleSetted("Cuentas")
@@ -127,8 +137,8 @@ fun AccountPage(
             editAccount = { editAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
             state = state,
-            startDate = startDate,
-            endDate = endDate
+            colorSelector = colorSelector,
+            viewHolder = viewHolder
         )
     }
 }
@@ -160,7 +170,7 @@ private fun PreviewAccountItem() {
             )
         }
     )
-    AccountViewHolder(
+    DefaultAccountViewHolder(
         account = accountAndOwnerWithTransactions,
         startDate = null,
         endDate = null
@@ -175,10 +185,8 @@ private fun PreviewAccountList() {
             accountList = getAccountSample(),
             delAccount = {},
             editAccount = {},
-            state = LazyListState(),
-            startDate = null,
-            endDate = null
-        )
+            state = LazyListState()
+        ) {}
     }
 }
 
@@ -196,8 +204,7 @@ private fun PreviewPage() {
             editAccount = {},
             delAccount = {},
             startDate = null,
-            endDate = null,
-            onTitleSetted = {}
-        )
+            endDate = null
+        ) {}
     }
 }

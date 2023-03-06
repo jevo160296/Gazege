@@ -15,17 +15,56 @@ data class PersonWithAccounts(
     val accounts: List<AccountAndOwnerWithTransactions>
 ) {
     @Ignore
+    private var range: Pair<LocalDate?, LocalDate?>? = null
+
+    @Ignore
     private var total: Double = Double.NaN
 
     @Ignore
-    private var range: Pair<LocalDate?, LocalDate?>? = null
+    private var ingresos: Double = Double.NaN
 
-    fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
+    @Ignore
+    var egresos: Double = Double.NaN
+
+    private fun calculateValues(startDate: LocalDate?, endDate: LocalDate?) {
         val newRange = Pair(startDate, endDate)
-        if (total.isNaN() || newRange != range) {
-            total = accounts.sumOf { it.getTotal(startDate, endDate) }
+        if (newRange != range) {
+            val selfAccounts = accounts.map { it.account }
+            total = accounts
+                .filter { it.account.includedInTotal }
+                .sumOf { it.getTotal(startDate, endDate) }
+            ingresos = accounts
+                .sumOf {
+                    it.calculateIngresos(
+                        startDate,
+                        endDate,
+                        selfAccounts
+                    )
+                }
+            egresos = accounts
+                .sumOf {
+                    it.calculateEgresos(
+                        startDate,
+                        endDate,
+                        selfAccounts
+                    )
+                }
             range = newRange
         }
+    }
+
+    fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
+        calculateValues(startDate, endDate)
         return total
+    }
+
+    fun getIngresos(startDate: LocalDate?, endDate: LocalDate?): Double {
+        calculateValues(startDate, endDate)
+        return ingresos
+    }
+
+    fun getEgresos(startDate: LocalDate?, endDate: LocalDate?): Double {
+        calculateValues(startDate, endDate)
+        return egresos
     }
 }

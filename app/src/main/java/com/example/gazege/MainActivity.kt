@@ -39,6 +39,7 @@ import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
+import com.example.gazege.ui.fragments.SaldoActualSettings
 import com.example.gazege.ui.fragments.SettingsFragment
 import com.example.gazege.ui.fragments.TransactionFormFragment
 import com.example.gazege.ui.theme.GazegeTheme
@@ -174,7 +175,10 @@ class MainActivity : ComponentActivity() {
                                 onSettingsClicked = {
                                     navController.navigate("settings")
                                 },
-                                principalPerson = principalPerson
+                                principalPerson = principalPerson,
+                                onSaldoActualClick = {
+                                    navController.navigate("saldoActualSettings")
+                                }
                             )
                         }
                         composable("addAccount") {
@@ -328,7 +332,12 @@ class MainActivity : ComponentActivity() {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { AccountAndOwner(it.account, it.owner) },
+                                accountList = accountList.map {
+                                    AccountAndOwner(
+                                        it.account,
+                                        it.owner
+                                    )
+                                },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.insertTransaction(it)
@@ -353,7 +362,12 @@ class MainActivity : ComponentActivity() {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map { AccountAndOwner(it.account, it.owner) },
+                                accountList = accountList.map {
+                                    AccountAndOwner(
+                                        it.account,
+                                        it.owner
+                                    )
+                                },
                                 onAccountAddRequested = { navController.navigate("addAccount") },
                                 onTransactionAndAccountsAdd = {
                                     mainViewModel.updateTransaction(it)
@@ -362,9 +376,7 @@ class MainActivity : ComponentActivity() {
                                 transactionAndAccounts = selectedTransactionAndAccounts
                             )
                         }
-                        composable(
-                            "settings"
-                        ) {
+                        composable("settings") {
                             SettingsFragment(
                                 personList = personList.map { it.person },
                                 principalPerson = principalPerson,
@@ -380,6 +392,11 @@ class MainActivity : ComponentActivity() {
                                     navController.navigateUp()
                                 }
                             )
+                        }
+                        composable("saldoActualSettings") {
+                            SaldoActualSettings(accountList.filter { it.owner.id == principalPerson?.id }) { account, nuevoEstado ->
+                                mainViewModel.updateAccount(account = account.copy(includedInTotal = nuevoEstado)) {}
+                            }
                         }
                     }
                 }

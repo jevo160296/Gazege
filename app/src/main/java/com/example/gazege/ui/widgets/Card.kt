@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,15 +26,21 @@ fun Card(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
+    colors: CardColors = CardDefaults.cardColors(),
+    enabled: Boolean = true,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    androidx.compose.material3.Card(
-        modifier = modifier
-            .clip(CardDefaults.shape)
+    var cardModifier = modifier.clip(CardDefaults.shape)
+    if (enabled) {
+        cardModifier = cardModifier
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-            ),
+            )
+    }
+    androidx.compose.material3.Card(
+        modifier = cardModifier,
+        colors = colors,
         content = content
     )
 }

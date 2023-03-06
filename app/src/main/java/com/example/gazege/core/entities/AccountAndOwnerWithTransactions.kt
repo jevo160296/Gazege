@@ -31,13 +31,31 @@ data class AccountAndOwnerWithTransactions(
     private var range: Pair<LocalDate?, LocalDate?>? = null
 
     private fun calculateTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
-        val totalIn = inTransactions
-            .filter { dateBetween(it.date, startDate, endDate) }
-            .sumOf { it.amount }
-        val totalOut = outTransactions
-            .filter { dateBetween(it.date, startDate, endDate) }
-            .sumOf { it.amount }
+        val totalIn = calculateIngresos(startDate, endDate)
+        val totalOut = calculateEgresos(startDate, endDate)
         return totalIn - totalOut
+    }
+
+    fun calculateIngresos(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        accountsToOmit: List<Account> = listOf()
+    ): Double {
+        return inTransactions
+            .filter { it.sourceId !in accountsToOmit.map { account -> account.id } }
+            .filter { dateBetween(it.date, startDate, endDate) }
+            .sumOf { it.amount }
+    }
+
+    fun calculateEgresos(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        accountsToOmit: List<Account> = listOf()
+    ): Double {
+        return outTransactions
+            .filter { it.destinationId !in accountsToOmit.map { account -> account.id } }
+            .filter { dateBetween(it.date, startDate, endDate) }
+            .sumOf { it.amount }
     }
 
     fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {

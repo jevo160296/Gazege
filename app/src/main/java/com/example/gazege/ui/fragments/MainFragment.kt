@@ -50,6 +50,7 @@ import com.example.gazege.ui.views.getAccountSample
 import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.PersonMonthSummaryView
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -121,6 +122,7 @@ fun MainFragment(
     sheetState: ModalBottomSheetState,
     snackbarHostState: SnackbarHostState,
     onSettingsClicked: () -> Unit,
+    onSaldoActualClick: () -> Unit,
     principalPerson: Person?
 ) {
     val transactionState = rememberLazyListState()
@@ -218,6 +220,8 @@ fun MainFragment(
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
+                val principalPersonWithAccounts = personList
+                    .firstOrNull { person -> person.person.id == principalPerson?.id }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.End
@@ -302,6 +306,16 @@ fun MainFragment(
                             )
                         }
                     }
+                    PersonMonthSummaryView(
+                        saldoActual = principalPersonWithAccounts?.getTotal(null, null) ?: 0.0,
+                        ingresos = principalPersonWithAccounts?.getIngresos(
+                            range.first,
+                            range.second
+                        ) ?: 0.0,
+                        egresos = principalPersonWithAccounts?.getEgresos(range.first, range.second)
+                            ?: 0.0,
+                        onSaldoActualClick = onSaldoActualClick
+                    )
                 }
             }
         ) {
@@ -315,18 +329,20 @@ fun MainFragment(
             }
             when (navPosition) {
                 NavPosition.TRANSACCIONES -> {
-                    TransactionPage(
-                        transactionList = transactionList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = transactionState,
-                        delTransaction = { transaction ->
-                            action = { delTransaction(transaction) }
-                            nombreItem = "la transacción"
-                            scope.launch { sheetState.show() }
-                        },
-                        editTransaction = onEditTransactionRequested,
-                        onTitleSetted = { newTitle -> title = newTitle }
-                    )
+                    Column {
+                        TransactionPage(
+                            transactionList = transactionList,
+                            itemHolderPaddingValues = paddingValues,
+                            state = transactionState,
+                            delTransaction = { transaction ->
+                                action = { delTransaction(transaction) }
+                                nombreItem = "la transacción"
+                                scope.launch { sheetState.show() }
+                            },
+                            editTransaction = onEditTransactionRequested,
+                            onTitleSetted = { newTitle -> title = newTitle }
+                        )
+                    }
                 }
                 NavPosition.CUENTAS -> {
                     AccountPage(
@@ -343,13 +359,12 @@ fun MainFragment(
                         },
                         editAccount = onEditAccountRequested,
                         startDate = null,
-                        endDate = null,
-                        onTitleSetted = { newTitle -> title = newTitle }
-                    )
+                        endDate = null
+                    ) { newTitle -> title = newTitle }
                 }
                 NavPosition.PERSONS -> {
                     PersonPage(
-                        personList = personList.filter{ person ->
+                        personList = personList.filter { person ->
                             person.person.id != principalPerson?.id
                         },
                         itemHolderPaddingValues = paddingValues,
@@ -460,7 +475,8 @@ fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Settings clicked")
                 }
             },
-            principalPerson = Person(name = "?")
+            principalPerson = Person(name = "?"),
+            onSaldoActualClick = {}
         )
     }
 }
