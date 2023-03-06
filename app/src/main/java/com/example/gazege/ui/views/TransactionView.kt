@@ -17,7 +17,9 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
@@ -101,7 +103,10 @@ private fun TransactionRecyclerView(
         onItemLongPressed = delTransaction,
         modifier = modifier,
         itemHolderPaddingValues = itemHolderPaddingValues,
-        state = state
+        state = state,
+        groupSelector = {
+            localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
+        }
     ) {
         TransactionViewHolder(transaction = it)
     }

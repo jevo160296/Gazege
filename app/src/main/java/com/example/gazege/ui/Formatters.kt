@@ -9,13 +9,13 @@ fun doubleToString(double: Double): String {
 
 enum class DateFormat {
     YEARMONTHNAME,
-    DAYYEARMONTH
+    DAYMONTHYEAR
 }
 
 fun localDateToString(date: LocalDate, format: DateFormat): String {
     val pattern = when (format) {
         DateFormat.YEARMONTHNAME -> "yyyy-MMM"
-        DateFormat.DAYYEARMONTH -> "dd-yyyy-M"
+        DateFormat.DAYMONTHYEAR -> "dd-MMM-yyyy"
     }
     val formatter = DateTimeFormatter.ofPattern(pattern)
     return date.format(formatter)
