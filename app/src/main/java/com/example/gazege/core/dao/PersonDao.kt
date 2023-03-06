@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PersonDao {
     @Transaction
-    @Query("SELECT * FROM Person")
+    @Query("SELECT * " +
+            "FROM Person " +
+            "ORDER BY name")
     fun getAll(): Flow<List<Person>>
 
     @Insert

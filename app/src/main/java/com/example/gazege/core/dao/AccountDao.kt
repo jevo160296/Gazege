@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface AccountDao {
     @Transaction
-    @Query("SELECT * FROM Account")
+    @Query("SELECT * " +
+            "FROM Account " +
+            "ORDER BY name")
     fun getAll(): Flow<List<Account>>
 
     @Insert
