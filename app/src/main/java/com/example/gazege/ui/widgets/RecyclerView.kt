@@ -38,8 +38,9 @@ fun <T> RecyclerView(
     viewHolder: @Composable (T) -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    val groupedItems = elements.groupBy {
-        groupSelector?.invoke(it)
+    val indexedItems = elements.mapIndexed { index, t -> Pair(index, t) }
+    val groupedItems = indexedItems.groupBy {
+        groupSelector?.invoke(it.second)
     }
     LazyColumn(
         modifier = modifier,
@@ -49,7 +50,7 @@ fun <T> RecyclerView(
         val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()
         val calculatedStart = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
         val calculatedEnd = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
-        groupedItems.forEach { (group, items) ->
+        groupedItems.forEach { (group, indexItems) ->
             if (group != null) {
                 stickyHeader {
                     Box(
@@ -67,7 +68,7 @@ fun <T> RecyclerView(
                     }
                 }
             }
-            itemsIndexed(items) { index, item ->
+            itemsIndexed(indexItems) { _, (index, item) ->
                 val paddingValues: PaddingValues =
                     if (index == 0) {
                         PaddingValues(
