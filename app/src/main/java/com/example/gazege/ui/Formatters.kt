@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 fun doubleToString(double: Double): String {
-    return "$ %.0f".format(double)
+    return "$ %,1.0f".format(double)
 }
 
 enum class DateFormat {
