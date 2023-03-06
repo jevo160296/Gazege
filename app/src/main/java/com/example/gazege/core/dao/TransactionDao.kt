@@ -21,7 +21,8 @@ interface TransactionDao {
                 "FROM `Transaction`" +
                 "WHERE " +
                 "(:startDate is null OR date >= :startDate) AND " +
-                "(:endDate is null OR date <= :endDate)"
+                "(:endDate is null OR date <= :endDate) " +
+                "ORDER BY date DESC, id DESC"
     )
     fun getAll(startDate: LocalDate?, endDate: LocalDate?): Flow<List<Transaction>>
 
