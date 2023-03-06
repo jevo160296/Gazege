@@ -15,4 +15,21 @@ data class TransactionAndAccounts(
         entityColumn = "id"
     )
     val destinationAccount: Account
-)
+) {
+    companion object {
+        fun from(
+            transactions: List<Transaction>,
+            accounts: List<Account>
+        ): List<TransactionAndAccounts> {
+            return transactions.map { transaction ->
+                TransactionAndAccounts(
+                    transaction = transaction,
+                    sourceAccount = accounts.firstOrNull { acc -> acc.id == transaction.sourceId }
+                        ?: Account.empty(),
+                    destinationAccount = accounts.firstOrNull { acc -> acc.id == transaction.destinationId }
+                        ?: Account.empty()
+                )
+            }
+        }
+    }
+}

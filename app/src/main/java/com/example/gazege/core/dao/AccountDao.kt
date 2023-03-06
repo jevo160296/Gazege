@@ -3,7 +3,6 @@ package com.example.gazege.core.dao
 import androidx.room.*
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
 import kotlinx.coroutines.flow.Flow
 
@@ -11,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface AccountDao {
     @Transaction
     @Query("SELECT * FROM Account")
-    fun getAll(): Flow<List<AccountAndOwnerWithTransactions>>
+    fun getAll(): Flow<List<Account>>
 
     @Insert
     suspend fun insertAll(vararg accounts: Account): List<Long>

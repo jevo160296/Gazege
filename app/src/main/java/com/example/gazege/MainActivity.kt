@@ -21,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -36,6 +37,9 @@ import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.PersonWithAccounts
+import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.fragments.AccountFormFragment
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.fragments.PersonFormFragment
@@ -68,7 +72,8 @@ class MainActivity : ComponentActivity() {
             GazegeTheme {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
-                val transactionList by mainViewModel.allTransactions.observeAsState(emptyList())
+                val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
+                val transactionList by mainViewModel.rangeTransactions.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
                         LocalDate.now(),
@@ -77,6 +82,12 @@ class MainActivity : ComponentActivity() {
                 )
                 val principalPersonState = mainViewModel.principalPerson.observeAsState()
                 val principalPerson = principalPersonState.value
+
+                val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
+                    .from(accountList, personList, allTransactions)
+                val personWithAccounts = PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
+                val transactionAndAccounts = TransactionAndAccounts.from(transactionList, accountList)
+
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
                 }
@@ -118,19 +129,19 @@ class MainActivity : ComponentActivity() {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
                             val snackbarHostState = SnackbarHostState()
                             MainFragment(
-                                personList,
+                                personWithAccounts,
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
                                 delPerson = { mainViewModel.deletePerson(it) },
-                                accountList = accountList,
+                                accountList = accountAndOwnerWithTransactions,
                                 onAddAccountRequested = {
                                     navController.navigate(
                                         route = "addAccount"
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                transactionList = transactionList,
+                                transactionList = transactionAndAccounts,
                                 onAddTransactionRequested = {
                                     val startDate = range.first
                                     val esMesActual =
@@ -185,16 +196,13 @@ class MainActivity : ComponentActivity() {
                             AccountFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                personList = personList
-                                    .map {
-                                        it.person
-                                    },
+                                personList = personList,
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
                                 onAccountAndOwnerAdd = { account, snackBarHostState ->
                                     val accountOwnerIdList = accountList.map {
-                                        Pair(it.account.name, it.account.ownerId)
+                                        Pair(it.name, it.ownerId)
                                     }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
@@ -221,7 +229,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("accountId") { type = NavType.IntType })
                         ) { navStack ->
                             val accountId = navStack.arguments?.getInt("accountId")
-                            val selectedAccountAndOwner = accountList
+                            val selectedAccountAndOwner = accountAndOwnerWithTransactions
                                 .firstOrNull { it.account.id == accountId }
                                 ?.let {
                                     AccountAndOwner(
@@ -230,13 +238,13 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             AccountFormFragment(
-                                personList = personList.map { it.person },
+                                personList = personList,
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
                                 onAccountAndOwnerAdd = { account, snackBarHostState ->
                                     val accountOwnerIdList = accountList.map {
-                                        Pair(it.account.name, it.account.ownerId)
+                                        Pair(it.name, it.ownerId)
                                     }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
@@ -265,7 +273,7 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
                                     val namesList =
-                                        personList.map { persona -> persona.person.name }
+                                        personList.map { persona -> persona.name }
                                     val sePuedeAgregar = person.name !in namesList
                                     if (sePuedeAgregar) {
                                         mainViewModel.insertPerson(person, onErrorAction = {
@@ -291,14 +299,13 @@ class MainActivity : ComponentActivity() {
                         ) { navBack ->
                             val personId = navBack.arguments?.getInt("personId")
                             val selectedPerson = personList
-                                .firstOrNull { it.person.id == personId }
-                                ?.person
+                                .firstOrNull { it.id == personId }
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
                                     val namesList =
-                                        personList.map { persona -> persona.person.name }
+                                        personList.map { persona -> persona.name }
                                     val sePuedeEditar = person.name !in namesList
                                     if (sePuedeEditar) {
                                         mainViewModel.updatePerson(person, onErrorAction = {
@@ -332,7 +339,7 @@ class MainActivity : ComponentActivity() {
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map {
+                                accountList = accountAndOwnerWithTransactions.map {
                                     AccountAndOwner(
                                         it.account,
                                         it.owner
@@ -357,12 +364,12 @@ class MainActivity : ComponentActivity() {
                             })
                         ) { navBackStackEntry ->
                             val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts = transactionList
+                            val selectedTransactionAndAccounts = transactionAndAccounts
                                 .firstOrNull { it.transaction.id == transactionId }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountList.map {
+                                accountList = accountAndOwnerWithTransactions.map {
                                     AccountAndOwner(
                                         it.account,
                                         it.owner
@@ -378,7 +385,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("settings") {
                             SettingsFragment(
-                                personList = personList.map { it.person },
+                                personList = personList,
                                 principalPerson = principalPerson,
                                 onPrincipalPersonChanged = {
                                     if (principalPerson != null) {
@@ -394,8 +401,20 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("saldoActualSettings") {
-                            SaldoActualSettings(accountList.filter { it.owner.id == principalPerson?.id }) { account, nuevoEstado ->
-                                mainViewModel.updateAccount(account = account.copy(includedInTotal = nuevoEstado)) {}
+                            var saving: Int by remember {
+                                mutableStateOf(0)
+                            }
+                            SaldoActualSettings(
+                                accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
+                                saving = saving
+                            ) { account, nuevoEstado ->
+                                saving += 1
+                                coroutineScope.launch {
+                                    mainViewModel.updateAccount(
+                                        account = account.copy(includedInTotal = nuevoEstado)) {}.join()
+                                }.invokeOnCompletion {
+                                    saving -= 1
+                                }
                             }
                         }
                     }

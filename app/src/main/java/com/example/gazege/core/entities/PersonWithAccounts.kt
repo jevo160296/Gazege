@@ -67,4 +67,18 @@ data class PersonWithAccounts(
         calculateValues(startDate, endDate)
         return egresos
     }
+
+    companion object {
+        fun from(
+            persons: List<Person>,
+            accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+        ): List<PersonWithAccounts> {
+            return persons.map { person ->
+                PersonWithAccounts(
+                    person = person,
+                    accounts = accountAndOwnerWithTransactions.filter { it.owner == person }
+                )
+            }
+        }
+    }
 }

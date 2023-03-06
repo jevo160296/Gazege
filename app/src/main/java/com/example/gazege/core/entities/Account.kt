@@ -23,4 +23,10 @@ data class Account(
     val ownerId: Int,
     val initial_balance: Double,
     @ColumnInfo(defaultValue = "true") val includedInTotal: Boolean = true
-)
+) {
+    companion object {
+        fun empty(): Account {
+            return Account(name = "Null", ownerId = -1, initial_balance = 0.0)
+        }
+    }
+}
