@@ -21,6 +21,7 @@ import com.example.gazege.ui.doubleToString
 fun DataView(
     modifier: Modifier = Modifier,
     title: String,
+    bigTitle: Boolean = false,
     value: String,
     enabled: Boolean = true,
     colors: CardColors,
@@ -33,13 +34,24 @@ fun DataView(
         enabled = enabled,
         onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceAround
-        ) {
-            Text(value)
-            SmallEmphasis(text = title)
+        if(!bigTitle){
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
+                Text(value)
+                SmallEmphasis(text = title)
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                MediumHeadline(text = title)
+                MediumHeadline(text = value)
+            }
         }
     }
 }
@@ -71,6 +83,7 @@ fun PersonMonthSummaryView(
             val modifier = Modifier.weight(1f)
             DataView(
                 title = "Saldo actual",
+                bigTitle = true,
                 value = doubleToString(saldoActual),
                 modifier = modifier,
                 colors = enabledColors,

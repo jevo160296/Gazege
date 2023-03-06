@@ -1,5 +1,7 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -21,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> RecyclerView(
     modifier: Modifier = Modifier,
@@ -30,9 +34,13 @@ fun <T> RecyclerView(
     onItemLongPressed: (T) -> Unit = {},
     state: LazyListState,
     colorSelector: @Composable (T) -> CardColors = { CardDefaults.cardColors() },
+    groupSelector: ((T) -> String)? = null,
     viewHolder: @Composable (T) -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
+    val groupedItems = elements.groupBy {
+        groupSelector?.invoke(it)
+    }
     LazyColumn(
         modifier = modifier,
         state = state
@@ -41,40 +49,59 @@ fun <T> RecyclerView(
         val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()
         val calculatedStart = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
         val calculatedEnd = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
-        itemsIndexed(elements) { index, item ->
-            val paddingValues: PaddingValues =
-                if (index == 0) {
-                    PaddingValues(
-                        top = calculatedTop,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
-                } else if (index < elements.lastIndex) {
-                    PaddingValues(
-                        top = 4.dp,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
-                } else {
-                    PaddingValues(
-                        top = 4.dp,
-                        bottom = calculatedBottom,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
+        groupedItems.forEach { (group, items) ->
+            if (group != null) {
+                stickyHeader {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(start = calculatedStart, end = calculatedEnd)
+                    ) {
+                        LargeEmphasis(
+                            group,
+                            color = MaterialTheme
+                                .colorScheme
+                                .onBackground
+                        )
+                    }
                 }
-            Card(
-                modifier =
-                Modifier
-                    .padding(paddingValues)
-                    .fillMaxWidth(),
-                onClick = { onItemTapped(item) },
-                onLongClick = { onItemLongPressed(item) },
-                colors = colorSelector(item)
-            )
-            {
-                Box(modifier = Modifier.padding(4.dp)) {
-                    viewHolder(item)
+            }
+            itemsIndexed(items) { index, item ->
+                val paddingValues: PaddingValues =
+                    if (index == 0) {
+                        PaddingValues(
+                            top = calculatedTop,
+                            start = calculatedStart,
+                            end = calculatedEnd
+                        )
+                    } else if (index < elements.lastIndex) {
+                        PaddingValues(
+                            top = 4.dp,
+                            start = calculatedStart,
+                            end = calculatedEnd
+                        )
+                    } else {
+                        PaddingValues(
+                            top = 4.dp,
+                            bottom = calculatedBottom,
+                            start = calculatedStart,
+                            end = calculatedEnd
+                        )
+                    }
+                Card(
+                    modifier =
+                    Modifier
+                        .padding(paddingValues)
+                        .fillMaxWidth(),
+                    onClick = { onItemTapped(item) },
+                    onLongClick = { onItemLongPressed(item) },
+                    colors = colorSelector(item)
+                )
+                {
+                    Box(modifier = Modifier.padding(4.dp)) {
+                        viewHolder(item)
+                    }
                 }
             }
         }

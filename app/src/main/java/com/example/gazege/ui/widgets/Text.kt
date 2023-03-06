@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.ui.theme.Typography
 
@@ -19,8 +20,13 @@ fun SmallBody(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LargeEmphasis(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, modifier = modifier, style = MaterialTheme.typography.labelLarge)
+fun LargeEmphasis(text: String, modifier: Modifier = Modifier, color: Color = Color.Unspecified) {
+    Text(
+        text = text,
+        modifier = modifier,
+        style = MaterialTheme.typography.labelLarge,
+        color = color
+    )
 }
 
 @Composable
@@ -35,7 +41,7 @@ fun MediumHeadline(text: String, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-private fun Preview(){
+private fun Preview() {
     Column {
         MediumHeadline(text = "Medium Headline")
         LargeEmphasis(text = "Large emphasis")
