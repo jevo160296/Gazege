@@ -411,8 +411,8 @@ fun DefaultPreview() {
     var navPosition by remember {
         mutableStateOf(NavPosition.TRANSACCIONES)
     }
+    val snackbarHostState = SnackbarHostState()
     GazegeTheme(darkTheme = true) {
-        val snackbarHostState = SnackbarHostState()
         MainFragment(
             personList = personList,
             accountList = accounts,

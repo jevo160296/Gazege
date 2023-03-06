@@ -5,11 +5,8 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.dao.TransactionDao
 import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
-import com.example.gazege.core.entities.TransactionAndAccounts
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -21,18 +18,18 @@ class AppRepository(
 
     // Room executes all queries on a separate thread.
     // Observed Flow will notify the observer when the data has changed.
-    fun getPersons(): Flow<List<PersonWithAccounts>> {
+    fun getPersons(): Flow<List<Person>> {
         return personDao.getAll()
     }
 
-    fun getAccounts(): Flow<List<AccountAndOwnerWithTransactions>> {
+    fun getAccounts(): Flow<List<Account>> {
         return accountDao.getAll()
     }
 
     fun getTransactions(
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Flow<List<TransactionAndAccounts>> {
+    ): Flow<List<Transaction>> {
         return transactionDao.getAll(startDate, endDate)
     }
 

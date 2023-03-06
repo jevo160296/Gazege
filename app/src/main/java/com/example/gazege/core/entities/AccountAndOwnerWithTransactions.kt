@@ -66,4 +66,22 @@ data class AccountAndOwnerWithTransactions(
         }
         return total
     }
+
+    companion object {
+        fun from(
+            accounts: List<Account>,
+            owners: List<Person>,
+            transactions: List<Transaction>
+        ): List<AccountAndOwnerWithTransactions> {
+            return accounts.map { account ->
+                AccountAndOwnerWithTransactions(
+                    account,
+                    owner = owners.firstOrNull { owner -> owner.id == account.ownerId }
+                        ?: Person.empty(),
+                    outTransactions = transactions.filter { transaction -> account.id == transaction.sourceId },
+                    inTransactions = transactions.filter { transaction -> account.id == transaction.destinationId }
+                )
+            }
+        }
+    }
 }

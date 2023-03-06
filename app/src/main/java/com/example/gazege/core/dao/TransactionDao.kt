@@ -23,7 +23,7 @@ interface TransactionDao {
                 "(:startDate is null OR date >= :startDate) AND " +
                 "(:endDate is null OR date <= :endDate)"
     )
-    fun getAll(startDate: LocalDate?, endDate: LocalDate?): Flow<List<TransactionAndAccounts>>
+    fun getAll(startDate: LocalDate?, endDate: LocalDate?): Flow<List<Transaction>>
 
     @Insert
     suspend fun insertAll(vararg transactions: Transaction): List<Long>

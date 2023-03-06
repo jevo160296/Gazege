@@ -40,14 +40,16 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
 
     val allPerson = repository.getPersons().asLiveData()
     val principalPerson = Transformations.switchMap(allPerson) { persons ->
-        MutableLiveData(getPrincipalPerson(persons.map { it.person }))
+        MutableLiveData(getPrincipalPerson(persons))
     }
     val allAccount = repository.getAccounts().asLiveData()
-    val allTransactions = Transformations.switchMap(
+    val allTransactions = repository.getTransactions(null, null).asLiveData()
+    val rangeTransactions = Transformations.switchMap(
         range
     ) { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
+
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
         range.value = Pair(startDate, endDate)

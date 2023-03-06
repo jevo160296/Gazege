@@ -14,8 +14,8 @@ android {
         applicationId "com.example.gazege"
         minSdk 29
         targetSdk 32
-        versionCode 14
-        versionName '0.1.0'
+        versionCode 15
+        versionName '0.1.1'
         versionNameSuffix 'alpha'
 
         javaCompileOptions {

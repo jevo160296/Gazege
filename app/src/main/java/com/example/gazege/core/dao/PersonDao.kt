@@ -7,14 +7,13 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.PersonWithAccounts
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PersonDao {
     @Transaction
     @Query("SELECT * FROM Person")
-    fun getAll(): Flow<List<PersonWithAccounts>>
+    fun getAll(): Flow<List<Person>>
 
     @Insert
     suspend fun insertAll(vararg persons: Person): List<Long>
