@@ -20,6 +20,7 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.DropDownMenu
+import com.example.gazege.ui.widgets.MediumHeadline
 
 @Composable
 fun SettingsFragment(
@@ -53,7 +54,8 @@ fun SettingsFragment(
                     contentDescription = "Save"
                 )
             }
-        }
+        },
+        topBar = { MediumHeadline(text = "Ajustes") },
     ) { paddingValues ->
         Column(modifier = Modifier
             .padding(paddingValues)
