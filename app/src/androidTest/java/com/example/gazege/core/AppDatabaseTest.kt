@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
 import java.util.*
+import kotlin.random.Random
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -23,6 +24,56 @@ import java.util.*
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseTest {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun initDatabase() = runTest{
+        val random = Random(100)
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = AppDatabase.getDatabase(appContext)
+
+        val initialPersons = database.personDao().getAll().first()
+        val maxIdPersons = initialPersons.maxOfOrNull {it.id ?: 0} ?: 0
+        val personasIn = (1..20).map {
+            Person(id = maxIdPersons + it, name = "Persona$it")
+        }
+        val Perinserted = database.personDao().insertAll(*personasIn.toTypedArray()).map { it.toInt() }
+        val insertedSize = Perinserted.size
+        val initialAccounts = database.accountDao().getAll().first()
+        val maxIdAccounts = initialAccounts.maxOfOrNull { it.id ?: 0 } ?: 0
+        val accountsIn = (1..20).map {
+            val ownerId = Perinserted[random.nextInt(0, insertedSize)]
+            Account(
+                id = maxIdAccounts + it,
+                name="Account$it",
+                ownerId = ownerId,
+                initial_balance = 0.0
+            )
+        }
+        val accInserted = database.accountDao().insertAll(*accountsIn.toTypedArray()).map{it.toInt()}
+        val accInsertedSize = accInserted.size
+        val initialTransactions = database.transactionDao().getAll().first()
+        val maxIdTransaction = initialTransactions.maxOfOrNull{it.transaction.id ?: 0} ?: 0
+        val transactionsIn = (1..200).map{
+            val amount = random.nextDouble(1000.0, 200000.0)
+            val dia = random.nextInt(1, 28)
+            val mes = random.nextInt(1, 12)
+            val anio = 2023
+            val fecha = LocalDate.of(anio, mes, dia)
+            val sourceId = accInserted[random.nextInt(0, accInsertedSize)]
+            val destinationId = accInserted
+                .filter{it != sourceId}[random.nextInt(0, accInsertedSize - 1)]
+            Transaction(
+                id = maxIdTransaction + it,
+                amount = amount,
+                description = "",
+                sourceId = sourceId,
+                destinationId = destinationId,
+                date = fecha
+            )
+        }
+        database.transactionDao().insertAll(*transactionsIn.toTypedArray())
+    }
+
     @Test
     fun createDataBase() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
