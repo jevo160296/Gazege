@@ -10,8 +10,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
@@ -20,7 +22,6 @@ import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
-import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
 
@@ -66,21 +67,17 @@ private fun DefaultAccountViewHolder(
     endDate: LocalDate?
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1F)) {
-            Row {
-                SmallEmphasis(text = "Account:", modifier = Modifier.padding(end = 4.dp))
-                SmallBody(text = account.account.name)
-            }
-            Row {
-                SmallEmphasis(text = "Owner:", modifier = Modifier.padding(end = 4.dp))
-                SmallBody(text = account.owner.name)
-            }
-
+        Column(modifier = Modifier.weight(1f)) {
+            SmallEmphasis(
+                text = "${stringResource(id = R.string.cuenta)}:",
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            LargeBody(text = account.account.name)
         }
         Column(
             horizontalAlignment = Alignment.End
         ) {
-            SmallEmphasis(text = "Total ")
+            SmallEmphasis(text = "${stringResource(id = R.string.total)} ")
             LargeBody(text = doubleToString(account.getTotal(startDate, endDate)))
         }
     }
@@ -129,7 +126,7 @@ fun AccountPage(
     colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
     onTitleSetted: (String) -> Unit
 ) {
-    onTitleSetted("Cuentas")
+    onTitleSetted(stringResource(id = R.string.cuentas))
     Column(modifier = modifier) {
         AccountRecyclerView(
             accountList = accountList,
@@ -186,7 +183,7 @@ private fun PreviewAccountList() {
             delAccount = {},
             editAccount = {},
             state = LazyListState()
-        ) {}
+        ) { acc -> DefaultAccountViewHolder(account = acc, startDate = null, endDate = null) }
     }
 }
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="transacciones">Transactions</string>
+    <string name="personas">People</string>
+    <string name="cuentas">Accounts</string>
+    <string name="me_debe">Owes me</string>
+    <string name="le_debo">I owe</string>
+    <string name="persona_principal_vacia">To view debts with other people, it is required to set up a main person.</string>
+    <string name="configurar_persona_principal">Set main person</string>
+    <string name="persona">Person</string>
+    <string name="nombre">Name</string>
+    <string name="Valor">Amount</string>
+    <string name="descripcion">Description</string>
+    <string name="cuenta">Account</string>
+    <string name="total">Total</string>
+    <string name="la_transaccion">the transaction</string>
+    <string name="la_cuenta">the account %1$s and all its transactions</string>
+    <string name="la_persona">%1$s its accounts and transactions</string>
+    <string name="confirmar_eliminacion">Confirm deleition</string>
+    <string name="confirma_la_eliminacion_de">Do you confirm the deleition of %1$s?</string>
+</resources>

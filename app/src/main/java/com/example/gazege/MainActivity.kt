@@ -397,7 +397,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateUpRequested = {
                                     navController.navigateUp()
-                                }
+                                },
+                                onAddPersonRequested = { navController.navigate("addPerson") }
                             )
                         }
                         composable("saldoActualSettings") {

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.Shapes
+import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.MediumHeadline
 
@@ -27,6 +28,7 @@ fun SettingsFragment(
     personList: List<Person>,
     principalPerson: Person?,
     onPrincipalPersonChanged: (Person) -> Unit,
+    onAddPersonRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
@@ -60,15 +62,21 @@ fun SettingsFragment(
         Column(modifier = Modifier
             .padding(paddingValues)
             .padding(8.dp)) {
-            DropDownMenu(
-                dropDownExpanded = principalPersonExpanded,
-                onExpandedChange = { principalPersonExpanded = it },
-                options = personList,
-                selectedItem = personSelected,
-                itemToString = { it?.name ?: "" },
-                onItemClick = { personIdSelected = it.id },
-                label = { Text("Principal person") }
-            )
+            if (personList.isEmpty()) {
+                ButtonField(onClick = onAddPersonRequested) {
+                    Text(text = "Nueva persona")
+                }
+            } else {
+                DropDownMenu(
+                    dropDownExpanded = principalPersonExpanded,
+                    onExpandedChange = { principalPersonExpanded = it },
+                    options = personList,
+                    selectedItem = personSelected,
+                    itemToString = { it?.name ?: "" },
+                    onItemClick = { personIdSelected = it.id },
+                    label = { Text("Principal person") }
+                )
+            }
         }
     }
 }
