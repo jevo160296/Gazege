@@ -1,10 +1,10 @@
 package com.example.gazege
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.Account
@@ -39,14 +39,12 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     val allPerson = repository.getPersons().asLiveData()
-    val principalPerson = Transformations.switchMap(allPerson) { persons ->
+    val principalPerson = allPerson.switchMap { persons ->
         MutableLiveData(getPrincipalPerson(persons))
     }
     val allAccount = repository.getAccounts().asLiveData()
     val allTransactions = repository.getTransactions(null, null).asLiveData()
-    val rangeTransactions = Transformations.switchMap(
-        range
-    ) { range ->
+    val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
 
