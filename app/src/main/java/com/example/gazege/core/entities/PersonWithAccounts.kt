@@ -24,7 +24,11 @@ data class PersonWithAccounts(
     private var ingresos: Double = Double.NaN
 
     @Ignore
-    var egresos: Double = Double.NaN
+    private var egresos: Double = Double.NaN
+
+    @Ignore
+    private var flujos: MutableMap<Person, Double> = mutableMapOf()
+
 
     private fun calculateValues(startDate: LocalDate?, endDate: LocalDate?) {
         val newRange = Pair(startDate, endDate)
@@ -53,6 +57,28 @@ data class PersonWithAccounts(
         }
     }
 
+    private fun calculateFlujo(
+        otherPersonWithAccounts: PersonWithAccounts
+    ): Double {
+        val selfAccounts = this.accounts.toTypedArray()
+        val otherAccountIds = otherPersonWithAccounts.accounts.map { it.account.id }
+        val inTransactions = selfAccounts.flatMap { account ->
+            account.inTransactions.filter { transaction ->
+                transaction.sourceId in otherAccountIds
+            }
+        }
+        val outTransactions = selfAccounts.flatMap { account ->
+            account.outTransactions.filter { transaction ->
+                transaction.destinationId in otherAccountIds
+            }
+        }
+
+        val totalIn = inTransactions.sumOf { it.amount }
+        val totalOut = outTransactions.sumOf { it.amount }
+
+        return totalOut - totalIn
+    }
+
     fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
         calculateValues(startDate, endDate)
         return total
@@ -75,23 +101,15 @@ data class PersonWithAccounts(
     fun getFlujo(
         otherPersonWithAccounts: PersonWithAccounts
     ): Double {
-        val selfAccounts = this.accounts.toTypedArray()
-        val otherAccountIds = otherPersonWithAccounts.accounts.map { it.account.id }
-        val inTransactions = selfAccounts.flatMap { account ->
-            account.inTransactions.filter { transaction ->
-                transaction.sourceId in otherAccountIds
-            }
+        val backedFlujo = flujos[otherPersonWithAccounts.person]
+        val flujo = if (backedFlujo == null) {
+            val calculatedFlujo = calculateFlujo(otherPersonWithAccounts)
+            flujos[otherPersonWithAccounts.person] = calculatedFlujo
+            calculatedFlujo
+        } else {
+            backedFlujo
         }
-        val outTransactions = selfAccounts.flatMap { account ->
-            account.outTransactions.filter { transaction ->
-                transaction.destinationId in otherAccountIds
-            }
-        }
-
-        val totalIn = inTransactions.sumOf { it.amount }
-        val totalOut = outTransactions.sumOf { it.amount }
-
-        return totalOut - totalIn
+        return flujo
     }
 
     companion object {
