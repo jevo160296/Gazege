@@ -68,6 +68,32 @@ data class PersonWithAccounts(
         return egresos
     }
 
+    /**
+     * Total entregado por esta persona a la otra persona (Negativo si la otra persona le entregó
+     * dinero).
+     */
+    fun getFlujo(
+        otherPersonWithAccounts: PersonWithAccounts
+    ): Double {
+        val selfAccounts = this.accounts.toTypedArray()
+        val otherAccountIds = otherPersonWithAccounts.accounts.map { it.account.id }
+        val inTransactions = selfAccounts.flatMap { account ->
+            account.inTransactions.filter { transaction ->
+                transaction.sourceId in otherAccountIds
+            }
+        }
+        val outTransactions = selfAccounts.flatMap { account ->
+            account.outTransactions.filter { transaction ->
+                transaction.destinationId in otherAccountIds
+            }
+        }
+
+        val totalIn = inTransactions.sumOf { it.amount }
+        val totalOut = outTransactions.sumOf { it.amount }
+
+        return totalOut - totalIn
+    }
+
     companion object {
         fun from(
             persons: List<Person>,
