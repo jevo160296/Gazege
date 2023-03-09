@@ -20,7 +20,6 @@ import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
-import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
 
@@ -66,16 +65,9 @@ private fun DefaultAccountViewHolder(
     endDate: LocalDate?
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1F)) {
-            Row {
-                SmallEmphasis(text = "Account:", modifier = Modifier.padding(end = 4.dp))
-                SmallBody(text = account.account.name)
-            }
-            Row {
-                SmallEmphasis(text = "Owner:", modifier = Modifier.padding(end = 4.dp))
-                SmallBody(text = account.owner.name)
-            }
-
+        Column(modifier = Modifier.weight(1f)) {
+            SmallEmphasis(text = "Account:", modifier = Modifier.padding(end = 4.dp))
+            LargeBody(text = account.account.name)
         }
         Column(
             horizontalAlignment = Alignment.End
@@ -186,7 +178,7 @@ private fun PreviewAccountList() {
             delAccount = {},
             editAccount = {},
             state = LazyListState()
-        ) {}
+        ) { acc -> DefaultAccountViewHolder(account = acc, startDate = null, endDate = null) }
     }
 }
 

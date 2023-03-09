@@ -65,15 +65,13 @@ private fun TransactionViewHolder(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceAround
         ) {
-            Row {
-                SmallEmphasis(text = "Source account: ")
+            Row(modifier = Modifier.weight(1f)) {
+                SmallEmphasis(text = "Cuentas: ")
                 SmallBody(text = transaction.sourceAccount.name)
-            }
-            Row {
-                SmallEmphasis(text = "Destination account: ")
+                SmallEmphasis(text = " --> ")
                 SmallBody(text = transaction.destinationAccount.name)
             }
-            Row {
+            Row(modifier = Modifier.weight(2f)) {
                 SmallEmphasis(text = "Description: ")
                 SmallBody(text = transaction.transaction.description)
             }
