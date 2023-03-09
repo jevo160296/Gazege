@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
@@ -153,8 +154,10 @@ fun MainFragment(
         sheetShape = Shapes.medium,
         sheetContent = {
             ModalSheetContent(
-                titleText = "Confirmar eliminación",
-                bodyText = "¿Confirma la eliminación de $nombreItem?",
+                titleText = stringResource(id = R.string.confirmar_eliminacion),
+                bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+                    nombreItem
+                ),
                 onSiClicked = {
                     action()
                     action = {}
@@ -329,6 +332,7 @@ fun MainFragment(
             }
             when (navPosition) {
                 NavPosition.TRANSACCIONES -> {
+                    val laTransaccion = stringResource(id = R.string.la_transaccion)
                     Column {
                         TransactionPage(
                             transactionList = transactionList,
@@ -336,7 +340,7 @@ fun MainFragment(
                             state = transactionState,
                             delTransaction = { transaction ->
                                 action = { delTransaction(transaction) }
-                                nombreItem = "la transacción"
+                                nombreItem = laTransaccion
                                 scope.launch { sheetState.show() }
                             },
                             editTransaction = onEditTransactionRequested,
@@ -345,6 +349,7 @@ fun MainFragment(
                     }
                 }
                 NavPosition.CUENTAS -> {
+                    val laCuenta = stringResource(id = R.string.la_cuenta)
                     AccountPage(
                         accountList = accountList.filter { person ->
                             person.owner.id == principalPerson?.id
@@ -353,8 +358,7 @@ fun MainFragment(
                         state = accountState,
                         delAccount = { account ->
                             action = { delAccount(account) }
-                            nombreItem =
-                                "la cuenta ${account.name} y sus transacciones asociadas"
+                            nombreItem = laCuenta.format(account.name)
                             scope.launch { sheetState.show() }
                         },
                         editAccount = onEditAccountRequested,
@@ -363,6 +367,7 @@ fun MainFragment(
                     ) { newTitle -> title = newTitle }
                 }
                 NavPosition.PERSONS -> {
+                    val laPersona = stringResource(R.string.la_persona)
                     PersonPage(
                         personList = personList.filter { person ->
                             person.person.id != principalPerson?.id
@@ -371,8 +376,7 @@ fun MainFragment(
                         state = personState,
                         delPerson = { person ->
                             action = { delPerson(person) }
-                            nombreItem =
-                                "${person.name} sus cuentas y transacciones asociadas"
+                            nombreItem = laPersona.format(person.name)
                             scope.launch { sheetState.show() }
                         },
                         editPerson = onEditPersonRequested,

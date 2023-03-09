@@ -10,9 +10,11 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
@@ -57,7 +59,7 @@ private fun PersonViewHolder(
         Column(
             horizontalAlignment = Alignment.Start
         ) {
-            SmallEmphasis(text = "Name: ")
+            SmallEmphasis(text = "${stringResource(id = R.string.nombre)}: ")
             LargeBody(text = person.person.name)
         }
         if (flujo != 0.0) {
@@ -65,10 +67,10 @@ private fun PersonViewHolder(
                 horizontalAlignment = Alignment.End
             ) {
                 if (flujo > 0) {
-                    SmallEmphasis(text = "Me debe")
+                    SmallEmphasis(text = stringResource(id = R.string.me_debe))
                     LargeBody(text = doubleToString(flujo.absoluteValue))
                 } else {
-                    SmallEmphasis(text = "Le debo")
+                    SmallEmphasis(text = stringResource(R.string.le_debo))
                     LargeBody(text = doubleToString(flujo.absoluteValue))
                 }
             }
@@ -111,16 +113,17 @@ fun PersonPage(
     onConfigurePrincipalPersonRequested: () -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
-    onTitleSetted("Persons")
+    onTitleSetted(stringResource(id = R.string.personas))
     Column(modifier = modifier) {
         val padding = Modifier.padding(horizontal = 8.dp)
         if (principalPerson == null) {
             LargeBody(
-                text = "Para ver las deudas con otras personas, es necesario configurar una " +
-                        "persona principal.", modifier = padding, textAlign = TextAlign.Justify
+                text = stringResource(id = R.string.persona_principal_vacia),
+                modifier = padding,
+                textAlign = TextAlign.Justify
             )
             ButtonField(onClick = onConfigurePrincipalPersonRequested, modifier = padding) {
-                SmallEmphasis(text = "Configurar persona principal")
+                SmallEmphasis(text = stringResource(id = R.string.configurar_persona_principal))
             }
         } else {
             PersonRecyclerView(

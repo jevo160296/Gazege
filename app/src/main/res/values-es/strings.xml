@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Gazege</string>
     <string name="transacciones">Transacciones</string>
     <string name="personas">Personas</string>
     <string name="cuentas">Cuentas</string>
@@ -14,8 +14,8 @@
     <string name="cuenta">Cuenta</string>
     <string name="total">Total</string>
     <string name="la_transaccion">la transacción</string>
-    <string name="la_persona">%1$s sus cuentas y transacciones asociadas</string>
     <string name="la_cuenta">la cuenta %1$s y sus transacciones asociadas</string>
+    <string name="la_persona">%1$s sus cuentas y transacciones asociadas</string>
     <string name="confirmar_eliminacion">Confirmar eliminación</string>
     <string name="confirma_la_eliminacion_de">¿Confirma la eliminación de %1$s?</string>
 </resources>

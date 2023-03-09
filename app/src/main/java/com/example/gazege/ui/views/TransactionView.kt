@@ -11,8 +11,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
@@ -66,13 +68,13 @@ private fun TransactionViewHolder(
             verticalArrangement = Arrangement.SpaceAround
         ) {
             Row(modifier = Modifier.weight(1f)) {
-                SmallEmphasis(text = "Cuentas: ")
+                SmallEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
                 SmallBody(text = transaction.sourceAccount.name)
                 SmallEmphasis(text = " --> ")
                 SmallBody(text = transaction.destinationAccount.name)
             }
             Row(modifier = Modifier.weight(2f)) {
-                SmallEmphasis(text = "Description: ")
+                SmallEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
                 SmallBody(text = transaction.transaction.description)
             }
         }
@@ -80,7 +82,7 @@ private fun TransactionViewHolder(
             modifier = Modifier.align(Alignment.CenterVertically),
             horizontalAlignment = Alignment.End
         ) {
-            SmallEmphasis(text = "Amount")
+            SmallEmphasis(text = stringResource(id = R.string.Valor))
             LargeBody(text = doubleToString(transaction.transaction.amount))
         }
     }
@@ -120,7 +122,7 @@ fun TransactionPage(
     state: LazyListState,
     onTitleSetted: (String) -> Unit
 ) {
-    onTitleSetted("Transacciones")
+    onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
         TransactionRecyclerView(
             transactionList = transactionList,
