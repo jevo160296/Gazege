@@ -376,9 +376,11 @@ fun MainFragment(
                             scope.launch { sheetState.show() }
                         },
                         editPerson = onEditPersonRequested,
-                        startDate = null,
-                        endDate = null,
-                        onTitleSetted = { newTitle -> title = newTitle }
+                        onTitleSetted = { newTitle -> title = newTitle },
+                        principalPerson = personList.firstOrNull { person ->
+                            person.person.id == principalPerson?.id
+                        },
+                        onConfigurePrincipalPersonRequested = onSettingsClicked
                     )
                 }
             }

@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
@@ -17,10 +20,12 @@ import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
+import kotlin.math.absoluteValue
 
 fun getPersonSample(): List<Person> {
     return (1..4).map {
@@ -34,18 +39,16 @@ fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
     val persons = getPersonSample()
     return persons.map {
         PersonWithAccounts(
-            person = it,
-            accounts = listOf()
+            person = it, accounts = listOf()
         )
     }
 }
 
 @Composable
 private fun PersonViewHolder(
-    person: PersonWithAccounts,
-    startDate: LocalDate?,
-    endDate: LocalDate?
+    principalPerson: PersonWithAccounts, person: PersonWithAccounts
 ) {
+    val flujo = principalPerson.getFlujo(person)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -57,25 +60,31 @@ private fun PersonViewHolder(
             SmallEmphasis(text = "Name: ")
             LargeBody(text = person.person.name)
         }
-        Column(
-            horizontalAlignment = Alignment.End
-        ) {
-            SmallEmphasis(text = "Total")
-            LargeBody(text = doubleToString(person.getTotal(startDate, endDate)))
+        if (flujo != 0.0) {
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                if (flujo > 0) {
+                    SmallEmphasis(text = "Me debe")
+                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                } else {
+                    SmallEmphasis(text = "Le debo")
+                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun PersonRecyclerView(
+    principalPerson: PersonWithAccounts,
     personList: List<PersonWithAccounts>,
     delPerson: (PersonWithAccounts) -> Unit,
     editPerson: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState,
-    startDate: LocalDate?,
-    endDate: LocalDate?
+    state: LazyListState
 ) {
     RecyclerView(
         elements = personList,
@@ -85,33 +94,44 @@ private fun PersonRecyclerView(
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
-        PersonViewHolder(person = it, startDate, endDate)
+        PersonViewHolder(person = it, principalPerson = principalPerson)
     }
+
 }
 
 @Composable
 fun PersonPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    principalPerson: PersonWithAccounts?,
     personList: List<PersonWithAccounts>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
     state: LazyListState,
-    startDate: LocalDate?,
-    endDate: LocalDate?,
+    onConfigurePrincipalPersonRequested: () -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
     onTitleSetted("Persons")
     Column(modifier = modifier) {
-        PersonRecyclerView(
-            personList = personList,
-            delPerson = { delPerson(it.person) },
-            editPerson = { editPerson(it.person) },
-            itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state,
-            startDate = startDate,
-            endDate = endDate
-        )
+        val padding = Modifier.padding(horizontal = 8.dp)
+        if (principalPerson == null) {
+            LargeBody(
+                text = "Para ver las deudas con otras personas, es necesario configurar una " +
+                        "persona principal.", modifier = padding, textAlign = TextAlign.Justify
+            )
+            ButtonField(onClick = onConfigurePrincipalPersonRequested, modifier = padding) {
+                SmallEmphasis(text = "Configurar persona principal")
+            }
+        } else {
+            PersonRecyclerView(
+                principalPerson = principalPerson,
+                personList = personList,
+                delPerson = { delPerson(it.person) },
+                editPerson = { editPerson(it.person) },
+                itemHolderPaddingValues = itemHolderPaddingValues,
+                state = state
+            )
+        }
     }
 }
 
@@ -120,34 +140,27 @@ fun PersonPage(
 private fun PreviewPersonItem() {
     val person = Person(name = "Persona")
     val account = Account(name = "Acc", ownerId = 0, initial_balance = 0.0)
-    val personWithAccounts = PersonWithAccounts(
-        person = person,
-        accounts = (0..10).map {
-            AccountAndOwnerWithTransactions(
-                account = account,
-                outTransactions = (1..2).map {
-                    Transaction(
-                        amount = it.toDouble(),
-                        description = "Trans",
-                        sourceId = 1,
-                        destinationId = 2,
-                        date = LocalDate.now()
-                    )
-                },
-                inTransactions = (1..4).map {
-                    Transaction(
-                        amount = it.toDouble(),
-                        description = "Trans2",
-                        sourceId = 1,
-                        destinationId = 2,
-                        date = LocalDate.now()
-                    )
-                },
-                owner = person
+    val personWithAccounts = PersonWithAccounts(person = person, accounts = (0..10).map {
+        AccountAndOwnerWithTransactions(account = account, outTransactions = (1..2).map {
+            Transaction(
+                amount = it.toDouble(),
+                description = "Trans",
+                sourceId = 1,
+                destinationId = 2,
+                date = LocalDate.now()
             )
-        }
-    )
-    PersonViewHolder(person = personWithAccounts, startDate = null, endDate = null)
+        }, inTransactions = (1..4).map {
+            Transaction(
+                amount = it.toDouble(),
+                description = "Trans2",
+                sourceId = 1,
+                destinationId = 2,
+                date = LocalDate.now()
+            )
+        }, owner = person
+        )
+    })
+    PersonViewHolder(person = personWithAccounts, principalPerson = personWithAccounts)
 }
 
 @Preview(showBackground = true)
@@ -155,14 +168,11 @@ private fun PreviewPersonItem() {
 private fun PreviewPersonList() {
     GazegeTheme {
         RecyclerView(
-            elements = getPersonWithAccountsSample(),
-            viewHolder = { person ->
+            elements = getPersonWithAccountsSample(), viewHolder = { person ->
                 PersonViewHolder(
-                    person = person, startDate = null,
-                    endDate = null
+                    person = person, principalPerson = person
                 )
-            },
-            state = LazyListState()
+            }, state = LazyListState()
         )
     }
 }
@@ -170,15 +180,15 @@ private fun PreviewPersonList() {
 @Preview(showBackground = true, widthDp = 420, heightDp = 620)
 @Composable
 private fun PreviewPersonPage() {
+    val persons = getPersonWithAccountsSample()
     GazegeTheme {
-        PersonPage(
-            personList = getPersonWithAccountsSample(),
+        PersonPage(personList = getPersonWithAccountsSample(),
             state = LazyListState(),
             editPerson = {},
             delPerson = {},
-            startDate = null,
-            endDate = null,
-            onTitleSetted = {}
+            onTitleSetted = {},
+            principalPerson = persons[0],
+            onConfigurePrincipalPersonRequested = {}
         )
     }
 }
