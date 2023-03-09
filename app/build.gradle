@@ -16,7 +16,6 @@ android {
         targetSdk 32
         versionCode 19
         versionName '1.0.0'
-        versionNameSuffix 'alpha'
 
         javaCompileOptions {
             annotationProcessorOptions {
