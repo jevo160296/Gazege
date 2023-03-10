@@ -29,23 +29,6 @@ import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
 import kotlin.math.absoluteValue
 
-fun getPersonSample(): List<Person> {
-    return (1..4).map {
-        Person(
-            name = "Person $it"
-        )
-    }
-}
-
-fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
-    val persons = getPersonSample()
-    return persons.map {
-        PersonWithAccounts(
-            person = it, accounts = listOf()
-        )
-    }
-}
-
 @Composable
 private fun PersonViewHolder(
     principalPerson: PersonWithAccounts, person: PersonWithAccounts
@@ -138,15 +121,33 @@ fun PersonPage(
     }
 }
 
+fun getPersonSample(): List<Person> {
+    return (1..40).map {
+        Person(
+            name = "Person $it"
+        )
+    }
+}
+
+fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
+    val persons = getPersonSample()
+    return persons.map {
+        PersonWithAccounts(
+            person = it, accounts = listOf()
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonItem() {
     val person = Person(name = "Persona")
     val account = Account(name = "Acc", ownerId = 0, initial_balance = 0.0)
     val personWithAccounts = PersonWithAccounts(person = person, accounts = (0..10).map {
-        AccountAndOwnerWithTransactions(account = account, outTransactions = (1..2).map {
-            Transaction(
-                amount = it.toDouble(),
+        AccountAndOwnerWithTransactions(
+            account = account, outTransactions = (1..2).map {
+                Transaction(
+                    amount = it.toDouble(),
                 description = "Trans",
                 sourceId = 1,
                 destinationId = 2,
@@ -185,13 +186,15 @@ private fun PreviewPersonList() {
 private fun PreviewPersonPage() {
     val persons = getPersonWithAccountsSample()
     GazegeTheme {
-        PersonPage(personList = getPersonWithAccountsSample(),
+        PersonPage(
+            personList = getPersonWithAccountsSample(),
             state = LazyListState(),
             editPerson = {},
             delPerson = {},
             onTitleSetted = {},
             principalPerson = persons[0],
-            onConfigurePrincipalPersonRequested = {}
+            onConfigurePrincipalPersonRequested = {},
+            itemHolderPaddingValues = PaddingValues(vertical = 50.dp)
         )
     }
 }
