@@ -38,11 +38,11 @@ fun <T> RecyclerView(
     viewHolder: @Composable (T) -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    var lastGroup = ""
+    var lastGroup: String? = null
     var firstGroup: String? = null
     val groupedItems = elements.groupBy {
         val group = groupSelector?.invoke(it)
-        lastGroup = group ?: ""
+        lastGroup = group
         firstGroup = firstGroup ?: group
         group
     }
