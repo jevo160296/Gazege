@@ -61,7 +61,9 @@ data class PersonWithAccounts(
         otherPersonWithAccounts: PersonWithAccounts
     ): Double {
         val selfAccounts = this.accounts.toTypedArray()
-        val otherAccountIds = otherPersonWithAccounts.accounts.map { it.account.id }
+        val otherAccountIds = otherPersonWithAccounts.accounts
+            .filter { !it.account.isIncome && !it.account.isOutcome }
+            .map { it.account.id }
         val inTransactions = selfAccounts.flatMap { account ->
             account.inTransactions.filter { transaction ->
                 transaction.sourceId in otherAccountIds

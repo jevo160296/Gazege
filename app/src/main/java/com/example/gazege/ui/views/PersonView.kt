@@ -72,7 +72,10 @@ private fun PersonRecyclerView(
     state: LazyListState
 ) {
     RecyclerView(
-        elements = personList,
+        elements = personList.filter {
+            val flujo = principalPerson.getFlujo(it)
+            flujo != 0.0
+        },
         modifier = modifier,
         onItemTapped = editPerson,
         onItemLongPressed = delPerson,
