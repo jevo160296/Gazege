@@ -384,7 +384,8 @@ fun MainFragment(
                         principalPerson = personList.firstOrNull { person ->
                             person.person.id == principalPerson?.id
                         },
-                        onConfigurePrincipalPersonRequested = onSettingsClicked
+                        onConfigurePrincipalPersonRequested = onSettingsClicked,
+                        transacciones = transactionList
                     )
                 }
             }

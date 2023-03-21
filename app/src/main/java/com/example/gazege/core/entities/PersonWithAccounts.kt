@@ -3,6 +3,7 @@ package com.example.gazege.core.entities
 import androidx.room.Embedded
 import androidx.room.Ignore
 import androidx.room.Relation
+import com.example.gazege.core.dao.PersonDao
 import java.time.LocalDate
 
 data class PersonWithAccounts(
@@ -58,27 +59,14 @@ data class PersonWithAccounts(
     }
 
     private fun calculateFlujo(
-        otherPersonWithAccounts: PersonWithAccounts
+        otherPersonWithAccounts: PersonWithAccounts,
+        transacciones: List<TransactionAndAccounts>
     ): Double {
-        val selfAccounts = this.accounts.toTypedArray()
-        val otherAccountIds = otherPersonWithAccounts.accounts
-            .filter { !it.account.isIncome && !it.account.isOutcome }
-            .map { it.account.id }
-        val inTransactions = selfAccounts.flatMap { account ->
-            account.inTransactions.filter { transaction ->
-                transaction.sourceId in otherAccountIds
-            }
-        }
-        val outTransactions = selfAccounts.flatMap { account ->
-            account.outTransactions.filter { transaction ->
-                transaction.destinationId in otherAccountIds
-            }
-        }
-
-        val totalIn = inTransactions.sumOf { it.amount }
-        val totalOut = outTransactions.sumOf { it.amount }
-
-        return totalOut - totalIn
+        return PersonDao.calculateFlujo(
+            this.person,
+            otherPersonWithAccounts.person,
+            transacciones
+        )
     }
 
     fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
@@ -101,11 +89,12 @@ data class PersonWithAccounts(
      * dinero).
      */
     fun getFlujo(
-        otherPersonWithAccounts: PersonWithAccounts
+        otherPersonWithAccounts: PersonWithAccounts,
+        transacciones: List<TransactionAndAccounts>
     ): Double {
         val backedFlujo = flujos[otherPersonWithAccounts.person]
         val flujo = if (backedFlujo == null) {
-            val calculatedFlujo = calculateFlujo(otherPersonWithAccounts)
+            val calculatedFlujo = calculateFlujo(otherPersonWithAccounts, transacciones)
             flujos[otherPersonWithAccounts.person] = calculatedFlujo
             calculatedFlujo
         } else {

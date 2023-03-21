@@ -20,6 +20,7 @@ import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
@@ -31,9 +32,11 @@ import kotlin.math.absoluteValue
 
 @Composable
 private fun PersonViewHolder(
-    principalPerson: PersonWithAccounts, person: PersonWithAccounts
+    principalPerson: PersonWithAccounts,
+    person: PersonWithAccounts,
+    transactions: List<TransactionAndAccounts>
 ) {
-    val flujo = principalPerson.getFlujo(person)
+    val flujo = principalPerson.getFlujo(person, transactions)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -65,6 +68,7 @@ private fun PersonViewHolder(
 private fun PersonRecyclerView(
     principalPerson: PersonWithAccounts,
     personList: List<PersonWithAccounts>,
+    transacciones: List<TransactionAndAccounts>,
     delPerson: (PersonWithAccounts) -> Unit,
     editPerson: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
@@ -73,7 +77,7 @@ private fun PersonRecyclerView(
 ) {
     RecyclerView(
         elements = personList.filter {
-            val flujo = principalPerson.getFlujo(it)
+            val flujo = principalPerson.getFlujo(it, transacciones = transacciones)
             flujo != 0.0
         },
         modifier = modifier,
@@ -82,7 +86,7 @@ private fun PersonRecyclerView(
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
-        PersonViewHolder(person = it, principalPerson = principalPerson)
+        PersonViewHolder(person = it, principalPerson = principalPerson, transactions = listOf())
     }
 
 }
@@ -93,6 +97,7 @@ fun PersonPage(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     principalPerson: PersonWithAccounts?,
     personList: List<PersonWithAccounts>,
+    transacciones: List<TransactionAndAccounts>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
     state: LazyListState,
@@ -118,7 +123,8 @@ fun PersonPage(
                 delPerson = { delPerson(it.person) },
                 editPerson = { editPerson(it.person) },
                 itemHolderPaddingValues = itemHolderPaddingValues,
-                state = state
+                state = state,
+                transacciones = transacciones
             )
         }
     }
@@ -154,7 +160,8 @@ private fun PreviewPersonItem() {
                     description = "Trans",
                     sourceId = 1,
                     destinationId = 2,
-                    date = LocalDate.now()
+                    date = LocalDate.now(),
+                    aNombreDe = null
                 )
         }, inTransactions = (1..4).map {
             Transaction(
@@ -162,12 +169,17 @@ private fun PreviewPersonItem() {
                 description = "Trans2",
                 sourceId = 1,
                 destinationId = 2,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
         }, owner = person
         )
     })
-    PersonViewHolder(person = personWithAccounts, principalPerson = personWithAccounts)
+    PersonViewHolder(
+        person = personWithAccounts,
+        principalPerson = personWithAccounts,
+        transactions = listOf()
+    )
 }
 
 @Preview(showBackground = true)
@@ -177,7 +189,7 @@ private fun PreviewPersonList() {
         RecyclerView(
             elements = getPersonWithAccountsSample(), viewHolder = { person ->
                 PersonViewHolder(
-                    person = person, principalPerson = person
+                    person = person, principalPerson = person, transactions = listOf()
                 )
             }, state = LazyListState()
         )
@@ -197,7 +209,8 @@ private fun PreviewPersonPage() {
             onTitleSetted = {},
             principalPerson = persons[0],
             onConfigurePrincipalPersonRequested = {},
-            itemHolderPaddingValues = PaddingValues(vertical = 50.dp)
+            itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
+            transacciones = listOf()
         )
     }
 }

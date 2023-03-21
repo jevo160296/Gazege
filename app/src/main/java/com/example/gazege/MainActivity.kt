@@ -403,7 +403,8 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.div(10000),
                                     yearMonthDay.mod(10000).div(100),
                                     yearMonthDay.mod(100)
-                                )
+                                ),
+                                personList = personList
                             )
                         }
                         composable(
@@ -429,7 +430,8 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.updateTransaction(it)
                                     navController.navigateUp()
                                 },
-                                transactionAndAccounts = selectedTransactionAndAccounts
+                                transactionAndAccounts = selectedTransactionAndAccounts,
+                                personList = personList
                             )
                         }
                         composable("settings") {

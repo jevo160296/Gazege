@@ -14,7 +14,8 @@ data class PartialTransaction(
     var description: String? = null,
     var sourceId: Int? = null,
     var destinationId: Int? = null,
-    var date: LocalDate? = null
+    var date: LocalDate? = null,
+    var aNombreDe: Int? = null
 ): PartialEntity<Transaction>
 {
     override fun isComplete(): Boolean {
@@ -33,7 +34,8 @@ data class PartialTransaction(
                 description = description!!,
                 sourceId = sourceId!!,
                 destinationId = destinationId!!,
-                date = date!!
+                date = date!!,
+                aNombreDe = aNombreDe
             )
         }
         else{

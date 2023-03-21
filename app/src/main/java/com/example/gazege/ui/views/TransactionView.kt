@@ -39,7 +39,8 @@ fun getTransactionSample(): List<TransactionAndAccounts> {
                 description = "Trans $i",
                 sourceId = source.account.id ?: -1,
                 destinationId = destination.account.id ?: -1,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
             i++
             TransactionAndAccounts(
@@ -150,7 +151,8 @@ private fun PreviewTransactionItem() {
     )
     val transaction = Transaction(
         amount = 0.0, description = "Trans", date = LocalDate.now(),
-        destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1
+        destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1,
+        aNombreDe = null
     )
     val transactionAndAccounts = TransactionAndAccounts(
         transaction = transaction, sourceAccount = sourceAccount,

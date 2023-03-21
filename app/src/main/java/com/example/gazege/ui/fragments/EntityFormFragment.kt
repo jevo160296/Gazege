@@ -6,6 +6,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -155,6 +156,7 @@ fun TransactionFormFragment(
     accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit,
+    personList: List<Person>,
     defaultDate: LocalDate = LocalDate.now()
 ) {
     var transactionAndAccountsState by rememberSaveable(
@@ -170,7 +172,8 @@ fun TransactionFormFragment(
                             description = it.description,
                             sourceId = it.sourceId,
                             destinationId = it.destinationId,
-                            date = it.date
+                            date = it.date,
+                            aNombreDe = it.aNombreDe
                         )
                     },
                     sourceAccount = transactionAndAccounts.sourceAccount,
@@ -180,6 +183,9 @@ fun TransactionFormFragment(
                 PartialTransactionAndAccounts()
             }
         )
+    }
+    var realizarANombreDe by rememberSaveable {
+        mutableStateOf(transactionAndAccountsState.transaction.aNombreDe != null)
     }
     val completeState = transactionAndAccountsState.isComplete()
     Form(
@@ -204,6 +210,14 @@ fun TransactionFormFragment(
             onDateChanged = {
                 transactionAndAccountsState = transactionAndAccountsState.copy().apply {
                     transaction = this.transaction.copy(date = it)
+                }
+            },
+            realizarANombreDe = realizarANombreDe,
+            onRealizarANombreDeChanged = { realizarANombreDe = it },
+            personList = personList,
+            onRealizarAnombreDeIdChanged = {
+                transactionAndAccountsState = transactionAndAccountsState.copy().apply {
+                    transaction = this.transaction.copy(aNombreDe = it)
                 }
             }
         )
@@ -394,6 +408,10 @@ private fun TransactionAndAccountsForm(
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit,
     defaultDate: LocalDate = LocalDate.now(),
+    realizarANombreDe: Boolean,
+    onRealizarANombreDeChanged: (Boolean) -> Unit,
+    personList: List<Person>,
+    onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
@@ -521,6 +539,33 @@ private fun TransactionAndAccountsForm(
                 onDateChanged(it)
             }
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = realizarANombreDe, onCheckedChange = {
+                if (!it) {
+                    onRealizarAnombreDeIdChanged(null)
+                }
+                onRealizarANombreDeChanged(it)
+            })
+            Text(text = "Realizar a nombre de otra persona")
+        }
+        if (realizarANombreDe) {
+            var dropDownExpanded by rememberSaveable {
+                mutableStateOf(false)
+            }
+            val selectedItem =
+                personList.firstOrNull { it.id == transactionAndAccounts.transaction.aNombreDe }
+            DropDownMenu(
+                dropDownExpanded = dropDownExpanded,
+                onExpandedChange = { dropDownExpanded = it },
+                options = personList,
+                selectedItem = selectedItem,
+                itemToString = { it?.name ?: "" },
+                onItemClick = { onRealizarAnombreDeIdChanged(it.id) },
+                label = { Text("Persona") }
+            )
+        }
     }
 }
 
@@ -572,7 +617,8 @@ private fun PreviewLight() {
                     onAccountAddRequested = { },
                     onTransactionAndAccountsAdd = {
                         formType = formTypes.Person
-                    }
+                    },
+                    personList = listOf()
                 )
             }
             else -> {}

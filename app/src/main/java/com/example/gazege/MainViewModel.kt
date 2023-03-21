@@ -113,7 +113,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     description = "Ajuste",
                     sourceId = incomeAccountId,
                     destinationId = accountId,
-                    date = LocalDate.now()
+                    date = LocalDate.now(),
+                    aNombreDe = null
                 )
             } else {
                 Transaction(
@@ -121,7 +122,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     description = "Ajuste",
                     sourceId = accountId,
                     destinationId = outcomeAccountId,
-                    date = LocalDate.now()
+                    date = LocalDate.now(),
+                    aNombreDe = null
                 )
             }
             repository.insertTransaction(transaccionAjuste)
