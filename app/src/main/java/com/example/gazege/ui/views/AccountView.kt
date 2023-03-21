@@ -42,7 +42,8 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                         description = "",
                         sourceId = 2,
                         destinationId = index,
-                        date = LocalDate.now()
+                        date = LocalDate.now(),
+                        aNombreDe = null
                     )
                 },
                 outTransactions = (1..40).map { trans_index ->
@@ -51,7 +52,8 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                         description = "",
                         sourceId = index,
                         destinationId = 3,
-                        date = LocalDate.now()
+                        date = LocalDate.now(),
+                        aNombreDe = null
                     )
                 }
             )
@@ -153,7 +155,8 @@ private fun PreviewAccountItem() {
                 description = "",
                 sourceId = 2,
                 destinationId = 1,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
         },
         outTransactions = (1..40).map { trans_index ->
@@ -162,7 +165,8 @@ private fun PreviewAccountItem() {
                 description = "",
                 sourceId = 1,
                 destinationId = 3,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
         }
     )

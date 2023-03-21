@@ -18,6 +18,12 @@ import java.time.LocalDate
             parentColumns = ["id"],
             childColumns = ["sourceId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Person::class,
+            parentColumns = ["id"],
+            childColumns = ["aNombreDe"],
+            onDelete = ForeignKey.SET_NULL
         )
     ]
 )
@@ -27,5 +33,6 @@ data class Transaction(
     val description: String,
     val sourceId: Int,
     val destinationId: Int,
-    val date: LocalDate
+    val date: LocalDate,
+    val aNombreDe: Int?
 )
