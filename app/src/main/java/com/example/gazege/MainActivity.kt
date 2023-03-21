@@ -200,18 +200,29 @@ class MainActivity : ComponentActivity() {
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState ->
                                     val accountOwnerIdList = accountList.map {
                                         Pair(it.name, it.ownerId)
                                     }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                                     if (sePuedeAgregar) {
-                                        mainViewModel.insertAccount(account, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostState.showSnackbar("Error añadiento cuenta $it")
-                                            }
-                                        }).invokeOnCompletion {
+                                        mainViewModel.insertAccount(
+                                            account,
+                                            onErrorAction = {
+                                                coroutineScope.launch {
+                                                    snackBarHostState.showSnackbar("Error añadiento cuenta $it")
+                                                }
+                                            },
+                                            onCompleitionAction = { addedId ->
+                                                val valorAjuste = newBalance
+                                                mainViewModel.realizarAjuste(
+                                                    accountId = addedId.toInt(),
+                                                    amount = valorAjuste,
+                                                    incomeAccountId = 2,
+                                                    outcomeAccountId = 2
+                                                )
+                                            }).invokeOnCompletion {
                                             if (it == null) {
                                                 navController.navigateUp()
                                             }
@@ -221,7 +232,8 @@ class MainActivity : ComponentActivity() {
                                             snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
                                         }
                                     }
-                                }
+                                },
+                                currentBalance = 0.0
                             )
                         }
                         composable(
@@ -229,8 +241,12 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("accountId") { type = NavType.IntType })
                         ) { navStack ->
                             val accountId = navStack.arguments?.getInt("accountId")
-                            val selectedAccountAndOwner = accountAndOwnerWithTransactions
-                                .firstOrNull { it.account.id == accountId }
+                            val selectedAccountAndOwnerWithTransactions =
+                                accountAndOwnerWithTransactions
+                                    .firstOrNull { it.account.id == accountId }
+                            val selectedAccountAndOwnerBalance =
+                                selectedAccountAndOwnerWithTransactions?.getTotal(null, null)
+                            val selectedAccountAndOwner = selectedAccountAndOwnerWithTransactions
                                 ?.let {
                                     AccountAndOwner(
                                         account = it.account,
@@ -242,18 +258,32 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
-                                onAccountAndOwnerAdd = { account, snackBarHostState ->
-                                    val accountOwnerIdList = accountList.map {
-                                        Pair(it.name, it.ownerId)
-                                    }
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState ->
+                                    val accountOwnerIdList = accountList
+                                        .filter { it.id != account.id }
+                                        .map { Pair(it.name, it.ownerId) }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                                     if (sePuedeAgregar) {
-                                        mainViewModel.updateAccount(account, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                        mainViewModel.updateAccount(
+                                            account,
+                                            onErrorAction = {
+                                                coroutineScope.launch {
+                                                    snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                                }
+                                            },
+                                            onCompleitionAction = { addedId ->
+                                                val valorAjuste =
+                                                    newBalance - (selectedAccountAndOwnerBalance
+                                                        ?: 0.0)
+                                                mainViewModel.realizarAjuste(
+                                                    accountId = addedId.toInt(),
+                                                    amount = valorAjuste,
+                                                    incomeAccountId = 2,
+                                                    outcomeAccountId = 2
+                                                )
                                             }
-                                        }).invokeOnCompletion {
+                                        ).invokeOnCompletion {
                                             if (it == null) {
                                                 navController.navigateUp()
                                             }
@@ -264,7 +294,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
-                                accountAndOwner = selectedAccountAndOwner
+                                accountAndOwner = selectedAccountAndOwner,
+                                currentBalance = selectedAccountAndOwnerBalance ?: 0.0
                             )
                         }
                         composable("addPerson") {
@@ -412,7 +443,9 @@ class MainActivity : ComponentActivity() {
                                 saving += 1
                                 coroutineScope.launch {
                                     mainViewModel.updateAccount(
-                                        account = account.copy(includedInTotal = nuevoEstado)) {}.join()
+                                        account = account.copy(includedInTotal = nuevoEstado),
+                                        onErrorAction = {},
+                                        onCompleitionAction = {}).join()
                                 }.invokeOnCompletion {
                                     saving -= 1
                                 }

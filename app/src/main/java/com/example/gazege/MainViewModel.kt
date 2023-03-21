@@ -67,18 +67,59 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         repository.deletePerson(person)
     }
 
-    fun insertAccount(account: Account, onErrorAction: (Throwable) -> Unit) =
+    fun insertAccount(
+        account: Account,
+        onErrorAction: (Throwable) -> Unit,
+        onCompleitionAction: (Long) -> Unit
+    ): Job =
         viewModelScope.safeLaunch(onErrorAction) {
-            repository.insertAccount(account)
+            val addedIds = repository.insertAccount(account)
+            onCompleitionAction(addedIds.first())
         }
 
-    fun updateAccount(account: Account, onErrorAction: (Throwable) -> Unit) =
+    fun updateAccount(
+        account: Account,
+        onErrorAction: (Throwable) -> Unit,
+        onCompleitionAction: (Long) -> Unit
+    ) =
         viewModelScope.safeLaunch(onErrorAction) {
             repository.updateAccount(account)
+            val id = account.id
+            if (id != null) {
+                onCompleitionAction(id.toLong())
+            }
         }
 
     fun deleteAccount(account: Account) = viewModelScope.launch {
         repository.deleteAccount(account)
+    }
+
+    fun realizarAjuste(
+        accountId: Int,
+        amount: Double,
+        incomeAccountId: Int,
+        outcomeAccountId: Int
+    ) = viewModelScope.launch {
+        if (amount != 0.0) {
+            val transaccionAjuste = if (amount > 0) {
+                Transaction(
+                    amount = amount,
+                    description = "Ajuste",
+                    sourceId = incomeAccountId,
+                    destinationId = accountId,
+                    date = LocalDate.now()
+                )
+            } else {
+                Transaction(
+                    amount = -amount,
+                    description = "Ajuste",
+                    sourceId = accountId,
+                    destinationId = outcomeAccountId,
+                    date = LocalDate.now()
+                )
+            }
+            repository.insertTransaction(transaccionAjuste)
+        }
     }
 
     fun insertTransaction(transaction: Transaction) = viewModelScope.launch {

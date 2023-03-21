@@ -54,8 +54,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertAccount(account: Account) {
-        accountDao.insertAll(account)
+    suspend fun insertAccount(account: Account): List<Long> {
+        return accountDao.insertAll(account)
     }
 
     @WorkerThread
