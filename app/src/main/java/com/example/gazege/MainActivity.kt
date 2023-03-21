@@ -80,13 +80,17 @@ class MainActivity : ComponentActivity() {
                         LocalDate.now()
                     )
                 )
+                val incomeAccount by mainViewModel.incomeAccount.observeAsState()
+                val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
                 val principalPersonState = mainViewModel.principalPerson.observeAsState()
                 val principalPerson = principalPersonState.value
 
                 val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
                     .from(accountList, personList, allTransactions)
-                val personWithAccounts = PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
-                val transactionAndAccounts = TransactionAndAccounts.from(transactionList, accountList)
+                val personWithAccounts =
+                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
+                val transactionAndAccounts =
+                    TransactionAndAccounts.from(transactionList, accountList)
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -200,18 +204,31 @@ class MainActivity : ComponentActivity() {
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                onAccountAndOwnerAdd = { account, snackBarHostState ->
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
                                     val accountOwnerIdList = accountList.map {
                                         Pair(it.name, it.ownerId)
                                     }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                                     if (sePuedeAgregar) {
-                                        mainViewModel.insertAccount(account, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostState.showSnackbar("Error añadiento cuenta $it")
-                                            }
-                                        }).invokeOnCompletion {
+                                        mainViewModel.insertAccount(
+                                            account,
+                                            onErrorAction = {
+                                                coroutineScope.launch {
+                                                    snackBarHostState.showSnackbar("Error añadiento cuenta $it")
+                                                }
+                                            },
+                                            onCompleitionAction = { addedId ->
+                                                if (incomeAccountId != null && outcomeAccountId != null) {
+                                                    val valorAjuste = newBalance
+                                                    mainViewModel.realizarAjuste(
+                                                        accountId = addedId.toInt(),
+                                                        amount = valorAjuste,
+                                                        incomeAccountId = incomeAccountId,
+                                                        outcomeAccountId = outcomeAccountId
+                                                    )
+                                                }
+                                            }).invokeOnCompletion {
                                             if (it == null) {
                                                 navController.navigateUp()
                                             }
@@ -221,6 +238,12 @@ class MainActivity : ComponentActivity() {
                                             snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
                                         }
                                     }
+                                },
+                                currentBalance = 0.0,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onSetIncomeOutcomeAccount = {
+                                    navController.navigate("settings")
                                 }
                             )
                         }
@@ -229,8 +252,12 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("accountId") { type = NavType.IntType })
                         ) { navStack ->
                             val accountId = navStack.arguments?.getInt("accountId")
-                            val selectedAccountAndOwner = accountAndOwnerWithTransactions
-                                .firstOrNull { it.account.id == accountId }
+                            val selectedAccountAndOwnerWithTransactions =
+                                accountAndOwnerWithTransactions
+                                    .firstOrNull { it.account.id == accountId }
+                            val selectedAccountAndOwnerBalance =
+                                selectedAccountAndOwnerWithTransactions?.getTotal(null, null)
+                            val selectedAccountAndOwner = selectedAccountAndOwnerWithTransactions
                                 ?.let {
                                     AccountAndOwner(
                                         account = it.account,
@@ -242,18 +269,34 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
-                                onAccountAndOwnerAdd = { account, snackBarHostState ->
-                                    val accountOwnerIdList = accountList.map {
-                                        Pair(it.name, it.ownerId)
-                                    }
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
+                                    val accountOwnerIdList = accountList
+                                        .filter { it.id != account.id }
+                                        .map { Pair(it.name, it.ownerId) }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
                                     val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                                     if (sePuedeAgregar) {
-                                        mainViewModel.updateAccount(account, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                        mainViewModel.updateAccount(
+                                            account,
+                                            onErrorAction = {
+                                                coroutineScope.launch {
+                                                    snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
+                                                }
+                                            },
+                                            onCompleitionAction = { addedId ->
+                                                if (incomeAccountId != null && outcomeAccountId != null) {
+                                                    val valorAjuste =
+                                                        newBalance - (selectedAccountAndOwnerBalance
+                                                            ?: 0.0)
+                                                    mainViewModel.realizarAjuste(
+                                                        accountId = addedId.toInt(),
+                                                        amount = valorAjuste,
+                                                        incomeAccountId = incomeAccountId,
+                                                        outcomeAccountId = outcomeAccountId
+                                                    )
+                                                }
                                             }
-                                        }).invokeOnCompletion {
+                                        ).invokeOnCompletion {
                                             if (it == null) {
                                                 navController.navigateUp()
                                             }
@@ -264,7 +307,13 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
-                                accountAndOwner = selectedAccountAndOwner
+                                accountAndOwner = selectedAccountAndOwner,
+                                currentBalance = selectedAccountAndOwnerBalance ?: 0.0,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onSetIncomeOutcomeAccount = {
+                                    navController.navigate("settings")
+                                }
                             )
                         }
                         composable("addPerson") {
@@ -398,7 +447,41 @@ class MainActivity : ComponentActivity() {
                                 onNavigateUpRequested = {
                                     navController.navigateUp()
                                 },
-                                onAddPersonRequested = { navController.navigate("addPerson") }
+                                onAddPersonRequested = { navController.navigate("addPerson") },
+                                accountList = accountAndOwnerWithTransactions,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onAddAccountRequested = { navController.navigate("addAccount") },
+                                onIncomeOutcomeAccountChanged = { newIncome, newOutcome ->
+                                    val castedIncomeAccount = incomeAccount
+                                    val castedOutcomeAccount = outcomeAccount
+                                    if (castedIncomeAccount != null) {
+                                        mainViewModel.updateAccount(
+                                            castedIncomeAccount.copy(
+                                                isIncome = false
+                                            ), onCompleitionAction = {}, onErrorAction = {})
+                                    }
+                                    if (castedOutcomeAccount != null) {
+                                        mainViewModel.updateAccount(
+                                            castedOutcomeAccount.copy(
+                                                isOutcome = false
+                                            ), onCompleitionAction = {}, onErrorAction = {})
+                                    }
+                                    if (newIncome != null) {
+                                        mainViewModel.updateAccount(
+                                            newIncome.copy(
+                                                isIncome = true,
+                                                isOutcome = false
+                                            ), onErrorAction = {}, onCompleitionAction = {})
+                                    }
+                                    if (newOutcome != null) {
+                                        mainViewModel.updateAccount(
+                                            newOutcome.copy(
+                                                isIncome = false,
+                                                isOutcome = true
+                                            ), onErrorAction = {}, onCompleitionAction = {})
+                                    }
+                                }
                             )
                         }
                         composable("saldoActualSettings") {
@@ -412,7 +495,9 @@ class MainActivity : ComponentActivity() {
                                 saving += 1
                                 coroutineScope.launch {
                                     mainViewModel.updateAccount(
-                                        account = account.copy(includedInTotal = nuevoEstado)) {}.join()
+                                        account = account.copy(includedInTotal = nuevoEstado),
+                                        onErrorAction = {},
+                                        onCompleitionAction = {}).join()
                                 }.invokeOnCompletion {
                                     saving -= 1
                                 }

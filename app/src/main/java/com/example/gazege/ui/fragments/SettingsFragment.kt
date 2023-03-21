@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
@@ -28,16 +30,38 @@ fun SettingsFragment(
     personList: List<Person>,
     principalPerson: Person?,
     onPrincipalPersonChanged: (Person) -> Unit,
+    accountList: List<AccountAndOwnerWithTransactions>,
+    incomeAccount: Account?,
+    outcomeAccount: Account?,
+    onIncomeOutcomeAccountChanged: (Account?, Account?) -> Unit,
+    onAddAccountRequested: () -> Unit,
     onAddPersonRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
         mutableStateOf(false)
     }
+    var incomeExpanded by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var outcomeExpanded by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var incomeIdSelected by rememberSaveable {
+        mutableStateOf(incomeAccount?.id)
+    }
+    var outcomeIdSelected by rememberSaveable {
+        mutableStateOf(outcomeAccount?.id)
+    }
     var personIdSelected by rememberSaveable {
         mutableStateOf(principalPerson?.id)
     }
     val personSelected = personList.firstOrNull { it.id == personIdSelected }
+    val incomeSelected = accountList.firstOrNull { it.account.id == incomeIdSelected }
+    val outcomeSelected = accountList.firstOrNull { it.account.id == outcomeIdSelected }
+    val accountListNoIncome = accountList.filter { it.account.id != incomeIdSelected }
+    val accountListNoOutcome = accountList.filter { it.account.id != outcomeIdSelected }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -47,6 +71,12 @@ fun SettingsFragment(
                 onClick = {
                     if (personSelected != null) {
                         onPrincipalPersonChanged(personSelected)
+                    }
+                    if (incomeSelected != null || outcomeSelected != null) {
+                        onIncomeOutcomeAccountChanged(
+                            incomeSelected?.account,
+                            outcomeSelected?.account
+                        )
                     }
                     onNavigateUpRequested()
                 }, shape = Shapes.small
@@ -76,6 +106,40 @@ fun SettingsFragment(
                     onItemClick = { personIdSelected = it.id },
                     label = { Text("Principal person") }
                 )
+            }
+            if (accountListNoOutcome.isEmpty()) {
+                ButtonField(onClick = onAddAccountRequested) {
+                    Text(text = "Nueva cuenta")
+                }
+            } else {
+                DropDownMenu(
+                    dropDownExpanded = incomeExpanded,
+                    onExpandedChange = { incomeExpanded = it },
+                    options = accountListNoOutcome,
+                    selectedItem = incomeSelected,
+                    itemToString = { it?.account?.name ?: "" },
+                    onItemClick = { incomeIdSelected = it.account.id },
+                    label = { Text("Income") }
+                ) {
+                    it.owner.name
+                }
+            }
+            if (accountListNoIncome.isEmpty()) {
+                ButtonField(onClick = onAddAccountRequested) {
+                    Text(text = "Nueva cuenta")
+                }
+            } else {
+                DropDownMenu(
+                    dropDownExpanded = outcomeExpanded,
+                    onExpandedChange = { outcomeExpanded = it },
+                    options = accountListNoIncome,
+                    selectedItem = outcomeSelected,
+                    itemToString = { it?.account?.name ?: "" },
+                    onItemClick = { outcomeIdSelected = it.account.id },
+                    label = { Text("Outcome") }
+                ) {
+                    it.owner.name
+                }
             }
         }
     }

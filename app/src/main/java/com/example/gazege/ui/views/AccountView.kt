@@ -31,8 +31,7 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
             val account = Account(
                 id = index,
                 name = "Cuenta$index",
-                ownerId = person.id ?: -1,
-                initial_balance = (person.id ?: -1).toDouble() * 10 + index
+                ownerId = person.id ?: -1
             )
             AccountAndOwnerWithTransactions(
                 account = account,
@@ -144,7 +143,7 @@ fun AccountPage(
 @Composable
 private fun PreviewAccountItem() {
     val owner = Person(id = 0, name = "Persona")
-    val account = Account(name = "Cuenta 1", ownerId = 0, initial_balance = 0.0)
+    val account = Account(name = "Cuenta 1", ownerId = 0)
     val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions(
         owner = owner,
         account = account,
