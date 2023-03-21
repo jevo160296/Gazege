@@ -43,6 +43,12 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         MutableLiveData(getPrincipalPerson(persons))
     }
     val allAccount = repository.getAccounts().asLiveData()
+    val incomeAccount = allAccount.switchMap { accounts ->
+        MutableLiveData(getIncomeAccount(accounts))
+    }
+    val outcomeAccount = allAccount.switchMap { accounts ->
+        MutableLiveData(getOutcomeAccount(accounts))
+    }
     val allTransactions = repository.getTransactions(null, null).asLiveData()
     val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
@@ -142,6 +148,28 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 .filter { it.importance != null }
                 .sortedBy { it.id }
                 .sortedBy { it.importance }
+                .firstOrNull()
+        }
+    }
+
+    private fun getIncomeAccount(accountList: List<Account>): Account? {
+        return if (accountList.isEmpty()) {
+            null
+        } else {
+            accountList
+                .filter { it.isIncome }
+                .sortedBy { it.id }
+                .firstOrNull()
+        }
+    }
+
+    private fun getOutcomeAccount(accountList: List<Account>): Account? {
+        return if (accountList.isEmpty()) {
+            null
+        } else {
+            accountList
+                .filter { it.isOutcome }
+                .sortedBy { it.id }
                 .firstOrNull()
         }
     }

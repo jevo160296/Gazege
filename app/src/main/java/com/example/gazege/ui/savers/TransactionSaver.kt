@@ -113,8 +113,7 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                 ParcelableAccount(
                     id = state.sourceAccount!!.id,
                     name = state.sourceAccount!!.name,
-                    ownerId = state.sourceAccount!!.ownerId,
-                    initial_balance = state.sourceAccount!!.initial_balance
+                    ownerId = state.sourceAccount!!.ownerId
                 )
             }else{
                 null
@@ -123,8 +122,7 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                 ParcelableAccount(
                     id = state.destinationAccount!!.id,
                     name = state.destinationAccount!!.name,
-                    ownerId = state.destinationAccount!!.ownerId,
-                    initial_balance = state.destinationAccount!!.initial_balance
+                    ownerId = state.destinationAccount!!.ownerId
                 )
             } else{
                 null

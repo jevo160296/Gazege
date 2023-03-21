@@ -9,16 +9,18 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.migrations.Migrate34
+import com.example.gazege.core.migrations.MigrateSpec56
 
 @Database(
     entities = [
         Person::class,
         Account::class,
         Transaction::class],
-    version = 5,
+    version = 6,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
-        AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6, MigrateSpec56::class)
     ]
 )
 @TypeConverters(DateConverter::class)

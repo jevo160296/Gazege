@@ -143,12 +143,10 @@ fun TransactionPage(
 private fun PreviewTransactionItem() {
     val person = Person(name = "Person", id = 0)
     val sourceAccount = Account(
-        name = "Account1", ownerId = person.id ?: -1,
-        initial_balance = 0.0
+        name = "Account1", ownerId = person.id ?: -1
     )
     val destinationAccount = Account(
-        name = "Account2", ownerId = person.id ?: -1,
-        initial_balance = 0.0
+        name = "Account2", ownerId = person.id ?: -1
     )
     val transaction = Transaction(
         amount = 0.0, description = "Trans", date = LocalDate.now(),

@@ -142,17 +142,17 @@ fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
 @Composable
 private fun PreviewPersonItem() {
     val person = Person(name = "Persona")
-    val account = Account(name = "Acc", ownerId = 0, initial_balance = 0.0)
+    val account = Account(name = "Acc", ownerId = 0)
     val personWithAccounts = PersonWithAccounts(person = person, accounts = (0..10).map {
         AccountAndOwnerWithTransactions(
             account = account, outTransactions = (1..2).map {
                 Transaction(
                     amount = it.toDouble(),
-                description = "Trans",
-                sourceId = 1,
-                destinationId = 2,
-                date = LocalDate.now()
-            )
+                    description = "Trans",
+                    sourceId = 1,
+                    destinationId = 2,
+                    date = LocalDate.now()
+                )
         }, inTransactions = (1..4).map {
             Transaction(
                 amount = it.toDouble(),

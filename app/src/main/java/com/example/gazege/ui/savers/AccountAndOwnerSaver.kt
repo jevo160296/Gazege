@@ -10,15 +10,13 @@ import kotlinx.parcelize.Parcelize
 data class PartialAccount (
     var id: Int? = null,
     var name: String? = null,
-    var ownerId: Int? = null,
-    var initial_balance: Double? = 0.0
+    var ownerId: Int? = null
 ): PartialEntity<Account>
 {
     override fun isComplete(): Boolean{
         return name != null
                 && name!!.isNotBlank()
                 && ownerId != null
-                && initial_balance != null
     }
 
     override fun toFull(): Account {
@@ -26,8 +24,7 @@ data class PartialAccount (
             return Account(
                 id = id,
                 name = name!!,
-                ownerId = ownerId!!,
-                initial_balance = initial_balance!!
+                ownerId = ownerId!!
             )
         }
         else{
@@ -62,16 +59,14 @@ data class PartialAccountAndOwner (
 data class ParcelableAccount(
     var id: Int?,
     var name: String?,
-    var ownerId: Int?,
-    var initial_balance: Double?
+    var ownerId: Int?
 ): Parcelable
 {
     fun toPartial(): PartialAccount{
         return PartialAccount(
             id = id,
             name = name,
-            ownerId = ownerId,
-            initial_balance = initial_balance
+            ownerId = ownerId
         )
     }
 }
@@ -88,8 +83,7 @@ val accountAndOwnerSaver = Saver<PartialAccountAndOwner, ParcelableAccountAndOwn
             account = ParcelableAccount(
                 id = state.account.id,
                 name = state.account.name,
-                ownerId = state.account.ownerId,
-                initial_balance = state.account.initial_balance
+                ownerId = state.account.ownerId
             ),
             owner = if(state.owner != null){
                 ParcelablePerson(

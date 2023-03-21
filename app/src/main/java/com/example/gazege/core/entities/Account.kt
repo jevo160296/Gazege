@@ -21,12 +21,13 @@ data class Account(
     @PrimaryKey(autoGenerate = true) val id: Int? = null,
     val name: String,
     val ownerId: Int,
-    val initial_balance: Double,
-    @ColumnInfo(defaultValue = "true") val includedInTotal: Boolean = true
+    @ColumnInfo(defaultValue = "true") val includedInTotal: Boolean = true,
+    @ColumnInfo(defaultValue = "false") val isIncome: Boolean = false,
+    @ColumnInfo(defaultValue = "false") val isOutcome: Boolean = false
 ) {
     companion object {
         fun empty(): Account {
-            return Account(name = "Null", ownerId = -1, initial_balance = 0.0)
+            return Account(name = "Null", ownerId = -1)
         }
     }
 }

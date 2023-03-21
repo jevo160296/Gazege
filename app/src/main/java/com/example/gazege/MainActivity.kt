@@ -80,13 +80,17 @@ class MainActivity : ComponentActivity() {
                         LocalDate.now()
                     )
                 )
+                val incomeAccount by mainViewModel.incomeAccount.observeAsState()
+                val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
                 val principalPersonState = mainViewModel.principalPerson.observeAsState()
                 val principalPerson = principalPersonState.value
 
                 val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
                     .from(accountList, personList, allTransactions)
-                val personWithAccounts = PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
-                val transactionAndAccounts = TransactionAndAccounts.from(transactionList, accountList)
+                val personWithAccounts =
+                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
+                val transactionAndAccounts =
+                    TransactionAndAccounts.from(transactionList, accountList)
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -200,7 +204,7 @@ class MainActivity : ComponentActivity() {
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState ->
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
                                     val accountOwnerIdList = accountList.map {
                                         Pair(it.name, it.ownerId)
                                     }
@@ -215,13 +219,15 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onCompleitionAction = { addedId ->
-                                                val valorAjuste = newBalance
-                                                mainViewModel.realizarAjuste(
-                                                    accountId = addedId.toInt(),
-                                                    amount = valorAjuste,
-                                                    incomeAccountId = 2,
-                                                    outcomeAccountId = 2
-                                                )
+                                                if (incomeAccountId != null && outcomeAccountId != null) {
+                                                    val valorAjuste = newBalance
+                                                    mainViewModel.realizarAjuste(
+                                                        accountId = addedId.toInt(),
+                                                        amount = valorAjuste,
+                                                        incomeAccountId = incomeAccountId,
+                                                        outcomeAccountId = outcomeAccountId
+                                                    )
+                                                }
                                             }).invokeOnCompletion {
                                             if (it == null) {
                                                 navController.navigateUp()
@@ -233,7 +239,12 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
-                                currentBalance = 0.0
+                                currentBalance = 0.0,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onSetIncomeOutcomeAccount = {
+                                    navController.navigate("settings")
+                                }
                             )
                         }
                         composable(
@@ -258,7 +269,7 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
-                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState ->
+                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
                                     val accountOwnerIdList = accountList
                                         .filter { it.id != account.id }
                                         .map { Pair(it.name, it.ownerId) }
@@ -273,15 +284,17 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onCompleitionAction = { addedId ->
-                                                val valorAjuste =
-                                                    newBalance - (selectedAccountAndOwnerBalance
-                                                        ?: 0.0)
-                                                mainViewModel.realizarAjuste(
-                                                    accountId = addedId.toInt(),
-                                                    amount = valorAjuste,
-                                                    incomeAccountId = 2,
-                                                    outcomeAccountId = 2
-                                                )
+                                                if (incomeAccountId != null && outcomeAccountId != null) {
+                                                    val valorAjuste =
+                                                        newBalance - (selectedAccountAndOwnerBalance
+                                                            ?: 0.0)
+                                                    mainViewModel.realizarAjuste(
+                                                        accountId = addedId.toInt(),
+                                                        amount = valorAjuste,
+                                                        incomeAccountId = incomeAccountId,
+                                                        outcomeAccountId = outcomeAccountId
+                                                    )
+                                                }
                                             }
                                         ).invokeOnCompletion {
                                             if (it == null) {
@@ -295,7 +308,12 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 accountAndOwner = selectedAccountAndOwner,
-                                currentBalance = selectedAccountAndOwnerBalance ?: 0.0
+                                currentBalance = selectedAccountAndOwnerBalance ?: 0.0,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onSetIncomeOutcomeAccount = {
+                                    navController.navigate("settings")
+                                }
                             )
                         }
                         composable("addPerson") {
@@ -429,7 +447,41 @@ class MainActivity : ComponentActivity() {
                                 onNavigateUpRequested = {
                                     navController.navigateUp()
                                 },
-                                onAddPersonRequested = { navController.navigate("addPerson") }
+                                onAddPersonRequested = { navController.navigate("addPerson") },
+                                accountList = accountAndOwnerWithTransactions,
+                                incomeAccount = incomeAccount,
+                                outcomeAccount = outcomeAccount,
+                                onAddAccountRequested = { navController.navigate("addAccount") },
+                                onIncomeOutcomeAccountChanged = { newIncome, newOutcome ->
+                                    val castedIncomeAccount = incomeAccount
+                                    val castedOutcomeAccount = outcomeAccount
+                                    if (castedIncomeAccount != null) {
+                                        mainViewModel.updateAccount(
+                                            castedIncomeAccount.copy(
+                                                isIncome = false
+                                            ), onCompleitionAction = {}, onErrorAction = {})
+                                    }
+                                    if (castedOutcomeAccount != null) {
+                                        mainViewModel.updateAccount(
+                                            castedOutcomeAccount.copy(
+                                                isOutcome = false
+                                            ), onCompleitionAction = {}, onErrorAction = {})
+                                    }
+                                    if (newIncome != null) {
+                                        mainViewModel.updateAccount(
+                                            newIncome.copy(
+                                                isIncome = true,
+                                                isOutcome = false
+                                            ), onErrorAction = {}, onCompleitionAction = {})
+                                    }
+                                    if (newOutcome != null) {
+                                        mainViewModel.updateAccount(
+                                            newOutcome.copy(
+                                                isIncome = false,
+                                                isOutcome = true
+                                            ), onErrorAction = {}, onCompleitionAction = {})
+                                    }
+                                }
                             )
                         }
                         composable("saldoActualSettings") {

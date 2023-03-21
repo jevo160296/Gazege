@@ -80,8 +80,11 @@ fun AccountFormFragment(
     accountAndOwner: AccountAndOwner? = null,
     personList: List<Person>,
     currentBalance: Double,
+    incomeAccount: Account?,
+    outcomeAccount: Account?,
+    onSetIncomeOutcomeAccount: () -> Unit,
     onPersonAddRequested: () -> Unit,
-    onAccountAndOwnerAdd: (Account, Double, SnackbarHostState) -> Unit
+    onAccountAndOwnerAdd: (Account, Double, SnackbarHostState, Int?, Int?) -> Unit
 ) {
     var currentBalanceState by rememberSaveable {
         mutableStateOf(currentBalance)
@@ -96,8 +99,7 @@ fun AccountFormFragment(
                         PartialAccount(
                             id = it.id,
                             name = it.name,
-                            ownerId = it.ownerId,
-                            initial_balance = it.initial_balance
+                            ownerId = it.ownerId
                         )
                     },
                     owner = accountAndOwner.owner
@@ -112,11 +114,14 @@ fun AccountFormFragment(
     Form(
         modifier = modifier,
         onSaveClicked = {
+
             val fullAccountAndOwner = accountAndOwnerState.toFull()
             onAccountAndOwnerAdd(
                 fullAccountAndOwner.account,
                 currentBalanceState,
-                snackbarHostState
+                snackbarHostState,
+                incomeAccount?.id,
+                outcomeAccount?.id
             )
         },
         isSavedButtonEnabled = completeState,
@@ -133,7 +138,10 @@ fun AccountFormFragment(
             onPersonAddRequested = onPersonAddRequested,
             onAccountAndOwnerChanged = {
                 accountAndOwnerState = it
-            }
+            },
+            incomeAccount = incomeAccount,
+            outcomeAccount = outcomeAccount,
+            onSetIncomeOutcomeAccount = onSetIncomeOutcomeAccount
         )
     }
 }
@@ -285,10 +293,15 @@ private fun AccountAndOwnerForm(
     currentBalance: Double,
     onCurrentBalanceChanged: (Double) -> Unit,
     onPersonAddRequested: () -> Unit,
+    incomeAccount: Account?,
+    outcomeAccount: Account?,
+    onSetIncomeOutcomeAccount: () -> Unit,
     onAccountAndOwnerChanged: (PartialAccountAndOwner) -> Unit
 ) {
     val name: String = accountAndOwner.account.name ?: ""
     val selectedOwner: Person? = accountAndOwner.owner
+    val incomeAccountId = incomeAccount?.id
+    val outcomeAccountId = outcomeAccount?.id
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
@@ -358,10 +371,16 @@ private fun AccountAndOwnerForm(
                 Text("New person")
             }
         }
-        NumberField(
-            value = currentBalance.toBigDecimal(),
-            onValueChange = { onCurrentBalanceChanged(it.toDouble()) }
-        )
+        if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
+            NumberField(
+                value = currentBalance.toBigDecimal(),
+                onValueChange = { onCurrentBalanceChanged(it.toDouble()) }
+            )
+        } else {
+            ButtonField(onClick = onSetIncomeOutcomeAccount) {
+                Text("Configurar income y/o outcome account")
+            }
+        }
     }
 }
 
@@ -538,10 +557,13 @@ private fun PreviewLight() {
                     onPersonAddRequested = {
 
                     },
-                    onAccountAndOwnerAdd = { _, _, _ ->
+                    onAccountAndOwnerAdd = { _, _, _, _, _ ->
                         formType = formTypes.Transaction
                     },
-                    currentBalance = 0.0
+                    currentBalance = 0.0,
+                    incomeAccount = null,
+                    outcomeAccount = null,
+                    onSetIncomeOutcomeAccount = {}
                 )
             }
             formTypes.Transaction -> {
@@ -577,7 +599,7 @@ private fun PreviewDark() {
         var accountList by rememberSaveable {
             mutableStateOf(
                 arrayOf(
-                    Account(name = "Cuenta1", ownerId = 1, initial_balance = 0.0)
+                    Account(name = "Cuenta1", ownerId = 1)
                 )
             )
         }
@@ -607,13 +629,16 @@ private fun PreviewDark() {
                         )
                         formType = formTypes.Person
                     },
-                    onAccountAndOwnerAdd = { _, _, _ ->
+                    onAccountAndOwnerAdd = { _, _, _, _, _ ->
                         accountList = arrayOf(
                             *accountList,
-                            Account(name = "Nueva cuenta", ownerId = 1, initial_balance = 0.0)
+                            Account(name = "Nueva cuenta", ownerId = 1)
                         )
                     },
-                    currentBalance = 0.0
+                    currentBalance = 0.0,
+                    incomeAccount = null,
+                    outcomeAccount = null,
+                    onSetIncomeOutcomeAccount = {}
                 )
             }
             else -> {}
