@@ -3,7 +3,6 @@ package com.example.gazege.core.entities
 import androidx.room.Embedded
 import androidx.room.Ignore
 import androidx.room.Relation
-import com.example.gazege.core.dao.PersonDao
 import java.time.LocalDate
 
 data class PersonWithAccounts(
@@ -16,92 +15,19 @@ data class PersonWithAccounts(
     val accounts: List<AccountAndOwnerWithTransactions>
 ) {
     @Ignore
-    private var range: Pair<LocalDate?, LocalDate?>? = null
+    var range: Pair<LocalDate?, LocalDate?>? = null
 
     @Ignore
-    private var total: Double = Double.NaN
+    var total: Double = Double.NaN
 
     @Ignore
-    private var ingresos: Double = Double.NaN
+    var ingresos: Double = Double.NaN
 
     @Ignore
-    private var egresos: Double = Double.NaN
+    var egresos: Double = Double.NaN
 
     @Ignore
-    private var flujos: MutableMap<Person, Double> = mutableMapOf()
-
-
-    private fun calculateValues(startDate: LocalDate?, endDate: LocalDate?) {
-        val newRange = Pair(startDate, endDate)
-        if (newRange != range) {
-            val selfAccounts = accounts.map { it.account }
-            total = accounts
-                .filter { it.account.includedInTotal }
-                .sumOf { it.getTotal(startDate, endDate) }
-            ingresos = accounts
-                .sumOf {
-                    it.calculateIngresos(
-                        startDate,
-                        endDate,
-                        selfAccounts
-                    )
-                }
-            egresos = accounts
-                .sumOf {
-                    it.calculateEgresos(
-                        startDate,
-                        endDate,
-                        selfAccounts
-                    )
-                }
-            range = newRange
-        }
-    }
-
-    private fun calculateFlujo(
-        otherPersonWithAccounts: PersonWithAccounts,
-        transacciones: List<TransactionAndAccounts>
-    ): Double {
-        return PersonDao.calculateFlujo(
-            this.person,
-            otherPersonWithAccounts.person,
-            transacciones
-        )
-    }
-
-    fun getTotal(startDate: LocalDate?, endDate: LocalDate?): Double {
-        calculateValues(startDate, endDate)
-        return total
-    }
-
-    fun getIngresos(startDate: LocalDate?, endDate: LocalDate?): Double {
-        calculateValues(startDate, endDate)
-        return ingresos
-    }
-
-    fun getEgresos(startDate: LocalDate?, endDate: LocalDate?): Double {
-        calculateValues(startDate, endDate)
-        return egresos
-    }
-
-    /**
-     * Total entregado por esta persona a la otra persona (Negativo si la otra persona le entregó
-     * dinero).
-     */
-    fun getFlujo(
-        otherPersonWithAccounts: PersonWithAccounts,
-        transacciones: List<TransactionAndAccounts>
-    ): Double {
-        val backedFlujo = flujos[otherPersonWithAccounts.person]
-        val flujo = if (backedFlujo == null) {
-            val calculatedFlujo = calculateFlujo(otherPersonWithAccounts, transacciones)
-            flujos[otherPersonWithAccounts.person] = calculatedFlujo
-            calculatedFlujo
-        } else {
-            backedFlujo
-        }
-        return flujo
-    }
+    var flujos: MutableMap<Person, Double> = mutableMapOf()
 
     companion object {
         fun from(

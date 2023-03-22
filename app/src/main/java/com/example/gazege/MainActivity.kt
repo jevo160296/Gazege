@@ -36,6 +36,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.PersonWithAccounts
@@ -256,7 +257,9 @@ class MainActivity : ComponentActivity() {
                                 accountAndOwnerWithTransactions
                                     .firstOrNull { it.account.id == accountId }
                             val selectedAccountAndOwnerBalance =
-                                selectedAccountAndOwnerWithTransactions?.getTotal(null, null)
+                                selectedAccountAndOwnerWithTransactions?.let {
+                                    AccountDao.getTotal(it, null, null)
+                                }
                             val selectedAccountAndOwner = selectedAccountAndOwnerWithTransactions
                                 ?.let {
                                     AccountAndOwner(
