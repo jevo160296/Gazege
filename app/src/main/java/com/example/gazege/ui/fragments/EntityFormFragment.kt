@@ -2,27 +2,23 @@ package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DropDownMenu
-import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
 import java.math.BigDecimal
@@ -224,47 +220,6 @@ fun TransactionFormFragment(
     }
 }
 
-@Composable
-private fun Form(
-    modifier: Modifier = Modifier,
-    onSaveClicked: () -> Unit,
-    isSavedButtonEnabled: Boolean,
-    title: String,
-    snackbarHostState: SnackbarHostState? = null,
-    content: @Composable () -> Unit
-) {
-    Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .imePadding(),
-        snackbarHost = {
-            if (snackbarHostState == null) {
-                androidx.compose.material.SnackbarHost(hostState = it)
-            } else {
-                SnackbarHost(hostState = snackbarHostState)
-            }
-        },
-        backgroundColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            if (isSavedButtonEnabled) {
-                FloatingActionButton(
-                    onClick = onSaveClicked,
-                    shape = Shapes.small
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_round_check_24),
-                        contentDescription = ""
-                    )
-                }
-            }
-        }) {
-        Column(modifier = Modifier.padding(it)) {
-            MediumHeadline(title)
-            content()
-        }
-    }
-}
 
 @Composable
 private fun PersonForm(
