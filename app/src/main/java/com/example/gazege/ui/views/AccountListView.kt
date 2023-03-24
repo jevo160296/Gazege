@@ -26,42 +26,6 @@ import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
 
-fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
-    return getPersonSample().map { person ->
-        listOf(1, 2, 3, 4, 5).map { index ->
-            val account = Account(
-                id = index,
-                name = "Cuenta$index",
-                ownerId = person.id ?: -1
-            )
-            AccountAndOwnerWithTransactions(
-                account = account,
-                owner = person,
-                inTransactions = (1..100).map { trans_index ->
-                    Transaction(
-                        amount = (index * trans_index).toDouble(),
-                        description = "",
-                        sourceId = 2,
-                        destinationId = index,
-                        date = LocalDate.now(),
-                        aNombreDe = null
-                    )
-                },
-                outTransactions = (1..40).map { trans_index ->
-                    Transaction(
-                        amount = (index * trans_index / (index + trans_index)).toDouble(),
-                        description = "",
-                        sourceId = index,
-                        destinationId = 3,
-                        date = LocalDate.now(),
-                        aNombreDe = null
-                    )
-                }
-            )
-        }
-    }.flatten().sortedBy { it.account.id }
-}
-
 @Composable
 private fun DefaultAccountViewHolder(
     account: AccountAndOwnerWithTransactions,
@@ -176,6 +140,42 @@ private fun PreviewAccountItem() {
         startDate = null,
         endDate = null
     )
+}
+
+fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
+    return getPersonSample().map { person ->
+        listOf(1, 2, 3, 4, 5).map { index ->
+            val account = Account(
+                id = index,
+                name = "Cuenta$index",
+                ownerId = person.id ?: -1
+            )
+            AccountAndOwnerWithTransactions(
+                account = account,
+                owner = person,
+                inTransactions = (1..100).map { trans_index ->
+                    Transaction(
+                        amount = (index * trans_index).toDouble(),
+                        description = "",
+                        sourceId = 2,
+                        destinationId = index,
+                        date = LocalDate.now(),
+                        aNombreDe = null
+                    )
+                },
+                outTransactions = (1..40).map { trans_index ->
+                    Transaction(
+                        amount = (index * trans_index / (index + trans_index)).toDouble(),
+                        description = "",
+                        sourceId = index,
+                        destinationId = 3,
+                        date = LocalDate.now(),
+                        aNombreDe = null
+                    )
+                }
+            )
+        }
+    }.flatten().sortedBy { it.account.id }
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)

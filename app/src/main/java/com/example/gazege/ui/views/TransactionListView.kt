@@ -29,30 +29,6 @@ import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
 
-fun getTransactionSample(): List<TransactionAndAccounts> {
-    val accountList = getAccountSample()
-    var i = 0
-    val transList = accountList.map { source ->
-        accountList.map { destination ->
-            val transaction = Transaction(
-                amount = i * 10.0,
-                description = "Trans $i",
-                sourceId = source.account.id ?: -1,
-                destinationId = destination.account.id ?: -1,
-                date = LocalDate.now(),
-                aNombreDe = null
-            )
-            i++
-            TransactionAndAccounts(
-                transaction,
-                source.account,
-                destination.account
-            )
-        }
-    }.flatten()
-    return transList
-}
-
 @Composable
 private fun TransactionViewHolder(
     transaction: TransactionAndAccounts
@@ -159,6 +135,30 @@ private fun PreviewTransactionItem() {
         destinationAccount = destinationAccount
     )
     TransactionViewHolder(transaction = transactionAndAccounts)
+}
+
+fun getTransactionSample(): List<TransactionAndAccounts> {
+    val accountList = getAccountSample()
+    var i = 0
+    val transList = accountList.map { source ->
+        accountList.map { destination ->
+            val transaction = Transaction(
+                amount = i * 10.0,
+                description = "Trans $i",
+                sourceId = source.account.id ?: -1,
+                destinationId = destination.account.id ?: -1,
+                date = LocalDate.now(),
+                aNombreDe = null
+            )
+            i++
+            TransactionAndAccounts(
+                transaction,
+                source.account,
+                destination.account
+            )
+        }
+    }.flatten()
+    return transList
 }
 
 @Preview(showBackground = true)
