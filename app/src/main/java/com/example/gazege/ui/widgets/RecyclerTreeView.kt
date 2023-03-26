@@ -3,6 +3,8 @@ package com.example.gazege.ui.widgets
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -20,6 +22,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     nodes: List<C>,
     groupSelector: (C) -> String? = { null },
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
+    state: LazyListState = rememberLazyListState(),
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = remember { mutableStateListOf<C>() }
@@ -42,7 +45,9 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
             )
         )
     }
-    LazyColumn {
+    LazyColumn(
+        state = state
+    ) {
         nodes(
             nodes,
             treeScope = treeScope.value

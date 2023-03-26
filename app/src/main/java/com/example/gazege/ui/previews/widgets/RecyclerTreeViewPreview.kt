@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -68,7 +69,8 @@ fun RecyclerViewPreview() {
                 },
                 groupSelector = {
                     it.content.owner
-                }
+                },
+                state = rememberLazyListState()
             ) { node, scope ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically
