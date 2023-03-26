@@ -9,18 +9,19 @@ import androidx.compose.runtime.remember
 
 interface Node<N, C> {
     val content: N
+    val level: Int
     val children: List<C>
 }
 
 @Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
     nodes: List<C>,
-    viewHolder: @Composable (C, RecyclerTreeScope<N, C>) -> Unit
+    viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = remember { mutableStateListOf<C>() }
-    val recyclerTreeScope = remember {
+    val treeScope = remember {
         mutableStateOf(
-            RecyclerTreeScope(
+            TreeScope(
                 viewHolder,
                 toggleExpanded = {
                     if (expandedItems.contains(it)) {
@@ -37,26 +38,26 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     LazyColumn {
         nodes(
             nodes,
-            recyclerTreeScope = recyclerTreeScope.value
+            treeScope = treeScope.value
         )
     }
 }
 
 fun <N, C : Node<N, C>> LazyListScope.nodes(
     nodes: List<C>,
-    recyclerTreeScope: RecyclerTreeScope<N, C>
+    treeScope: TreeScope<N, C>
 ) {
     nodes.forEach { node ->
         node(
             node,
-            treeScope = recyclerTreeScope
+            treeScope = treeScope
         )
     }
 }
 
 fun <N, C : Node<N, C>> LazyListScope.node(
     node: C,
-    treeScope: RecyclerTreeScope<N, C>
+    treeScope: TreeScope<N, C>
 ) {
     item {
         treeScope.viewHolder(node, treeScope)
@@ -64,13 +65,13 @@ fun <N, C : Node<N, C>> LazyListScope.node(
     if (treeScope.isExpanded(node)) {
         nodes(
             node.children,
-            recyclerTreeScope = treeScope
+            treeScope = treeScope
         )
     }
 }
 
-data class RecyclerTreeScope<N, C : Node<N, C>>(
-    val viewHolder: @Composable (C, RecyclerTreeScope<N, C>) -> Unit,
+data class TreeScope<N, C : Node<N, C>>(
+    val viewHolder: @Composable (C, TreeScope<N, C>) -> Unit,
     val isExpanded: (C) -> Boolean,
     val toggleExpanded: (C) -> Unit
 )
