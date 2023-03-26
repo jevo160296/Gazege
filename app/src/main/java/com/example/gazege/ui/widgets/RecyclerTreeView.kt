@@ -1,7 +1,9 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,6 +11,7 @@ import androidx.compose.runtime.remember
 
 interface Node<N, C : Node<N, C>> {
     val content: N
+    val group: String?
     val level: Int
     val children: List<C>
 }
@@ -33,7 +36,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
                 isExpanded = {
                     expandedItems.contains(it)
                 }
-            ))
+            )
+        )
     }
     LazyColumn {
         nodes(
@@ -45,26 +49,42 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
 
 fun <N, C : Node<N, C>> LazyListScope.nodes(
     nodes: List<C>,
+    parentGroup: String? = null,
     treeScope: TreeScope<N, C>
 ) {
+    var previousGroup: String? = parentGroup
+    var currentGroup: String?
     nodes.forEach { node ->
+        currentGroup = node.group
         node(
             node,
+            previousGroup = previousGroup,
+            currentGroup = currentGroup,
             treeScope = treeScope
         )
+        previousGroup = currentGroup
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 fun <N, C : Node<N, C>> LazyListScope.node(
     node: C,
+    previousGroup: String?,
+    currentGroup: String?,
     treeScope: TreeScope<N, C>
 ) {
+    if (currentGroup != null && previousGroup != currentGroup) {
+        stickyHeader {
+            treeScope.groupViewHolder(currentGroup)
+        }
+    }
     item {
         treeScope.viewHolder(node, treeScope)
     }
     if (treeScope.isExpanded(node)) {
         nodes(
             node.children,
+            parentGroup = currentGroup,
             treeScope = treeScope
         )
     }
@@ -72,6 +92,7 @@ fun <N, C : Node<N, C>> LazyListScope.node(
 
 data class TreeScope<N, C : Node<N, C>>(
     val viewHolder: @Composable (C, TreeScope<N, C>) -> Unit,
+    val groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     val isExpanded: (C) -> Boolean,
     val toggleExpanded: (C) -> Unit
 )

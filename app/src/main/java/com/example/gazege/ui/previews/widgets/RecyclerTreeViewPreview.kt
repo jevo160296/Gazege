@@ -26,32 +26,34 @@ import com.example.gazege.ui.widgets.RecyclerTreeView
 data class CuentaEHijos(
     val nombre: String,
     val valor: Int,
+    val owner: String,
     val hijos: List<CuentaEHijos>
 )
 
 
 data class CuentaNode(
     override val content: CuentaEHijos,
+    override val group: String?,
     override val level: Int
 ) : Node<CuentaEHijos, CuentaNode> {
     override val children: List<CuentaNode>
-        get() = content.hijos.map { CuentaNode(it, level + 1) }
+        get() = content.hijos.map { CuentaNode(it, group, level + 1) }
 }
 
 @Preview(showBackground = true, heightDp = 400, widthDp = 200)
 @Composable
 fun RecyclerViewPreview() {
     val cuentas = listOf(
-        CuentaEHijos("Efectivo", 10000, listOf()),
+        CuentaEHijos("Efectivo", 10000, "A", listOf()),
         CuentaEHijos(
-            "Banco", 20000, listOf(
+            "Banco", 20000, "B", listOf(
                 CuentaEHijos(
-                    "Banco 1", 5000, listOf(
-                        CuentaEHijos("Banco 1.1", 6000, listOf()),
-                        CuentaEHijos("Banco 1.2", 7000, listOf())
+                    "Banco 1", 5000, "B", listOf(
+                        CuentaEHijos("Banco 1.1", 6000, "B", listOf()),
+                        CuentaEHijos("Banco 1.2", 7000, "C", listOf())
                     )
                 ),
-                CuentaEHijos("Banco 2", 6000, listOf())
+                CuentaEHijos("Banco 2", 6000, "B", listOf())
             )
         )
     )
@@ -63,7 +65,7 @@ fun RecyclerViewPreview() {
         ) {
             RecyclerTreeView(
                 cuentas.map {
-                    CuentaNode(it, 0)
+                    CuentaNode(it, it.owner, 0)
                 }
             ) { node, scope ->
                 Row(
