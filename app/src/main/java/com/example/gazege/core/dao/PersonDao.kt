@@ -7,18 +7,11 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.TransactionAndAccounts
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
-data class TransactionAndPerson(
-    val sourcePersonId: Int,
-    val destinationPersonId: Int,
-    val sourceAccountIsIncome: Boolean,
-    val sourceAccountIsOutcome: Boolean,
-    val destinationAccountIsIncome: Boolean,
-    val destinationAccountIsOutcome: Boolean,
-    val value: Double,
-)
 
 @Dao
 interface PersonDao {
@@ -40,11 +33,81 @@ interface PersonDao {
     suspend fun delete(person: Person): Int
 
     companion object {
-        fun calculateFlujo(
+        private fun calculateValues(
+            person: PersonWithAccounts,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ) {
+            val newRange = Pair(startDate, endDate)
+            if (newRange != person.range) {
+                val selfAccounts = person.accounts.map { it.account }
+                person.total = person.accounts
+                    .filter { it.account.includedInTotal }
+                    .sumOf { AccountDao.getTotal(it, startDate, endDate) }
+                person.ingresos = person.accounts
+                    .sumOf {
+                        AccountDao.calculateIngresos(
+                            it,
+                            startDate,
+                            endDate,
+                            selfAccounts
+                        )
+                    }
+                person.egresos = person.accounts
+                    .sumOf {
+                        AccountDao.calculateEgresos(
+                            it,
+                            startDate,
+                            endDate,
+                            selfAccounts
+                        )
+                    }
+                person.range = newRange
+            }
+        }
+
+        fun getTotal(
+            person: PersonWithAccounts,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ): Double {
+            calculateValues(person, startDate, endDate)
+            return person.total
+        }
+
+        fun getIngresos(
+            person: PersonWithAccounts,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ): Double {
+            calculateValues(person, startDate, endDate)
+            return person.ingresos
+        }
+
+        fun getEgresos(
+            person: PersonWithAccounts,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ): Double {
+            calculateValues(person, startDate, endDate)
+            return person.egresos
+        }
+
+        private fun calculateFlujo(
             from: Person,
             to: Person,
             transacciones: List<TransactionAndAccounts>
         ): Double {
+            data class TransactionAndPerson(
+                val sourcePersonId: Int,
+                val destinationPersonId: Int,
+                val sourceAccountIsIncome: Boolean,
+                val sourceAccountIsOutcome: Boolean,
+                val destinationAccountIsIncome: Boolean,
+                val destinationAccountIsOutcome: Boolean,
+                val value: Double,
+            )
+
             val mappedTransactions: List<TransactionAndPerson> = listOf(
                 transacciones
                     .filter { it.transaction.aNombreDe == null }
@@ -95,6 +158,27 @@ interface PersonDao {
             val totalOut = outTransactions.sumOf { it.value }
 
             return totalOut - totalIn
+        }
+
+        /**
+         * Total entregado por esta persona a la otra persona (Negativo si la otra persona le entregó
+         * dinero).
+         */
+        fun getFlujo(
+            person: PersonWithAccounts,
+            otherPersonWithAccounts: PersonWithAccounts,
+            transacciones: List<TransactionAndAccounts>
+        ): Double {
+            val backedFlujo = person.flujos[otherPersonWithAccounts.person]
+            val flujo = if (backedFlujo == null) {
+                val calculatedFlujo =
+                    calculateFlujo(person.person, otherPersonWithAccounts.person, transacciones)
+                person.flujos[otherPersonWithAccounts.person] = calculatedFlujo
+                calculatedFlujo
+            } else {
+                backedFlujo
+            }
+            return flujo
         }
     }
 }

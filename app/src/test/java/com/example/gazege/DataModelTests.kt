@@ -1,10 +1,12 @@
 package com.example.gazege
 
+import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -29,8 +31,7 @@ class DataModelTests {
             Account(
                 id = index,
                 ownerId = pair.first,
-                name = pair.second,
-                initial_balance = 0.0
+                name = pair.second
             )
         }
         val transactions: List<Transaction> = arrayOf(
@@ -47,9 +48,14 @@ class DataModelTests {
                 description = "",
                 sourceId = triple.first,
                 destinationId = triple.second,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
         }
+
+        val transactionsAndAccounts = TransactionAndAccounts.from(
+            transactions, accounts
+        )
 
         val personWithAccounts: List<PersonWithAccounts> = PersonWithAccounts.from(
             persons,
@@ -65,7 +71,8 @@ class DataModelTests {
         for (principalPerson in personWithAccounts) {
             for (otherPerson in personWithAccounts) {
                 val key = Pair(principalPerson.person.name, otherPerson.person.name)
-                flows[key] = principalPerson.getFlujo(otherPerson)
+                flows[key] =
+                    PersonDao.getFlujo(principalPerson, otherPerson, transactionsAndAccounts)
             }
         }
 

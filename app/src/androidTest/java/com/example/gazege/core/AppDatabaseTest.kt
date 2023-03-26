@@ -45,8 +45,7 @@ class AppDatabaseTest {
             Account(
                 id = maxIdAccounts + it,
                 name="Account$it",
-                ownerId = ownerId,
-                initial_balance = 0.0
+                ownerId = ownerId
             )
         }
         val accInserted = database.accountDao().insertAll(*accountsIn.toTypedArray()).map{it.toInt()}
@@ -68,7 +67,8 @@ class AppDatabaseTest {
                 description = "",
                 sourceId = sourceId,
                 destinationId = destinationId,
-                date = fecha
+                date = fecha,
+                aNombreDe = null
             )
         }
         database.transactionDao().insertAll(*transactionsIn.toTypedArray())
@@ -153,19 +153,19 @@ class AppDatabaseTest {
         persons.addAll(database.personDao().getAll().first())
         val initialAccounts = database.accountDao().getAll().first()
         val accountsToAdd = arrayOf(
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.0, name = "Cuenta4"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.1, name = "Cuenta5"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.2, name = "Cuenta6"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.3, name = "Cuenta7"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.4, name = "Cuenta8"),
-            Account(ownerId = persons[0].id ?: -1, initial_balance = 0.5, name = "Cuenta9"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.0, name = "Cuenta10"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.1, name = "Cuenta11"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.2, name = "Cuenta12"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.3, name = "Cuenta13"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.4, name = "Cuenta14"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.5, name = "Cuenta15"),
-            Account(ownerId = persons[1].id ?: -1, initial_balance = 1.6, name = "Cuenta16")
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta4"),
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta5"),
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta6"),
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta7"),
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta8"),
+            Account(ownerId = persons[0].id ?: -1, name = "Cuenta9"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta10"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta11"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta12"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta13"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta14"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta15"),
+            Account(ownerId = persons[1].id ?: -1, name = "Cuenta16")
         )
         database.accountDao().insertAll(*accountsToAdd)
         val accounts = database.accountDao().getAll().first()
@@ -181,7 +181,7 @@ class AppDatabaseTest {
         val persons = database.personDao().getAll().first()
         val maxId = persons.maxOfOrNull { it.id ?: -1 } ?: -1
 
-        val accountToAdd = Account(ownerId = maxId + 1, initial_balance = 0.0, name = "")
+        val accountToAdd = Account(ownerId = maxId + 1, name = "")
         assertThrows(SQLiteConstraintException::class.java) {
             runBlocking {
                 database.accountDao().insertAll(accountToAdd)
@@ -206,18 +206,15 @@ class AppDatabaseTest {
             val accountsToAdd = arrayOf(
                 Account(
                     name = "Cuenta1",
-                    ownerId = minId,
-                    initial_balance = 1.0
+                    ownerId = minId
                 ),
                 Account(
                     name = "Cuenta2",
-                    ownerId = minId,
-                    initial_balance = 1.0
+                    ownerId = minId
                 ),
                 Account(
                     name = "Cuenta3",
-                    ownerId = minId,
-                    initial_balance = 1.0
+                    ownerId = minId
                 )
             )
             database.accountDao().insertAll(*accountsToAdd)
@@ -229,21 +226,24 @@ class AppDatabaseTest {
                 description = "Test",
                 sourceId = accounts[0].id ?: -1,
                 destinationId = accounts[1].id ?: -1,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             ),
             Transaction(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[1].id ?: -1,
                 destinationId = accounts[0].id ?: -1,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             ),
             Transaction(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[0].id ?: -1,
                 destinationId = accounts[1].id ?: -1,
-                date = LocalDate.now()
+                date = LocalDate.now(),
+                aNombreDe = null
             )
         )
         database.transactionDao().insertAll(*transactionsToAdd)

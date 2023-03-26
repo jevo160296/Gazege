@@ -6,8 +6,9 @@ import com.example.gazege.core.entities.Person
 import kotlinx.parcelize.Parcelize
 
 data class PartialPerson(
-    var id: Int? = null,
-    var name: String? = null
+    var id: Int?,
+    var name: String?,
+    var importance: Int?
 ): PartialEntity<Person>
 {
     override fun isComplete(): Boolean{
@@ -18,11 +19,17 @@ data class PartialPerson(
         if(isComplete()){
             return Person(
                 id = id,
-                name = name!!
+                name = name!!,
+                importance = importance
             )
-        }
-        else{
+        } else {
             throw Exception()
+        }
+    }
+
+    companion object {
+        fun blankEntity(): PartialPerson {
+            return PartialPerson(null, null, null)
         }
     }
 }
@@ -30,21 +37,23 @@ data class PartialPerson(
 @Parcelize
 data class ParcelablePerson(
     val id: Int?,
-    val name: String?
+    val name: String?,
+    val importance: Int?
 ) : Parcelable {
     fun toPartial(): PartialPerson {
         return PartialPerson(
             id = id,
-            name = name
+            name = name,
+            importance = importance
         )
     }
 }
 
 val personSaver = Saver<PartialPerson, ParcelablePerson>(
     save = { state ->
-        ParcelablePerson(id = state.id, name = state.name)
+        ParcelablePerson(id = state.id, name = state.name, importance = state.importance)
     },
     restore = {
-        PartialPerson(id = it.id, name = it.name)
+        PartialPerson(id = it.id, name = it.name, importance = it.importance)
     }
 )

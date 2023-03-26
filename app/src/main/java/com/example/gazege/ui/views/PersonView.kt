@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
@@ -36,7 +37,7 @@ private fun PersonViewHolder(
     person: PersonWithAccounts,
     transactions: List<TransactionAndAccounts>
 ) {
-    val flujo = principalPerson.getFlujo(person, transactions)
+    val flujo = PersonDao.getFlujo(principalPerson, person, transactions)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -77,7 +78,7 @@ private fun PersonRecyclerView(
 ) {
     RecyclerView(
         elements = personList.filter {
-            val flujo = principalPerson.getFlujo(it, transacciones = transacciones)
+            val flujo = PersonDao.getFlujo(principalPerson, it, transacciones)
             flujo != 0.0
         },
         modifier = modifier,

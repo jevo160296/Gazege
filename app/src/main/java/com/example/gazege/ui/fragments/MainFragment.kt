@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
+import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.core.lastDayOfMonth
@@ -310,12 +311,19 @@ fun MainFragment(
                         }
                     }
                     PersonMonthSummaryView(
-                        saldoActual = principalPersonWithAccounts?.getTotal(null, null) ?: 0.0,
-                        ingresos = principalPersonWithAccounts?.getIngresos(
-                            range.first,
-                            range.second
-                        ) ?: 0.0,
-                        egresos = principalPersonWithAccounts?.getEgresos(range.first, range.second)
+                        saldoActual = principalPersonWithAccounts?.let {
+                            PersonDao.getTotal(it, null, null)
+                        } ?: 0.0,
+                        ingresos = principalPersonWithAccounts?.let {
+                            PersonDao.getIngresos(
+                                it,
+                                range.first,
+                                range.second
+                            )
+                        } ?: 0.0,
+                        egresos = principalPersonWithAccounts?.let {
+                            PersonDao.getEgresos(it, range.first, range.second)
+                        }
                             ?: 0.0,
                         onSaldoActualClick = onSaldoActualClick
                     )

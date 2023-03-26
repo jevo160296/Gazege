@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.Person
@@ -79,7 +80,7 @@ private fun DefaultAccountViewHolder(
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = "${stringResource(id = R.string.total)} ")
-            LargeBody(text = doubleToString(account.getTotal(startDate, endDate)))
+            LargeBody(text = doubleToString(AccountDao.getTotal(account, startDate, endDate)))
         }
     }
 }
