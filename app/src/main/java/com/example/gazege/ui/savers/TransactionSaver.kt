@@ -9,13 +9,13 @@ import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 
 data class PartialTransaction(
-    var id: Int? = null,
-    var amount: Double? = null,
-    var description: String? = null,
-    var sourceId: Int? = null,
-    var destinationId: Int? = null,
-    var date: LocalDate? = null,
-    var aNombreDe: Int? = null
+    var id: Int?,
+    var amount: Double?,
+    var description: String?,
+    var sourceId: Int?,
+    var destinationId: Int?,
+    var date: LocalDate?,
+    var aNombreDe: Int?
 ): PartialEntity<Transaction>
 {
     override fun isComplete(): Boolean {
@@ -37,18 +37,31 @@ data class PartialTransaction(
                 date = date!!,
                 aNombreDe = aNombreDe
             )
-        }
-        else{
+        } else {
             throw Exception()
+        }
+    }
+
+    companion object {
+        fun blankEntity(): PartialTransaction {
+            return PartialTransaction(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
         }
     }
 
 }
 
 data class PartialTransactionAndAccounts(
-    var transaction: PartialTransaction = PartialTransaction(),
-    var sourceAccount: Account? = null,
-    var destinationAccount: Account? = null
+    var transaction: PartialTransaction,
+    var sourceAccount: Account?,
+    var destinationAccount: Account?
 ): PartialEntity<TransactionAndAccounts>
 {
     override fun isComplete(): Boolean {
@@ -64,9 +77,18 @@ data class PartialTransactionAndAccounts(
                 sourceAccount = sourceAccount!!,
                 destinationAccount = destinationAccount!!
             )
-        }
-        else{
+        } else {
             throw Exception()
+        }
+    }
+
+    companion object {
+        fun blankEntity(): PartialTransactionAndAccounts {
+            return PartialTransactionAndAccounts(
+                PartialTransaction.blankEntity(),
+                null,
+                null
+            )
         }
     }
 
@@ -79,7 +101,8 @@ data class ParcelableTransaction(
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,
-    var date: LocalDate?
+    var date: LocalDate?,
+    var aNombreDe: Int?
 ): Parcelable {
     fun toPartial(): PartialTransaction {
         return PartialTransaction(
@@ -88,7 +111,8 @@ data class ParcelableTransaction(
             description = description,
             sourceId = sourceId,
             destinationId = destinationId,
-            date = date
+            date = date,
+            aNombreDe = aNombreDe
         )
     }
 }
@@ -109,13 +133,17 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                 description = state.transaction.description,
                 sourceId = state.transaction.sourceId,
                 destinationId = state.transaction.destinationId,
-                date = state.transaction.date
+                date = state.transaction.date,
+                aNombreDe = state.transaction.aNombreDe
             ),
             sourceAccount = if(state.sourceAccount != null){
                 ParcelableAccount(
                     id = state.sourceAccount!!.id,
                     name = state.sourceAccount!!.name,
-                    ownerId = state.sourceAccount!!.ownerId
+                    ownerId = state.sourceAccount!!.ownerId,
+                    includedInTotal = state.sourceAccount!!.includedInTotal,
+                    isIncome = state.sourceAccount!!.isIncome,
+                    isOutcome = state.sourceAccount!!.isOutcome
                 )
             }else{
                 null
@@ -124,7 +152,10 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                 ParcelableAccount(
                     id = state.destinationAccount!!.id,
                     name = state.destinationAccount!!.name,
-                    ownerId = state.destinationAccount!!.ownerId
+                    ownerId = state.destinationAccount!!.ownerId,
+                    includedInTotal = state.destinationAccount!!.includedInTotal,
+                    isIncome = state.destinationAccount!!.isIncome,
+                    isOutcome = state.destinationAccount!!.isOutcome
                 )
             } else{
                 null

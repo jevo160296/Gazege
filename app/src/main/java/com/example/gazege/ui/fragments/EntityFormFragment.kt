@@ -40,10 +40,11 @@ fun PersonFormFragment(
             if (person != null) {
                 PartialPerson(
                     id = person.id,
-                    name = person.name
+                    name = person.name,
+                    importance = person.importance
                 )
             } else {
-                PartialPerson()
+                PartialPerson.blankEntity()
             }
         )
     }
@@ -96,13 +97,16 @@ fun AccountFormFragment(
                         PartialAccount(
                             id = it.id,
                             name = it.name,
-                            ownerId = it.ownerId
+                            ownerId = it.ownerId,
+                            includedInTotal = it.includedInTotal,
+                            isIncome = it.isIncome,
+                            isOutcome = it.isOutcome
                         )
                     },
                     owner = accountAndOwner.owner
                 )
             } else {
-                PartialAccountAndOwner()
+                PartialAccountAndOwner.blankEntity()
             }
         )
     }
@@ -176,7 +180,7 @@ fun TransactionFormFragment(
                     destinationAccount = transactionAndAccounts.destinationAccount
                 )
             } else {
-                PartialTransactionAndAccounts()
+                PartialTransactionAndAccounts.blankEntity()
             }
         )
     }

@@ -8,15 +8,21 @@ import com.example.gazege.core.entities.Person
 import kotlinx.parcelize.Parcelize
 
 data class PartialAccount (
-    var id: Int? = null,
-    var name: String? = null,
-    var ownerId: Int? = null
+    var id: Int?,
+    var name: String?,
+    var ownerId: Int?,
+    var includedInTotal: Boolean?,
+    var isIncome: Boolean?,
+    var isOutcome: Boolean?
 ): PartialEntity<Account>
 {
     override fun isComplete(): Boolean{
         return name != null
                 && name!!.isNotBlank()
                 && ownerId != null
+                && includedInTotal != null
+                && isIncome != null
+                && isOutcome != null
     }
 
     override fun toFull(): Account {
@@ -24,18 +30,33 @@ data class PartialAccount (
             return Account(
                 id = id,
                 name = name!!,
-                ownerId = ownerId!!
+                ownerId = ownerId!!,
+                includedInTotal = includedInTotal!!,
+                isIncome = isIncome!!,
+                isOutcome = isOutcome!!
             )
-        }
-        else{
+        } else {
             throw Exception()
+        }
+    }
+
+    companion object {
+        fun blankEntity(): PartialAccount {
+            return PartialAccount(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
         }
     }
 }
 
-data class PartialAccountAndOwner (
-    var account: PartialAccount = PartialAccount(),
-    var owner: Person? = null
+data class PartialAccountAndOwner(
+    var account: PartialAccount,
+    var owner: Person?
 ): PartialEntity<AccountAndOwner>
 {
     override fun isComplete(): Boolean{
@@ -43,14 +64,19 @@ data class PartialAccountAndOwner (
     }
 
     override fun toFull(): AccountAndOwner {
-        if(isComplete()){
+        if (isComplete()) {
             return AccountAndOwner(
                 account = account.toFull(),
                 owner = owner!!
             )
-        }
-        else{
+        } else {
             throw Exception()
+        }
+    }
+
+    companion object {
+        fun blankEntity(): PartialAccountAndOwner {
+            return PartialAccountAndOwner(PartialAccount.blankEntity(), null)
         }
     }
 }
@@ -59,14 +85,20 @@ data class PartialAccountAndOwner (
 data class ParcelableAccount(
     var id: Int?,
     var name: String?,
-    var ownerId: Int?
+    var ownerId: Int?,
+    var includedInTotal: Boolean?,
+    var isIncome: Boolean?,
+    var isOutcome: Boolean?
 ): Parcelable
 {
     fun toPartial(): PartialAccount{
         return PartialAccount(
             id = id,
             name = name,
-            ownerId = ownerId
+            ownerId = ownerId,
+            includedInTotal = includedInTotal,
+            isIncome = isIncome,
+            isOutcome = isOutcome
         )
     }
 }
@@ -83,12 +115,16 @@ val accountAndOwnerSaver = Saver<PartialAccountAndOwner, ParcelableAccountAndOwn
             account = ParcelableAccount(
                 id = state.account.id,
                 name = state.account.name,
-                ownerId = state.account.ownerId
+                ownerId = state.account.ownerId,
+                includedInTotal = state.account.includedInTotal,
+                isIncome = state.account.isIncome,
+                isOutcome = state.account.isOutcome
             ),
             owner = if(state.owner != null){
                 ParcelablePerson(
                     id = state.owner?.id,
-                    name = state.owner?.name
+                    name = state.owner?.name,
+                    importance = state.owner?.importance
                 )
             } else {
                 null
