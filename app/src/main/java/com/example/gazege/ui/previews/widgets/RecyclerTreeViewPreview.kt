@@ -33,11 +33,10 @@ data class CuentaEHijos(
 
 data class CuentaNode(
     override val content: CuentaEHijos,
-    override val group: String?,
     override val level: Int
 ) : Node<CuentaEHijos, CuentaNode> {
     override val children: List<CuentaNode>
-        get() = content.hijos.map { CuentaNode(it, group, level + 1) }
+        get() = content.hijos.map { CuentaNode(it, level + 1) }
 }
 
 @Preview(showBackground = true, heightDp = 400, widthDp = 200)
@@ -64,8 +63,11 @@ fun RecyclerViewPreview() {
                 .background(MaterialTheme.colors.background)
         ) {
             RecyclerTreeView(
-                cuentas.map {
-                    CuentaNode(it, it.owner, 0)
+                nodes = cuentas.map {
+                    CuentaNode(it, 0)
+                },
+                groupSelector = {
+                    it.content.owner
                 }
             ) { node, scope ->
                 Row(

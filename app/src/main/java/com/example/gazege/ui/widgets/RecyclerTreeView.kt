@@ -11,7 +11,6 @@ import androidx.compose.runtime.remember
 
 interface Node<N, C : Node<N, C>> {
     val content: N
-    val group: String?
     val level: Int
     val children: List<C>
 }
@@ -19,6 +18,8 @@ interface Node<N, C : Node<N, C>> {
 @Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
     nodes: List<C>,
+    groupSelector: (C) -> String? = { null },
+    groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = remember { mutableStateListOf<C>() }
@@ -35,7 +36,9 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
                 },
                 isExpanded = {
                     expandedItems.contains(it)
-                }
+                },
+                groupSelector = groupSelector,
+                groupViewHolder = groupViewHolder
             )
         )
     }
@@ -55,7 +58,7 @@ fun <N, C : Node<N, C>> LazyListScope.nodes(
     var previousGroup: String? = parentGroup
     var currentGroup: String?
     nodes.forEach { node ->
-        currentGroup = node.group
+        currentGroup = treeScope.groupSelector(node)
         node(
             node,
             previousGroup = previousGroup,
@@ -92,7 +95,8 @@ fun <N, C : Node<N, C>> LazyListScope.node(
 
 data class TreeScope<N, C : Node<N, C>>(
     val viewHolder: @Composable (C, TreeScope<N, C>) -> Unit,
-    val groupViewHolder: @Composable (String) -> Unit = { Text(it) },
+    val groupViewHolder: @Composable (String) -> Unit,
+    val groupSelector: (C) -> String?,
     val isExpanded: (C) -> Boolean,
     val toggleExpanded: (C) -> Unit
 )
