@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 
-interface Node<N, C> {
+interface Node<N, C : Node<N, C>> {
     val content: N
     val level: Int
     val children: List<C>
