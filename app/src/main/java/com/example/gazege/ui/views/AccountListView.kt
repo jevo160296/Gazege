@@ -1,15 +1,25 @@
 package com.example.gazege.ui.views
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -17,11 +27,15 @@ import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.Node
+import com.example.gazege.ui.widgets.RecyclerTreeView
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
@@ -72,6 +86,97 @@ private fun AccountRecyclerView(
     )
 }
 
+private data class AccountAndOwnerWithTransactionsNode(
+    override val content: AccountAndOwnerWithTransactions,
+    val accountList: List<AccountAndOwnerWithTransactions>,
+    override val level: Int
+) : Node<AccountAndOwnerWithTransactions, AccountAndOwnerWithTransactionsNode> {
+    override val children: List<AccountAndOwnerWithTransactionsNode>
+        get() {
+            val pockets = AccountAndOwnerWithTransactionsAndPockets.from(
+                content, accountList
+            ).pockets
+            return pockets.map {
+                AccountAndOwnerWithTransactionsNode(
+                    it.accountAndOwnerWithTransactions,
+                    accountList,
+                    level + 1
+                )
+            }
+        }
+}
+
+@Composable
+private fun AccountTreeView(
+    accountList: List<AccountAndOwnerWithTransactions>,
+    delAccount: (AccountAndOwnerWithTransactions) -> Unit,
+    editAccount: (AccountAndOwnerWithTransactions) -> Unit,
+    modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    state: LazyListState,
+    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
+    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
+) {
+    val nodes = accountList
+        .filter {
+            it.account.parentId == null
+        }
+        .map {
+            AccountAndOwnerWithTransactionsNode(
+                it,
+                accountList,
+                0
+            )
+        }
+    RecyclerTreeView(
+        nodes = nodes,
+        state = state,
+        itemHolderPaddingValues = itemHolderPaddingValues
+    ) { node, scope ->
+        val isExpanded = scope.isExpanded(node)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.width(node.level.dp * 8))
+            if (node.children.isNotEmpty()) {
+                IconToggleButton(
+                    modifier = Modifier.width(42.dp),
+                    checked = isExpanded,
+                    onCheckedChange = { scope.toggleExpanded(node) }
+                ) {
+                    if (isExpanded) {
+                        Icon(
+                            painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowDown),
+                            contentDescription = "Collapse"
+                        )
+                    } else {
+                        Icon(
+                            painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowRight),
+                            contentDescription = "Expand"
+                        )
+                    }
+                }
+            } else {
+                Spacer(
+                    Modifier
+                        .width(42.dp)
+                        .height(42.dp)
+                )
+            }
+            Card(
+                modifier = modifier.padding(vertical = 4.dp),
+                onClick = { editAccount(node.content) },
+                onLongClick = { delAccount(node.content) },
+                colors = colorSelector(node.content)
+            ) {
+                Box(
+                    Modifier.padding(8.dp)
+                ) {
+                    viewHolder(node.content)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun AccountPage(
     modifier: Modifier = Modifier,
@@ -94,7 +199,7 @@ fun AccountPage(
 ) {
     onTitleSetted(stringResource(id = R.string.cuentas))
     Column(modifier = modifier) {
-        AccountRecyclerView(
+        AccountTreeView(
             accountList = accountList,
             delAccount = { delAccount(it.account) },
             editAccount = { editAccount(it.account) },
