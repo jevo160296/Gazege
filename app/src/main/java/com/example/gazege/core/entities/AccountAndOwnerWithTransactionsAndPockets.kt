@@ -2,7 +2,7 @@ package com.example.gazege.core.entities
 
 data class AccountAndOwnerWithTransactionsAndPockets(
     val accountAndOwnerWithTransactions: AccountAndOwnerWithTransactions,
-    val pockets: List<AccountAndOwnerWithTransactions>
+    val pockets: List<AccountAndOwnerWithTransactionsAndPockets>
 ) {
     companion object {
         fun from(
@@ -14,6 +14,12 @@ data class AccountAndOwnerWithTransactionsAndPockets(
                 pockets = accountAndOwnerWithTransactionsList
                     .filter {
                         accountAndOwnerWithTransactions.account.id == it.account.parentId
+                    }
+                    .map {
+                        from(
+                            it,
+                            accountAndOwnerWithTransactionsList
+                        )
                     }
             )
         }

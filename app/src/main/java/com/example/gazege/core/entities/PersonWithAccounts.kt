@@ -12,7 +12,7 @@ data class PersonWithAccounts(
         parentColumn = "id",
         entityColumn = "ownerId"
     )
-    val accounts: List<AccountAndOwnerWithTransactions>
+    val accounts: List<AccountAndOwnerWithTransactionsAndPockets>
 ) {
     @Ignore
     var range: Pair<LocalDate?, LocalDate?>? = null
@@ -32,12 +32,13 @@ data class PersonWithAccounts(
     companion object {
         fun from(
             persons: List<Person>,
-            accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+            accountAndOwnerWithTransactionsAndPockets: List<AccountAndOwnerWithTransactionsAndPockets>
         ): List<PersonWithAccounts> {
             return persons.map { person ->
                 PersonWithAccounts(
                     person = person,
-                    accounts = accountAndOwnerWithTransactions.filter { it.owner == person }
+                    accounts = accountAndOwnerWithTransactionsAndPockets
+                        .filter { it.accountAndOwnerWithTransactions.owner == person }
                 )
             }
         }

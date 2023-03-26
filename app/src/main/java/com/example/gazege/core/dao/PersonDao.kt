@@ -40,14 +40,21 @@ interface PersonDao {
         ) {
             val newRange = Pair(startDate, endDate)
             if (newRange != person.range) {
-                val selfAccounts = person.accounts.map { it.account }
+                val selfAccounts =
+                    person.accounts.map { it.accountAndOwnerWithTransactions.account }
                 person.total = person.accounts
-                    .filter { it.account.includedInTotal }
-                    .sumOf { AccountDao.getTotal(it, startDate, endDate) }
+                    .filter { it.accountAndOwnerWithTransactions.account.includedInTotal }
+                    .sumOf {
+                        AccountDao.getTotal(
+                            it.accountAndOwnerWithTransactions,
+                            startDate,
+                            endDate
+                        )
+                    }
                 person.ingresos = person.accounts
                     .sumOf {
                         AccountDao.calculateIngresos(
-                            it,
+                            it.accountAndOwnerWithTransactions,
                             startDate,
                             endDate,
                             selfAccounts
@@ -56,7 +63,7 @@ interface PersonDao {
                 person.egresos = person.accounts
                     .sumOf {
                         AccountDao.calculateEgresos(
-                            it,
+                            it.accountAndOwnerWithTransactions,
                             startDate,
                             endDate,
                             selfAccounts

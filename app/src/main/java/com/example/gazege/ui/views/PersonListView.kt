@@ -18,6 +18,7 @@ import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
@@ -154,26 +155,29 @@ private fun PreviewPersonItem() {
     val person = Person(name = "Persona")
     val account = Account(name = "Acc", ownerId = 0)
     val personWithAccounts = PersonWithAccounts(person = person, accounts = (0..10).map {
-        AccountAndOwnerWithTransactions(
-            account = account, outTransactions = (1..2).map {
-                Transaction(
-                    amount = it.toDouble(),
-                    description = "Trans",
-                    sourceId = 1,
-                    destinationId = 2,
-                    date = LocalDate.now(),
-                    aNombreDe = null
-                )
-        }, inTransactions = (1..4).map {
-            Transaction(
-                amount = it.toDouble(),
-                description = "Trans2",
-                sourceId = 1,
-                destinationId = 2,
-                date = LocalDate.now(),
-                aNombreDe = null
-            )
-        }, owner = person
+        AccountAndOwnerWithTransactionsAndPockets.from(
+            AccountAndOwnerWithTransactions(
+                account = account, outTransactions = (1..2).map {
+                    Transaction(
+                        amount = it.toDouble(),
+                        description = "Trans",
+                        sourceId = 1,
+                        destinationId = 2,
+                        date = LocalDate.now(),
+                        aNombreDe = null
+                    )
+                }, inTransactions = (1..4).map {
+                    Transaction(
+                        amount = it.toDouble(),
+                        description = "Trans2",
+                        sourceId = 1,
+                        destinationId = 2,
+                        date = LocalDate.now(),
+                        aNombreDe = null
+                    )
+                }, owner = person
+            ),
+            listOf()
         )
     })
     PersonViewHolder(

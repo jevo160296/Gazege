@@ -39,6 +39,7 @@ import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.fragments.AccountFormFragment
@@ -88,8 +89,13 @@ class MainActivity : ComponentActivity() {
 
                 val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
                     .from(accountList, personList, allTransactions)
+                val accountAndOwnerWithTransactionsAndPockets = accountAndOwnerWithTransactions
+                    .map {
+                        AccountAndOwnerWithTransactionsAndPockets
+                            .from(it, accountAndOwnerWithTransactions)
+                    }
                 val personWithAccounts =
-                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactions)
+                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
                 val transactionAndAccounts =
                     TransactionAndAccounts.from(transactionList, accountList)
 
@@ -254,17 +260,22 @@ class MainActivity : ComponentActivity() {
                         ) { navStack ->
                             val accountId = navStack.arguments?.getInt("accountId")
                             val selectedAccountAndOwnerWithTransactions =
-                                accountAndOwnerWithTransactions
-                                    .firstOrNull { it.account.id == accountId }
+                                accountAndOwnerWithTransactionsAndPockets
+                                    .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
                             val selectedAccountAndOwnerBalance =
                                 selectedAccountAndOwnerWithTransactions?.let {
-                                    AccountDao.getTotal(it, null, null)
+                                    AccountDao.getTotal(
+                                        it.accountAndOwnerWithTransactions,
+                                        null,
+                                        null
+                                    ) +
+                                            AccountDao.getChildrenTotal(it, null, null)
                                 }
                             val selectedAccountAndOwner = selectedAccountAndOwnerWithTransactions
                                 ?.let {
                                     AccountAndOwner(
-                                        account = it.account,
-                                        owner = it.owner
+                                        account = it.accountAndOwnerWithTransactions.account,
+                                        owner = it.accountAndOwnerWithTransactions.owner
                                     )
                                 }
                             AccountFormFragment(
