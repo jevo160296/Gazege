@@ -1,9 +1,11 @@
 package com.example.gazege.ui.previews.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,13 +19,12 @@ data class CuentaEHijos(
     val hijos: List<CuentaEHijos>
 )
 
+
 data class CuentaNode(
-    val item: CuentaEHijos
-) : Node<CuentaNode> {
-    override val content: String
-        get() = item.nombre
+    override val content: CuentaEHijos
+) : Node<CuentaEHijos, CuentaNode> {
     override val children: List<CuentaNode>
-        get() = item.hijos.map { CuentaNode(it) }
+        get() = content.hijos.map { CuentaNode(it) }
 }
 
 @Preview(showBackground = true, heightDp = 400, widthDp = 200)
@@ -48,7 +49,14 @@ fun RecyclerViewPreview() {
                 cuentas.map {
                     CuentaNode(it)
                 }
-            )
+            ) { node, scope ->
+                Text(
+                    node.content.nombre,
+                    Modifier.clickable {
+                        scope.toggleExpanded(node)
+                    }
+                )
+            }
         }
     }
 }
