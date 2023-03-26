@@ -74,6 +74,90 @@ class AppDatabaseTest {
         database.transactionDao().insertAll(*transactionsIn.toTypedArray())
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun initDatabaseSmall() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = AppDatabase.getDatabase(appContext)
+
+        val persons = database.personDao().getAll().first()
+        persons.forEach {
+            database.personDao().delete(it)
+        }
+        val newPersons = listOf(
+            "Pablo",
+            "Banco",
+            "Petunia",
+            "Hortensia",
+            "__ESPECIAL__"
+        ).mapIndexed { index, s ->
+            Person(
+                index, s, if (index == 0) {
+                    1
+                } else {
+                    null
+                }
+            )
+        }
+        val newAccounts: List<Account> = newPersons
+            .flatMap {
+                when (it.name) {
+                    "Pablo" -> Pair(
+                        0, listOf(
+                            Triple(0, "Efectivo", null),
+                            Triple(1, "Banco", null),
+                            Triple(2, "Banco 1", 1),
+                            Triple(3, "Banco 2", 2)
+                        )
+                    )
+                    "Banco" -> Pair(
+                        1, listOf(
+                            Triple(4, "Banco", null)
+                        )
+                    )
+                    "Petunia" -> Pair(
+                        2, listOf(
+                            Triple(5, "Petunia", null)
+                        )
+                    )
+                    "Hortensia" -> Pair(
+                        3, listOf(
+                            Triple(6, "Hortensia", null)
+                        )
+                    )
+                    "__ESPECIAL__" -> Pair(
+                        4, listOf(
+                            Triple(7, "__INGRESOS__", null),
+                            Triple(8, "__GASTOS__", null)
+                        )
+                    )
+                    else -> null
+                }
+                    .let { pair ->
+                        if (pair != null) {
+                            val ownerId = pair.first
+                            val accounts = pair.second
+                            accounts.map { triple ->
+                                val isIncome = triple.second == "__INGRESOS__"
+                                val isOutcome = triple.second == "__GASTOS__"
+                                Account(
+                                    triple.first,
+                                    triple.second,
+                                    ownerId,
+                                    triple.third,
+                                    isIncome = isIncome,
+                                    isOutcome = isOutcome
+                                )
+                            }
+                        } else {
+                            listOf()
+                        }
+                    }
+            }
+        database.personDao().insertAll(*newPersons.toTypedArray())
+        database.accountDao().insertAll(*newAccounts.toTypedArray())
+    }
+
     @Test
     fun createDataBase() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
