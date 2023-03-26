@@ -19,20 +19,24 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
 ) {
     val expandedItems = remember { mutableStateListOf<C>() }
     val recyclerTreeScope = remember {
-        mutableStateOf(RecyclerTreeScope(viewHolder) {
-            if (expandedItems.contains(it)) {
-                expandedItems.remove(it)
-            } else {
-                expandedItems.add(it)
-            }
-        })
+        mutableStateOf(
+            RecyclerTreeScope(
+                viewHolder,
+                toggleExpanded = {
+                    if (expandedItems.contains(it)) {
+                        expandedItems.remove(it)
+                    } else {
+                        expandedItems.add(it)
+                    }
+                },
+                isExpanded = {
+                    expandedItems.contains(it)
+                }
+            ))
     }
     LazyColumn {
         nodes(
             nodes,
-            isExpanded = {
-                expandedItems.contains(it)
-            },
             recyclerTreeScope = recyclerTreeScope.value
         )
     }
@@ -40,36 +44,33 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
 
 fun <N, C : Node<N, C>> LazyListScope.nodes(
     nodes: List<C>,
-    isExpanded: (C) -> Boolean,
     recyclerTreeScope: RecyclerTreeScope<N, C>
 ) {
     nodes.forEach { node ->
         node(
             node,
-            isExpanded = isExpanded,
-            recyclerTreeScope = recyclerTreeScope
+            treeScope = recyclerTreeScope
         )
     }
 }
 
 fun <N, C : Node<N, C>> LazyListScope.node(
     node: C,
-    isExpanded: (C) -> Boolean,
-    recyclerTreeScope: RecyclerTreeScope<N, C>
+    treeScope: RecyclerTreeScope<N, C>
 ) {
     item {
-        recyclerTreeScope.viewHolder(node, recyclerTreeScope)
+        treeScope.viewHolder(node, treeScope)
     }
-    if (isExpanded(node)) {
+    if (treeScope.isExpanded(node)) {
         nodes(
             node.children,
-            isExpanded = isExpanded,
-            recyclerTreeScope = recyclerTreeScope
+            recyclerTreeScope = treeScope
         )
     }
 }
 
 data class RecyclerTreeScope<N, C : Node<N, C>>(
     val viewHolder: @Composable (C, RecyclerTreeScope<N, C>) -> Unit,
+    val isExpanded: (C) -> Boolean,
     val toggleExpanded: (C) -> Unit
 )

@@ -34,7 +34,12 @@ fun RecyclerViewPreview() {
         CuentaEHijos("Efectivo", 10000, listOf()),
         CuentaEHijos(
             "Banco", 20000, listOf(
-                CuentaEHijos("Banco 1", 5000, listOf()),
+                CuentaEHijos(
+                    "Banco 1", 5000, listOf(
+                        CuentaEHijos("Banco 1.1", 6000, listOf()),
+                        CuentaEHijos("Banco 1.2", 7000, listOf())
+                    )
+                ),
                 CuentaEHijos("Banco 2", 6000, listOf())
             )
         )
