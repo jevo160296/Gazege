@@ -1,7 +1,10 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -16,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.widgets.treeview.ColumnTreeView
 import com.example.gazege.ui.widgets.treeview.Node
@@ -148,10 +152,13 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             it.id() to key
         }
     }.toMap()
+    val contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+    val layoutDirection = LocalLayoutDirection.current
     ColumnTreeView(nodes = nodes, groupSelector = {
         inverseMap[it.id()]
     }) { node, treeScope ->
         Row {
+            Spacer(Modifier.width(contentPadding.calculateStartPadding(layoutDirection)))
             Spacer(modifier = Modifier.width(node.level.dp * 8))
             if (node.children.isNotEmpty()) {
                 IconToggleButton(
@@ -173,7 +180,14 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
                     onExpandedChange(false)
                     onItemClick(node)
                 },
-                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                contentPadding = contentPadding.let {
+                    PaddingValues(
+                        start = 8.dp,
+                        top = it.calculateTopPadding(),
+                        bottom = it.calculateBottomPadding(),
+                        end = it.calculateEndPadding(layoutDirection)
+                    )
+                }
             )
         }
     }
