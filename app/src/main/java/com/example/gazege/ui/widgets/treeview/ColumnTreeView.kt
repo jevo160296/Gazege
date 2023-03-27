@@ -1,15 +1,12 @@
 package com.example.gazege.ui.widgets.treeview
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -87,20 +84,12 @@ private fun <N, C : Node<N, C>> ColumnScope.Node(
     val startPadding = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
     val endPadding = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
     if (currentGroup != null && previousGroup != currentGroup) {
-        Row {
-            Spacer(Modifier.width(startPadding))
-            Box(Modifier.weight(1f)) {
-                treeScope.groupViewHolder(currentGroup)
-            }
-            Spacer(Modifier.width(endPadding))
+        DefaultHeader(startPadding = startPadding, endPadding = endPadding) {
+            treeScope.groupViewHolder(currentGroup)
         }
     }
-    Row {
-        Spacer(Modifier.width(startPadding))
-        Box(Modifier.weight(1f)) {
-            treeScope.viewHolder(node, treeScope)
-        }
-        Spacer(Modifier.width(endPadding))
+    DefaultItemHolder(startPadding = startPadding, endPadding = endPadding) {
+        treeScope.viewHolder(node, treeScope)
     }
     if (treeScope.isExpanded(node)) {
         Nodes(
