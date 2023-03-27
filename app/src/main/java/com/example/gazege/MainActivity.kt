@@ -464,7 +464,12 @@ class MainActivity : ComponentActivity() {
                                     navController.navigateUp()
                                 },
                                 onAddPersonRequested = { navController.navigate("addPerson") },
-                                accountList = accountAndOwnerWithTransactions,
+                                accountList = accountAndOwnerWithTransactions.map {
+                                    AccountAndOwner(
+                                        it.account,
+                                        it.owner
+                                    )
+                                },
                                 incomeAccount = incomeAccount,
                                 outcomeAccount = outcomeAccount,
                                 onAddAccountRequested = { navController.navigate("addAccount") },

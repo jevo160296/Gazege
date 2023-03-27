@@ -26,7 +26,6 @@ import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DropDownMenu
-import com.example.gazege.ui.widgets.DropDownTreeMenu
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
@@ -144,29 +143,11 @@ fun TransactionAndAccountsForm(
             )
         }
         if (sourceAccountsList.isNotEmpty()) {
-            val sourceNodes = sourceAccountsList
-                .filter {
-                    it.account.parentId == null
-                }
-                .mapIndexed { index, it ->
-                    AccountAndOwnerNode(
-                        it,
-                        sourceAccountsList,
-                        0,
-                        index
-                    )
-                }
-            var dropDownExpanded by rememberSaveable {
-                mutableStateOf(false)
-            }
-            DropDownTreeMenu(
-                dropDownExpanded = dropDownExpanded,
-                onExpandedChange = { dropDownExpanded = !dropDownExpanded },
-                options = sourceNodes,
-                selectedItem = selectedSourceNode,
-                itemToString = { it?.content?.account?.name ?: "" },
+            AccountDropDownMenu(
+                accountsList = sourceAccountsList,
+                selectedAccountNode = selectedSourceNode,
+                label = { Text("Source account") },
                 onItemClick = {
-                    dropDownExpanded = false
                     if (it.content.account.id != null) {
                         onTransactionAndAccountsChanged(
                             transactionAndAccounts.copy().apply {
@@ -175,42 +156,18 @@ fun TransactionAndAccountsForm(
                             }
                         )
                     }
-                },
-                label = { Text("Source account") }
-            ) {
-                it.content.owner.name
-            }
+                }
+            )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
         if (destinationAccountsList.isNotEmpty()) {
-            val destinationNodes = destinationAccountsList
-                .filter {
-                    it.account.parentId == null
-                }
-                .mapIndexed { index, it ->
-                    AccountAndOwnerNode(
-                        it,
-                        destinationAccountsList,
-                        0,
-                        index
-                    )
-                }
-            var dropDownExpanded by rememberSaveable {
-                mutableStateOf(false)
-            }
-            DropDownTreeMenu(
-                dropDownExpanded = dropDownExpanded,
-                onExpandedChange = {
-                    dropDownExpanded = !dropDownExpanded
-                },
-                options = destinationNodes,
-                selectedItem = selectedDestinationNode,
-                itemToString = { it?.content?.account?.name ?: "" },
+            AccountDropDownMenu(
+                accountsList = destinationAccountsList,
+                selectedAccountNode = selectedDestinationNode,
                 onItemClick = {
-                    dropDownExpanded = false
                     if (it.content.account.id != null) {
                         onTransactionAndAccountsChanged(
                             transactionAndAccounts.copy().apply {
@@ -222,9 +179,7 @@ fun TransactionAndAccountsForm(
                     }
                 },
                 label = { Text("Destination account") }
-            ) {
-                it.content.owner.name
-            }
+            )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
