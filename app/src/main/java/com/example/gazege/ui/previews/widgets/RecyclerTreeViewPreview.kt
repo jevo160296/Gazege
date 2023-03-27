@@ -2,6 +2,7 @@ package com.example.gazege.ui.previews.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -71,7 +72,8 @@ fun RecyclerViewPreview() {
                 groupSelector = {
                     it.content.owner
                 },
-                treeState = rememberTreeState()
+                treeState = rememberTreeState(),
+                itemHolderPaddingValues = PaddingValues(8.dp)
             ) { node, scope ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically
