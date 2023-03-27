@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 
 @Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
@@ -66,17 +65,6 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         item {
             Spacer(Modifier.height(calculatedBottom))
         }
-    }
-}
-
-interface Node<N, C : Node<N, C>> {
-    val content: N
-    val relativeIndex: Int
-    val level: Int
-    val children: List<C>
-
-    fun expanded(expandedItems: List<NodeId>): Boolean {
-        return NodeId.from(this) in expandedItems
     }
 }
 
@@ -130,13 +118,3 @@ fun <N, C : Node<N, C>> LazyListScope.node(
         )
     }
 }
-
-data class TreeScope<N, C : Node<N, C>>(
-    val viewHolder: @Composable (C, TreeScope<N, C>) -> Unit,
-    val groupViewHolder: @Composable (String) -> Unit,
-    val groupSelector: (C) -> String?,
-    val itemHolderPaddingValues: PaddingValues,
-    val layoutDirection: LayoutDirection,
-    val isExpanded: (C) -> Boolean,
-    val toggleExpanded: (C) -> Unit
-)
