@@ -15,7 +15,7 @@ fun AccountDropDownMenu(
     label: @Composable () -> Unit,
     onItemClick: (AccountAndOwnerNode) -> Unit
 ) {
-    val destinationNodes = accountsList
+    val accountNodes = accountsList
         .filter {
             it.account.parentId == null
         }
@@ -35,7 +35,7 @@ fun AccountDropDownMenu(
         onExpandedChange = {
             dropDownExpanded = !dropDownExpanded
         },
-        options = destinationNodes,
+        options = accountNodes,
         selectedItem = selectedAccountNode,
         itemToString = { it?.content?.account?.name ?: "" },
         onItemClick = {

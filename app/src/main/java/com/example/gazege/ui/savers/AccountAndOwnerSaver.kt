@@ -49,9 +49,9 @@ data class PartialAccount (
                 null,
                 null,
                 null,
-                null,
-                null,
-                null
+                includedInTotal = true,
+                isIncome = false,
+                isOutcome = false
             )
         }
     }
