@@ -15,7 +15,7 @@ import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.ui.views.AccountPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.rememberTreeState
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
 @Composable
 fun SaldoActualSettings(

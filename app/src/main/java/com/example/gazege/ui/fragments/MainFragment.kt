@@ -53,7 +53,7 @@ import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
-import com.example.gazege.ui.widgets.rememberTreeState
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 

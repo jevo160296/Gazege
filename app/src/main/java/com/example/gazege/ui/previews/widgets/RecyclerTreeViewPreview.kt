@@ -20,9 +20,9 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.Node
-import com.example.gazege.ui.widgets.RecyclerTreeView
-import com.example.gazege.ui.widgets.rememberTreeState
+import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
 data class CuentaEHijos(
     val nombre: String,

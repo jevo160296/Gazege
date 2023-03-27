@@ -34,12 +34,12 @@ import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.Node
-import com.example.gazege.ui.widgets.RecyclerTreeView
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
-import com.example.gazege.ui.widgets.TreeState
-import com.example.gazege.ui.widgets.rememberTreeState
+import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
+import com.example.gazege.ui.widgets.treeview.TreeState
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import java.time.LocalDate
 
 @Composable
