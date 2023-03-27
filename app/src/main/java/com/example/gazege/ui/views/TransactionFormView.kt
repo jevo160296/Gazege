@@ -20,15 +20,40 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithPockets
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DropDownMenu
+import com.example.gazege.ui.widgets.DropDownTreeMenu
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
+import com.example.gazege.ui.widgets.treeview.Node
 import java.math.BigDecimal
 import java.time.LocalDate
+
+data class AccountAndOwnerNode(
+    override val content: AccountAndOwner,
+    val accountList: List<AccountAndOwner>,
+    override val level: Int,
+    override val relativeIndex: Int
+) : Node<AccountAndOwner, AccountAndOwnerNode> {
+    override val children: List<AccountAndOwnerNode>
+        get() {
+            val pockets = AccountAndOwnerWithPockets.from(
+                content, accountList
+            ).pockets
+            return pockets.mapIndexed { index, it ->
+                AccountAndOwnerNode(
+                    it.accountAndOwner,
+                    accountList,
+                    level + 1,
+                    index
+                )
+            }
+        }
+}
 
 @Composable
 fun TransactionAndAccountsForm(
@@ -50,14 +75,6 @@ fun TransactionAndAccountsForm(
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
-    val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
-    val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
-    val sourceAccountsList = accountList.filter {
-        it != selectedDestination
-    }
-    val destinationAccountsList = accountList.filter {
-        it != selectedSource
-    }
     val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
     if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
@@ -102,30 +119,66 @@ fun TransactionAndAccountsForm(
                 imeAction = ImeAction.Next
             )
         )
+        val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
+        val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
+        val sourceAccountsList = accountList.filter {
+            it != selectedDestination
+        }
+        val destinationAccountsList = accountList.filter {
+            it != selectedSource
+        }
+        val selectedSourceNode = selectedSource?.let {
+            AccountAndOwnerNode(
+                selectedSource,
+                accountList,
+                0,
+                0
+            )
+        }
+        val selectedDestinationNode = selectedDestination?.let {
+            AccountAndOwnerNode(
+                selectedDestination,
+                accountList,
+                0,
+                0
+            )
+        }
         if (sourceAccountsList.isNotEmpty()) {
+            val sourceNodes = sourceAccountsList
+                .filter {
+                    it.account.parentId == null
+                }
+                .mapIndexed { index, it ->
+                    AccountAndOwnerNode(
+                        it,
+                        sourceAccountsList,
+                        0,
+                        index
+                    )
+                }
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            DropDownMenu(
+            DropDownTreeMenu(
                 dropDownExpanded = dropDownExpanded,
                 onExpandedChange = { dropDownExpanded = !dropDownExpanded },
-                options = sourceAccountsList,
-                selectedItem = selectedSource,
-                itemToString = { it?.account?.name ?: "" },
+                options = sourceNodes,
+                selectedItem = selectedSourceNode,
+                itemToString = { it?.content?.account?.name ?: "" },
                 onItemClick = {
                     dropDownExpanded = false
-                    if (it.account.id != null) {
+                    if (it.content.account.id != null) {
                         onTransactionAndAccountsChanged(
                             transactionAndAccounts.copy().apply {
-                                sourceAccount = it.account
-                                transaction = transaction.copy(sourceId = it.account.id)
+                                sourceAccount = it.content.account
+                                transaction = transaction.copy(sourceId = it.content.account.id)
                             }
                         )
                     }
                 },
                 label = { Text("Source account") }
             ) {
-                it.owner.name
+                it.content.owner.name
             }
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -133,31 +186,44 @@ fun TransactionAndAccountsForm(
             }
         }
         if (destinationAccountsList.isNotEmpty()) {
+            val destinationNodes = destinationAccountsList
+                .filter {
+                    it.account.parentId == null
+                }
+                .mapIndexed { index, it ->
+                    AccountAndOwnerNode(
+                        it,
+                        destinationAccountsList,
+                        0,
+                        index
+                    )
+                }
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            DropDownMenu(
+            DropDownTreeMenu(
                 dropDownExpanded = dropDownExpanded,
                 onExpandedChange = {
                     dropDownExpanded = !dropDownExpanded
                 },
-                options = destinationAccountsList,
-                selectedItem = selectedDestination,
-                itemToString = { it?.account?.name ?: "" },
+                options = destinationNodes,
+                selectedItem = selectedDestinationNode,
+                itemToString = { it?.content?.account?.name ?: "" },
                 onItemClick = {
                     dropDownExpanded = false
-                    if (it.account.id != null) {
+                    if (it.content.account.id != null) {
                         onTransactionAndAccountsChanged(
                             transactionAndAccounts.copy().apply {
-                                destinationAccount = it.account
-                                transaction = transaction.copy(destinationId = it.account.id)
+                                destinationAccount = it.content.account
+                                transaction =
+                                    transaction.copy(destinationId = it.content.account.id)
                             }
                         )
                     }
                 },
                 label = { Text("Destination account") }
             ) {
-                it.owner.name
+                it.content.owner.name
             }
         } else {
             ButtonField(onClick = onAccountAddRequested) {
