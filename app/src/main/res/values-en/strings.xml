@@ -18,4 +18,5 @@
     <string name="la_persona">%1$s its accounts and transactions</string>
     <string name="confirmar_eliminacion">Confirm deleition</string>
     <string name="confirma_la_eliminacion_de">Do you confirm the deleition of %1$s?</string>
+    <string name="TotalConBolsillos">Total with pockets</string>
 </resources>

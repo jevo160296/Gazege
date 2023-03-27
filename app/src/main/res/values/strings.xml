@@ -18,4 +18,5 @@
     <string name="la_cuenta">la cuenta %1$s y sus transacciones asociadas</string>
     <string name="confirmar_eliminacion">Confirmar eliminación</string>
     <string name="confirma_la_eliminacion_de">¿Confirma la eliminación de %1$s?</string>
+    <string name="TotalConBolsillos">Total con bolsillos</string>
 </resources>

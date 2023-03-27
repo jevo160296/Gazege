@@ -1,14 +1,17 @@
 package com.example.gazege.ui.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -41,13 +44,31 @@ import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
 import com.example.gazege.ui.widgets.treeview.TreeState
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import java.time.LocalDate
+import kotlin.random.Random
 
 @Composable
 private fun DefaultAccountViewHolder(
     account: AccountAndOwnerWithTransactions,
+    accounts: List<AccountAndOwnerWithTransactions>,
+    isExpanded: Boolean,
     startDate: LocalDate?,
     endDate: LocalDate?
 ) {
+    val total = if (isExpanded) {
+        AccountDao.getTotal(account, startDate, endDate)
+    } else {
+        AccountDao.getTotal(account, startDate, endDate) +
+                AccountDao.getChildrenTotal(
+                    AccountAndOwnerWithTransactionsAndPockets.from(account, accounts),
+                    startDate,
+                    endDate
+                )
+    }
+    val totalString = if (isExpanded) {
+        stringResource(id = R.string.total)
+    } else {
+        stringResource(id = R.string.TotalConBolsillos)
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             SmallEmphasis(
@@ -59,8 +80,8 @@ private fun DefaultAccountViewHolder(
         Column(
             horizontalAlignment = Alignment.End
         ) {
-            SmallEmphasis(text = "${stringResource(id = R.string.total)} ")
-            LargeBody(text = doubleToString(AccountDao.getTotal(account, startDate, endDate)))
+            SmallEmphasis(text = totalString)
+            LargeBody(text = doubleToString(total))
         }
     }
 }
@@ -88,7 +109,7 @@ private fun AccountRecyclerView(
     )
 }
 
-private data class AccountAndOwnerWithTransactionsNode(
+data class AccountAndOwnerWithTransactionsNode(
     override val content: AccountAndOwnerWithTransactions,
     val accountList: List<AccountAndOwnerWithTransactions>,
     override val level: Int,
@@ -119,7 +140,7 @@ private fun AccountTreeView(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     treeState: TreeState,
     colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
-    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
+    viewHolder: @Composable (AccountAndOwnerWithTransactionsNode) -> Unit
 ) {
     val nodes = accountList
         .filter {
@@ -175,7 +196,7 @@ private fun AccountTreeView(
                 Box(
                     Modifier.padding(8.dp)
                 ) {
-                    viewHolder(node.content)
+                    viewHolder(node)
                 }
             }
         }
@@ -192,11 +213,13 @@ fun AccountPage(
     editAccount: (Account) -> Unit,
     startDate: LocalDate?,
     endDate: LocalDate?,
-    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit = {
+    viewHolder: @Composable (AccountAndOwnerWithTransactionsNode) -> Unit = {
         DefaultAccountViewHolder(
-            account = it,
+            account = it.content,
+            accounts = accountList,
             startDate = startDate,
-            endDate = endDate
+            endDate = endDate,
+            isExpanded = it.expanded(treeState.expandedItems)
         )
     },
     colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
@@ -248,56 +271,162 @@ private fun PreviewAccountItem() {
     DefaultAccountViewHolder(
         account = accountAndOwnerWithTransactions,
         startDate = null,
-        endDate = null
+        endDate = null,
+        accounts = listOf(),
+        isExpanded = false
     )
 }
 
 fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
-    return getPersonSample().map { person ->
-        listOf(1, 2, 3, 4, 5).map { index ->
-            val account = Account(
-                id = index,
-                name = "Cuenta$index",
-                ownerId = person.id ?: -1
-            )
-            AccountAndOwnerWithTransactions(
-                account = account,
-                owner = person,
-                inTransactions = (1..100).map { trans_index ->
-                    Transaction(
-                        amount = (index * trans_index).toDouble(),
-                        description = "",
-                        sourceId = 2,
-                        destinationId = index,
-                        date = LocalDate.now(),
-                        aNombreDe = null
+    val persons = getPersonSample()
+    var index = 0
+    val random = Random(3)
+    val accounts: List<Account> = persons
+        .flatMap {
+            when (it.name) {
+                "Pablo" -> Pair(
+                    0, (0..100).map {
+                        val pIndex = index++
+                        val hasParent = random.nextBoolean()
+                        val parentId = if (hasParent && pIndex > 0) {
+                            random.nextInt(pIndex)
+                        } else {
+                            null
+                        }
+                        Triple(pIndex, "Cuenta $pIndex", parentId)
+                    }
+                )
+                "Banco" -> Pair(
+                    1, listOf(
+                        Triple(index++, "Banco", null)
                     )
-                },
-                outTransactions = (1..40).map { trans_index ->
-                    Transaction(
-                        amount = (index * trans_index / (index + trans_index)).toDouble(),
-                        description = "",
-                        sourceId = index,
-                        destinationId = 3,
-                        date = LocalDate.now(),
-                        aNombreDe = null
+                )
+                "Petunia" -> Pair(
+                    2, listOf(
+                        Triple(index++, "Petunia", null)
                     )
+                )
+                "Hortensia" -> Pair(
+                    3, listOf(
+                        Triple(index++, "Hortensia", null)
+                    )
+                )
+                "__ESPECIAL__" -> Pair(
+                    4, listOf(
+                        Triple(index++, "__INGRESOS__", null),
+                        Triple(index++, "__GASTOS__", null)
+                    )
+                )
+                else -> null
+            }
+                .let { pair ->
+                    if (pair != null) {
+                        val ownerId = pair.first
+                        val accounts = pair.second
+                        accounts.map { triple ->
+                            val isIncome = triple.second == "__INGRESOS__"
+                            val isOutcome = triple.second == "__GASTOS__"
+                            Account(
+                                triple.first,
+                                triple.second,
+                                ownerId,
+                                triple.third,
+                                isIncome = isIncome,
+                                isOutcome = isOutcome
+                            )
+                        }
+                    } else {
+                        listOf()
+                    }
                 }
-            )
         }
-    }.flatten().sortedBy { it.account.id }
+    val transactions: List<Transaction> = (0..500).map {
+        val from = persons
+            .let {
+                val selected = random.nextInt(it.size)
+                it[selected].id
+            }
+        val to = persons
+            .filter { it.id != from }
+            .let {
+                val selected = random.nextInt(it.size)
+                it[selected].id
+            }
+        val sourceAccount = accounts
+            .filter { it.ownerId == from }
+            .let {
+                val selected = random.nextInt(it.size)
+                it[selected].id
+            }
+        val destinationAccount = accounts
+            .filter { it.ownerId == to }
+            .let {
+                val selected = random.nextInt(it.size)
+                it[selected].id
+            }
+        Transaction(
+            index++,
+            random.nextDouble(100.0, 500000.0),
+            "",
+            sourceAccount ?: 0,
+            destinationAccount ?: 1,
+            LocalDate.now(),
+            null
+        )
+    }
+    return AccountAndOwnerWithTransactions.from(accounts, persons, transactions)
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountList() {
     GazegeTheme {
-        AccountRecyclerView(
-            accountList = getAccountSample(),
-            delAccount = {},
-            editAccount = {},
-            state = LazyListState()
-        ) { acc -> DefaultAccountViewHolder(account = acc, startDate = null, endDate = null) }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colors.background)
+        ) {
+            AccountRecyclerView(
+                accountList = getAccountSample(),
+                delAccount = {},
+                editAccount = {},
+                state = LazyListState()
+            ) { acc ->
+                DefaultAccountViewHolder(
+                    account = acc, startDate = null, endDate = null,
+                    accounts = listOf(), isExpanded = false
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 240, heightDp = 320)
+@Composable
+private fun PreviewAccountTreeView() {
+    val accounts = getAccountSample()
+    val treeState = rememberTreeState()
+    GazegeTheme {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colors.background)
+        ) {
+            AccountTreeView(
+                accountList = accounts,
+                delAccount = {},
+                editAccount = {},
+                treeState = treeState
+            ) { acc ->
+                DefaultAccountViewHolder(
+                    account = acc.content,
+                    startDate = null,
+                    endDate = null,
+                    accounts = accounts,
+                    isExpanded = acc.expanded(treeState.expandedItems)
+                )
+            }
+        }
     }
 }
 
