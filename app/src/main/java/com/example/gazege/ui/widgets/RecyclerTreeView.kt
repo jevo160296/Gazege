@@ -65,6 +65,13 @@ interface Node<N, C : Node<N, C>> {
 }
 
 @Composable
+fun rememberTreeState(): SnapshotStateList<NodeId> {
+    return rememberSaveable(saver = ParcelizableNodeIdList.saver) {
+        mutableStateListOf()
+    }
+}
+
+@Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
     nodes: List<C>,
     groupSelector: (C) -> String? = { null },
@@ -73,8 +80,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
-    val expandedItems =
-        rememberSaveable(saver = ParcelizableNodeIdList.saver) { mutableStateListOf() }
+    val expandedItems = rememberTreeState()
     val layoutDirection = LocalLayoutDirection.current
     val treeScope = remember {
         mutableStateOf(
