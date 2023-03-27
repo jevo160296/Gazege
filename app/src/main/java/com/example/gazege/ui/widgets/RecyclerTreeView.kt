@@ -1,5 +1,6 @@
 package com.example.gazege.ui.widgets
 
+import android.os.Parcelable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,18 +19,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class NodeId(
     val relativeIndex: Int,
     val level: Int
-) {
+) : Parcelable {
     companion object {
         fun <T : Node<*, *>> from(node: T): NodeId {
             return NodeId(node.relativeIndex, node.level)
         }
+    }
+}
+
+@Parcelize
+data class ParcelizableNodeIdList(val NodeIdList: List<NodeId>) : Parcelable {
+    companion object {
+        val saver = Saver<SnapshotStateList<NodeId>, ParcelizableNodeIdList>(
+            restore = {
+                mutableStateListOf(*it.NodeIdList.toTypedArray())
+            },
+            save = {
+                ParcelizableNodeIdList(it)
+            }
+        )
     }
 }
 
@@ -53,7 +73,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
-    val expandedItems = remember { mutableStateListOf<NodeId>() }
+    val expandedItems =
+        rememberSaveable(saver = ParcelizableNodeIdList.saver) { mutableStateListOf() }
     val layoutDirection = LocalLayoutDirection.current
     val treeScope = remember {
         mutableStateOf(
