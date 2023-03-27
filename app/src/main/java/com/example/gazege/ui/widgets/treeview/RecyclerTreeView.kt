@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
 
 @Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
@@ -24,6 +25,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
 ) {
     val expandedItems = treeState.expandedItems
     val layoutDirection = LocalLayoutDirection.current
+    val startPadding = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
+    val endPadding = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
     val treeScope = TreeScope(
         viewHolder,
         toggleExpanded = {
@@ -37,9 +40,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
             it.expanded(expandedItems)
         },
         groupSelector = groupSelector,
-        groupViewHolder = groupViewHolder,
-        itemHolderPaddingValues = itemHolderPaddingValues,
-        layoutDirection = layoutDirection
+        groupViewHolder = groupViewHolder
     )
     LazyColumn(
         state = treeState.listState
@@ -51,6 +52,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         }
         nodes(
             nodes,
+            startPadding = startPadding,
+            endPadding = endPadding,
             treeScope = treeScope
         )
         item {
@@ -62,6 +65,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
 private fun <N, C : Node<N, C>> LazyListScope.nodes(
     nodes: List<C>,
     parentGroup: String? = null,
+    startPadding: Dp,
+    endPadding: Dp,
     treeScope: TreeScope<N, C>
 ) {
     var previousGroup: String? = parentGroup
@@ -72,6 +77,8 @@ private fun <N, C : Node<N, C>> LazyListScope.nodes(
             node,
             previousGroup = previousGroup,
             currentGroup = currentGroup,
+            startPadding = startPadding,
+            endPadding = endPadding,
             treeScope = treeScope
         )
         previousGroup = currentGroup
@@ -83,12 +90,10 @@ private fun <N, C : Node<N, C>> LazyListScope.node(
     node: C,
     previousGroup: String?,
     currentGroup: String?,
+    startPadding: Dp,
+    endPadding: Dp,
     treeScope: TreeScope<N, C>
 ) {
-    val itemHolderPaddingValues = treeScope.itemHolderPaddingValues
-    val layoutDirection = treeScope.layoutDirection
-    val startPadding = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
-    val endPadding = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
     if (currentGroup != null && previousGroup != currentGroup) {
         stickyHeader {
             DefaultHeader(startPadding = startPadding, endPadding = endPadding) {
@@ -105,6 +110,8 @@ private fun <N, C : Node<N, C>> LazyListScope.node(
         nodes(
             node.children,
             parentGroup = currentGroup,
+            startPadding = startPadding,
+            endPadding = endPadding,
             treeScope = treeScope
         )
     }
