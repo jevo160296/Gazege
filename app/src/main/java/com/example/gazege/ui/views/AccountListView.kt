@@ -89,18 +89,20 @@ private fun AccountRecyclerView(
 private data class AccountAndOwnerWithTransactionsNode(
     override val content: AccountAndOwnerWithTransactions,
     val accountList: List<AccountAndOwnerWithTransactions>,
-    override val level: Int
+    override val level: Int,
+    override val relativeIndex: Int
 ) : Node<AccountAndOwnerWithTransactions, AccountAndOwnerWithTransactionsNode> {
     override val children: List<AccountAndOwnerWithTransactionsNode>
         get() {
             val pockets = AccountAndOwnerWithTransactionsAndPockets.from(
                 content, accountList
             ).pockets
-            return pockets.map {
+            return pockets.mapIndexed { index, it ->
                 AccountAndOwnerWithTransactionsNode(
                     it.accountAndOwnerWithTransactions,
                     accountList,
-                    level + 1
+                    level + 1,
+                    index
                 )
             }
         }
@@ -121,11 +123,12 @@ private fun AccountTreeView(
         .filter {
             it.account.parentId == null
         }
-        .map {
+        .mapIndexed { index, it ->
             AccountAndOwnerWithTransactionsNode(
                 it,
                 accountList,
-                0
+                0,
+                index
             )
         }
     RecyclerTreeView(

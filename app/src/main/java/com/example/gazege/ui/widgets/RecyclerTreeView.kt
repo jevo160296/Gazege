@@ -22,10 +22,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 
+data class NodeId(
+    val relativeIndex: Int,
+    val level: Int
+) {
+    companion object {
+        fun <T : Node<*, *>> from(node: T): NodeId {
+            return NodeId(node.relativeIndex, node.level)
+        }
+    }
+}
+
 interface Node<N, C : Node<N, C>> {
     val content: N
+    val relativeIndex: Int
     val level: Int
     val children: List<C>
+
+    fun expanded(expandedItems: List<NodeId>): Boolean {
+        return NodeId.from(this) in expandedItems
+    }
 }
 
 @Composable
@@ -37,21 +53,21 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
-    val expandedItems = remember { mutableStateListOf<C>() }
+    val expandedItems = remember { mutableStateListOf<NodeId>() }
     val layoutDirection = LocalLayoutDirection.current
     val treeScope = remember {
         mutableStateOf(
             TreeScope(
                 viewHolder,
                 toggleExpanded = {
-                    if (expandedItems.contains(it)) {
-                        expandedItems.remove(it)
+                    if (it.expanded(expandedItems)) {
+                        expandedItems.remove(NodeId.from(it))
                     } else {
-                        expandedItems.add(it)
+                        expandedItems.add(NodeId.from(it))
                     }
                 },
                 isExpanded = {
-                    expandedItems.contains(it)
+                    it.expanded(expandedItems)
                 },
                 groupSelector = groupSelector,
                 groupViewHolder = groupViewHolder,
