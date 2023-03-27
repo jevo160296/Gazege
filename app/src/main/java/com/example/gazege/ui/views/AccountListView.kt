@@ -38,6 +38,8 @@ import com.example.gazege.ui.widgets.Node
 import com.example.gazege.ui.widgets.RecyclerTreeView
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
+import com.example.gazege.ui.widgets.TreeState
+import com.example.gazege.ui.widgets.rememberTreeState
 import java.time.LocalDate
 
 @Composable
@@ -115,7 +117,7 @@ private fun AccountTreeView(
     editAccount: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState,
+    treeState: TreeState,
     colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
     viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
 ) {
@@ -133,7 +135,7 @@ private fun AccountTreeView(
         }
     RecyclerTreeView(
         nodes = nodes,
-        state = state,
+        treeState = treeState,
         itemHolderPaddingValues = itemHolderPaddingValues
     ) { node, scope ->
         val isExpanded = scope.isExpanded(node)
@@ -185,7 +187,7 @@ fun AccountPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     accountList: List<AccountAndOwnerWithTransactions>,
-    state: LazyListState,
+    treeState: TreeState,
     delAccount: (Account) -> Unit,
     editAccount: (Account) -> Unit,
     startDate: LocalDate?,
@@ -207,7 +209,7 @@ fun AccountPage(
             delAccount = { delAccount(it.account) },
             editAccount = { editAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state,
+            treeState = treeState,
             colorSelector = colorSelector,
             viewHolder = viewHolder
         )
@@ -309,7 +311,7 @@ private fun PreviewPage() {
     GazegeTheme(darkTheme = false) {
         AccountPage(
             accountList = getAccountSample(),
-            state = LazyListState(),
+            treeState = rememberTreeState(),
             editAccount = {},
             delAccount = {},
             startDate = null,

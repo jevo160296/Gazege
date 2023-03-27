@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.Node
 import com.example.gazege.ui.widgets.RecyclerTreeView
+import com.example.gazege.ui.widgets.rememberTreeState
 
 data class CuentaEHijos(
     val nombre: String,
@@ -71,7 +71,7 @@ fun RecyclerViewPreview() {
                 groupSelector = {
                     it.content.owner
                 },
-                state = rememberLazyListState()
+                treeState = rememberTreeState()
             ) { node, scope ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically

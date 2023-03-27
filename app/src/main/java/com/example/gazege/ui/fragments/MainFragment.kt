@@ -53,6 +53,7 @@ import com.example.gazege.ui.views.getPersonWithAccountsSample
 import com.example.gazege.ui.views.getTransactionSample
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
+import com.example.gazege.ui.widgets.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -128,7 +129,7 @@ fun MainFragment(
     principalPerson: Person?
 ) {
     val transactionState = rememberLazyListState()
-    val accountState = rememberLazyListState()
+    val accountState = rememberTreeState()
     val personState = rememberLazyListState()
     val isFiltered = range.first != null || range.second != null
     val startDate = range.first
@@ -363,7 +364,7 @@ fun MainFragment(
                             person.owner.id == principalPerson?.id
                         },
                         itemHolderPaddingValues = paddingValues,
-                        state = accountState,
+                        treeState = accountState,
                         delAccount = { account ->
                             action = { delAccount(account) }
                             nombreItem = laCuenta.format(account.name)

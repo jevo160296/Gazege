@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.ui.views.AccountPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.rememberTreeState
 
 @Composable
 fun SaldoActualSettings(
@@ -23,7 +23,7 @@ fun SaldoActualSettings(
     saving: Int,
     onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
 ) {
-    val accountState = rememberLazyListState()
+    val accountState = rememberTreeState()
     Column {
         MediumHeadline(text = "Saldo actual settings")
         LargeBody(text = "A continuación seleccione las cuentas incluídas en el cálculo del saldo actual")
@@ -39,7 +39,7 @@ fun SaldoActualSettings(
         AccountPage(
             accountList = accountList,
             itemHolderPaddingValues = PaddingValues(4.dp),
-            state = accountState,
+            treeState = accountState,
             delAccount = { },
             editAccount = { account ->
                 val id = account.id

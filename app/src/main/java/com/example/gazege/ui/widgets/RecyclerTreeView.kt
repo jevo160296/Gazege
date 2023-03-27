@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -39,20 +38,6 @@ data class NodeId(
     }
 }
 
-@Parcelize
-data class ParcelizableNodeIdList(val NodeIdList: List<NodeId>) : Parcelable {
-    companion object {
-        val saver = Saver<SnapshotStateList<NodeId>, ParcelizableNodeIdList>(
-            restore = {
-                mutableStateListOf(*it.NodeIdList.toTypedArray())
-            },
-            save = {
-                ParcelizableNodeIdList(it)
-            }
-        )
-    }
-}
-
 interface Node<N, C : Node<N, C>> {
     val content: N
     val relativeIndex: Int
@@ -64,10 +49,49 @@ interface Node<N, C : Node<N, C>> {
     }
 }
 
+@Parcelize
+class ParcelableTreeState(
+    val expandedItems: List<NodeId>,
+    val listState: List<Int>
+) : Parcelable
+
+data class TreeState(
+    val expandedItems: SnapshotStateList<NodeId>,
+    val listState: LazyListState
+) {
+    companion object {
+        val Saver: Saver<TreeState, *> = Saver<TreeState, ParcelableTreeState>(
+            save = {
+                ParcelableTreeState(
+                    expandedItems = it.expandedItems,
+                    listState = it.listState.let { state ->
+                        listOf(
+                            state.firstVisibleItemIndex,
+                            state.firstVisibleItemScrollOffset
+                        )
+                    }
+                )
+            },
+            restore = {
+                TreeState(
+                    expandedItems = mutableStateListOf(*it.expandedItems.toTypedArray()),
+                    listState = LazyListState(
+                        it.listState[0],
+                        it.listState[1]
+                    )
+                )
+            }
+        )
+    }
+}
+
 @Composable
-fun rememberTreeState(): SnapshotStateList<NodeId> {
-    return rememberSaveable(saver = ParcelizableNodeIdList.saver) {
-        mutableStateListOf()
+fun rememberTreeState(): TreeState {
+    return rememberSaveable(saver = TreeState.Saver) {
+        TreeState(
+            mutableStateListOf(),
+            LazyListState()
+        )
     }
 }
 
@@ -76,11 +100,11 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     nodes: List<C>,
     groupSelector: (C) -> String? = { null },
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
-    state: LazyListState = rememberLazyListState(),
+    treeState: TreeState = rememberTreeState(),
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
 ) {
-    val expandedItems = rememberTreeState()
+    val expandedItems = treeState.expandedItems
     val layoutDirection = LocalLayoutDirection.current
     val treeScope = remember {
         mutableStateOf(
@@ -104,7 +128,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         )
     }
     LazyColumn(
-        state = state
+        state = treeState.listState
     ) {
         val calculatedTop = itemHolderPaddingValues.calculateTopPadding()
         val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()
