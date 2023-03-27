@@ -26,7 +26,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     treeState: TreeState = rememberTreeState(),
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    viewHolder: @Composable (C, TreeScope<N, C>) -> Unit
+    viewHolder: @Composable (node: C, treeSope: TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = treeState.expandedItems
     val layoutDirection = LocalLayoutDirection.current
