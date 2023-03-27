@@ -74,6 +74,132 @@ class AppDatabaseTest {
         database.transactionDao().insertAll(*transactionsIn.toTypedArray())
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun initDatabaseSmall() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = AppDatabase.getDatabase(appContext)
+
+        val persons = database.personDao().getAll().first()
+        persons.forEach {
+            database.personDao().delete(it)
+        }
+        val newPersons = listOf(
+            "Pablo",
+            "Banco",
+            "Petunia",
+            "Hortensia",
+            "__ESPECIAL__"
+        ).mapIndexed { index, s ->
+            Person(
+                index, s, if (index == 0) {
+                    1
+                } else {
+                    null
+                }
+            )
+        }
+        var index = 0
+        val random = Random(3)
+        val newAccounts: List<Account> = newPersons
+            .flatMap {
+                when (it.name) {
+                    "Pablo" -> Pair(
+                        0, (0..100).map {
+                            val pIndex = index++
+                            val hasParent = random.nextBoolean()
+                            val parentId = if (hasParent && pIndex > 0) {
+                                random.nextInt(pIndex)
+                            } else {
+                                null
+                            }
+                            Triple(pIndex, "Cuenta $pIndex", parentId)
+                        }
+                    )
+                    "Banco" -> Pair(
+                        1, listOf(
+                            Triple(index++, "Banco", null)
+                        )
+                    )
+                    "Petunia" -> Pair(
+                        2, listOf(
+                            Triple(index++, "Petunia", null)
+                        )
+                    )
+                    "Hortensia" -> Pair(
+                        3, listOf(
+                            Triple(index++, "Hortensia", null)
+                        )
+                    )
+                    "__ESPECIAL__" -> Pair(
+                        4, listOf(
+                            Triple(index++, "__INGRESOS__", null),
+                            Triple(index++, "__GASTOS__", null)
+                        )
+                    )
+                    else -> null
+                }
+                    .let { pair ->
+                        if (pair != null) {
+                            val ownerId = pair.first
+                            val accounts = pair.second
+                            accounts.map { triple ->
+                                val isIncome = triple.second == "__INGRESOS__"
+                                val isOutcome = triple.second == "__GASTOS__"
+                                Account(
+                                    triple.first,
+                                    triple.second,
+                                    ownerId,
+                                    triple.third,
+                                    isIncome = isIncome,
+                                    isOutcome = isOutcome
+                                )
+                            }
+                        } else {
+                            listOf()
+                        }
+                    }
+            }
+        index = 0
+        val newTransactions: List<Transaction> = (0..500).map {
+            val from = newPersons
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val to = newPersons
+                .filter { it.id != from }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val sourceAccount = newAccounts
+                .filter { it.ownerId == from }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val destinationAccount = newAccounts
+                .filter { it.ownerId == to }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            Transaction(
+                index++,
+                random.nextDouble(100.0, 500000.0),
+                "",
+                sourceAccount ?: 0,
+                destinationAccount ?: 1,
+                LocalDate.now(),
+                null
+            )
+        }
+        database.personDao().insertAll(*newPersons.toTypedArray())
+        database.accountDao().insertAll(*newAccounts.toTypedArray())
+        database.transactionDao().insertAll(*newTransactions.toTypedArray())
+    }
+
     @Test
     fun createDataBase() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext

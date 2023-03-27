@@ -18,9 +18,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.theme.Shapes
+import com.example.gazege.ui.views.AccountAndOwnerNode
+import com.example.gazege.ui.views.AccountDropDownMenu
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.MediumHeadline
@@ -30,7 +32,7 @@ fun SettingsFragment(
     personList: List<Person>,
     principalPerson: Person?,
     onPrincipalPersonChanged: (Person) -> Unit,
-    accountList: List<AccountAndOwnerWithTransactions>,
+    accountList: List<AccountAndOwner>,
     incomeAccount: Account?,
     outcomeAccount: Account?,
     onIncomeOutcomeAccountChanged: (Account?, Account?) -> Unit,
@@ -39,12 +41,6 @@ fun SettingsFragment(
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var incomeExpanded by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var outcomeExpanded by rememberSaveable {
         mutableStateOf(false)
     }
     var incomeIdSelected by rememberSaveable {
@@ -112,34 +108,33 @@ fun SettingsFragment(
                     Text(text = "Nueva cuenta")
                 }
             } else {
-                DropDownMenu(
-                    dropDownExpanded = incomeExpanded,
-                    onExpandedChange = { incomeExpanded = it },
-                    options = accountListNoOutcome,
-                    selectedItem = incomeSelected,
-                    itemToString = { it?.account?.name ?: "" },
-                    onItemClick = { incomeIdSelected = it.account.id },
-                    label = { Text("Income") }
-                ) {
-                    it.owner.name
-                }
+                AccountDropDownMenu(
+                    accountsList = accountListNoOutcome,
+                    selectedAccountNode = incomeSelected?.let {
+                        AccountAndOwnerNode(it, accountListNoOutcome, 0, 0)
+                    },
+                    label = { Text("Income") },
+                    onItemClick = { incomeIdSelected = it.content.account.id }
+                )
             }
             if (accountListNoIncome.isEmpty()) {
                 ButtonField(onClick = onAddAccountRequested) {
                     Text(text = "Nueva cuenta")
                 }
             } else {
-                DropDownMenu(
-                    dropDownExpanded = outcomeExpanded,
-                    onExpandedChange = { outcomeExpanded = it },
-                    options = accountListNoIncome,
-                    selectedItem = outcomeSelected,
-                    itemToString = { it?.account?.name ?: "" },
-                    onItemClick = { outcomeIdSelected = it.account.id },
-                    label = { Text("Outcome") }
-                ) {
-                    it.owner.name
-                }
+                AccountDropDownMenu(
+                    accountsList = accountListNoIncome,
+                    selectedAccountNode = outcomeSelected?.let {
+                        AccountAndOwnerNode(
+                            it,
+                            accountListNoIncome,
+                            0,
+                            0
+                        )
+                    },
+                    label = { Text("Outcome") },
+                    onItemClick = { outcomeIdSelected = it.content.account.id }
+                )
             }
         }
     }

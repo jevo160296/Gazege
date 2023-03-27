@@ -27,6 +27,9 @@ data class AccountAndOwnerWithTransactions(
     var total: Double = Double.NaN
 
     @Ignore
+    var childrenTotal: Double = Double.NaN
+
+    @Ignore
     var range: Pair<LocalDate?, LocalDate?>? = null
 
     companion object {

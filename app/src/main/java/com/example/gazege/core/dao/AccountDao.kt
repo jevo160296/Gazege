@@ -5,6 +5,7 @@ import com.example.gazege.core.dateBetween
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Person
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -49,6 +50,22 @@ interface AccountDao {
                 .sumOf { it.amount }
         }
 
+        private fun calculateChildrenIngresos(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+            accountsToOmit: List<Account> = listOf()
+        ): Double {
+            return account.pockets.sumOf {
+                calculateIngresos(
+                    it.accountAndOwnerWithTransactions,
+                    startDate,
+                    endDate,
+                    accountsToOmit
+                ) + calculateChildrenIngresos(it, startDate, endDate, accountsToOmit)
+            }
+        }
+
         fun calculateEgresos(
             account: AccountAndOwnerWithTransactions,
             startDate: LocalDate?,
@@ -61,6 +78,22 @@ interface AccountDao {
                 .sumOf { it.amount }
         }
 
+        private fun calculateChildrenEgresos(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+            accountsToOmit: List<Account> = listOf()
+        ): Double {
+            return account.pockets.sumOf {
+                calculateEgresos(
+                    it.accountAndOwnerWithTransactions,
+                    startDate,
+                    endDate,
+                    accountsToOmit
+                ) + calculateChildrenEgresos(it, startDate, endDate, accountsToOmit)
+            }
+        }
+
         private fun calculateTotal(
             account: AccountAndOwnerWithTransactions, startDate: LocalDate?,
             endDate: LocalDate?
@@ -68,6 +101,32 @@ interface AccountDao {
             val totalIn = calculateIngresos(account, startDate, endDate)
             val totalOut = calculateEgresos(account, startDate, endDate)
             return totalIn - totalOut
+        }
+
+        private fun calculateChildrenTotal(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ): Double {
+            val totalIn = calculateChildrenIngresos(account, startDate, endDate)
+            val totalOut = calculateChildrenEgresos(account, startDate, endDate)
+            return totalIn - totalOut
+        }
+
+        fun getChildrenTotal(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            startDate: LocalDate?,
+            endDate: LocalDate?
+        ): Double {
+            val newRange = Pair(startDate, endDate)
+            val shouldBeCalculated = account.accountAndOwnerWithTransactions.childrenTotal.isNaN()
+                    || account.accountAndOwnerWithTransactions.range != newRange
+            if (shouldBeCalculated) {
+                val childrenTotal = calculateChildrenTotal(account, startDate, endDate)
+                account.accountAndOwnerWithTransactions.childrenTotal = childrenTotal
+                account.accountAndOwnerWithTransactions.range = newRange
+            }
+            return account.accountAndOwnerWithTransactions.childrenTotal
         }
 
         fun getTotal(
