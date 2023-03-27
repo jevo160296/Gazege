@@ -62,7 +62,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     }
 }
 
-fun <N, C : Node<N, C>> LazyListScope.nodes(
+private fun <N, C : Node<N, C>> LazyListScope.nodes(
     nodes: List<C>,
     parentGroup: String? = null,
     treeScope: TreeScope<N, C>
@@ -82,7 +82,7 @@ fun <N, C : Node<N, C>> LazyListScope.nodes(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-fun <N, C : Node<N, C>> LazyListScope.node(
+private fun <N, C : Node<N, C>> LazyListScope.node(
     node: C,
     previousGroup: String?,
     currentGroup: String?,
