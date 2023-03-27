@@ -19,4 +19,6 @@
     <string name="confirmar_eliminacion">Confirm deleition</string>
     <string name="confirma_la_eliminacion_de">Do you confirm the deleition of %1$s?</string>
     <string name="TotalConBolsillos">Total with pockets</string>
+    <string name="cuentaPadre">Parent account</string>
+    <string name="balance_actual">Current balance with pockets</string>
 </resources>

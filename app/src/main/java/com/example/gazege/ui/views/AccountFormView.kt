@@ -16,11 +16,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialAccountAndOwner
 import com.example.gazege.ui.widgets.ButtonField
@@ -34,6 +37,7 @@ fun AccountAndOwnerForm(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     accountAndOwner: PartialAccountAndOwner,
+    accountAndOwnerList: List<AccountAndOwner>,
     personList: List<Person>,
     currentBalance: Double,
     onCurrentBalanceChanged: (Double) -> Unit,
@@ -47,6 +51,21 @@ fun AccountAndOwnerForm(
     val selectedOwner: Person? = accountAndOwner.owner
     val incomeAccountId = incomeAccount?.id
     val outcomeAccountId = outcomeAccount?.id
+    val selectableParentAccounts = accountAndOwnerList
+        .filter {
+            it.account.parentId != accountAndOwner.account.id &&
+                    it.account.id != accountAndOwner.account.id &&
+                    it.account.ownerId == selectedOwner?.id
+        }
+    val selectedParentAccountAndOwner = selectableParentAccounts.firstOrNull {
+        it.account.id == accountAndOwner.account.parentId
+    }
+    val selectedParentAccountAndOwnerId = selectedParentAccountAndOwner?.account?.id
+    if (selectedParentAccountAndOwnerId != accountAndOwner.account.parentId) {
+        onAccountAndOwnerChanged(accountAndOwner.copy().apply {
+            account = account.copy(parentId = selectedParentAccountAndOwnerId)
+        })
+    }
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
@@ -116,10 +135,30 @@ fun AccountAndOwnerForm(
                 Text("New person")
             }
         }
+        AccountDropDownMenu(
+            accountsList = selectableParentAccounts,
+            selectedAccountNode = selectedParentAccountAndOwner?.let {
+                AccountAndOwnerNode(
+                    selectedParentAccountAndOwner,
+                    accountAndOwnerList,
+                    0,
+                    0
+                )
+            },
+            label = { Text(stringResource(id = R.string.cuentaPadre)) },
+            onItemClick = {
+                onAccountAndOwnerChanged(
+                    accountAndOwner.copy().apply {
+                        account = account.copy(parentId = it.content.account.id)
+                    }
+                )
+            }
+        )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
                 value = currentBalance.toBigDecimal(),
-                onValueChange = { onCurrentBalanceChanged(it.toDouble()) }
+                onValueChange = { onCurrentBalanceChanged(it.toDouble()) },
+                label = { Text(stringResource(id = R.string.balance_actual)) }
             )
         } else {
             ButtonField(onClick = onSetIncomeOutcomeAccount) {

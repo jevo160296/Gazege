@@ -52,6 +52,21 @@ data class AccountAndOwnerNode(
                 )
             }
         }
+
+    companion object {
+        fun from(accountList: List<AccountAndOwner>): List<AccountAndOwnerNode> {
+            return accountList.filter {
+                it.account.parentId == null
+            }.mapIndexed { index, it ->
+                AccountAndOwnerNode(
+                    it,
+                    accountList,
+                    0,
+                    index
+                )
+            }
+        }
+    }
 }
 
 @Composable

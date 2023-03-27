@@ -11,6 +11,7 @@ data class PartialAccount (
     var id: Int?,
     var name: String?,
     var ownerId: Int?,
+    var parentId: Int?,
     var includedInTotal: Boolean?,
     var isIncome: Boolean?,
     var isOutcome: Boolean?
@@ -31,6 +32,7 @@ data class PartialAccount (
                 id = id,
                 name = name!!,
                 ownerId = ownerId!!,
+                parentId = parentId,
                 includedInTotal = includedInTotal!!,
                 isIncome = isIncome!!,
                 isOutcome = isOutcome!!
@@ -43,6 +45,7 @@ data class PartialAccount (
     companion object {
         fun blankEntity(): PartialAccount {
             return PartialAccount(
+                null,
                 null,
                 null,
                 null,
@@ -86,6 +89,7 @@ data class ParcelableAccount(
     var id: Int?,
     var name: String?,
     var ownerId: Int?,
+    var parentId: Int?,
     var includedInTotal: Boolean?,
     var isIncome: Boolean?,
     var isOutcome: Boolean?
@@ -96,6 +100,7 @@ data class ParcelableAccount(
             id = id,
             name = name,
             ownerId = ownerId,
+            parentId = parentId,
             includedInTotal = includedInTotal,
             isIncome = isIncome,
             isOutcome = isOutcome
@@ -116,6 +121,7 @@ val accountAndOwnerSaver = Saver<PartialAccountAndOwner, ParcelableAccountAndOwn
                 id = state.account.id,
                 name = state.account.name,
                 ownerId = state.account.ownerId,
+                parentId = state.account.parentId,
                 includedInTotal = state.account.includedInTotal,
                 isIncome = state.account.isIncome,
                 isOutcome = state.account.isOutcome

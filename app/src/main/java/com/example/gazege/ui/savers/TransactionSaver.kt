@@ -143,7 +143,8 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                     ownerId = state.sourceAccount!!.ownerId,
                     includedInTotal = state.sourceAccount!!.includedInTotal,
                     isIncome = state.sourceAccount!!.isIncome,
-                    isOutcome = state.sourceAccount!!.isOutcome
+                    isOutcome = state.sourceAccount!!.isOutcome,
+                    parentId = state.sourceAccount!!.parentId
                 )
             }else{
                 null
@@ -155,7 +156,8 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                     ownerId = state.destinationAccount!!.ownerId,
                     includedInTotal = state.destinationAccount!!.includedInTotal,
                     isIncome = state.destinationAccount!!.isIncome,
-                    isOutcome = state.destinationAccount!!.isOutcome
+                    isOutcome = state.destinationAccount!!.isOutcome,
+                    parentId = state.destinationAccount!!.parentId
                 )
             } else{
                 null

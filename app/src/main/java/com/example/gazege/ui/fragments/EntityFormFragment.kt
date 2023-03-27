@@ -80,6 +80,7 @@ fun AccountFormFragment(
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     accountAndOwner: AccountAndOwner? = null,
+    accountAndOwnerList: List<AccountAndOwner>,
     personList: List<Person>,
     currentBalance: Double,
     incomeAccount: Account?,
@@ -104,7 +105,8 @@ fun AccountFormFragment(
                             ownerId = it.ownerId,
                             includedInTotal = it.includedInTotal,
                             isIncome = it.isIncome,
-                            isOutcome = it.isOutcome
+                            isOutcome = it.isOutcome,
+                            parentId = it.parentId
                         )
                     },
                     owner = accountAndOwner.owner
@@ -137,6 +139,7 @@ fun AccountFormFragment(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
             accountAndOwner = accountAndOwnerState,
+            accountAndOwnerList = accountAndOwnerList,
             personList = personList,
             currentBalance = currentBalanceState,
             onCurrentBalanceChanged = { currentBalanceState = it },

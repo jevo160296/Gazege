@@ -251,6 +251,9 @@ class MainActivity : ComponentActivity() {
                                 outcomeAccount = outcomeAccount,
                                 onSetIncomeOutcomeAccount = {
                                     navController.navigate("settings")
+                                },
+                                accountAndOwnerList = accountAndOwnerWithTransactions.map {
+                                    AccountAndOwner(it.account, it.owner)
                                 }
                             )
                         }
@@ -327,6 +330,9 @@ class MainActivity : ComponentActivity() {
                                 outcomeAccount = outcomeAccount,
                                 onSetIncomeOutcomeAccount = {
                                     navController.navigate("settings")
+                                },
+                                accountAndOwnerList = accountAndOwnerWithTransactions.map {
+                                    AccountAndOwner(it.account, it.owner)
                                 }
                             )
                         }
