@@ -12,17 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,6 +34,7 @@ import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
+import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
 import com.example.gazege.ui.widgets.treeview.TreeState
@@ -168,17 +164,7 @@ private fun AccountTreeView(
                     checked = isExpanded,
                     onCheckedChange = { scope.toggleExpanded(node) }
                 ) {
-                    if (isExpanded) {
-                        Icon(
-                            painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowDown),
-                            contentDescription = "Collapse"
-                        )
-                    } else {
-                        Icon(
-                            painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowRight),
-                            contentDescription = "Expand"
-                        )
-                    }
+                    DefaultTreeLeadingIcon(isExpanded = isExpanded)
                 }
             } else {
                 Spacer(
