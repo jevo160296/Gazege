@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -160,14 +161,21 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
         Row {
             Spacer(Modifier.width(contentPadding.calculateStartPadding(layoutDirection)))
             Spacer(modifier = Modifier.width(node.level.dp * 8))
+            val isExpanded = treeScope.isExpanded(node)
             if (node.children.isNotEmpty()) {
                 IconToggleButton(
                     modifier = Modifier.width(32.dp),
-                    checked = treeScope.isExpanded(node),
+                    checked = isExpanded,
                     onCheckedChange = { treeScope.toggleExpanded(node) }
                 ) {
                     Icon(
-                        painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowRight),
+                        painter = rememberVectorPainter(
+                            image = if (isExpanded) {
+                                Icons.Default.KeyboardArrowDown
+                            } else {
+                                Icons.Default.KeyboardArrowRight
+                            }
+                        ),
                         contentDescription = "Desc"
                     )
                 }
