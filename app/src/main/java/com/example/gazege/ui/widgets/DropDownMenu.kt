@@ -7,22 +7,18 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.widgets.treeview.ColumnTreeView
+import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 
@@ -168,16 +164,7 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
                     checked = isExpanded,
                     onCheckedChange = { treeScope.toggleExpanded(node) }
                 ) {
-                    Icon(
-                        painter = rememberVectorPainter(
-                            image = if (isExpanded) {
-                                Icons.Default.KeyboardArrowDown
-                            } else {
-                                Icons.Default.KeyboardArrowRight
-                            }
-                        ),
-                        contentDescription = "Desc"
-                    )
+                    DefaultTreeLeadingIcon(isExpanded = isExpanded)
                 }
             } else {
                 Spacer(Modifier.width(32.dp))
