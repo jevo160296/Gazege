@@ -21,4 +21,10 @@
     <string name="TotalConBolsillos">Total with pockets</string>
     <string name="cuentaPadre">Parent account</string>
     <string name="balance_actual">Current balance with pockets</string>
+    <string name="Ajustes">Settings</string>
+    <string name="Nueva_persona">New person</string>
+    <string name="Persona_principal">Principal person</string>
+    <string name="Nueva_cuenta">New account</string>
+    <string name="Ingreso">Income</string>
+    <string name="Gasto">Outcome</string>
 </resources>

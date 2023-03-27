@@ -1,8 +1,6 @@
 package com.example.gazege.ui.widgets.treeview
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.LayoutDirection
 
 interface Node<N, C : Node<N, C>> {
     val content: N
@@ -23,8 +21,6 @@ data class TreeScope<N, C : Node<N, C>>(
     val viewHolder: @Composable (C, TreeScope<N, C>) -> Unit,
     val groupViewHolder: @Composable (String) -> Unit,
     val groupSelector: (C) -> String?,
-    val itemHolderPaddingValues: PaddingValues,
-    val layoutDirection: LayoutDirection,
     val isExpanded: (C) -> Boolean,
     val toggleExpanded: (C) -> Unit
 )
