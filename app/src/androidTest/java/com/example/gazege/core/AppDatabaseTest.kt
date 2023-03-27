@@ -99,36 +99,42 @@ class AppDatabaseTest {
                 }
             )
         }
+        var index = 0
+        val random = Random(3)
         val newAccounts: List<Account> = newPersons
             .flatMap {
                 when (it.name) {
                     "Pablo" -> Pair(
-                        0, listOf(
-                            Triple(0, "Efectivo", null),
-                            Triple(1, "Banco", null),
-                            Triple(2, "Banco 1", 1),
-                            Triple(3, "Banco 2", 2)
-                        )
+                        0, (0..100).map {
+                            val pIndex = index++
+                            val hasParent = random.nextBoolean()
+                            val parentId = if (hasParent && pIndex > 0) {
+                                random.nextInt(pIndex)
+                            } else {
+                                null
+                            }
+                            Triple(pIndex, "Cuenta $pIndex", parentId)
+                        }
                     )
                     "Banco" -> Pair(
                         1, listOf(
-                            Triple(4, "Banco", null)
+                            Triple(index++, "Banco", null)
                         )
                     )
                     "Petunia" -> Pair(
                         2, listOf(
-                            Triple(5, "Petunia", null)
+                            Triple(index++, "Petunia", null)
                         )
                     )
                     "Hortensia" -> Pair(
                         3, listOf(
-                            Triple(6, "Hortensia", null)
+                            Triple(index++, "Hortensia", null)
                         )
                     )
                     "__ESPECIAL__" -> Pair(
                         4, listOf(
-                            Triple(7, "__INGRESOS__", null),
-                            Triple(8, "__GASTOS__", null)
+                            Triple(index++, "__INGRESOS__", null),
+                            Triple(index++, "__GASTOS__", null)
                         )
                     )
                     else -> null
@@ -154,8 +160,44 @@ class AppDatabaseTest {
                         }
                     }
             }
+        index = 0
+        val newTransactions: List<Transaction> = (0..500).map {
+            val from = newPersons
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val to = newPersons
+                .filter { it.id != from }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val sourceAccount = newAccounts
+                .filter { it.ownerId == from }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            val destinationAccount = newAccounts
+                .filter { it.ownerId == to }
+                .let {
+                    val selected = random.nextInt(it.size)
+                    it[selected].id
+                }
+            Transaction(
+                index++,
+                random.nextDouble(100.0, 500000.0),
+                "",
+                sourceAccount ?: 0,
+                destinationAccount ?: 1,
+                LocalDate.now(),
+                null
+            )
+        }
         database.personDao().insertAll(*newPersons.toTypedArray())
         database.accountDao().insertAll(*newAccounts.toTypedArray())
+        database.transactionDao().insertAll(*newTransactions.toTypedArray())
     }
 
     @Test
