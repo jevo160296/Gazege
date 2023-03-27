@@ -13,8 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 
@@ -25,31 +23,27 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     treeState: TreeState = rememberTreeState(),
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    viewHolder: @Composable (node: C, treeSope: TreeScope<N, C>) -> Unit
+    viewHolder: @Composable (node: C, scope: TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = treeState.expandedItems
     val layoutDirection = LocalLayoutDirection.current
-    val treeScope = remember {
-        mutableStateOf(
-            TreeScope(
-                viewHolder,
-                toggleExpanded = {
-                    if (it.expanded(expandedItems)) {
-                        expandedItems.remove(NodeId.from(it))
-                    } else {
-                        expandedItems.add(NodeId.from(it))
-                    }
-                },
-                isExpanded = {
-                    it.expanded(expandedItems)
-                },
-                groupSelector = groupSelector,
-                groupViewHolder = groupViewHolder,
-                itemHolderPaddingValues = itemHolderPaddingValues,
-                layoutDirection = layoutDirection
-            )
-        )
-    }
+    val treeScope = TreeScope(
+        viewHolder,
+        toggleExpanded = {
+            if (it.expanded(expandedItems)) {
+                expandedItems.remove(NodeId.from(it))
+            } else {
+                expandedItems.add(NodeId.from(it))
+            }
+        },
+        isExpanded = {
+            it.expanded(expandedItems)
+        },
+        groupSelector = groupSelector,
+        groupViewHolder = groupViewHolder,
+        itemHolderPaddingValues = itemHolderPaddingValues,
+        layoutDirection = layoutDirection
+    )
     LazyColumn(
         state = treeState.listState
     ) {
@@ -60,7 +54,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         }
         nodes(
             nodes,
-            treeScope = treeScope.value
+            treeScope = treeScope
         )
         item {
             Spacer(Modifier.height(calculatedBottom))
