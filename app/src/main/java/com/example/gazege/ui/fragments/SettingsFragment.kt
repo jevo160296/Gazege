@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
@@ -83,14 +84,14 @@ fun SettingsFragment(
                 )
             }
         },
-        topBar = { MediumHeadline(text = "Ajustes") },
+        topBar = { MediumHeadline(text = stringResource(id = R.string.Ajustes)) },
     ) { paddingValues ->
         Column(modifier = Modifier
             .padding(paddingValues)
             .padding(8.dp)) {
             if (personList.isEmpty()) {
                 ButtonField(onClick = onAddPersonRequested) {
-                    Text(text = "Nueva persona")
+                    Text(text = stringResource(id = R.string.Nueva_persona))
                 }
             } else {
                 DropDownMenu(
@@ -100,12 +101,12 @@ fun SettingsFragment(
                     selectedItem = personSelected,
                     itemToString = { it?.name ?: "" },
                     onItemClick = { personIdSelected = it.id },
-                    label = { Text("Principal person") }
+                    label = { Text(stringResource(id = R.string.Persona_principal)) }
                 )
             }
             if (accountListNoOutcome.isEmpty()) {
                 ButtonField(onClick = onAddAccountRequested) {
-                    Text(text = "Nueva cuenta")
+                    Text(text = stringResource(id = R.string.Nueva_cuenta))
                 }
             } else {
                 AccountDropDownMenu(
@@ -113,13 +114,13 @@ fun SettingsFragment(
                     selectedAccountNode = incomeSelected?.let {
                         AccountAndOwnerNode(it, accountListNoOutcome, 0, 0)
                     },
-                    label = { Text("Income") },
+                    label = { Text(stringResource(id = R.string.Ingreso)) },
                     onItemClick = { incomeIdSelected = it.content.account.id }
                 )
             }
             if (accountListNoIncome.isEmpty()) {
                 ButtonField(onClick = onAddAccountRequested) {
-                    Text(text = "Nueva cuenta")
+                    Text(text = stringResource(id = R.string.Nueva_cuenta))
                 }
             } else {
                 AccountDropDownMenu(
@@ -132,7 +133,7 @@ fun SettingsFragment(
                             0
                         )
                     },
-                    label = { Text("Outcome") },
+                    label = { Text(stringResource(id = R.string.Gasto)) },
                     onItemClick = { outcomeIdSelected = it.content.account.id }
                 )
             }

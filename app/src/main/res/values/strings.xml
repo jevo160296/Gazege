@@ -21,4 +21,10 @@
     <string name="TotalConBolsillos">Total con bolsillos</string>
     <string name="cuentaPadre">Cuenta padre</string>
     <string name="balance_actual">Balance actual con bolsillos</string>
+    <string name="Ajustes">Ajustes</string>
+    <string name="Nueva_persona">Nueva persona</string>
+    <string name="Persona_principal">Persona principal</string>
+    <string name="Nueva_cuenta">Nueva cuenta</string>
+    <string name="Ingreso">Ingreso</string>
+    <string name="Gasto">Gasto</string>
 </resources>
