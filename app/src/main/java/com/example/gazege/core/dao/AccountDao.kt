@@ -62,7 +62,7 @@ interface AccountDao {
                     startDate,
                     endDate,
                     accountsToOmit
-                )
+                ) + calculateChildrenIngresos(it, startDate, endDate, accountsToOmit)
             }
         }
 
@@ -90,7 +90,7 @@ interface AccountDao {
                     startDate,
                     endDate,
                     accountsToOmit
-                )
+                ) + calculateChildrenEgresos(it, startDate, endDate, accountsToOmit)
             }
         }
 
