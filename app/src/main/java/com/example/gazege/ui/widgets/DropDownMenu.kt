@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenuItem
@@ -149,13 +148,14 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             it.id() to key
         }
     }.toMap()
-    val contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
     val layoutDirection = LocalLayoutDirection.current
-    ColumnTreeView(nodes = nodes, groupSelector = {
-        inverseMap[it.id()]
-    }) { node, treeScope ->
+    val contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+    ColumnTreeView(
+        nodes = nodes,
+        groupSelector = { inverseMap[it.id()] },
+        itemHolderPaddingValues = contentPadding
+    ) { node, treeScope ->
         Row {
-            Spacer(Modifier.width(contentPadding.calculateStartPadding(layoutDirection)))
             Spacer(modifier = Modifier.width(node.level.dp * 8))
             val isExpanded = treeScope.isExpanded(node)
             if (node.children.isNotEmpty()) {

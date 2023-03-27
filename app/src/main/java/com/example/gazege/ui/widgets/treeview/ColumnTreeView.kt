@@ -92,15 +92,23 @@ fun <N, C : Node<N, C>> ColumnScope.Node(
 ) {
     val itemHolderPaddingValues = treeScope.itemHolderPaddingValues
     val layoutDirection = treeScope.layoutDirection
+    val startPadding = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
+    val endPadding = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
     if (currentGroup != null && previousGroup != currentGroup) {
-        treeScope.groupViewHolder(currentGroup)
+        Row {
+            Spacer(Modifier.width(startPadding))
+            Box(Modifier.weight(1f)) {
+                treeScope.groupViewHolder(currentGroup)
+            }
+            Spacer(Modifier.width(endPadding))
+        }
     }
     Row {
-        Spacer(Modifier.width(itemHolderPaddingValues.calculateStartPadding(layoutDirection)))
+        Spacer(Modifier.width(startPadding))
         Box(Modifier.weight(1f)) {
             treeScope.viewHolder(node, treeScope)
         }
-        Spacer(Modifier.width(itemHolderPaddingValues.calculateEndPadding(layoutDirection)))
+        Spacer(Modifier.width(endPadding))
     }
     if (treeScope.isExpanded(node)) {
         Nodes(
