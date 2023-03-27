@@ -133,9 +133,19 @@ fun PersonPage(
 }
 
 fun getPersonSample(): List<Person> {
-    return (1..40).map {
+    return listOf(
+        "Pablo",
+        "Banco",
+        "Petunia",
+        "Hortensia",
+        "__ESPECIAL__"
+    ).mapIndexed { index, s ->
         Person(
-            name = "Person $it"
+            index, s, if (index == 0) {
+                1
+            } else {
+                null
+            }
         )
     }
 }
