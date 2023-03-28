@@ -143,17 +143,27 @@ class NumberTransformation(
     }
 
     class Offset(
-        originalIntegerLength: Int, val decimalPointPosition: Int? = null
+        originalNumberLength: Int, val decimalPointPosition: Int? = null, startsWithMinus: Boolean
     ) : OffsetMapping {
         private val wholePartOriginalIntegerLength: Int =
-            originalIntegerLength - if (decimalPointPosition != null) {
+            originalNumberLength - if (decimalPointPosition != null) {
                 3
             } else {
                 0
-            }
+            } -
+                    if (startsWithMinus) {
+                        1
+                    } else {
+                        0
+                    }
 
         private val transformedIntegerLength =
-            wholePartOriginalIntegerLength + calculateTotalThousandSeparatorCount()
+            wholePartOriginalIntegerLength + calculateTotalThousandSeparatorCount() +
+                    if (startsWithMinus) {
+                        1
+                    } else {
+                        0
+                    }
 
         override fun originalToTransformed(offset: Int): Int =
             offset + calculateLeftTotalThousandSeparatorCount(offset)
@@ -192,10 +202,10 @@ class NumberTransformation(
                 .replace(thousandsReplacementPattern, thousandsSeparator.toString())
         )
         val decimalPointPosition = when (formatType) {
-            FormatType.Double -> text.indexOf(decimalSeparator) + 1
+            FormatType.Double -> text.indexOf(".") + 1
             FormatType.Int -> null
         }
-        val offsetMapping = Offset(text.length, decimalPointPosition)
+        val offsetMapping = Offset(text.length, decimalPointPosition, text.startsWith('-'))
         return TransformedText(
             text = AnnotatedString(text = textFormatted), offsetMapping = offsetMapping
         )
@@ -235,10 +245,6 @@ class NumberTransformation(
 @Preview(showBackground = true, heightDp = 620, widthDp = 420)
 @Composable
 private fun TextFieldPreview() {
-    val numberTransformation = NumberTransformation.Offset(6)
-    (0..6).map {
-        numberTransformation.originalToTransformed(it)
-    }
     GazegeTheme {
         var number by remember {
             mutableStateOf(BigDecimal(0))
