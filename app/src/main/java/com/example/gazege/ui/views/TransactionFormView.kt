@@ -36,8 +36,10 @@ data class AccountAndOwnerNode(
     override val content: AccountAndOwner,
     val accountList: List<AccountAndOwner>,
     override val level: Int,
-    override val relativeIndex: Int
+    override val relativeIndex: Int,
+    val deactivatedAccountList: List<AccountAndOwner>,
 ) : Node<AccountAndOwner, AccountAndOwnerNode> {
+    val isActive: Boolean get() = this.content !in deactivatedAccountList
     override val children: List<AccountAndOwnerNode>
         get() {
             val pockets = AccountAndOwnerWithPockets.from(
@@ -46,15 +48,19 @@ data class AccountAndOwnerNode(
             return pockets.mapIndexed { index, it ->
                 AccountAndOwnerNode(
                     it.accountAndOwner,
-                    accountList,
+                    accountList = accountList,
                     level + 1,
-                    index
+                    index,
+                    deactivatedAccountList = deactivatedAccountList
                 )
             }
         }
 
     companion object {
-        fun from(accountList: List<AccountAndOwner>): List<AccountAndOwnerNode> {
+        fun from(
+            accountList: List<AccountAndOwner>,
+            deactivatedAccountList: List<AccountAndOwner>
+        ): List<AccountAndOwnerNode> {
             return accountList.filter {
                 it.account.parentId == null
             }.mapIndexed { index, it ->
@@ -62,7 +68,8 @@ data class AccountAndOwnerNode(
                     it,
                     accountList,
                     0,
-                    index
+                    index,
+                    deactivatedAccountList = deactivatedAccountList
                 )
             }
         }
@@ -135,18 +142,19 @@ fun TransactionAndAccountsForm(
         )
         val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
         val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
-        val sourceAccountsList = accountList.filter {
-            it != selectedDestination
+        val deactivatedSourceAccountList = accountList.filter {
+            it.account.id == selectedDestination?.account?.id
         }
-        val destinationAccountsList = accountList.filter {
-            it != selectedSource
+        val deactivatedDestinationAccountList = accountList.filter {
+            it.account.id == selectedSource?.account?.id
         }
         val selectedSourceNode = selectedSource?.let {
             AccountAndOwnerNode(
                 selectedSource,
                 accountList,
                 0,
-                0
+                0,
+                deactivatedAccountList = deactivatedSourceAccountList
             )
         }
         val selectedDestinationNode = selectedDestination?.let {
@@ -154,12 +162,13 @@ fun TransactionAndAccountsForm(
                 selectedDestination,
                 accountList,
                 0,
-                0
+                0,
+                deactivatedAccountList = deactivatedDestinationAccountList
             )
         }
-        if (sourceAccountsList.isNotEmpty()) {
+        if (accountList.isNotEmpty()) {
             AccountDropDownMenu(
-                accountsList = sourceAccountsList,
+                accountsList = accountList,
                 selectedAccountNode = selectedSourceNode,
                 label = { Text("Source account") },
                 onItemClick = {
@@ -171,16 +180,17 @@ fun TransactionAndAccountsForm(
                             }
                         )
                     }
-                }
+                },
+                deactivatedAccountList = deactivatedSourceAccountList
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
                 Text("New account")
             }
         }
-        if (destinationAccountsList.isNotEmpty()) {
+        if (accountList.isNotEmpty()) {
             AccountDropDownMenu(
-                accountsList = destinationAccountsList,
+                accountsList = accountList,
                 selectedAccountNode = selectedDestinationNode,
                 onItemClick = {
                     if (it.content.account.id != null) {
@@ -193,7 +203,8 @@ fun TransactionAndAccountsForm(
                         )
                     }
                 },
-                label = { Text("Destination account") }
+                label = { Text("Destination account") },
+                deactivatedAccountList = deactivatedDestinationAccountList
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {

@@ -98,8 +98,8 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
     options: List<C>,
     selectedItem: C?,
     itemToString: (C?) -> String,
-    onItemClick: (C) -> Unit,
     label: @Composable () -> Unit,
+    viewHolder: @Composable (C) -> Unit,
     groupByKeySelector: ((C) -> String)? = null
 ) {
     val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
@@ -124,9 +124,7 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
         ) {
             OptionsGroupTreeView(
                 groupedOptions = groupedOptions,
-                onItemClick = onItemClick,
-                itemToString = itemToString,
-                onExpandedChange = onExpandedChange
+                viewHolder = viewHolder
             )
         }
     }
@@ -136,9 +134,7 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
 @Composable
 private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     groupedOptions: Map<String?, List<C>>,
-    onItemClick: (C) -> Unit,
-    itemToString: (C?) -> String,
-    onExpandedChange: (Boolean) -> Unit
+    viewHolder: @Composable (C) -> Unit
 ) {
     val nodes: List<C> = groupedOptions.flatMap {
         it.value
@@ -148,7 +144,6 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             it.id() to key
         }
     }.toMap()
-    val layoutDirection = LocalLayoutDirection.current
     val contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
     ColumnTreeView(
         nodes = nodes,
@@ -169,21 +164,35 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             } else {
                 Spacer(Modifier.width(32.dp))
             }
-            DropdownMenuItem(
-                text = { Text(itemToString(node)) },
-                onClick = {
-                    onExpandedChange(false)
-                    onItemClick(node)
-                },
-                contentPadding = contentPadding.let {
-                    PaddingValues(
-                        start = 8.dp,
-                        top = it.calculateTopPadding(),
-                        bottom = it.calculateBottomPadding(),
-                        end = it.calculateEndPadding(layoutDirection)
-                    )
-                }
-            )
+            viewHolder(node)
         }
     }
+}
+
+@Composable
+fun <N, C : Node<N, C>> DefaultDropDownViewHolder(
+    itemToString: (C?) -> String,
+    node: C,
+    onExpandedChange: (Boolean) -> Unit,
+    onItemClick: (C) -> Unit,
+    contentPadding: PaddingValues,
+    enabled: Boolean
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    DropdownMenuItem(
+        text = { Text(itemToString(node)) },
+        onClick = {
+            onExpandedChange(false)
+            onItemClick(node)
+        },
+        contentPadding = contentPadding.let {
+            PaddingValues(
+                start = 8.dp,
+                top = it.calculateTopPadding(),
+                bottom = it.calculateBottomPadding(),
+                end = it.calculateEndPadding(layoutDirection)
+            )
+        },
+        enabled = enabled
+    )
 }
