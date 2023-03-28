@@ -4,24 +4,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
+import com.example.gazege.R
 
 @Composable
 fun DefaultTreeLeadingIcon(isExpanded: Boolean) = if (isExpanded) {
     Icon(
-        painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowDown),
+        painter = painterResource(id = R.drawable.ic_round_arrow_drop_down_24),
         contentDescription = "Collapse"
     )
 } else {
     Icon(
-        painter = rememberVectorPainter(image = Icons.Default.KeyboardArrowRight),
+        painter = painterResource(id = R.drawable.round_arrow_right_24),
         contentDescription = "Expand"
     )
 }
