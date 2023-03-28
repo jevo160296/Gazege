@@ -56,8 +56,8 @@ fun SettingsFragment(
     val personSelected = personList.firstOrNull { it.id == personIdSelected }
     val incomeSelected = accountList.firstOrNull { it.account.id == incomeIdSelected }
     val outcomeSelected = accountList.firstOrNull { it.account.id == outcomeIdSelected }
-    val accountListNoIncome = accountList.filter { it.account.id != incomeIdSelected }
-    val accountListNoOutcome = accountList.filter { it.account.id != outcomeIdSelected }
+    val deactivatedAccountListNoIncome = accountList.filter { it.account.id == incomeIdSelected }
+    val deactivatedAccountListNoOutcome = accountList.filter { it.account.id == outcomeIdSelected }
 
     Scaffold(
         floatingActionButton = {
@@ -104,37 +104,40 @@ fun SettingsFragment(
                     label = { Text(stringResource(id = R.string.Persona_principal)) }
                 )
             }
-            if (accountListNoOutcome.isEmpty()) {
+            if (accountList.isEmpty()) {
                 ButtonField(onClick = onAddAccountRequested) {
                     Text(text = stringResource(id = R.string.Nueva_cuenta))
                 }
             } else {
                 AccountDropDownMenu(
-                    accountsList = accountListNoOutcome,
+                    accountsList = accountList,
                     selectedAccountNode = incomeSelected?.let {
-                        AccountAndOwnerNode(it, accountListNoOutcome, 0, 0)
+                        AccountAndOwnerNode(it, accountList, 0, 0, listOf())
                     },
                     label = { Text(stringResource(id = R.string.Ingreso)) },
-                    onItemClick = { incomeIdSelected = it.content.account.id }
+                    onItemClick = { incomeIdSelected = it.content.account.id },
+                    deactivatedAccountList = deactivatedAccountListNoOutcome
                 )
             }
-            if (accountListNoIncome.isEmpty()) {
+            if (accountList.isEmpty()) {
                 ButtonField(onClick = onAddAccountRequested) {
                     Text(text = stringResource(id = R.string.Nueva_cuenta))
                 }
             } else {
                 AccountDropDownMenu(
-                    accountsList = accountListNoIncome,
+                    accountsList = accountList,
                     selectedAccountNode = outcomeSelected?.let {
                         AccountAndOwnerNode(
                             it,
-                            accountListNoIncome,
+                            accountList,
                             0,
-                            0
+                            0,
+                            listOf()
                         )
                     },
                     label = { Text(stringResource(id = R.string.Gasto)) },
-                    onItemClick = { outcomeIdSelected = it.content.account.id }
+                    onItemClick = { outcomeIdSelected = it.content.account.id },
+                    deactivatedAccountList = deactivatedAccountListNoIncome
                 )
             }
         }

@@ -51,14 +51,19 @@ fun AccountAndOwnerForm(
     val selectedOwner: Person? = accountAndOwner.owner
     val incomeAccountId = incomeAccount?.id
     val outcomeAccountId = outcomeAccount?.id
-    val selectableParentAccounts = accountAndOwnerList
-        .filter {
-            it.account.parentId != accountAndOwner.account.id &&
-                    it.account.id != accountAndOwner.account.id &&
-                    it.account.ownerId == selectedOwner?.id
-        }
-    val selectedParentAccountAndOwner = selectableParentAccounts.firstOrNull {
-        it.account.id == accountAndOwner.account.parentId
+    val selectable = { it: AccountAndOwner ->
+        it.account.parentId != accountAndOwner.account.id &&
+                it.account.id != accountAndOwner.account.id &&
+                it.account.ownerId == selectedOwner?.id
+    }
+    val filteredAccountAndOwnerList = accountAndOwnerList.filter {
+        it.owner.id == selectedOwner?.id &&
+                it.account.id != accountAndOwner.account.id
+    }
+    val notSelectableParentAccounts = filteredAccountAndOwnerList.filter { !selectable(it) }
+    val selectedParentAccountAndOwner = filteredAccountAndOwnerList.firstOrNull {
+        it.account.id == accountAndOwner.account.parentId &&
+                selectable(it)
     }
     val selectedParentAccountAndOwnerId = selectedParentAccountAndOwner?.account?.id
     if (selectedParentAccountAndOwnerId != accountAndOwner.account.parentId) {
@@ -136,13 +141,14 @@ fun AccountAndOwnerForm(
             }
         }
         AccountDropDownMenu(
-            accountsList = selectableParentAccounts,
+            accountsList = filteredAccountAndOwnerList,
             selectedAccountNode = selectedParentAccountAndOwner?.let {
                 AccountAndOwnerNode(
                     selectedParentAccountAndOwner,
-                    accountAndOwnerList,
+                    filteredAccountAndOwnerList,
                     0,
-                    0
+                    0,
+                    listOf()
                 )
             },
             label = { Text(stringResource(id = R.string.cuentaPadre)) },
@@ -152,7 +158,8 @@ fun AccountAndOwnerForm(
                         account = account.copy(parentId = it.content.account.id)
                     }
                 )
-            }
+            },
+            deactivatedAccountList = notSelectableParentAccounts
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
