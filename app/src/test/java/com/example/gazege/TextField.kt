@@ -290,110 +290,29 @@ class TextFieldUnitTestDecimal {
             numberTransformation = numberTransformation,
             numberOriginal = BigDecimal(1234567890.12),
             rightTotalCountExpected = listOf(
-                3,
-                3,
-                2,
-                2,
-                2,
-                1,
-                1,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-            ),//1.234.567.890
+                3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0
+            ),//   1  2  3  4  5  6  7  8  9  0  ,  1  2
+            //     1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
             leftTotalCountExpected = listOf(
-                0,
-                0,
-                1,
-                1,
-                1,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ),//1.234.567.890
+                0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3
+            ),//   1  2  3  4  5  6  7  8  9  0  ,  1  2
+            //     1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
             transformedOffsetExpected = listOf(
-                0,
-                1,
-                3,
-                4,
-                5,
-                7,
-                8,
-                9,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16
-            ),//1.234.567.890
+                0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16
+            ),//   1  2  3  4  5  6  7  8   9   0   ,   1   2
+            //  0  1  2  3  4  5  6  7  8   9  10  11  12  13
+            //     1  .  2  3  4  .  5  6   7   .   8   9   0
             originalOffsetExpected = listOf(
-                0,
-                1,
-                1,
-                2,
-                3,
-                4,
-                4,
-                5,
-                6,
-                7,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13
-            ), //1.234.567.890
+                0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 13
+            ),//   1  .  2  3  4  .  5  6  7  .  8  9  0   ,   1   2
+            //  0  1  2  3  4  5  6  7  8  9  10 11 12 13
+            //     1  2  3  4  5  6  7  8  9  0  ,  1  2
             leftTotalCountExpectedTransformed = listOf(
-                0,
-                0,
-                1,
-                1,
-                1,
-                1,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ),//1.234.567.890
+                0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3
+            ),//   1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
             rightTotalCountExpectedTransformed = listOf(
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                1,
-                1,
-                1,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-            ), //1.234.567.890
+                3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
+            ),//   1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
         ),
         Example(
             numberTransformation = numberTransformation,
@@ -424,19 +343,7 @@ class TextFieldUnitTestDecimal {
             originalOffsetExpected = listOf(0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10), // 1.234.567
             leftTotalCountExpectedTransformed = listOf(0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
             rightTotalCountExpectedTransformed = listOf(
-                2,
-                2,
-                1,
-                1,
-                1,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
+                2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
             ), // 1.234.567
         ),
         Example(
@@ -448,6 +355,238 @@ class TextFieldUnitTestDecimal {
             originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11),
             leftTotalCountExpectedTransformed = listOf(0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
             rightTotalCountExpectedTransformed = listOf(2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0)
+        )
+    )
+
+    @Test
+    fun calculateTotalThousandSeparatorCount() {
+        val calculatedThousandSeparatorCounts =
+            examples.map { it.offsetTransformed }.map { offsetTransformer ->
+                offsetTransformer.calculateTotalThousandSeparatorCount()
+            }.toTypedArray()
+        val expectedCalculatedThousandSeparatorCount = arrayOf(3, 0, 1, 2, 2)
+        assertArrayEquals(
+            expectedCalculatedThousandSeparatorCount, calculatedThousandSeparatorCounts
+        )
+    }
+
+    @Test
+    fun calculateRightTotalThousandSeparatorCount() {
+        examples.forEach {
+            checkOneRightTotalThousandSeparatorCount(
+                it.textOriginal, it.rightTotalCountExpected.toTypedArray(), it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneRightTotalThousandSeparatorCount(
+        textOriginal: String,
+        rightTotalCountExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val rightTotalCalculated = (0..textOriginal.length).map {
+            offsetTransformed.calculateRightTotalThousandSeparatorCount(it)
+        }.toTypedArray()
+        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
+    }
+
+    @Test
+    fun calculateLeftTotalThousandSeparatorCount() {
+        examples.forEach {
+            checkOneLeftTotalThousandSeparatorCount(
+                it.textOriginal, it.leftTotalCountExpected.toTypedArray(), it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneLeftTotalThousandSeparatorCount(
+        textOriginal: String,
+        leftTotalCountExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val leftTotalCalculated = (0..textOriginal.length).map {
+            offsetTransformed.calculateLeftTotalThousandSeparatorCount(it)
+        }.toTypedArray()
+        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
+    }
+
+    @Test
+    fun originalToTransformed() {
+        examples.forEach {
+            checkOneOriginalToTransformed(
+                it.textOriginal,
+                it.textTransformed,
+                it.transformedOffsetExpected.toTypedArray(),
+                it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneOriginalToTransformed(
+        textOriginal: String,
+        textTransformed: String,
+        transformedOffsetExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val offsetList = (0..textOriginal.length).map { it }
+        val calculatedTransformedOffset =
+            offsetList.map { offsetTransformed.originalToTransformed(it) }.toTypedArray()
+        val reconstructedText = reconstructText(textTransformed, calculatedTransformedOffset)
+        assertArrayEquals(transformedOffsetExpected, calculatedTransformedOffset)
+        assertEquals(textOriginal, reconstructedText)
+    }
+
+    @Test
+    fun calculateRightTotalThousandSeparatorCountTransformed() {
+        examples.forEach {
+            checkOneCalculateRightTotalThousandSeparatorCountTransformed(
+                it.textTransformed,
+                it.rightTotalCountExpectedTransformed.toTypedArray(),
+                it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneCalculateRightTotalThousandSeparatorCountTransformed(
+        textTransformed: String,
+        rightTotalCountExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val rightTotalCalculated = (0..textTransformed.length).map {
+            offsetTransformed.calculateRightTotalThousandSeparatorCountTransformed(it)
+        }.toTypedArray()
+        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
+    }
+
+    @Test
+    fun calculateLeftTotalThousandSeparatorCountTransformed() {
+        examples.forEach {
+            checkOneLeftTotalThousandSeparatorCountTransformed(
+                it.textTransformed,
+                it.leftTotalCountExpectedTransformed.toTypedArray(),
+                it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneLeftTotalThousandSeparatorCountTransformed(
+        textTransformed: String,
+        leftTotalCountExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val leftTotalCalculated = (0..textTransformed.length).map {
+            offsetTransformed.calculateLeftTotalThousandSeparatorCountTransformed(it)
+        }.toTypedArray()
+        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
+    }
+
+    @Test
+    fun transformedToOriginal() {
+        examples.forEach {
+            checkOneTransformedToOriginal(
+                it.textOriginal,
+                it.textTransformed,
+                it.originalOffsetExpected.toTypedArray(),
+                it.offsetTransformed
+            )
+        }
+    }
+
+    private fun checkOneTransformedToOriginal(
+        textOriginal: String,
+        textTransformed: String,
+        originalOffsetExpected: Array<Int>,
+        offsetTransformed: NumberTransformation.Offset
+    ) {
+        val offsetList = (0..textTransformed.length).map { it }
+        val calculatedOriginalOffset =
+            offsetList.map { offsetTransformed.transformedToOriginal(it) }.toTypedArray()
+        val offsetToReconstructOriginal =
+            textTransformed.toList().zip(calculatedOriginalOffset.drop(1)).filter { (text, _) ->
+                text != numberTransformation.thousandsSeparator
+            }.map { (_, offset) ->
+                offset
+            }.toTypedArray()
+        val reconstructedText = reconstructText(
+            textOriginal, arrayOf(0, *offsetToReconstructOriginal)
+        )
+        assertArrayEquals(originalOffsetExpected, calculatedOriginalOffset)
+        assertEquals(textOriginal, reconstructedText)
+    }
+
+    private fun reconstructText(text: String, indices: Array<Int>): String =
+        indices.drop(1).map { text[it - 1] }.joinToString("").replace(',', '.')
+}
+
+class TextFieldUnitTestDecimalNegative {
+    private val numberTransformation = NumberTransformation(
+        thousandsSeparator = '.', decimalSeparator = ',', NumberTransformation.FormatType.Double
+    )
+    private val examples: List<Example> = listOf(
+        Example(
+            numberTransformation = numberTransformation,
+            numberOriginal = BigDecimal(-1234567890.12),
+            rightTotalCountExpected = listOf(
+                3,
+                3,
+                3,
+                2,
+                2,
+                2,
+                2,
+                1,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0
+            ),//-1.234.567.890
+            leftTotalCountExpected = listOf(),
+            transformedOffsetExpected = listOf(),
+            originalOffsetExpected = listOf(),
+            leftTotalCountExpectedTransformed = listOf(),
+            rightTotalCountExpectedTransformed = listOf(),
+        ),
+        Example(
+            numberTransformation = numberTransformation,
+            numberOriginal = BigDecimal(123.45),
+            rightTotalCountExpected = listOf(),
+            leftTotalCountExpected = listOf(),
+            transformedOffsetExpected = listOf(),
+            originalOffsetExpected = listOf(), //123
+            leftTotalCountExpectedTransformed = listOf(),
+            rightTotalCountExpectedTransformed = listOf(), //123
+        ),
+        Example(
+            numberTransformation = numberTransformation,
+            numberOriginal = BigDecimal(12345.67),
+            rightTotalCountExpected = listOf(),
+            leftTotalCountExpected = listOf(),
+            transformedOffsetExpected = listOf(),
+            originalOffsetExpected = listOf(), //12.345
+            leftTotalCountExpectedTransformed = listOf(),
+            rightTotalCountExpectedTransformed = listOf(), //12.345
+        ),
+        Example(
+            numberTransformation = numberTransformation,
+            numberOriginal = BigDecimal(1234567.89),
+            rightTotalCountExpected = listOf(),
+            leftTotalCountExpected = listOf(),
+            transformedOffsetExpected = listOf(),
+            originalOffsetExpected = listOf(), // 1.234.567
+            leftTotalCountExpectedTransformed = listOf(),
+            rightTotalCountExpectedTransformed = listOf(), // 1.234.567
+        ),
+        Example(
+            numberTransformation = numberTransformation,
+            numberOriginal = BigDecimal(12345678.90),
+            rightTotalCountExpected = listOf(),
+            leftTotalCountExpected = listOf(),
+            transformedOffsetExpected = listOf(),
+            originalOffsetExpected = listOf(),
+            leftTotalCountExpectedTransformed = listOf(),
+            rightTotalCountExpectedTransformed = listOf()
         )
     )
 
