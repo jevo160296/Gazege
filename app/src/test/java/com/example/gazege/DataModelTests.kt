@@ -3,6 +3,7 @@ package com.example.gazege
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
@@ -57,13 +58,15 @@ class DataModelTests {
             transactions, accounts
         )
 
+        val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions.from(
+            accounts, persons, transactions
+        )
+
         val personWithAccounts: List<PersonWithAccounts> = PersonWithAccounts.from(
             persons,
-            AccountAndOwnerWithTransactions.from(
-                accounts,
-                persons,
-                transactions
-            )
+            accountAndOwnerWithTransactions.map {
+                AccountAndOwnerWithTransactionsAndPockets.from(it, accountAndOwnerWithTransactions)
+            }
         )
 
         val flows: MutableMap<Pair<String, String>, Double> = mutableMapOf()
