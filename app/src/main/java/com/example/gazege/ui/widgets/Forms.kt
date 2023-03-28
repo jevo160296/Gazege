@@ -1,10 +1,14 @@
 package com.example.gazege.ui.widgets
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material3.FloatingActionButton
@@ -15,6 +19,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.ui.theme.Shapes
 
@@ -55,7 +60,10 @@ fun Form(
         }) {
         Column(modifier = Modifier.padding(it)) {
             MediumHeadline(title)
-            content()
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                content()
+                Spacer(modifier = Modifier.height(90.dp))
+            }
         }
     }
 }
