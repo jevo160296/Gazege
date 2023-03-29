@@ -62,8 +62,8 @@ fun TextField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberField(
-    value: BigDecimal,
-    onValueChange: (BigDecimal) -> Unit,
+    value: SignedBigDecimal,
+    onValueChange: (SignedBigDecimal) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
@@ -87,7 +87,7 @@ fun NumberField(
         mutableStateOf(NumberTransformation.FormatType.Int)
     }
     val numberTransformation = NumberTransformation()
-    val stringRepresentation = numberTransformation.bigDecimalToString(value, formatType)
+    val stringRepresentation = numberTransformation.signedBigDecimalToString(value, formatType)
     TextField(
         value = stringRepresentation,
         onValueChange = {
@@ -215,20 +215,27 @@ class NumberTransformation(
         )
     }
 
-    fun stringToBigDecimal(text: String, max: Long = 100000000000): BigDecimal? {
+    fun stringToBigDecimal(text: String, max: Long = 100000000000): SignedBigDecimal? {
         return if (text == "") {
-            BigDecimal(0)
+            BigDecimal.ZERO.toSignedBigDecimal()
         } else {
             val transformedNumber = text.toBigDecimalOrNull()
-            if (transformedNumber != null && transformedNumber > BigDecimal(max)) {
+            val transformedBigDecimal = transformedNumber?.toSignedBigDecimal()
+            if (
+                transformedBigDecimal != null &&
+                (transformedBigDecimal > BigDecimal(max) || transformedBigDecimal < BigDecimal(-max))
+            ) {
                 null
             } else {
-                transformedNumber
+                transformedBigDecimal
             }
         }
     }
 
-    fun bigDecimalToString(number: BigDecimal?, formatType: FormatType = FormatType.Int): String {
+    private fun bigDecimalToString(
+        number: BigDecimal?,
+        formatType: FormatType = FormatType.Int
+    ): String {
         return if (number == null) {
             ""
         } else {
@@ -246,15 +253,40 @@ class NumberTransformation(
             }
         }
     }
+
+    fun signedBigDecimalToString(
+        number: SignedBigDecimal,
+        formatType: FormatType = FormatType.Int
+    ) = bigDecimalToString(number.value, formatType)
 }
 
+fun Double.toSignedBigDecimal() = SignedBigDecimal.from(this)
+fun BigDecimal.toSignedBigDecimal() = SignedBigDecimal.from(this)
+
+open class SignedBigDecimal protected constructor(val value: BigDecimal) {
+    fun toDouble() = value.toDouble()
+    operator fun compareTo(other: BigDecimal): Int {
+        return this.value.compareTo(other)
+    }
+
+    operator fun compareTo(other: SignedBigDecimal): Int {
+        return this.value.compareTo(other.value)
+    }
+
+    companion object {
+        fun from(value: Double) = SignedBigDecimal(value.toBigDecimal())
+        fun from(value: BigDecimal) = SignedBigDecimal(value)
+    }
+}
+
+class NegativeZeroBigDecimal : SignedBigDecimal(BigDecimal.ZERO)
 
 @Preview(showBackground = true, heightDp = 620, widthDp = 420)
 @Composable
 private fun TextFieldPreview() {
     GazegeTheme {
         var number by remember {
-            mutableStateOf(BigDecimal(0))
+            mutableStateOf(BigDecimal.ZERO.toSignedBigDecimal())
         }
         var valor by remember {
             mutableStateOf("Valor1")

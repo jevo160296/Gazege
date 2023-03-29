@@ -29,6 +29,7 @@ import com.example.gazege.ui.savers.PartialAccountAndOwner
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
+import com.example.gazege.ui.widgets.toSignedBigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,7 +164,7 @@ fun AccountAndOwnerForm(
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
-                value = currentBalance.toBigDecimal(),
+                value = currentBalance.toSignedBigDecimal(),
                 onValueChange = { onCurrentBalanceChanged(it.toDouble()) },
                 label = { Text(stringResource(id = R.string.balance_actual)) }
             )

@@ -28,6 +28,7 @@ import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
+import com.example.gazege.ui.widgets.toSignedBigDecimal
 import com.example.gazege.ui.widgets.treeview.Node
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -92,7 +93,7 @@ fun TransactionAndAccountsForm(
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit
 ) {
-    val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0)
+    val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0).toSignedBigDecimal()
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
