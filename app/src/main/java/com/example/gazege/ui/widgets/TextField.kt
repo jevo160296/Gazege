@@ -86,7 +86,7 @@ fun NumberField(
     var formatType by rememberSaveable {
         mutableStateOf(NumberTransformation.FormatType.Int)
     }
-    val numberTransformation = NumberTransformation(formatType = formatType)
+    val numberTransformation = NumberTransformation()
     val stringRepresentation = numberTransformation.bigDecimalToString(value, formatType)
     TextField(
         value = stringRepresentation,
@@ -135,8 +135,7 @@ fun NumberField(
 
 class NumberTransformation(
     val thousandsSeparator: Char = DecimalFormat().decimalFormatSymbols.groupingSeparator,
-    val decimalSeparator: Char = DecimalFormat().decimalFormatSymbols.decimalSeparator,
-    val formatType: FormatType
+    val decimalSeparator: Char = DecimalFormat().decimalFormatSymbols.decimalSeparator
 ) : VisualTransformation {
     enum class FormatType {
         Double, Int
@@ -201,6 +200,11 @@ class NumberTransformation(
             text.replace(Regex("\\."), decimalSeparator.toString())
                 .replace(thousandsReplacementPattern, thousandsSeparator.toString())
         )
+        val formatType = if (text.contains(decimalSeparator)) {
+            FormatType.Double
+        } else {
+            FormatType.Int
+        }
         val decimalPointPosition = when (formatType) {
             FormatType.Double -> text.indexOf(".") + 1
             FormatType.Int -> null
