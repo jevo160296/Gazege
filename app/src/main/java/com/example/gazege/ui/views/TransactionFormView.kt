@@ -30,6 +30,7 @@ import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.NodeId
 import java.time.LocalDate
 
 data class AccountAndOwnerNode(
@@ -38,6 +39,7 @@ data class AccountAndOwnerNode(
     override val level: Int,
     override val relativeIndex: Int,
     val deactivatedAccountList: List<AccountAndOwner>,
+    override val parentId: NodeId?,
 ) : Node<AccountAndOwner, AccountAndOwnerNode> {
     val isActive: Boolean get() = this.content !in deactivatedAccountList
     override val children: List<AccountAndOwnerNode>
@@ -51,7 +53,8 @@ data class AccountAndOwnerNode(
                     accountList = accountList,
                     level + 1,
                     index,
-                    deactivatedAccountList = deactivatedAccountList
+                    deactivatedAccountList = deactivatedAccountList,
+                    this.id()
                 )
             }
         }
@@ -69,7 +72,8 @@ data class AccountAndOwnerNode(
                     accountList,
                     0,
                     index,
-                    deactivatedAccountList = deactivatedAccountList
+                    deactivatedAccountList = deactivatedAccountList,
+                    null
                 )
             }
         }
@@ -154,7 +158,8 @@ fun TransactionAndAccountsForm(
                 accountList,
                 0,
                 0,
-                deactivatedAccountList = deactivatedSourceAccountList
+                deactivatedAccountList = deactivatedSourceAccountList,
+                null
             )
         }
         val selectedDestinationNode = selectedDestination?.let {
@@ -163,7 +168,8 @@ fun TransactionAndAccountsForm(
                 accountList,
                 0,
                 0,
-                deactivatedAccountList = deactivatedDestinationAccountList
+                deactivatedAccountList = deactivatedDestinationAccountList,
+                null
             )
         }
         if (accountList.isNotEmpty()) {

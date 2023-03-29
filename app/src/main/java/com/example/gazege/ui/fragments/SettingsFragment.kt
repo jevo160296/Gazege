@@ -112,7 +112,7 @@ fun SettingsFragment(
                 AccountDropDownMenu(
                     accountsList = accountList,
                     selectedAccountNode = incomeSelected?.let {
-                        AccountAndOwnerNode(it, accountList, 0, 0, listOf())
+                        AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
                     },
                     label = { Text(stringResource(id = R.string.Ingreso)) },
                     onItemClick = { incomeIdSelected = it.content.account.id },
@@ -132,7 +132,8 @@ fun SettingsFragment(
                             accountList,
                             0,
                             0,
-                            listOf()
+                            listOf(),
+                            null
                         )
                     },
                     label = { Text(stringResource(id = R.string.Gasto)) },
