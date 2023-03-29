@@ -5,12 +5,13 @@ import androidx.compose.runtime.saveable.Saver
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.ui.widgets.SignedBigDecimal
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 
 data class PartialTransaction(
     var id: Int?,
-    var amount: Double?,
+    var amount: SignedBigDecimal?,
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,
@@ -30,7 +31,7 @@ data class PartialTransaction(
         if(isComplete()){
             return Transaction(
                 id = id,
-                amount = amount!!,
+                amount = amount!!.toDouble(),
                 description = description!!,
                 sourceId = sourceId!!,
                 destinationId = destinationId!!,
@@ -97,7 +98,7 @@ data class PartialTransactionAndAccounts(
 @Parcelize
 data class ParcelableTransaction(
     var id: Int?,
-    var amount: Double?,
+    var amount: SignedBigDecimal?,
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,

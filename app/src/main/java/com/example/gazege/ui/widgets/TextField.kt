@@ -3,6 +3,7 @@
 package com.example.gazege.ui.widgets
 
 import android.icu.text.DecimalFormat
+import android.os.Parcelable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.ui.theme.GazegeTheme
+import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -97,7 +99,9 @@ fun NumberField(
                 NumberTransformation.FormatType.Int
             }
             var coercedRepresentation =
-                if (stringRepresentation == "0" && it.endsWith("0")) {
+                if (stringRepresentation == "0" && it.contains('-')) {
+                    "-0"
+                } else if (stringRepresentation == "0" && it.endsWith("0")) {
                     it.take(1)
                 } else if (stringRepresentation == "0.00" && it.endsWith("0.00")) {
                     "${it.take(1)}.00"
@@ -217,7 +221,9 @@ class NumberTransformation(
 
     fun stringToBigDecimal(text: String, max: Long = 100000000000): SignedBigDecimal? {
         return if (text == "") {
-            BigDecimal.ZERO.toSignedBigDecimal()
+            SignedBigDecimal.ZERO
+        } else if (text in listOf("-0", "-", "0-")) {
+            SignedBigDecimal.NEGATIVE_ZERO
         } else {
             val transformedNumber = text.toBigDecimalOrNull()
             val transformedBigDecimal = transformedNumber?.toSignedBigDecimal()
@@ -240,16 +246,24 @@ class NumberTransformation(
             ""
         } else {
             val coercedNumber: BigDecimal = number.setScale(2, RoundingMode.HALF_EVEN)
-            val wholePart = coercedNumber.setScale(0, RoundingMode.DOWN)
+            val isNegative = coercedNumber < BigDecimal.ZERO
+            val negativeChar = if (isNegative) {
+                "-"
+            } else {
+                ""
+            }
+            val wholePart = coercedNumber
+                .setScale(0, RoundingMode.DOWN)
+                .abs()
             val decimalPart =
-                (coercedNumber - wholePart)
+                (coercedNumber.abs() - wholePart)
                     .times(BigDecimal(100))
                     .setScale(0, RoundingMode.FLOOR)
                     .abs()
             if (decimalPart == BigDecimal(0) && formatType == FormatType.Int) {
-                "$wholePart"
+                "$negativeChar$wholePart"
             } else {
-                "${wholePart}${decimalSeparator}${"%02.0f".format(decimalPart)}"
+                "$negativeChar$wholePart$decimalSeparator${"%02.0f".format(decimalPart)}"
             }
         }
     }
@@ -257,13 +271,18 @@ class NumberTransformation(
     fun signedBigDecimalToString(
         number: SignedBigDecimal,
         formatType: FormatType = FormatType.Int
-    ) = bigDecimalToString(number.value, formatType)
+    ): String = if (number is NegativeZeroBigDecimal) {
+        "-0"
+    } else {
+        bigDecimalToString(number.value, formatType)
+    }
 }
 
 fun Double.toSignedBigDecimal() = SignedBigDecimal.from(this)
 fun BigDecimal.toSignedBigDecimal() = SignedBigDecimal.from(this)
 
-open class SignedBigDecimal protected constructor(val value: BigDecimal) {
+@Parcelize
+open class SignedBigDecimal protected constructor(val value: BigDecimal) : Parcelable {
     fun toDouble() = value.toDouble()
     operator fun compareTo(other: BigDecimal): Int {
         return this.value.compareTo(other)
@@ -276,6 +295,9 @@ open class SignedBigDecimal protected constructor(val value: BigDecimal) {
     companion object {
         fun from(value: Double) = SignedBigDecimal(value.toBigDecimal())
         fun from(value: BigDecimal) = SignedBigDecimal(value)
+
+        val NEGATIVE_ZERO: NegativeZeroBigDecimal get() = NegativeZeroBigDecimal()
+        val ZERO: SignedBigDecimal get() = SignedBigDecimal(BigDecimal.ZERO)
     }
 }
 

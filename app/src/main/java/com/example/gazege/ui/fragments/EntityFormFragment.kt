@@ -27,6 +27,7 @@ import com.example.gazege.ui.views.AccountAndOwnerForm
 import com.example.gazege.ui.views.PersonForm
 import com.example.gazege.ui.views.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.toSignedBigDecimal
 import java.time.LocalDate
 
 @Composable
@@ -90,7 +91,7 @@ fun AccountFormFragment(
     onAccountAndOwnerAdd: (Account, Double, SnackbarHostState, Int?, Int?) -> Unit
 ) {
     var currentBalanceState by rememberSaveable {
-        mutableStateOf(currentBalance)
+        mutableStateOf(currentBalance.toSignedBigDecimal())
     }
     var accountAndOwnerState by rememberSaveable(
         stateSaver = accountAndOwnerSaver
@@ -125,7 +126,7 @@ fun AccountFormFragment(
             val fullAccountAndOwner = accountAndOwnerState.toFull()
             onAccountAndOwnerAdd(
                 fullAccountAndOwner.account,
-                currentBalanceState,
+                currentBalanceState.toDouble(),
                 snackbarHostState,
                 incomeAccount?.id,
                 outcomeAccount?.id
@@ -176,7 +177,7 @@ fun TransactionFormFragment(
                     transaction = transactionAndAccounts.transaction.let {
                         PartialTransaction(
                             id = it.id,
-                            amount = it.amount,
+                            amount = it.amount.toSignedBigDecimal(),
                             description = it.description,
                             sourceId = it.sourceId,
                             destinationId = it.destinationId,

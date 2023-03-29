@@ -28,8 +28,8 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialAccountAndOwner
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.NumberField
+import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
-import com.example.gazege.ui.widgets.toSignedBigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +40,8 @@ fun AccountAndOwnerForm(
     accountAndOwner: PartialAccountAndOwner,
     accountAndOwnerList: List<AccountAndOwner>,
     personList: List<Person>,
-    currentBalance: Double,
-    onCurrentBalanceChanged: (Double) -> Unit,
+    currentBalance: SignedBigDecimal,
+    onCurrentBalanceChanged: (SignedBigDecimal) -> Unit,
     onPersonAddRequested: () -> Unit,
     incomeAccount: Account?,
     outcomeAccount: Account?,
@@ -164,8 +164,8 @@ fun AccountAndOwnerForm(
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
-                value = currentBalance.toSignedBigDecimal(),
-                onValueChange = { onCurrentBalanceChanged(it.toDouble()) },
+                value = currentBalance,
+                onValueChange = { onCurrentBalanceChanged(it) },
                 label = { Text(stringResource(id = R.string.balance_actual)) }
             )
         } else {

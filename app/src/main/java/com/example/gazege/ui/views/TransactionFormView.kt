@@ -27,10 +27,9 @@ import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.NumberField
+import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
-import com.example.gazege.ui.widgets.toSignedBigDecimal
 import com.example.gazege.ui.widgets.treeview.Node
-import java.math.BigDecimal
 import java.time.LocalDate
 
 data class AccountAndOwnerNode(
@@ -93,7 +92,7 @@ fun TransactionAndAccountsForm(
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit
 ) {
-    val amount = BigDecimal(transactionAndAccounts.transaction.amount ?: 0.0).toSignedBigDecimal()
+    val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
@@ -114,7 +113,7 @@ fun TransactionAndAccountsForm(
             onValueChange = {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(amount = it.toDouble())
+                        transaction = transaction.copy(amount = it)
                     }
                 )
             },
