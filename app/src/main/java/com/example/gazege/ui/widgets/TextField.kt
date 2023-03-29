@@ -229,9 +229,12 @@ class NumberTransformation(
             ""
         } else {
             val coercedNumber: BigDecimal = number.setScale(2, RoundingMode.HALF_EVEN)
-            val wholePart = coercedNumber.setScale(0, RoundingMode.FLOOR)
+            val wholePart = coercedNumber.setScale(0, RoundingMode.DOWN)
             val decimalPart =
-                (coercedNumber - wholePart).times(BigDecimal(100)).setScale(0, RoundingMode.FLOOR)
+                (coercedNumber - wholePart)
+                    .times(BigDecimal(100))
+                    .setScale(0, RoundingMode.FLOOR)
+                    .abs()
             if (decimalPart == BigDecimal(0) && formatType == FormatType.Int) {
                 "$wholePart"
             } else {
