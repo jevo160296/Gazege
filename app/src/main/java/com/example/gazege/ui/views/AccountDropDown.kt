@@ -34,7 +34,8 @@ fun AccountDropDownMenu(
                 accountsList,
                 0,
                 index,
-                deactivatedAccountList = deactivatedAccountList
+                deactivatedAccountList = deactivatedAccountList,
+                null
             )
         }
     var dropDownExpanded by rememberSaveable {

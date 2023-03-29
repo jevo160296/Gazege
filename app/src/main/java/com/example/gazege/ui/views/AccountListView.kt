@@ -36,6 +36,7 @@ import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.NodeId
 import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
 import com.example.gazege.ui.widgets.treeview.TreeState
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
@@ -109,7 +110,8 @@ data class AccountAndOwnerWithTransactionsNode(
     override val content: AccountAndOwnerWithTransactions,
     val accountList: List<AccountAndOwnerWithTransactions>,
     override val level: Int,
-    override val relativeIndex: Int
+    override val relativeIndex: Int,
+    override val parentId: NodeId?
 ) : Node<AccountAndOwnerWithTransactions, AccountAndOwnerWithTransactionsNode> {
     override val children: List<AccountAndOwnerWithTransactionsNode>
         get() {
@@ -121,7 +123,8 @@ data class AccountAndOwnerWithTransactionsNode(
                     it.accountAndOwnerWithTransactions,
                     accountList,
                     level + 1,
-                    index
+                    index,
+                    this.id()
                 )
             }
         }
@@ -147,7 +150,8 @@ private fun AccountTreeView(
                 it,
                 accountList,
                 0,
-                index
+                index,
+                null
             )
         }
     RecyclerTreeView(

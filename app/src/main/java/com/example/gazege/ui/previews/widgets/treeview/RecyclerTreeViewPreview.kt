@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.NodeId
 import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
@@ -36,10 +37,18 @@ data class CuentaEHijos(
 data class CuentaNode(
     override val content: CuentaEHijos,
     override val level: Int,
-    override val relativeIndex: Int
+    override val relativeIndex: Int,
+    override val parentId: NodeId?
 ) : Node<CuentaEHijos, CuentaNode> {
     override val children: List<CuentaNode>
-        get() = content.hijos.mapIndexed { index, it -> CuentaNode(it, level + 1, index) }
+        get() = content.hijos.mapIndexed { index, it ->
+            CuentaNode(
+                it,
+                level + 1,
+                index,
+                this.id()
+            )
+        }
 }
 
 @Preview(showBackground = true, heightDp = 400, widthDp = 200)
@@ -67,7 +76,7 @@ fun RecyclerViewPreview() {
         ) {
             RecyclerTreeView(
                 nodes = cuentas.mapIndexed { index, it ->
-                    CuentaNode(it, 0, index)
+                    CuentaNode(it, 0, index, null)
                 },
                 groupSelector = {
                     it.content.owner

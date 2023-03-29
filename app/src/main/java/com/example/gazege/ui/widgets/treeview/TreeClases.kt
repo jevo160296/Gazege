@@ -7,6 +7,7 @@ interface Node<N, C : Node<N, C>> {
     val relativeIndex: Int
     val level: Int
     val children: List<C>
+    val parentId: NodeId?
 
     fun expanded(expandedItems: List<NodeId>): Boolean {
         return id() in expandedItems

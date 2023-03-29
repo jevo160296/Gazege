@@ -11,12 +11,13 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class NodeId(
+    val parentId: NodeId?,
     val relativeIndex: Int,
     val level: Int
 ) : Parcelable {
     companion object {
         fun <T : Node<*, *>> from(node: T): NodeId {
-            return NodeId(node.relativeIndex, node.level)
+            return NodeId(node.parentId, node.relativeIndex, node.level)
         }
     }
 }
