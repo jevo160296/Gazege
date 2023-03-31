@@ -2,15 +2,7 @@ package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FabPosition
@@ -19,13 +11,8 @@ import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -45,12 +32,7 @@ import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
-import com.example.gazege.ui.views.AccountPage
-import com.example.gazege.ui.views.PersonPage
-import com.example.gazege.ui.views.TransactionPage
-import com.example.gazege.ui.views.getAccountSample
-import com.example.gazege.ui.views.getPersonWithAccountsSample
-import com.example.gazege.ui.views.getTransactionSample
+import com.example.gazege.ui.views.*
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
@@ -114,7 +96,8 @@ fun MainFragment(
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
-    transactionList: List<TransactionAndAccounts>,
+    allTransactionList: List<TransactionAndAccounts>,
+    filteredTransactionList: List<TransactionAndAccounts>,
     onAddTransactionRequested: () -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
@@ -344,7 +327,7 @@ fun MainFragment(
                     val laTransaccion = stringResource(id = R.string.la_transaccion)
                     Column {
                         TransactionPage(
-                            transactionList = transactionList,
+                            transactionList = filteredTransactionList,
                             itemHolderPaddingValues = paddingValues,
                             state = transactionState,
                             delTransaction = { transaction ->
@@ -394,7 +377,7 @@ fun MainFragment(
                             person.person.id == principalPerson?.id
                         },
                         onConfigurePrincipalPersonRequested = onSettingsClicked,
-                        transacciones = transactionList
+                        transacciones = allTransactionList
                     )
                 }
             }
@@ -447,7 +430,8 @@ fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Delete person requested")
                 }
             },
-            transactionList = transactions,
+            allTransactionList = transactions,
+            filteredTransactionList = transactions,
             onAddTransactionRequested = {
                 scope.launch {
                     snackbarHostState.showSnackbar("Add transaction requested")
