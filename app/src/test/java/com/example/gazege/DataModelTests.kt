@@ -1,13 +1,8 @@
 package com.example.gazege
 
 import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.PersonWithAccounts
-import com.example.gazege.core.entities.Transaction
-import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.*
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -98,5 +93,61 @@ class DataModelTests {
             Pair("Paola", "Paola") to 0.0
         )
         assertTrue(flows == expectedFlows)
+    }
+
+    @Test
+    fun testCategoryWithSubcategories() {
+        val expected = listOf(
+            Category(0, null).let {
+                CategoryWithSubCategories(
+                    it,
+                    listOf(
+                        CategoryWithSubCategories(Category(5, it.id), listOf()),
+                        CategoryWithSubCategories(Category(6, it.id), listOf()),
+                        Category(7, it.id).let {
+                            CategoryWithSubCategories(
+                                it, listOf(
+                                    CategoryWithSubCategories(Category(8, it.id), listOf()),
+                                    CategoryWithSubCategories(Category(9, it.id), listOf())
+                                )
+                            )
+                        }
+                    )
+                )
+            },
+            CategoryWithSubCategories(Category(1, null), listOf()),
+            CategoryWithSubCategories(Category(2, null), listOf()),
+            CategoryWithSubCategories(Category(3, null), listOf()),
+            CategoryWithSubCategories(Category(4, null), listOf())
+        )
+        val categoriesDsl = categories {
+            category(0) {
+                category(5) {}
+                category(6) {}
+                category(7) {
+                    category(8) {}
+                    category(9) {}
+                }
+            }
+            category(1) {}
+            category(2) {}
+            category(3) {}
+            category(4) {}
+        }
+        val categories: List<CategoryWithSubCategories> = listOf(
+            Category(0, null),
+            Category(1, null),
+            Category(2, null),
+            Category(3, null),
+            Category(4, null),
+            Category(5, 0),
+            Category(6, 0),
+            Category(7, 0),
+            Category(8, 7),
+            Category(9, 7)
+        )
+            .let { CategoryWithSubCategories.from(it) }
+        assertArrayEquals(expected.toTypedArray(), categories.toTypedArray())
+        assertArrayEquals(expected.toTypedArray(), categoriesDsl.toTypedArray())
     }
 }
