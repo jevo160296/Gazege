@@ -2,6 +2,8 @@ package com.example.gazege
 
 import androidx.compose.ui.text.AnnotatedString
 import com.example.gazege.ui.widgets.NumberTransformation
+import com.example.gazege.ui.widgets.SignedBigDecimal
+import com.example.gazege.ui.widgets.toSignedBigDecimal
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -9,7 +11,7 @@ import java.math.BigDecimal
 
 data class Example(
     val numberTransformation: NumberTransformation,
-    val numberOriginal: BigDecimal,
+    val numberOriginal: SignedBigDecimal,
     val rightTotalCountExpected: List<Int>,
     val leftTotalCountExpected: List<Int>,
     val transformedOffsetExpected: List<Int>,
@@ -20,10 +22,9 @@ data class Example(
     val textOriginal: String = numberOriginal.let {
         val numberTransformation = NumberTransformation(
             thousandsSeparator = ',',
-            decimalSeparator = '.',
-            NumberTransformation.FormatType.Double
+            decimalSeparator = '.'
         )
-        numberTransformation.bigDecimalToString(it)
+        numberTransformation.signedBigDecimalToString(it)
     }
     val textTransformed: String = textOriginal.let {
         numberTransformation.filter(AnnotatedString(text = it)).text.text
@@ -31,10 +32,9 @@ data class Example(
     val offsetTransformed: NumberTransformation.Offset = numberOriginal.let {
         val numberTransformation = NumberTransformation(
             thousandsSeparator = ',',
-            decimalSeparator = '.',
-            NumberTransformation.FormatType.Double
+            decimalSeparator = '.'
         )
-        val stringRepresentation = numberTransformation.bigDecimalToString(it)
+        val stringRepresentation = numberTransformation.signedBigDecimalToString(it)
         val decimalPointPosition = stringRepresentation.indexOf('.') + 1
         NumberTransformation.Offset(
             stringRepresentation.length,
@@ -45,7 +45,7 @@ data class Example(
 
 class TextFieldUnitTestWhole {
     private val numberTransformation = NumberTransformation(
-        thousandsSeparator = '.', decimalSeparator = ',', NumberTransformation.FormatType.Int
+        thousandsSeparator = '.', decimalSeparator = ','
     )
     private val numberOriginals = arrayOf(1234567890, 123, 12345, 1234567, 12345678)
     private val textOriginals = numberOriginals.map { numberOriginal ->
@@ -289,12 +289,12 @@ class TextFieldUnitTestWhole {
 
 class TextFieldUnitTestDecimal {
     private val numberTransformation = NumberTransformation(
-        thousandsSeparator = '.', decimalSeparator = ',', NumberTransformation.FormatType.Double
+        thousandsSeparator = '.', decimalSeparator = ','
     )
     private val examples: List<Example> = listOf(
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567890.12),
+            numberOriginal = BigDecimal(1234567890.12).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(
                 3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0
             ),//   1  2  3  4  5  6  7  8  9  0  ,  1  2
@@ -322,7 +322,7 @@ class TextFieldUnitTestDecimal {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(123.45),
+            numberOriginal = BigDecimal(123.45).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
             transformedOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6),
@@ -332,7 +332,7 @@ class TextFieldUnitTestDecimal {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345.67),
+            numberOriginal = BigDecimal(12345.67).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1),
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 7, 8, 9),
@@ -342,7 +342,7 @@ class TextFieldUnitTestDecimal {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567.89),
+            numberOriginal = BigDecimal(1234567.89).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
             transformedOffsetExpected = listOf(0, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12),
@@ -354,7 +354,7 @@ class TextFieldUnitTestDecimal {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345678.90),
+            numberOriginal = BigDecimal(12345678.90).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13),
@@ -526,12 +526,12 @@ class TextFieldUnitTestDecimal {
 
 class TextFieldUnitTestDecimalNegative {
     private val numberTransformation = NumberTransformation(
-        thousandsSeparator = '.', decimalSeparator = ',', NumberTransformation.FormatType.Double
+        thousandsSeparator = '.', decimalSeparator = ','
     )
     private val examples: List<Example> = listOf(
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(-1234567890.12),
+            numberOriginal = BigDecimal(-1234567890.12).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(
                 3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
             ),
@@ -565,7 +565,7 @@ class TextFieldUnitTestDecimalNegative {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(123.45),
+            numberOriginal = BigDecimal(123.45).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
             transformedOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6),
@@ -575,7 +575,7 @@ class TextFieldUnitTestDecimalNegative {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345.67),
+            numberOriginal = BigDecimal(12345.67).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1),
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 7, 8, 9),
@@ -585,7 +585,7 @@ class TextFieldUnitTestDecimalNegative {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567.89),
+            numberOriginal = BigDecimal(1234567.89).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
             transformedOffsetExpected = listOf(0, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12),
@@ -597,7 +597,7 @@ class TextFieldUnitTestDecimalNegative {
         ),
         Example(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345678.90),
+            numberOriginal = BigDecimal(12345678.90).toSignedBigDecimal(),
             rightTotalCountExpected = listOf(2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
             leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13),
