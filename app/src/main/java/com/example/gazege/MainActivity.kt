@@ -17,14 +17,9 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -37,17 +32,8 @@ import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.AccountDao
-import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
-import com.example.gazege.core.entities.PersonWithAccounts
-import com.example.gazege.core.entities.TransactionAndAccounts
-import com.example.gazege.ui.fragments.AccountFormFragment
-import com.example.gazege.ui.fragments.MainFragment
-import com.example.gazege.ui.fragments.PersonFormFragment
-import com.example.gazege.ui.fragments.SaldoActualSettings
-import com.example.gazege.ui.fragments.SettingsFragment
-import com.example.gazege.ui.fragments.TransactionFormFragment
+import com.example.gazege.core.entities.*
+import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
@@ -75,7 +61,7 @@ class MainActivity : ComponentActivity() {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
-                val transactionList by mainViewModel.rangeTransactions.observeAsState(emptyList())
+                val filteredTransactions by mainViewModel.rangeTransactions.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
                         LocalDate.now(),
@@ -96,8 +82,10 @@ class MainActivity : ComponentActivity() {
                     }
                 val personWithAccounts =
                     PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
-                val transactionAndAccounts =
-                    TransactionAndAccounts.from(transactionList, accountList)
+                val filteredTransactionAndAccounts =
+                    TransactionAndAccounts.from(filteredTransactions, accountList)
+                val allTransactionAndAccounts =
+                    TransactionAndAccounts.from(allTransactions, accountList)
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -152,7 +140,8 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                transactionList = transactionAndAccounts,
+                                allTransactionList = allTransactionAndAccounts,
+                                filteredTransactionList = filteredTransactionAndAccounts,
                                 onAddTransactionRequested = {
                                     val startDate = range.first
                                     val esMesActual =
@@ -434,7 +423,7 @@ class MainActivity : ComponentActivity() {
                             })
                         ) { navBackStackEntry ->
                             val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts = transactionAndAccounts
+                            val selectedTransactionAndAccounts = filteredTransactionAndAccounts
                                 .firstOrNull { it.transaction.id == transactionId }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
