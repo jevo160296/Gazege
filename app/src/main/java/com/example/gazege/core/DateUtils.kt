@@ -30,10 +30,11 @@ fun stableMinusMonths(date: LocalDate, months: Long): LocalDate {
 }
 
 /**
- * Devuelve una copia de date con months añadidos.
+ * Devuelve una copia de date con months añadidos, si es el último día del mes actual devuelve
+ * el último día del mes siguiente.
  */
 fun stablePlusMonths(date: LocalDate, months: Long): LocalDate {
-    return date.plusMonths(months)
+    return date.plusDays(1L).plusMonths(months).minusDays(1L)
 }
 
 

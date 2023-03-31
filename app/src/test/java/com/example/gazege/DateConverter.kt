@@ -1,6 +1,8 @@
 package com.example.gazege
 
 import com.example.gazege.core.DateConverter
+import com.example.gazege.core.stableMinusMonths
+import com.example.gazege.core.stablePlusMonths
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
@@ -42,6 +44,70 @@ class DateConverterUnitTest {
         dates.forEach {
             val pairs = testOneDateLong(it, converter)
             assertEquals(pairs.first, pairs.second)
+        }
+    }
+}
+
+class DateFunctionsUnitTest {
+    data class Example(
+        val date: LocalDate,
+        val months: Long,
+        val expectedDate: LocalDate
+    )
+
+    @Test
+    fun testStablePlusMonths() {
+        val examples = listOf(
+            Example(
+                LocalDate.of(2023, 2, 28),
+                1,
+                LocalDate.of(2023, 3, 31)
+            ),
+            Example(
+                LocalDate.of(2023, 3, 31),
+                3,
+                LocalDate.of(2023, 6, 30)
+            ),
+            Example(
+                LocalDate.of(2023, 6, 30),
+                8,
+                LocalDate.of(2024, 2, 29)
+            )
+        )
+        examples.forEach {
+            assertEquals(
+                "Fechas no iguales",
+                it.expectedDate,
+                stablePlusMonths(it.date, it.months)
+            )
+        }
+    }
+
+    @Test
+    fun testStableMinusMonths() {
+        val examples = listOf(
+            Example(
+                LocalDate.of(2023, 2, 28),
+                1,
+                LocalDate.of(2023, 1, 31)
+            ),
+            Example(
+                LocalDate.of(2023, 1, 31),
+                3,
+                LocalDate.of(2022, 10, 31)
+            ),
+            Example(
+                LocalDate.of(2022, 10, 31),
+                8,
+                LocalDate.of(2022, 2, 28)
+            )
+        )
+        examples.forEach {
+            assertEquals(
+                "Fechas no iguales",
+                it.expectedDate,
+                stableMinusMonths(it.date, it.months)
+            )
         }
     }
 }

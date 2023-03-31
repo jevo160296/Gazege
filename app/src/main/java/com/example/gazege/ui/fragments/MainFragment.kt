@@ -1,7 +1,6 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -24,15 +23,10 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
-import com.example.gazege.core.firstDayOfMonth
-import com.example.gazege.core.lastDayOfMonth
-import com.example.gazege.core.stableMinusMonths
-import com.example.gazege.core.stablePlusMonths
-import com.example.gazege.ui.DateFormat
-import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.*
+import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
@@ -114,14 +108,6 @@ fun MainFragment(
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
     val personState = rememberLazyListState()
-    val isFiltered = range.first != null || range.second != null
-    val startDate = range.first
-    val endDate = range.second
-    val dateString =
-        if (startDate == null && endDate == null) "Todo"
-        else if (startDate != null && endDate != null)
-            localDateToString(startDate, DateFormat.YEARMONTHNAME)
-        else "?"
 
     val scope = rememberCoroutineScope()
     var action by remember {
@@ -133,6 +119,9 @@ fun MainFragment(
     var title: String by rememberSaveable {
         mutableStateOf("Gazedge")
     }
+
+    val startDate = range.first
+    val endDate = range.second
 
     ModalBottomSheetLayout(
         sheetState = sheetState,
@@ -227,73 +216,11 @@ fun MainFragment(
                             )
                         }
                     }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = {
-                                if (startDate != null && endDate != null) {
-                                    val newRange = Pair(
-                                        stableMinusMonths(startDate, 1L),
-                                        stableMinusMonths(endDate, 1L)
-                                    )
-                                    onRangeChanged(newRange.first, newRange.second)
-                                }
-                            },
-                            enabled = startDate != null && endDate != null
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.round_arrow_left_24
-                                ), contentDescription = "Left"
-                            )
-                        }
-                        Text(
-                            dateString,
-                            modifier = Modifier.clickable {
-                                val newRange = LocalDate.now().let {
-                                    Pair(
-                                        firstDayOfMonth(it),
-                                        lastDayOfMonth(it)
-                                    )
-                                }
-                                onRangeChanged(newRange.first, newRange.second)
-                            })
-                        IconButton(
-                            onClick = {
-                                if (startDate != null && endDate != null) {
-                                    val newRange = Pair(
-                                        stablePlusMonths(startDate, 1L),
-                                        stablePlusMonths(endDate, 1L)
-                                    )
-                                    onRangeChanged(newRange.first, newRange.second)
-                                }
-                            },
-                            enabled = startDate != null && endDate != null
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.round_arrow_right_24
-                                ), contentDescription = "Right"
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                val newRange = Pair(
-                                    null,
-                                    null
-                                )
-                                onRangeChanged(newRange.first, newRange.second)
-                            },
-                            enabled = isFiltered
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.round_filter_list_off_24
-                                ), contentDescription = "Clear filters"
-                            )
-                        }
-                    }
+                    Filter(
+                        startDate,
+                        endDate,
+                        onRangeChanged = onRangeChanged
+                    )
                     PersonMonthSummaryView(
                         saldoActual = principalPersonWithAccounts?.let {
                             PersonDao.getTotal(it, null, null)
