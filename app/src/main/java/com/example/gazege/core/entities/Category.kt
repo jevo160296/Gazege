@@ -16,5 +16,6 @@ import androidx.room.PrimaryKey
 )
 data class Category(
     @PrimaryKey(autoGenerate = true) val id: Int? = null,
+    val name: String,
     val parentId: Int?
 )
