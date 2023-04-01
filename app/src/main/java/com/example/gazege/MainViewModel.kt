@@ -1,11 +1,6 @@
 package com.example.gazege
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.switchMap
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Person
@@ -53,6 +48,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
+    val categories = repository.getCategories().asLiveData()
 
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
@@ -114,7 +110,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     sourceId = incomeAccountId,
                     destinationId = accountId,
                     date = LocalDate.now(),
-                    aNombreDe = null
+                    aNombreDe = null,
+                    categoryId = null
                 )
             } else {
                 Transaction(
@@ -123,7 +120,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     sourceId = accountId,
                     destinationId = outcomeAccountId,
                     date = LocalDate.now(),
-                    aNombreDe = null
+                    aNombreDe = null,
+                    categoryId = null
                 )
             }
             repository.insertTransaction(transaccionAjuste)

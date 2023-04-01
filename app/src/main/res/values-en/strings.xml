@@ -27,4 +27,5 @@
     <string name="Nueva_cuenta">New account</string>
     <string name="Ingreso">Income</string>
     <string name="Gasto">Outcome</string>
+    <string name="Categoria">Category</string>
 </resources>

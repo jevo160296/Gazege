@@ -10,19 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
-import com.example.gazege.core.entities.TransactionAndAccounts
-import com.example.gazege.ui.savers.PartialAccount
-import com.example.gazege.ui.savers.PartialAccountAndOwner
-import com.example.gazege.ui.savers.PartialPerson
-import com.example.gazege.ui.savers.PartialTransaction
-import com.example.gazege.ui.savers.PartialTransactionAndAccounts
-import com.example.gazege.ui.savers.accountAndOwnerSaver
-import com.example.gazege.ui.savers.personSaver
-import com.example.gazege.ui.savers.transactionSaver
+import com.example.gazege.core.entities.*
+import com.example.gazege.ui.savers.*
 import com.example.gazege.ui.views.AccountAndOwnerForm
 import com.example.gazege.ui.views.PersonForm
 import com.example.gazege.ui.views.TransactionAndAccountsForm
@@ -166,6 +155,7 @@ fun TransactionFormFragment(
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit,
     personList: List<Person>,
+    categoryList: List<Category>,
     defaultDate: LocalDate = LocalDate.now()
 ) {
     var transactionAndAccountsState by rememberSaveable(
@@ -182,7 +172,8 @@ fun TransactionFormFragment(
                             sourceId = it.sourceId,
                             destinationId = it.destinationId,
                             date = it.date,
-                            aNombreDe = it.aNombreDe
+                            aNombreDe = it.aNombreDe,
+                            categoryId = it.categoryId
                         )
                     },
                     sourceAccount = transactionAndAccounts.sourceAccount,
@@ -228,7 +219,8 @@ fun TransactionFormFragment(
                 transactionAndAccountsState = transactionAndAccountsState.copy().apply {
                     transaction = this.transaction.copy(aNombreDe = it)
                 }
-            }
+            },
+            categoryList = categoryList
         )
     }
 }

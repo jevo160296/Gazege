@@ -1,15 +1,7 @@
 package com.example.gazege.ui.views
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.CardColors
@@ -23,23 +15,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
-import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
-import com.example.gazege.ui.widgets.treeview.Node
-import com.example.gazege.ui.widgets.treeview.NodeId
-import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
-import com.example.gazege.ui.widgets.treeview.TreeState
-import com.example.gazege.ui.widgets.treeview.rememberTreeState
+import com.example.gazege.ui.widgets.treeview.*
 import java.time.LocalDate
 import kotlin.random.Random
 
@@ -244,7 +227,8 @@ private fun PreviewAccountItem() {
                 sourceId = 2,
                 destinationId = 1,
                 date = LocalDate.now(),
-                aNombreDe = null
+                aNombreDe = null,
+                categoryId = null
             )
         },
         outTransactions = (1..40).map { trans_index ->
@@ -254,7 +238,8 @@ private fun PreviewAccountItem() {
                 sourceId = 1,
                 destinationId = 3,
                 date = LocalDate.now(),
-                aNombreDe = null
+                aNombreDe = null,
+                categoryId = null
             )
         }
     )
@@ -357,11 +342,12 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
         Transaction(
             index++,
             random.nextDouble(100.0, 500000.0),
-            "",
-            sourceAccount ?: 0,
-            destinationAccount ?: 1,
-            LocalDate.now(),
-            null
+            description = "",
+            sourceId = sourceAccount ?: 0,
+            destinationId = destinationAccount ?: 1,
+            date = LocalDate.now(),
+            aNombreDe = null,
+            categoryId = null
         )
     }
     return AccountAndOwnerWithTransactions.from(accounts, persons, transactions)

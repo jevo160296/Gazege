@@ -45,7 +45,8 @@ class MainActivity : ComponentActivity() {
         AppRepository(
             personDao = database.personDao(),
             accountDao = database.accountDao(),
-            transactionDao = database.transactionDao()
+            transactionDao = database.transactionDao(),
+            categoryDao = database.categoryDao()
         )
     }
 
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
                 val filteredTransactions by mainViewModel.rangeTransactions.observeAsState(emptyList())
+                val categories by mainViewModel.categories.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
                         LocalDate.now(),
@@ -413,7 +415,8 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(10000).div(100),
                                     yearMonthDay.mod(100)
                                 ),
-                                personList = personList
+                                personList = personList,
+                                categoryList = categories
                             )
                         }
                         composable(
@@ -440,7 +443,8 @@ class MainActivity : ComponentActivity() {
                                     navController.navigateUp()
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts,
-                                personList = personList
+                                personList = personList,
+                                categoryList = categories
                             )
                         }
                         composable("settings") {

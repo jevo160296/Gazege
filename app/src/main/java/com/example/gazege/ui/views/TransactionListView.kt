@@ -1,12 +1,6 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -128,7 +122,7 @@ private fun PreviewTransactionItem() {
     val transaction = Transaction(
         amount = 0.0, description = "Trans", date = LocalDate.now(),
         destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1,
-        aNombreDe = null
+        aNombreDe = null, categoryId = null
     )
     val transactionAndAccounts = TransactionAndAccounts(
         transaction = transaction, sourceAccount = sourceAccount,
@@ -148,7 +142,8 @@ fun getTransactionSample(): List<TransactionAndAccounts> {
                 sourceId = source.account.id ?: -1,
                 destinationId = destination.account.id ?: -1,
                 date = LocalDate.now(),
-                aNombreDe = null
+                aNombreDe = null,
+                categoryId = null
             )
             i++
             TransactionAndAccounts(
