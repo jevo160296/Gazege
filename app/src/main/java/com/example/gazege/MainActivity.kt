@@ -1,6 +1,7 @@
 package com.example.gazege
 
 import android.content.res.Configuration
+import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.CategoryForm
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -88,6 +90,7 @@ class MainActivity : ComponentActivity() {
                     TransactionAndAccounts.from(filteredTransactions, accountList)
                 val allTransactionAndAccounts =
                     TransactionAndAccounts.from(allTransactions, accountList)
+                val categoriesWithSubCategories = CategoryWithSubCategories.from(categories)
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -416,7 +419,7 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(100)
                                 ),
                                 personList = personList,
-                                categoryList = categories
+                                categoryList = categoriesWithSubCategories
                             )
                         }
                         composable(
@@ -444,7 +447,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts,
                                 personList = personList,
-                                categoryList = categories
+                                categoryList = categoriesWithSubCategories
                             )
                         }
                         composable("settings") {
@@ -501,6 +504,9 @@ class MainActivity : ComponentActivity() {
                                                 isOutcome = true
                                             ), onErrorAction = {}, onCompleitionAction = {})
                                     }
+                                },
+                                onEditCategoriesRequested = {
+                                    navController.navigate("editCategories")
                                 }
                             )
                         }
@@ -522,6 +528,40 @@ class MainActivity : ComponentActivity() {
                                     saving -= 1
                                 }
                             }
+                        }
+                        composable("editCategories") {
+                            EditarCategorias(
+                                categoriesWithSubCategories,
+                                onAddCategoryRequested = {
+                                    navController.navigate("addCategory")
+                                }
+                            )
+                        }
+                        composable("addCategory") {
+                            CategoryForm(
+                                null,
+                                categoriesWithSubCategories,
+                                onCategorySave = { category, snackbar ->
+                                    mainViewModel.insertCategory(
+                                        category,
+                                        onCompleitionAction = {
+                                            navController.navigateUp()
+                                        }
+                                    ) { error ->
+                                        val msg = when (error) {
+                                            is SQLiteConstraintException -> if (category.name in categories.map { it.name }) {
+                                                "${category.name} ya existe."
+                                            } else {
+                                                "CONSTRAINT ERROR"
+                                            }
+                                            else -> it.toString()
+                                        }
+                                        coroutineScope.launch {
+                                            snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 package com.example.gazege
 
-import com.example.gazege.core.DateConverter
+import com.example.gazege.core.converters.Converters
 import com.example.gazege.core.stableMinusMonths
 import com.example.gazege.core.stablePlusMonths
 import org.junit.Assert.assertEquals
@@ -10,14 +10,15 @@ import java.time.ZoneOffset
 import java.util.*
 
 class DateConverterUnitTest {
-    private fun testOneDate(localDate: LocalDate, converter: DateConverter): LocalDate? {
+    private fun testOneDate(localDate: LocalDate, converter: Converters): LocalDate? {
         val transformedDate = converter.fromDate(localDate)
         return converter.toDate(transformedDate)
     }
 
-    private fun testOneDateLong(localDate: LocalDate, converter: DateConverter): Pair<Long?, Long>{
+    private fun testOneDateLong(localDate: LocalDate, converter: Converters): Pair<Long?, Long> {
         val longFromConverter = converter.fromDate(localDate)
-        val dateFromLocalDate = Date.from(localDate.atStartOfDay().toInstant(ZoneOffset.ofHours(-5)))
+        val dateFromLocalDate =
+            Date.from(localDate.atStartOfDay().toInstant(ZoneOffset.ofHours(-5)))
         val longFromDate = dateFromLocalDate.time
         return Pair(longFromConverter, longFromDate)
     }
@@ -28,7 +29,7 @@ class DateConverterUnitTest {
         val dates: Array<LocalDate> = (0..365).map {
             startDate.plusDays(it.toLong())
         }.toTypedArray()
-        val converter = DateConverter()
+        val converter = Converters()
         dates.forEach {
             assertEquals(it, testOneDate(it, converter))
         }
@@ -40,7 +41,7 @@ class DateConverterUnitTest {
         val dates: Array<LocalDate> = (0..365).map {
             startDate.plusDays(it.toLong())
         }.toTypedArray()
-        val converter = DateConverter()
+        val converter = Converters()
         dates.forEach {
             val pairs = testOneDateLong(it, converter)
             assertEquals(pairs.first, pairs.second)

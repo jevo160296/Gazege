@@ -155,7 +155,7 @@ fun TransactionFormFragment(
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit,
     personList: List<Person>,
-    categoryList: List<Category>,
+    categoryList: List<CategoryWithSubCategories>,
     defaultDate: LocalDate = LocalDate.now()
 ) {
     var transactionAndAccountsState by rememberSaveable(

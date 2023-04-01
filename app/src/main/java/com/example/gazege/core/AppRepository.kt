@@ -84,4 +84,9 @@ class AppRepository(
     suspend fun deleteTransaction(transaction: Transaction) {
         transactionDao.delete(transaction = transaction)
     }
+
+    @WorkerThread
+    suspend fun insertCategory(category: Category): List<Long> {
+        return categoryDao.insertAll(category)
+    }
 }

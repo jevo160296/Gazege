@@ -2,6 +2,7 @@ package com.example.gazege.core
 
 import android.content.Context
 import androidx.room.*
+import com.example.gazege.core.converters.Converters
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dao.CategoryDao
 import com.example.gazege.core.dao.PersonDao
@@ -30,7 +31,7 @@ import com.example.gazege.core.migrations.MigrateSpec56
         AutoMigration(8, 9)
     ]
 )
-@TypeConverters(DateConverter::class)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
     abstract fun accountDao(): AccountDao

@@ -3,6 +3,7 @@ package com.example.gazege
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -139,6 +140,16 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.deleteTransaction(transaction)
     }
+
+    fun insertCategory(
+        category: Category,
+        onCompleitionAction: (Long?) -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            val ids = repository.insertCategory(category)
+            onCompleitionAction(ids.firstOrNull())
+        }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {

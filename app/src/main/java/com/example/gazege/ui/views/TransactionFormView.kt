@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithPockets
-import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.widgets.*
@@ -88,7 +88,7 @@ fun TransactionAndAccountsForm(
     onRealizarANombreDeChanged: (Boolean) -> Unit,
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
-    categoryList: List<Category>,
+    categoryList: List<CategoryWithSubCategories>,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
@@ -220,11 +220,11 @@ fun TransactionAndAccountsForm(
                 onDateChanged(it)
             }
         )
-        val selectedCategory = categoryList.firstOrNull { it.id == selectedCategoryId }
+        val selectedCategory = categoryList.firstOrNull { it.category.id == selectedCategoryId }
         if (categoryList.isNotEmpty()) {
             CategoryDropDown(
                 categoryList = categoryList,
-                selectedCategory = selectedCategory,
+                selectedCategory = selectedCategory?.category,
                 label = { Text(stringResource(id = R.string.Categoria)) }
             ) {
                 onTransactionAndAccountsChanged(

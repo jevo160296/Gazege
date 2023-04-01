@@ -28,4 +28,6 @@
     <string name="Ingreso">Ingreso</string>
     <string name="Gasto">Gasto</string>
     <string name="Categoria">Categoría</string>
+    <string name="ConfigurarCategorias">Configurar categorías</string>
+    <string name="CategoriaPadre">Categoría padre</string>
 </resources>

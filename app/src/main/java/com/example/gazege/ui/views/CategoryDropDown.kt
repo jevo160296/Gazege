@@ -33,15 +33,14 @@ data class CategoryNode(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryDropDown(
-    categoryList: List<Category>,
+    categoryList: List<CategoryWithSubCategories>,
     selectedCategory: Category?,
     label: @Composable () -> Unit,
     onItemClick: (Category) -> Unit
 ) {
     val selectedNode = selectedCategory
         ?.let { CategoryNode(CategoryWithSubCategories(it, listOf())) }
-    val categoryNode: List<CategoryNode> = CategoryWithSubCategories
-        .from(categoryList)
+    val categoryNode: List<CategoryNode> = categoryList
         .map {
             CategoryNode(it)
         }
