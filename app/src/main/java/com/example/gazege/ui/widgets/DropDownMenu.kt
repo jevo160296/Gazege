@@ -1,5 +1,6 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -83,7 +84,7 @@ fun <T> DropDownMenu(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun <N, C : Node<N, C>> DropDownTreeMenu(
     dropDownExpanded: Boolean,
@@ -108,20 +109,24 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
-                if (canClearSelection && selectedItem != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                val showClearButton = canClearSelection && selectedItem != null
+                AnimatedContent(
+                    targetState = showClearButton,
+                    transitionSpec = {
+                        scaleIn() with scaleOut()
+                    },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (it) {
                         IconButton(onClick = onClearSelectionClicked) {
                             Icon(
                                 painter = painterResource(id = R.drawable.clear_selection),
                                 contentDescription = "Clear"
                             )
                         }
+                    } else {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     }
-                } else {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                 }
             },
             label = label,
