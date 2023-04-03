@@ -2,9 +2,11 @@ package com.example.gazege.core
 
 import androidx.annotation.WorkerThread
 import com.example.gazege.core.dao.AccountDao
+import com.example.gazege.core.dao.CategoryDao
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.dao.TransactionDao
 import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +15,8 @@ import java.time.LocalDate
 class AppRepository(
     private val personDao: PersonDao,
     private val accountDao: AccountDao,
-    private val transactionDao: TransactionDao
+    private val transactionDao: TransactionDao,
+    private val categoryDao: CategoryDao
 ) {
 
     // Room executes all queries on a separate thread.
@@ -31,6 +34,10 @@ class AppRepository(
         endDate: LocalDate?
     ): Flow<List<Transaction>> {
         return transactionDao.getAll(startDate, endDate)
+    }
+
+    fun getCategories(): Flow<List<Category>> {
+        return categoryDao.getAll()
     }
 
     @WorkerThread
@@ -77,4 +84,15 @@ class AppRepository(
     suspend fun deleteTransaction(transaction: Transaction) {
         transactionDao.delete(transaction = transaction)
     }
+
+    @WorkerThread
+    suspend fun insertCategory(category: Category): List<Long> {
+        return categoryDao.insertAll(category)
+    }
+
+    @WorkerThread
+    suspend fun deleteCategory(category: Category) = categoryDao.deleteAll(category)
+
+    @WorkerThread
+    suspend fun updateCategory(category: Category) = categoryDao.update(category)
 }

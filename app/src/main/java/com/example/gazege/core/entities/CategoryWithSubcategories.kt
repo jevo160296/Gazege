@@ -1,5 +1,6 @@
 package com.example.gazege.core.entities
 
+
 fun categories(
     categoryWithSubCategories: CategoryWithSubCategoriesScope.() -> Unit
 ): List<CategoryWithSubCategories> = categories(null, categoryWithSubCategories)
@@ -19,7 +20,7 @@ data class CategoryWithSubCategories(
                         parent,
                         from(
                             allCategories,
-                            allCategories.filter { child -> parent.id == child.parentId }
+                            allCategories.filter { child -> child.parentId == parent.id }
                         )
                     )
                 }
@@ -38,10 +39,11 @@ data class CategoryWithSubCategoriesScope(
 ) {
     fun category(
         id: Int,
+        name: String,
         categoryWithSubCategories: CategoryWithSubCategoriesScope.() -> Unit
     ) {
         subCategories.add(
-            Category(id, category?.id).run {
+            Category(id, name, category?.id).run {
                 CategoryWithSubCategories(
                     this,
                     categories(this) {

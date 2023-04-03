@@ -27,4 +27,8 @@
     <string name="Nueva_cuenta">Nueva cuenta</string>
     <string name="Ingreso">Ingreso</string>
     <string name="Gasto">Gasto</string>
+    <string name="Categoria">Categoría</string>
+    <string name="ConfigurarCategorias">Configurar categorías</string>
+    <string name="CategoriaPadre">Categoría padre</string>
+    <string name="Sin_categoria">Sin categoría</string>
 </resources>

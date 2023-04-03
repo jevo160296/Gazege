@@ -16,7 +16,8 @@ data class PartialTransaction(
     var sourceId: Int?,
     var destinationId: Int?,
     var date: LocalDate?,
-    var aNombreDe: Int?
+    var aNombreDe: Int?,
+    var categoryId: Int?
 ): PartialEntity<Transaction>
 {
     override fun isComplete(): Boolean {
@@ -36,7 +37,8 @@ data class PartialTransaction(
                 sourceId = sourceId!!,
                 destinationId = destinationId!!,
                 date = date!!,
-                aNombreDe = aNombreDe
+                aNombreDe = aNombreDe,
+                categoryId = categoryId
             )
         } else {
             throw Exception()
@@ -46,6 +48,7 @@ data class PartialTransaction(
     companion object {
         fun blankEntity(): PartialTransaction {
             return PartialTransaction(
+                null,
                 null,
                 null,
                 null,
@@ -103,7 +106,8 @@ data class ParcelableTransaction(
     var sourceId: Int?,
     var destinationId: Int?,
     var date: LocalDate?,
-    var aNombreDe: Int?
+    var aNombreDe: Int?,
+    var categoryId: Int?
 ): Parcelable {
     fun toPartial(): PartialTransaction {
         return PartialTransaction(
@@ -113,7 +117,8 @@ data class ParcelableTransaction(
             sourceId = sourceId,
             destinationId = destinationId,
             date = date,
-            aNombreDe = aNombreDe
+            aNombreDe = aNombreDe,
+            categoryId = categoryId
         )
     }
 }
@@ -135,7 +140,8 @@ val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactio
                 sourceId = state.transaction.sourceId,
                 destinationId = state.transaction.destinationId,
                 date = state.transaction.date,
-                aNombreDe = state.transaction.aNombreDe
+                aNombreDe = state.transaction.aNombreDe,
+                categoryId = state.transaction.categoryId
             ),
             sourceAccount = if(state.sourceAccount != null){
                 ParcelableAccount(

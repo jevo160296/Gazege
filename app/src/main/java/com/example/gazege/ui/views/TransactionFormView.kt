@@ -1,10 +1,6 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -15,20 +11,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithPockets
+import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
-import com.example.gazege.ui.widgets.ButtonField
-import com.example.gazege.ui.widgets.DatePicker
-import com.example.gazege.ui.widgets.DropDownMenu
-import com.example.gazege.ui.widgets.NumberField
-import com.example.gazege.ui.widgets.SignedBigDecimal
-import com.example.gazege.ui.widgets.TextField
+import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 import java.time.LocalDate
@@ -94,6 +88,7 @@ fun TransactionAndAccountsForm(
     onRealizarANombreDeChanged: (Boolean) -> Unit,
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
+    categoryList: List<Category>,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
@@ -101,6 +96,7 @@ fun TransactionAndAccountsForm(
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
     val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
+    val selectedCategoryId = transactionAndAccounts.transaction.categoryId
     if (transactionAndAccounts.transaction.date == null) {
         onTransactionAndAccountsChanged(
             transactionAndAccounts.copy().apply {
@@ -187,7 +183,9 @@ fun TransactionAndAccountsForm(
                         )
                     }
                 },
-                deactivatedAccountList = deactivatedSourceAccountList
+                deactivatedAccountList = deactivatedSourceAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {}
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -210,7 +208,9 @@ fun TransactionAndAccountsForm(
                     }
                 },
                 label = { Text("Destination account") },
-                deactivatedAccountList = deactivatedDestinationAccountList
+                deactivatedAccountList = deactivatedDestinationAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {}
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -224,6 +224,21 @@ fun TransactionAndAccountsForm(
                 onDateChanged(it)
             }
         )
+        val selectedCategory = categoryList.firstOrNull { it.id == selectedCategoryId }
+        if (categoryList.isNotEmpty()) {
+            CategoryDropDown(
+                categoryList = categoryList,
+                selectedCategory = selectedCategory,
+                label = { Text(stringResource(id = R.string.Categoria)) }
+            ) {
+                onTransactionAndAccountsChanged(
+                    transactionAndAccounts.copy().apply {
+                        transaction = transaction.copy(categoryId = it?.id)
+                    }
+                )
+            }
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {

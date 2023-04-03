@@ -45,6 +45,7 @@ class DataModelTests {
                 sourceId = triple.first,
                 destinationId = triple.second,
                 date = LocalDate.now(),
+                categoryId = null,
                 aNombreDe = null
             )
         }
@@ -98,53 +99,53 @@ class DataModelTests {
     @Test
     fun testCategoryWithSubcategories() {
         val expected = listOf(
-            Category(0, null).let {
+            Category(0, "", null).let {
                 CategoryWithSubCategories(
                     it,
                     listOf(
-                        CategoryWithSubCategories(Category(5, it.id), listOf()),
-                        CategoryWithSubCategories(Category(6, it.id), listOf()),
-                        Category(7, it.id).let {
+                        CategoryWithSubCategories(Category(5, "", it.id), listOf()),
+                        CategoryWithSubCategories(Category(6, "", it.id), listOf()),
+                        Category(7, "", it.id).let {
                             CategoryWithSubCategories(
                                 it, listOf(
-                                    CategoryWithSubCategories(Category(8, it.id), listOf()),
-                                    CategoryWithSubCategories(Category(9, it.id), listOf())
+                                    CategoryWithSubCategories(Category(8, "", it.id), listOf()),
+                                    CategoryWithSubCategories(Category(9, "", it.id), listOf())
                                 )
                             )
                         }
                     )
                 )
             },
-            CategoryWithSubCategories(Category(1, null), listOf()),
-            CategoryWithSubCategories(Category(2, null), listOf()),
-            CategoryWithSubCategories(Category(3, null), listOf()),
-            CategoryWithSubCategories(Category(4, null), listOf())
+            CategoryWithSubCategories(Category(1, "", null), listOf()),
+            CategoryWithSubCategories(Category(2, "", null), listOf()),
+            CategoryWithSubCategories(Category(3, "", null), listOf()),
+            CategoryWithSubCategories(Category(4, "", null), listOf())
         )
         val categoriesDsl = categories {
-            category(0) {
-                category(5) {}
-                category(6) {}
-                category(7) {
-                    category(8) {}
-                    category(9) {}
+            category(0, "") {
+                category(5, "") {}
+                category(6, "") {}
+                category(7, "") {
+                    category(8, "") {}
+                    category(9, "") {}
                 }
             }
-            category(1) {}
-            category(2) {}
-            category(3) {}
-            category(4) {}
+            category(1, "") {}
+            category(2, "") {}
+            category(3, "") {}
+            category(4, "") {}
         }
         val categories: List<CategoryWithSubCategories> = listOf(
-            Category(0, null),
-            Category(1, null),
-            Category(2, null),
-            Category(3, null),
-            Category(4, null),
-            Category(5, 0),
-            Category(6, 0),
-            Category(7, 0),
-            Category(8, 7),
-            Category(9, 7)
+            Category(0, "", null),
+            Category(1, "", null),
+            Category(2, "", null),
+            Category(3, "", null),
+            Category(4, "", null),
+            Category(5, "", 0),
+            Category(6, "", 0),
+            Category(7, "", 0),
+            Category(8, "", 7),
+            Category(9, "", 7)
         )
             .let { CategoryWithSubCategories.from(it) }
         assertArrayEquals(expected.toTypedArray(), categories.toTypedArray())

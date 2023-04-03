@@ -1,6 +1,5 @@
 package com.example.gazege.ui.fragments
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -28,56 +27,11 @@ import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.ModalSheetContent
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-
-@Composable
-fun ModalSheetContent(
-    onSiClicked: () -> Unit,
-    onNoClicked: () -> Unit,
-    titleText: String,
-    bodyText: String
-) {
-    Column(
-        Modifier
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
-            .navigationBarsPadding()
-            .padding(horizontal = 8.dp)
-            .padding(top = 8.dp)
-    ) {
-        Text(
-            text = titleText,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Text(
-            text = bodyText
-        )
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            androidx.compose.material.TextButton(
-                onClick = {
-                    onSiClicked()
-                }) {
-                Text(
-                    text = "Si"
-                )
-            }
-            androidx.compose.material.TextButton(
-                onClick = {
-                    onNoClicked()
-                }
-            ) {
-                Text(
-                    text = "No"
-                )
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -90,8 +44,8 @@ fun MainFragment(
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
-    allTransactionList: List<TransactionAndAccounts>,
-    filteredTransactionList: List<TransactionAndAccounts>,
+    allTransactionList: List<TransactionAndAccountsAndCategory>,
+    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
     onAddTransactionRequested: () -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
@@ -305,6 +259,7 @@ fun MainFragment(
                         },
                         onConfigurePrincipalPersonRequested = onSettingsClicked,
                         transacciones = allTransactionList
+                            .map { trans -> trans.toTransactionAndAccounts() }
                     )
                 }
             }
@@ -314,7 +269,7 @@ fun MainFragment(
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ModalSheetContent() {
+private fun ModalSheetContentPreview() {
     GazegeTheme(darkTheme = true) {
         ModalSheetContent(
             onSiClicked = { },
@@ -328,7 +283,7 @@ fun ModalSheetContent() {
 @OptIn(ExperimentalMaterialApi::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun DefaultPreview() {
+private fun DefaultPreview() {
     val personList = getPersonWithAccountsSample()
     val accounts = getAccountSample()
     val transactions = getTransactionSample()

@@ -1,11 +1,6 @@
 package com.example.gazege.ui.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,13 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.PersonWithAccounts
-import com.example.gazege.core.entities.Transaction
-import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
@@ -174,7 +163,8 @@ private fun PreviewPersonItem() {
                         sourceId = 1,
                         destinationId = 2,
                         date = LocalDate.now(),
-                        aNombreDe = null
+                        aNombreDe = null,
+                        categoryId = null
                     )
                 }, inTransactions = (1..4).map {
                     Transaction(
@@ -183,7 +173,8 @@ private fun PreviewPersonItem() {
                         sourceId = 1,
                         destinationId = 2,
                         date = LocalDate.now(),
-                        aNombreDe = null
+                        aNombreDe = null,
+                        categoryId = null
                     )
                 }, owner = person
             ),

@@ -1,6 +1,7 @@
 package com.example.gazege
 
 import android.content.res.Configuration
+import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.CategoryForm
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -45,7 +47,8 @@ class MainActivity : ComponentActivity() {
         AppRepository(
             personDao = database.personDao(),
             accountDao = database.accountDao(),
-            transactionDao = database.transactionDao()
+            transactionDao = database.transactionDao(),
+            categoryDao = database.categoryDao()
         )
     }
 
@@ -62,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
                 val filteredTransactions by mainViewModel.rangeTransactions.observeAsState(emptyList())
+                val categories by mainViewModel.categories.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
                         LocalDate.now(),
@@ -82,10 +86,15 @@ class MainActivity : ComponentActivity() {
                     }
                 val personWithAccounts =
                     PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
-                val filteredTransactionAndAccounts =
-                    TransactionAndAccounts.from(filteredTransactions, accountList)
-                val allTransactionAndAccounts =
-                    TransactionAndAccounts.from(allTransactions, accountList)
+                val filteredTransactionAndAccountsAndCategory =
+                    TransactionAndAccountsAndCategory.from(
+                        filteredTransactions,
+                        accountList,
+                        categories
+                    )
+                val allTransactionAndAccountsAndCategory =
+                    TransactionAndAccountsAndCategory.from(allTransactions, accountList, categories)
+                val categoriesWithSubCategories = CategoryWithSubCategories.from(categories)
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -140,8 +149,8 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                allTransactionList = allTransactionAndAccounts,
-                                filteredTransactionList = filteredTransactionAndAccounts,
+                                allTransactionList = allTransactionAndAccountsAndCategory,
+                                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
                                 onAddTransactionRequested = {
                                     val startDate = range.first
                                     val esMesActual =
@@ -413,7 +422,8 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(10000).div(100),
                                     yearMonthDay.mod(100)
                                 ),
-                                personList = personList
+                                personList = personList,
+                                categoryList = categories
                             )
                         }
                         composable(
@@ -423,8 +433,9 @@ class MainActivity : ComponentActivity() {
                             })
                         ) { navBackStackEntry ->
                             val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts = filteredTransactionAndAccounts
-                                .firstOrNull { it.transaction.id == transactionId }
+                            val selectedTransactionAndAccounts =
+                                filteredTransactionAndAccountsAndCategory
+                                    .firstOrNull { it.transaction.id == transactionId }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
@@ -439,8 +450,9 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.updateTransaction(it)
                                     navController.navigateUp()
                                 },
-                                transactionAndAccounts = selectedTransactionAndAccounts,
-                                personList = personList
+                                transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
+                                personList = personList,
+                                categoryList = categories
                             )
                         }
                         composable("settings") {
@@ -497,6 +509,9 @@ class MainActivity : ComponentActivity() {
                                                 isOutcome = true
                                             ), onErrorAction = {}, onCompleitionAction = {})
                                     }
+                                },
+                                onEditCategoriesRequested = {
+                                    navController.navigate("editCategories")
                                 }
                             )
                         }
@@ -518,6 +533,78 @@ class MainActivity : ComponentActivity() {
                                     saving -= 1
                                 }
                             }
+                        }
+                        composable("editCategories") {
+                            EditarCategorias(
+                                categoriesWithSubCategories,
+                                onAddCategoryRequested = {
+                                    navController.navigate("addCategory")
+                                },
+                                onEditCategoryRequested = {
+                                    navController.navigate("editCategory/${it.category.id}")
+                                },
+                                onDeleteCategoryRequested = { mainViewModel.deleteCategory(it.category) }
+                            )
+                        }
+                        composable("addCategory") {
+                            CategoryForm(
+                                null,
+                                categories,
+                                onCategorySave = { category, snackbar ->
+                                    mainViewModel.insertCategory(
+                                        category,
+                                        onCompleitionAction = {
+                                            navController.navigateUp()
+                                        }
+                                    ) { error ->
+                                        val msg = when (error) {
+                                            is SQLiteConstraintException -> if (category.name in categories.map { it.name }) {
+                                                "${category.name} ya existe."
+                                            } else {
+                                                "CONSTRAINT ERROR"
+                                            }
+                                            else -> error.toString()
+                                        }
+                                        coroutineScope.launch {
+                                            snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        composable(
+                            "editCategory/{categoryId}",
+                            arguments = listOf(
+                                navArgument("categoryId") {
+                                    type = NavType.IntType
+                                }
+                            )
+                        ) { navStack ->
+                            val categoryId = navStack.arguments?.getInt("categoryId")
+                            val category = categories.firstOrNull { it.id == categoryId }
+                            CategoryForm(
+                                category,
+                                categories,
+                                onCategorySave = { newCategory, state ->
+                                    mainViewModel.updateCategory(newCategory,
+                                        onCompleitionAction = {
+                                            navController.navigateUp()
+                                        }
+                                    ) { error ->
+                                        val msg = when (error) {
+                                            is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
+                                                "${newCategory.name} ya existe."
+                                            } else {
+                                                "CONSTRAINT ERROR"
+                                            }
+                                            else -> error.toString()
+                                        }
+                                        coroutineScope.launch {
+                                            state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
                 }

@@ -1,24 +1,15 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.ui.theme.Shapes
@@ -30,7 +21,9 @@ fun Form(
     isSavedButtonEnabled: Boolean,
     title: String,
     snackbarHostState: SnackbarHostState? = null,
-    content: @Composable () -> Unit
+    itemSpacing: Dp = 0.dp,
+    itemsColumnsModifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
         modifier = modifier
@@ -60,7 +53,10 @@ fun Form(
         }) {
         Column(modifier = Modifier.padding(it)) {
             MediumHeadline(title)
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                itemsColumnsModifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
                 content()
                 Spacer(modifier = Modifier.height(90.dp))
             }

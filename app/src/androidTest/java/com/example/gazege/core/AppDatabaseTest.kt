@@ -3,9 +3,7 @@ package com.example.gazege.core
 import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -68,6 +66,7 @@ class AppDatabaseTest {
                 sourceId = sourceId,
                 destinationId = destinationId,
                 date = fecha,
+                categoryId = null,
                 aNombreDe = null
             )
         }
@@ -84,6 +83,11 @@ class AppDatabaseTest {
         persons.forEach {
             database.personDao().delete(it)
         }
+        database
+            .categoryDao()
+            .getAll()
+            .first()
+            .run { database.categoryDao().deleteAll(*this.toTypedArray()) }
         val newPersons = listOf(
             "Pablo",
             "Banco",
@@ -188,16 +192,28 @@ class AppDatabaseTest {
             Transaction(
                 index++,
                 random.nextDouble(100.0, 500000.0),
-                "",
-                sourceAccount ?: 0,
-                destinationAccount ?: 1,
-                LocalDate.now(),
-                null
+                description = "",
+                sourceId = sourceAccount ?: 0,
+                destinationId = destinationAccount ?: 1,
+                date = LocalDate.now(),
+                aNombreDe = null,
+                categoryId = null
             )
         }
+        val newCategories: Array<Category> = (0..10).map {
+            val parentId = when (it) {
+                4 -> 0
+                6 -> 0
+                7 -> 3
+                8 -> 6
+                else -> null
+            }
+            Category(it, "Category$it", parentId)
+        }.toTypedArray()
         database.personDao().insertAll(*newPersons.toTypedArray())
         database.accountDao().insertAll(*newAccounts.toTypedArray())
         database.transactionDao().insertAll(*newTransactions.toTypedArray())
+        database.categoryDao().insertAll(*newCategories)
     }
 
     @Test
@@ -353,6 +369,7 @@ class AppDatabaseTest {
                 sourceId = accounts[0].id ?: -1,
                 destinationId = accounts[1].id ?: -1,
                 date = LocalDate.now(),
+                categoryId = null,
                 aNombreDe = null
             ),
             Transaction(
@@ -361,7 +378,8 @@ class AppDatabaseTest {
                 sourceId = accounts[1].id ?: -1,
                 destinationId = accounts[0].id ?: -1,
                 date = LocalDate.now(),
-                aNombreDe = null
+                aNombreDe = null,
+                categoryId = null
             ),
             Transaction(
                 amount = 10.0,
@@ -369,6 +387,7 @@ class AppDatabaseTest {
                 sourceId = accounts[0].id ?: -1,
                 destinationId = accounts[1].id ?: -1,
                 date = LocalDate.now(),
+                categoryId = null,
                 aNombreDe = null
             )
         )
