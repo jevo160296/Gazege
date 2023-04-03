@@ -22,6 +22,8 @@ fun AccountDropDownMenu(
     deactivatedAccountList: List<AccountAndOwner>,
     selectedAccountNode: AccountAndOwnerNode?,
     label: @Composable () -> Unit,
+    canClearSelection: Boolean,
+    onClearSelectionClicked: () -> Unit,
     onItemClick: (AccountAndOwnerNode) -> Unit
 ) {
     val accountNodes = accountsList
@@ -73,7 +75,9 @@ fun AccountDropDownMenu(
                 },
                 enabled = node.isActive
             )
-        }
+        },
+        canClearSelection = canClearSelection,
+        onClearSelectionClicked = onClearSelectionClicked
     ) {
         it.content.owner.name
     }

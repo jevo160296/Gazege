@@ -93,7 +93,7 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
     itemToString: (C?) -> String,
     label: @Composable () -> Unit,
     viewHolder: @Composable (C) -> Unit,
-    showClearSelectionButton: Boolean = false,
+    canClearSelection: Boolean = false,
     onClearSelectionClicked: () -> Unit = {},
     groupByKeySelector: ((C) -> String)? = null
 ) {
@@ -108,7 +108,7 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
-                if (showClearSelectionButton && selectedItem != null) {
+                if (canClearSelection && selectedItem != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {

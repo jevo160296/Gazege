@@ -78,7 +78,7 @@ fun CategoryDropDown(
                 enabled = true
             )
         },
-        showClearSelectionButton = true,
+        canClearSelection = true,
         onClearSelectionClicked = {
             onItemClick(null)
         }

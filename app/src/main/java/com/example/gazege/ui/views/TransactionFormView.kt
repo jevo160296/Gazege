@@ -183,7 +183,9 @@ fun TransactionAndAccountsForm(
                         )
                     }
                 },
-                deactivatedAccountList = deactivatedSourceAccountList
+                deactivatedAccountList = deactivatedSourceAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {}
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -206,7 +208,9 @@ fun TransactionAndAccountsForm(
                     }
                 },
                 label = { Text("Destination account") },
-                deactivatedAccountList = deactivatedDestinationAccountList
+                deactivatedAccountList = deactivatedDestinationAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {}
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {

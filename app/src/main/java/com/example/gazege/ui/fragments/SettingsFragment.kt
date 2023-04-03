@@ -98,7 +98,9 @@ fun SettingsFragment(
                 },
                 label = { Text(stringResource(id = R.string.Ingreso)) },
                 onItemClick = { incomeIdSelected = it.content.account.id },
-                deactivatedAccountList = deactivatedAccountListNoOutcome
+                deactivatedAccountList = deactivatedAccountListNoOutcome,
+                canClearSelection = true,
+                onClearSelectionClicked = { incomeIdSelected = null }
             )
         }
         if (accountList.isEmpty()) {
@@ -120,7 +122,9 @@ fun SettingsFragment(
                 },
                 label = { Text(stringResource(id = R.string.Gasto)) },
                 onItemClick = { outcomeIdSelected = it.content.account.id },
-                deactivatedAccountList = deactivatedAccountListNoIncome
+                deactivatedAccountList = deactivatedAccountListNoIncome,
+                canClearSelection = true,
+                onClearSelectionClicked = { outcomeIdSelected = null }
             )
         }
         ButtonField(onClick = onEditCategoriesRequested) {

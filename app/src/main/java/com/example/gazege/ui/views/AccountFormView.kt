@@ -5,11 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -161,7 +157,15 @@ fun AccountAndOwnerForm(
                     }
                 )
             },
-            deactivatedAccountList = notSelectableParentAccounts
+            deactivatedAccountList = notSelectableParentAccounts,
+            canClearSelection = true,
+            onClearSelectionClicked = {
+                onAccountAndOwnerChanged(
+                    accountAndOwner.copy().apply {
+                        account = account.copy(parentId = null)
+                    }
+                )
+            }
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
