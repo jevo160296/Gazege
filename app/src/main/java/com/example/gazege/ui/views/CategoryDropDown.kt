@@ -36,7 +36,7 @@ fun CategoryDropDown(
     categoryList: List<CategoryWithSubCategories>,
     selectedCategory: Category?,
     label: @Composable () -> Unit,
-    onItemClick: (Category) -> Unit
+    onItemClick: (Category?) -> Unit
 ) {
     val selectedNode = selectedCategory
         ?.let { CategoryNode(CategoryWithSubCategories(it, listOf())) }
@@ -77,6 +77,10 @@ fun CategoryDropDown(
                 },
                 enabled = true
             )
+        },
+        showClearSelectionButton = true,
+        onClearSelectionClicked = {
+            onItemClick(null)
         }
     )
 }

@@ -61,7 +61,7 @@ fun CategoryForm(
             selectedCategory = selectedCategory,
             label = { Text(stringResource(id = R.string.cuentaPadre)) },
             onItemClick = {
-                partialCategory = partialCategory.copy(parentId = it.id)
+                partialCategory = partialCategory.copy(parentId = it?.id)
             }
         )
     }

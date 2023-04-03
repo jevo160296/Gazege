@@ -229,7 +229,7 @@ fun TransactionAndAccountsForm(
             ) {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(categoryId = it.id)
+                        transaction = transaction.copy(categoryId = it?.id)
                     }
                 )
             }
