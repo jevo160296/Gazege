@@ -44,8 +44,8 @@ fun MainFragment(
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
-    allTransactionList: List<TransactionAndAccounts>,
-    filteredTransactionList: List<TransactionAndAccounts>,
+    allTransactionList: List<TransactionAndAccountsAndCategory>,
+    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
     onAddTransactionRequested: () -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
@@ -259,6 +259,7 @@ fun MainFragment(
                         },
                         onConfigurePrincipalPersonRequested = onSettingsClicked,
                         transacciones = allTransactionList
+                            .map { trans -> trans.toTransactionAndAccounts() }
                     )
                 }
             }

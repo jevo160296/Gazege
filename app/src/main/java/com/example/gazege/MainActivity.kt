@@ -86,10 +86,14 @@ class MainActivity : ComponentActivity() {
                     }
                 val personWithAccounts =
                     PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
-                val filteredTransactionAndAccounts =
-                    TransactionAndAccounts.from(filteredTransactions, accountList)
-                val allTransactionAndAccounts =
-                    TransactionAndAccounts.from(allTransactions, accountList)
+                val filteredTransactionAndAccountsAndCategory =
+                    TransactionAndAccountsAndCategory.from(
+                        filteredTransactions,
+                        accountList,
+                        categories
+                    )
+                val allTransactionAndAccountsAndCategory =
+                    TransactionAndAccountsAndCategory.from(allTransactions, accountList, categories)
                 val categoriesWithSubCategories = CategoryWithSubCategories.from(categories)
 
                 var navPosition: NavPosition by rememberSaveable {
@@ -145,8 +149,8 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 delAccount = { mainViewModel.deleteAccount(it) },
-                                allTransactionList = allTransactionAndAccounts,
-                                filteredTransactionList = filteredTransactionAndAccounts,
+                                allTransactionList = allTransactionAndAccountsAndCategory,
+                                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
                                 onAddTransactionRequested = {
                                     val startDate = range.first
                                     val esMesActual =
@@ -429,8 +433,9 @@ class MainActivity : ComponentActivity() {
                             })
                         ) { navBackStackEntry ->
                             val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts = filteredTransactionAndAccounts
-                                .firstOrNull { it.transaction.id == transactionId }
+                            val selectedTransactionAndAccounts =
+                                filteredTransactionAndAccountsAndCategory
+                                    .firstOrNull { it.transaction.id == transactionId }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
@@ -445,7 +450,7 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.updateTransaction(it)
                                     navController.navigateUp()
                                 },
-                                transactionAndAccounts = selectedTransactionAndAccounts,
+                                transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
                                 personList = personList,
                                 categoryList = categories
                             )

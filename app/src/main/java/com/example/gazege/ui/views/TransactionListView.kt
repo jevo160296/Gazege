@@ -11,10 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
-import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.localDateToString
@@ -28,7 +25,7 @@ import java.util.*
 
 @Composable
 private fun TransactionViewHolder(
-    transaction: TransactionAndAccounts
+    transaction: TransactionAndAccountsAndCategory
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -47,6 +44,12 @@ private fun TransactionViewHolder(
                 SmallEmphasis(text = " --> ")
                 SmallBody(text = transaction.destinationAccount.name)
             }
+            Row(modifier = Modifier.weight(1f)) {
+                SmallEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
+                SmallBody(
+                    text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+                )
+            }
             Row(modifier = Modifier.weight(2f)) {
                 SmallEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
                 SmallBody(text = transaction.transaction.description)
@@ -64,9 +67,9 @@ private fun TransactionViewHolder(
 
 @Composable
 private fun TransactionRecyclerView(
-    transactionList: List<TransactionAndAccounts>,
-    editTransaction: (TransactionAndAccounts) -> Unit,
-    delTransaction: (TransactionAndAccounts) -> Unit,
+    transactionList: List<TransactionAndAccountsAndCategory>,
+    editTransaction: (TransactionAndAccountsAndCategory) -> Unit,
+    delTransaction: (TransactionAndAccountsAndCategory) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
@@ -90,7 +93,7 @@ private fun TransactionRecyclerView(
 fun TransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    transactionList: List<TransactionAndAccounts>,
+    transactionList: List<TransactionAndAccountsAndCategory>,
     delTransaction: (Transaction) -> Unit,
     editTransaction: (Transaction) -> Unit,
     state: LazyListState,
@@ -112,36 +115,36 @@ fun TransactionPage(
     }
 }
 
-fun getTransactionSample(): List<TransactionAndAccounts> {
+fun getTransactionSample(): List<TransactionAndAccountsAndCategory> {
     val accountList = getAccountSample()
     val categories = getCategoriesSample()
-    val random = Random()
-    var i = 0
-    val transList = accountList.map { source ->
-        accountList.map { destination ->
-            val hasCategory = random.nextBoolean()
-            val transaction = Transaction(
-                amount = i * 10.0,
-                description = "Trans $i",
-                sourceId = source.account.id ?: -1,
-                destinationId = destination.account.id ?: -1,
-                date = LocalDate.now(),
-                aNombreDe = null,
-                categoryId = if (hasCategory) {
-                    categories[random.nextInt(categories.size)].id
+    val random = Random(3)
+    val transList = (0..100).map {
+        val selectedAccounts = accountList.shuffled(random).take(2)
+        val sourceAccount = selectedAccounts[0]
+        val destinationAccount = selectedAccounts[1]
+        val category = random.nextBoolean()
+            .let {
+                if (it) {
+                    categories.shuffled(random).first()
                 } else {
                     null
                 }
-            )
-            i++
-            TransactionAndAccounts(
-                transaction,
-                source.account,
-                destination.account
-            )
-        }
-    }.flatten()
-    return transList
+            }
+        Transaction(
+            it, random.nextDouble(), "Esta es la transaccion $it, desde " +
+                    "${sourceAccount.account.name} hasta ${destinationAccount.account.name}, y " +
+                    "categoría ${category?.name}",
+            sourceAccount.account.id ?: -1,
+            destinationAccount.account.id ?: -1,
+            category?.id,
+            date = LocalDate.now(),
+            null
+        )
+    }
+    return TransactionAndAccountsAndCategory.from(
+        transList, accountList.map { it.account }, categories
+    )
 }
 
 @Preview(showBackground = true)
@@ -154,14 +157,17 @@ private fun PreviewTransactionItem() {
     val destinationAccount = Account(
         name = "Account2", ownerId = person.id ?: -1
     )
+    val categoria = Category(
+        id = 0, name = "Categoría", parentId = null
+    )
     val transaction = Transaction(
         amount = 0.0, description = "Trans", date = LocalDate.now(),
         destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1,
-        aNombreDe = null, categoryId = null
+        aNombreDe = null, categoryId = 0
     )
-    val transactionAndAccounts = TransactionAndAccounts(
+    val transactionAndAccounts = TransactionAndAccountsAndCategory(
         transaction = transaction, sourceAccount = sourceAccount,
-        destinationAccount = destinationAccount
+        destinationAccount = destinationAccount, category = categoria
     )
     GazegeTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
