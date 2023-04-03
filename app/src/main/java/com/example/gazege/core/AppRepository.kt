@@ -89,4 +89,10 @@ class AppRepository(
     suspend fun insertCategory(category: Category): List<Long> {
         return categoryDao.insertAll(category)
     }
+
+    @WorkerThread
+    suspend fun deleteCategory(category: Category) = categoryDao.deleteAll(category)
+
+    @WorkerThread
+    suspend fun updateCategory(category: Category) = categoryDao.update(category)
 }
