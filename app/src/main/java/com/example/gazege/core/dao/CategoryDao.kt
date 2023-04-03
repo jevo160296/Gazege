@@ -1,9 +1,6 @@
 package com.example.gazege.core.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.Query
+import androidx.room.*
 import com.example.gazege.core.entities.Category
 import kotlinx.coroutines.flow.Flow
 
@@ -22,4 +19,7 @@ interface CategoryDao {
 
     @Delete
     suspend fun deleteAll(vararg category: Category): Int
+
+    @Update
+    suspend fun update(account: Category)
 }
