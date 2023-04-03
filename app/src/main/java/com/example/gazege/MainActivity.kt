@@ -534,13 +534,17 @@ class MainActivity : ComponentActivity() {
                                 categoriesWithSubCategories,
                                 onAddCategoryRequested = {
                                     navController.navigate("addCategory")
-                                }
+                                },
+                                onEditCategoryRequested = {
+                                    navController.navigate("editCategory/${it.category.id}")
+                                },
+                                onDeleteCategoryRequested = { mainViewModel.deleteCategory(it.category) }
                             )
                         }
                         composable("addCategory") {
                             CategoryForm(
                                 null,
-                                categoriesWithSubCategories,
+                                categories,
                                 onCategorySave = { category, snackbar ->
                                     mainViewModel.insertCategory(
                                         category,
@@ -554,10 +558,44 @@ class MainActivity : ComponentActivity() {
                                             } else {
                                                 "CONSTRAINT ERROR"
                                             }
-                                            else -> it.toString()
+                                            else -> error.toString()
                                         }
                                         coroutineScope.launch {
                                             snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        composable(
+                            "editCategory/{categoryId}",
+                            arguments = listOf(
+                                navArgument("categoryId") {
+                                    type = NavType.IntType
+                                }
+                            )
+                        ) { navStack ->
+                            val categoryId = navStack.arguments?.getInt("categoryId")
+                            val category = categories.firstOrNull { it.id == categoryId }
+                            CategoryForm(
+                                category,
+                                categories,
+                                onCategorySave = { newCategory, state ->
+                                    mainViewModel.updateCategory(newCategory,
+                                        onCompleitionAction = {
+                                            navController.navigateUp()
+                                        }
+                                    ) { error ->
+                                        val msg = when (error) {
+                                            is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
+                                                "${newCategory.name} ya existe."
+                                            } else {
+                                                "CONSTRAINT ERROR"
+                                            }
+                                            else -> error.toString()
+                                        }
+                                        coroutineScope.launch {
+                                            state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
                                         }
                                     }
                                 }

@@ -23,7 +23,7 @@ import com.example.gazege.ui.widgets.TextField
 @Composable
 fun CategoryForm(
     category: Category?,
-    categories: List<CategoryWithSubCategories>,
+    categories: List<Category>,
     onCategorySave: (Category, SnackbarHostState) -> Unit
 ) {
     var partialCategory by rememberSaveable(
@@ -39,7 +39,8 @@ fun CategoryForm(
     }
 
     val snackbarHostState = SnackbarHostState()
-    val selectedCategory = categories.firstOrNull { it.category.id == partialCategory.parentId }
+    val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
+    val filteredCategories = categories.filter { it.id != partialCategory.id }
     Form(
         onSaveClicked = { onCategorySave(partialCategory.toFull(), snackbarHostState) },
         isSavedButtonEnabled = partialCategory.isComplete(),
@@ -56,8 +57,8 @@ fun CategoryForm(
             label = { Text(text = stringResource(R.string.nombre)) }
         )
         CategoryDropDown(
-            categoryList = categories,
-            selectedCategory = selectedCategory?.category,
+            categoryList = CategoryWithSubCategories.from(filteredCategories),
+            selectedCategory = selectedCategory,
             label = { Text(stringResource(id = R.string.cuentaPadre)) },
             onItemClick = {
                 partialCategory = partialCategory.copy(parentId = it.id)

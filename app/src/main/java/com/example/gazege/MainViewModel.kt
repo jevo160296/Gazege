@@ -151,6 +151,19 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
             onCompleitionAction(ids.firstOrNull())
         }
 
+    fun deleteCategory(category: Category) = viewModelScope.launch {
+        repository.deleteCategory(category)
+    }
+
+    fun updateCategory(
+        newCategory: Category,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit,
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.updateCategory(newCategory)
+        onCompleitionAction()
+    }
+
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {
             null
