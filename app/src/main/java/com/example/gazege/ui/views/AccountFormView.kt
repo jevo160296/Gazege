@@ -49,9 +49,10 @@ fun AccountAndOwnerForm(
     val incomeAccountId = incomeAccount?.id
     val outcomeAccountId = outcomeAccount?.id
     val selectable = { it: AccountAndOwner ->
-        it.account.parentId != accountAndOwner.account.id &&
-                it.account.id != accountAndOwner.account.id &&
-                it.account.ownerId == selectedOwner?.id
+        it.account.ownerId == selectedOwner?.id &&
+                (accountAndOwner.account.id == null ||
+                        it.account.parentId != accountAndOwner.account.id) &&
+                it.account.id != accountAndOwner.account.id
     }
     val filteredAccountAndOwnerList = accountAndOwnerList.filter {
         it.owner.id == selectedOwner?.id &&
