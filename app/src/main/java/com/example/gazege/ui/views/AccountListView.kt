@@ -50,11 +50,7 @@ private fun DefaultAccountViewHolder(
         stringResource(id = R.string.TotalConBolsillos)
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            SmallEmphasis(
-                text = "${stringResource(id = R.string.cuenta)}:",
-                modifier = Modifier.padding(end = 4.dp)
-            )
+        Box(modifier = Modifier.weight(1f)) {
             LargeBody(text = account.account.name)
         }
         Column(
