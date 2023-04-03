@@ -14,7 +14,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
 import com.example.gazege.ui.widgets.Form
@@ -57,7 +56,7 @@ fun CategoryForm(
             label = { Text(text = stringResource(R.string.nombre)) }
         )
         CategoryDropDown(
-            categoryList = CategoryWithSubCategories.from(filteredCategories),
+            categoryList = filteredCategories,
             selectedCategory = selectedCategory,
             label = { Text(stringResource(id = R.string.cuentaPadre)) },
             onItemClick = {

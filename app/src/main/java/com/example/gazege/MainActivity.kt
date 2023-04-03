@@ -419,7 +419,7 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(100)
                                 ),
                                 personList = personList,
-                                categoryList = categoriesWithSubCategories
+                                categoryList = categories
                             )
                         }
                         composable(
@@ -447,7 +447,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts,
                                 personList = personList,
-                                categoryList = categoriesWithSubCategories
+                                categoryList = categories
                             )
                         }
                         composable("settings") {
