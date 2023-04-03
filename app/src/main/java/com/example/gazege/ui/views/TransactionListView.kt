@@ -1,7 +1,9 @@
 package com.example.gazege.ui.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +24,7 @@ import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import java.time.LocalDate
+import java.util.*
 
 @Composable
 private fun TransactionViewHolder(
@@ -109,6 +112,38 @@ fun TransactionPage(
     }
 }
 
+fun getTransactionSample(): List<TransactionAndAccounts> {
+    val accountList = getAccountSample()
+    val categories = getCategoriesSample()
+    val random = Random()
+    var i = 0
+    val transList = accountList.map { source ->
+        accountList.map { destination ->
+            val hasCategory = random.nextBoolean()
+            val transaction = Transaction(
+                amount = i * 10.0,
+                description = "Trans $i",
+                sourceId = source.account.id ?: -1,
+                destinationId = destination.account.id ?: -1,
+                date = LocalDate.now(),
+                aNombreDe = null,
+                categoryId = if (hasCategory) {
+                    categories[random.nextInt(categories.size)].id
+                } else {
+                    null
+                }
+            )
+            i++
+            TransactionAndAccounts(
+                transaction,
+                source.account,
+                destination.account
+            )
+        }
+    }.flatten()
+    return transList
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionItem() {
@@ -128,32 +163,11 @@ private fun PreviewTransactionItem() {
         transaction = transaction, sourceAccount = sourceAccount,
         destinationAccount = destinationAccount
     )
-    TransactionViewHolder(transaction = transactionAndAccounts)
-}
-
-fun getTransactionSample(): List<TransactionAndAccounts> {
-    val accountList = getAccountSample()
-    var i = 0
-    val transList = accountList.map { source ->
-        accountList.map { destination ->
-            val transaction = Transaction(
-                amount = i * 10.0,
-                description = "Trans $i",
-                sourceId = source.account.id ?: -1,
-                destinationId = destination.account.id ?: -1,
-                date = LocalDate.now(),
-                aNombreDe = null,
-                categoryId = null
-            )
-            i++
-            TransactionAndAccounts(
-                transaction,
-                source.account,
-                destination.account
-            )
+    GazegeTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+            TransactionViewHolder(transaction = transactionAndAccounts)
         }
-    }.flatten()
-    return transList
+    }
 }
 
 @Preview(showBackground = true)
