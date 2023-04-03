@@ -1,21 +1,14 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.ui.widgets.treeview.ColumnTreeView
 import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
@@ -100,6 +93,8 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
     itemToString: (C?) -> String,
     label: @Composable () -> Unit,
     viewHolder: @Composable (C) -> Unit,
+    showClearSelectionButton: Boolean = false,
+    onClearSelectionClicked: () -> Unit = {},
     groupByKeySelector: ((C) -> String)? = null
 ) {
     val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
@@ -113,7 +108,21 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+                if (showClearSelectionButton && selectedItem != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onClearSelectionClicked) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.clear_selection),
+                                contentDescription = "Clear"
+                            )
+                        }
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+                    }
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+                }
             },
             label = label,
             colors = ExposedDropdownMenuDefaults.textFieldColors()
