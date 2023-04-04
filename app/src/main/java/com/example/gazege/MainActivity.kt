@@ -677,6 +677,17 @@ class MainActivity : ComponentActivity() {
                                                 mainViewModel.deletePerson(person.person)
                                             }
                                         }
+                                    },
+                                    allAccounts = accountList,
+                                    allCategories = categories,
+                                    onTransactionAction = { transaction, action ->
+                                        val transactionId = transaction.id
+                                        when (action) {
+                                            TransactionAction.EDIT -> navController.navigate("editTransaction/${transactionId}")
+                                            TransactionAction.DELETE -> mainViewModel.deleteTransaction(
+                                                transaction
+                                            )
+                                        }
                                     }
                                 )
                             } else {
