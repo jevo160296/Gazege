@@ -165,7 +165,7 @@ class AppDatabaseTest {
                     }
             }
         index = 0
-        val newTransactions: List<Transaction> = (0..500).map {
+        val newTransactions: List<Transaction> = (0..5000).map {
             val from = newPersons
                 .let {
                     val selected = random.nextInt(it.size)
@@ -195,7 +195,7 @@ class AppDatabaseTest {
                 description = "",
                 sourceId = sourceAccount ?: 0,
                 destinationId = destinationAccount ?: 1,
-                date = LocalDate.now(),
+                date = LocalDate.of(2023, 1, 1).plusDays(random.nextLong(365)),
                 aNombreDe = null,
                 categoryId = null
             )
