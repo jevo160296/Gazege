@@ -665,7 +665,7 @@ class MainActivity : ComponentActivity() {
                             )
                         ) { navStack ->
                             val personId = navStack.arguments?.getInt("personId")
-                            val person = personWithAccounts.firstOrNull { it.person.id == personId }
+                            val person = personList.firstOrNull { it.id == personId }
                             if (person != null) {
                                 PersonDetail(
                                     person = person,
@@ -674,10 +674,11 @@ class MainActivity : ComponentActivity() {
                                             PersonAction.EDIT -> navController.navigate("editPerson/${personId}")
                                             PersonAction.DELETE -> {
                                                 navController.navigateUp()
-                                                mainViewModel.deletePerson(person.person)
+                                                mainViewModel.deletePerson(person)
                                             }
                                         }
                                     },
+                                    allTransactions = allTransactions,
                                     allAccounts = accountList,
                                     allCategories = categories,
                                     onTransactionAction = { transaction, action ->
