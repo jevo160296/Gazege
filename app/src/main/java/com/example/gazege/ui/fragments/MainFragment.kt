@@ -43,6 +43,7 @@ fun MainFragment(
     accountList: List<AccountAndOwnerWithTransactions>,
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
+    onAccountDetailRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
@@ -236,7 +237,8 @@ fun MainFragment(
                         },
                         editAccount = onEditAccountRequested,
                         startDate = null,
-                        endDate = null
+                        endDate = null,
+                        detailAccount = onAccountDetailRequested
                     ) { newTitle -> title = newTitle }
                 }
                 NavPosition.PERSONS -> {
@@ -358,7 +360,8 @@ private fun DefaultPreview() {
                 }
             },
             principalPerson = Person(name = "?"),
-            onSaldoActualClick = {}
+            onSaldoActualClick = {},
+            onAccountDetailRequested = {}
         )
     }
 }

@@ -31,4 +31,5 @@
     <string name="ConfigurarCategorias">Configurar categorías</string>
     <string name="CategoriaPadre">Categoría padre</string>
     <string name="Sin_categoria">Sin categoría</string>
+    <string name="Propietario">Propietario</string>
 </resources>

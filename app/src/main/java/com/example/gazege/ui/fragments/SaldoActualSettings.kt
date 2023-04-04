@@ -1,10 +1,6 @@
 package com.example.gazege.ui.fragments
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
@@ -40,13 +36,8 @@ fun SaldoActualSettings(
             accountList = accountList,
             itemHolderPaddingValues = PaddingValues(4.dp),
             treeState = accountState,
-            delAccount = { },
-            editAccount = { account ->
-                val id = account.id
-                if (id != null) {
-                    onUpdateSeleccion(account, !account.includedInTotal)
-                }
-            },
+            delAccount = null,
+            editAccount = null,
             startDate = null,
             endDate = null,
             colorSelector = {
@@ -55,6 +46,12 @@ fun SaldoActualSettings(
                 } else {
                     CardDefaults.elevatedCardColors()
 
+                }
+            },
+            detailAccount = { account ->
+                val id = account.id
+                if (id != null) {
+                    onUpdateSeleccion(account, !account.includedInTotal)
                 }
             }
         ) {}

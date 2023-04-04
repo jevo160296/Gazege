@@ -1,5 +1,6 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -93,7 +94,7 @@ fun MediumHeadline(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    Column {
+    Column(Modifier.background(Color.White)) {
         MediumHeadline(text = "Medium Headline")
         LargeEmphasis(text = "Large emphasis")
         LargeBody(text = "Large body")

@@ -18,6 +18,7 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,7 +37,10 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.AccountAction
+import com.example.gazege.ui.views.AccountDetail
 import com.example.gazege.ui.views.CategoryForm
+import com.example.gazege.ui.views.TransactionAction
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -198,6 +202,10 @@ class MainActivity : ComponentActivity() {
                                 principalPerson = principalPerson,
                                 onSaldoActualClick = {
                                     navController.navigate("saldoActualSettings")
+                                },
+                                onAccountDetailRequested = {
+                                    val accountId = it.id
+                                    navController.navigate("accountDetail/${accountId}")
                                 }
                             )
                         }
@@ -605,6 +613,47 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
+                        }
+                        composable(
+                            "accountDetail/{accountId}",
+                            arguments = listOf(
+                                navArgument("accountId") {
+                                    type = NavType.IntType
+                                }
+                            )
+                        ) { navStack ->
+                            val accountId = navStack.arguments?.getInt("accountId")
+                            val account = accountAndOwnerWithTransactionsAndPockets
+                                .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
+                            if (account != null) {
+                                AccountDetail(
+                                    account = account,
+                                    allAccounts = accountList,
+                                    allCategories = categories,
+                                    onAction = { actionAccount, action ->
+                                        when (action) {
+                                            AccountAction.EDIT -> navController.navigate("editAccount/${accountId}")
+                                            AccountAction.DELETE -> {
+                                                navController.navigateUp()
+                                                mainViewModel.deleteAccount(actionAccount)
+                                            }
+                                        }
+                                    },
+                                    onTransactionAction = { transaction, action ->
+                                        val transactionId = transaction.id
+                                        when (action) {
+                                            TransactionAction.EDIT -> navController.navigate("editTransaction/${transactionId}")
+                                            TransactionAction.DELETE -> mainViewModel.deleteTransaction(
+                                                transaction
+                                            )
+                                        }
+                                    },
+                                    startDate = range.first,
+                                    endDate = range.second
+                                )
+                            } else {
+                                Text("Cuenta vacía")
+                            }
                         }
                     }
                 }

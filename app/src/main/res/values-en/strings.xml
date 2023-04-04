@@ -31,4 +31,5 @@
     <string name="ConfigurarCategorias">Set categories</string>
     <string name="CategoriaPadre">Parent category</string>
     <string name="Sin_categoria">No category</string>
+    <string name="Propietario">Owner</string>
 </resources>
