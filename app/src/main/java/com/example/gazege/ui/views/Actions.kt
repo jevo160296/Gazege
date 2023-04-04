@@ -9,3 +9,8 @@ enum class TransactionAction {
     EDIT,
     DELETE
 }
+
+enum class PersonAction {
+    EDIT,
+    DELETE
+}

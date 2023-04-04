@@ -667,7 +667,18 @@ class MainActivity : ComponentActivity() {
                             val personId = navStack.arguments?.getInt("personId")
                             val person = personWithAccounts.firstOrNull { it.person.id == personId }
                             if (person != null) {
-                                PersonDetail(person = person)
+                                PersonDetail(
+                                    person = person,
+                                    onPersonAction = { _, action ->
+                                        when (action) {
+                                            PersonAction.EDIT -> navController.navigate("editPerson/${personId}")
+                                            PersonAction.DELETE -> {
+                                                navController.navigateUp()
+                                                mainViewModel.deletePerson(person.person)
+                                            }
+                                        }
+                                    }
+                                )
                             } else {
                                 Text(text = "Empty person")
                             }
