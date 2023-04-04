@@ -43,6 +43,7 @@ fun MainFragment(
     onAddPersonRequested: () -> Unit,
     onEditPersonRequested: (Person) -> Unit,
     delPerson: (Person) -> Unit,
+    onPersonDetailRequested: (Person) -> Unit,
     accountList: List<AccountAndOwnerWithTransactions>,
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
@@ -262,7 +263,8 @@ fun MainFragment(
                         },
                         onConfigurePrincipalPersonRequested = onSettingsClicked,
                         transacciones = allTransactionList
-                            .map { trans -> trans.toTransactionAndAccounts() }
+                            .map { trans -> trans.toTransactionAndAccounts() },
+                        detailPerson = onPersonDetailRequested
                     )
                 }
             }
@@ -362,7 +364,8 @@ private fun DefaultPreview() {
             },
             principalPerson = Person(name = "?"),
             onSaldoActualClick = {},
-            onAccountDetailRequested = {}
+            onAccountDetailRequested = {},
+            onPersonDetailRequested = {}
         )
     }
 }

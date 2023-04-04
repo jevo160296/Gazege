@@ -7,17 +7,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.Text
 import androidx.compose.material3.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,71 +26,8 @@ import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetContent
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-
-data class BottomSheetController(
-    val getMsg: @Composable () -> String,
-    val action: () -> Unit
-)
-
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun EntityDetail(
-    modalController: BottomSheetController?,
-    title: String,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    sheetState: ModalBottomSheetState,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    ModalBottomSheetLayout(
-        sheetContent = {
-            ModalSheetContent(
-                onSiClicked = {
-                    modalController?.action?.let { it() }
-                    scope.launch { sheetState.hide() }
-                },
-                onNoClicked = { scope.launch { sheetState.hide() } },
-                titleText = stringResource(id = R.string.confirmar_eliminacion),
-                bodyText = modalController?.getMsg?.invoke() ?: ""
-            )
-        },
-        sheetState = sheetState
-    ) {
-        Column(
-            Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            TopAppBar(
-                title = {
-                    MediumHeadline(
-                        text = title
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.edit),
-                            contentDescription = "Edit"
-                        )
-                    }
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.delete),
-                            contentDescription = "Delete"
-                        )
-                    }
-                }
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))) {
-                content()
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

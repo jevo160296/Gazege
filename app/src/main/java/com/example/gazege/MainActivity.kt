@@ -37,10 +37,7 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.AccountAction
-import com.example.gazege.ui.views.AccountDetail
-import com.example.gazege.ui.views.CategoryForm
-import com.example.gazege.ui.views.TransactionAction
+import com.example.gazege.ui.views.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -206,6 +203,10 @@ class MainActivity : ComponentActivity() {
                                 onAccountDetailRequested = {
                                     val accountId = it.id
                                     navController.navigate("accountDetail/${accountId}")
+                                },
+                                onPersonDetailRequested = {
+                                    val personId = it.id
+                                    navController.navigate("personDetail/${personId}")
                                 }
                             )
                         }
@@ -653,6 +654,22 @@ class MainActivity : ComponentActivity() {
                                 )
                             } else {
                                 Text("Cuenta vacía")
+                            }
+                        }
+                        composable(
+                            "personDetail/{personId}",
+                            arguments = listOf(
+                                navArgument("personId") {
+                                    type = NavType.IntType
+                                }
+                            )
+                        ) { navStack ->
+                            val personId = navStack.arguments?.getInt("personId")
+                            val person = personWithAccounts.firstOrNull { it.person.id == personId }
+                            if (person != null) {
+                                PersonDetail(person = person)
+                            } else {
+                                Text(text = "Empty person")
                             }
                         }
                     }
