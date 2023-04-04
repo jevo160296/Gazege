@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PersonDetail(
-    person: PersonWithAccounts,
+    person: Person,
+    allTransactions: List<Transaction>,
     allAccounts: List<Account>,
     allCategories: List<Category>,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
@@ -29,15 +30,15 @@ fun PersonDetail(
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     EntityDetail(
         modalController = modalController,
-        title = stringResource(id = R.string.persona) + " ${person.person.name}",
-        onEditClick = { onPersonAction(person.person, PersonAction.EDIT) },
+        title = person.name,
+        onEditClick = { onPersonAction(person, PersonAction.EDIT) },
         onDeleteClick = {
             modalController = BottomSheetController(
                 getMsg = {
-                    personaDeleitionConfirmationBuilder()(person.person.name)
+                    personaDeleitionConfirmationBuilder()(person.name)
                 },
                 action = {
-                    onPersonAction(person.person, PersonAction.DELETE)
+                    onPersonAction(person, PersonAction.DELETE)
                 }
             )
             scope.launch { sheetState.show() }
@@ -45,12 +46,14 @@ fun PersonDetail(
         sheetState = sheetState
     ) {
         MediumHeadline(text = stringResource(id = R.string.transacciones))
-        val transactions = person.accounts
-            .flatMap {
-                listOf(
-                    *it.accountAndOwnerWithTransactions.inTransactions.toTypedArray(),
-                    *it.accountAndOwnerWithTransactions.outTransactions.toTypedArray()
-                )
+        val personAccountsIds = allAccounts
+            .filter { it.ownerId == person.id }
+            .map { it.id }
+        val transactions = allTransactions
+            .filter {
+                it.aNombreDe == person.id ||
+                        it.sourceId in personAccountsIds ||
+                        it.destinationId in personAccountsIds
             }
             .sortedByDescending { it.date }
         val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(

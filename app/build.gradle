@@ -7,6 +7,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('C:\\Users\\jevo1\\android_studio_keystore\\jevomiguel.jks')
+            keyAlias 'jevomiguel_debug'
+            storePassword 'manchas'
+            keyPassword '0123456789'
+        }
+    }
     namespace 'com.example.gazege'
     compileSdk 33
 
@@ -14,8 +22,8 @@ android {
         applicationId "com.example.gazege"
         minSdk 29
         targetSdk 32
-        versionCode 27
-        versionName '1.3.0'
+        versionCode 28
+        versionName '1.3.1'
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -44,6 +52,7 @@ android {
                     roundIcon: '@mipmap/ic_launcher_round',
                     appName  : '@string/app_name'
             ]
+            signingConfig signingConfigs.debug
         }
         debug {
             applicationIdSuffix '.debug'

@@ -109,7 +109,7 @@ class AppDatabaseTest {
             .flatMap {
                 when (it.name) {
                     "Pablo" -> Pair(
-                        0, (0..100).map {
+                        0, (0..10).map {
                             val pIndex = index++
                             val hasParent = random.nextBoolean()
                             val parentId = if (hasParent && pIndex > 0) {
@@ -200,7 +200,7 @@ class AppDatabaseTest {
                 categoryId = null
             )
         }
-        val newCategories: Array<Category> = (0..10).map {
+        val newCategories: Array<Category> = (0..90).map {
             val parentId = when (it) {
                 4 -> 0
                 6 -> 0

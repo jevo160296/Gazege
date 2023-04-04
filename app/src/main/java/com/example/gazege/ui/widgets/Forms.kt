@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.ui.theme.Shapes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Form(
     modifier: Modifier = Modifier,
@@ -50,9 +51,14 @@ fun Form(
                     )
                 }
             }
-        }) {
-        Column(modifier = Modifier.padding(it)) {
-            MediumHeadline(title)
+        },
+        topBar = {
+            TopAppBar(
+                title = { MediumHeadline(title) }
+            )
+        }
+    ) {
+        Box(modifier = Modifier.padding(it)) {
             Column(
                 itemsColumnsModifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(itemSpacing)

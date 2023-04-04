@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
+import com.example.gazege.core.dateBetween
 import com.example.gazege.core.entities.*
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
@@ -44,30 +45,73 @@ class Entry(
 }
 
 @Composable
-fun Plot(transactions: List<Transaction>) {
+fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
     val maxDate = transactions.maxOfOrNull { it.date }
     val minDate = transactions.minOfOrNull { it.date }
-    val dateRange = if (maxDate != null && minDate != null) {
-        Period.between(minDate, maxDate).days
+    val ownerAccountsId = ownerAccounts.map { it.id }
+    val monthSpan = if (maxDate != null && minDate != null) {
+        Period.between(minDate, maxDate).toTotalMonths()
     } else {
         null
     }
-    val groupedTransactions = transactions
-        .sortedBy { it.date }
+    val groupedGastos = listOf(*transactions.toTypedArray(),
+        *if (minDate != null && maxDate != null) {
+            generateSequence(
+                seedFunction = {
+                    Transaction(
+                        null,
+                        0.0,
+                        "",
+                        ownerAccountsId.firstOrNull() ?: -1,
+                        -1,
+                        null,
+                        minDate,
+                        null
+                    )
+                },
+                nextFunction = { trx ->
+                    val newDate = trx.date.plusDays(1)
+                    if (newDate <= maxDate) {
+                        Transaction(
+                            null,
+                            0.0,
+                            "",
+                            ownerAccountsId.firstOrNull() ?: -1,
+                            -1,
+                            null,
+                            newDate,
+                            null
+                        )
+                    } else {
+                        null
+                    }
+                }
+            ).toList().toTypedArray()
+        } else {
+            arrayOf()
+        })
         .groupBy {
-            if (dateRange != null && dateRange > 60) {
+            if (monthSpan != null && monthSpan > 1) {
                 firstDayOfMonth(it.date)
             } else {
                 it.date
             }
         }
         .map {
-            it.key to it.value.sumOf { trx -> trx.amount }
+            it.key to it.value.sumOf { trx ->
+                if (trx.sourceId in ownerAccountsId) {
+                    trx.amount
+                } else {
+                    0.0
+                }
+            }
         }
+        .let { listOf(*it.toTypedArray()) }
+        .sortedBy { it.first }
         .mapIndexed { index, (date, y) ->
             Entry(date, index.toFloat(), y.toFloat())
         }
-    val chartEntryModel = ChartEntryModelProducer(groupedTransactions).getModel()
+    val chartEntryModel = ChartEntryModelProducer(groupedGastos).getModel()
     val horizontalAxisValueFormatter =
         AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
             (chartValues.chartEntryModel.entries.first().getOrNull(value.toInt()) as? Entry)
@@ -164,8 +208,9 @@ fun AccountDetail(
             *account.accountAndOwnerWithTransactions.outTransactions.toTypedArray()
         )
             .sortedByDescending { it.date }
-            .filter { it.date >= startDate && it.date <= endDate }
-        Plot(transactions)
+            .filter { dateBetween(it.date, startDate, endDate) }
+        LargeEmphasis(text = stringResource(id = R.string.Gastos))
+        Plot(transactions, listOf(account.accountAndOwnerWithTransactions.account))
         MediumHeadline(text = stringResource(id = R.string.transacciones))
         val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(
             transactions,
