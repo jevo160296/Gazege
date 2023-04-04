@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.widgets.Card
@@ -39,7 +41,10 @@ fun CategoryListView(
     onItemLongClick: (category: CategoryWithSubCategories) -> Unit
 ) {
     val nodes = categories.map { CategoryNode(it) }
-    RecyclerTreeView(nodes = nodes) { node, scope ->
+    RecyclerTreeView(
+        nodes = nodes,
+        itemHolderPaddingValues = PaddingValues(bottom = dimensionResource(id = R.dimen.FABDefaultSpace))
+    ) { node, scope ->
         scope.DefaultItemHolderWithExpandIcon(
             startPadding = 8.dp,
             endPadding = 8.dp,

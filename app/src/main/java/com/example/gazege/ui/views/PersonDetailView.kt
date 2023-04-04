@@ -29,7 +29,7 @@ fun PersonDetail(
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     EntityDetail(
         modalController = modalController,
-        title = stringResource(id = R.string.persona) + " ${person.person.name}",
+        title = person.person.name,
         onEditClick = { onPersonAction(person.person, PersonAction.EDIT) },
         onDeleteClick = {
             modalController = BottomSheetController(

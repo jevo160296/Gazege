@@ -1,6 +1,7 @@
 package com.example.gazege.ui.widgets
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +21,7 @@ import java.time.LocalDate
 
 @Composable
 fun Filter(
+    modifier: Modifier = Modifier,
     startDate: LocalDate?,
     endDate: LocalDate?,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit
@@ -27,6 +29,8 @@ fun Filter(
     val isFiltered = startDate != null || endDate != null
     val dateString = rangeToString(startDate, endDate)
     Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
