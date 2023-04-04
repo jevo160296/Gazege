@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -112,14 +110,18 @@ data class AccountAndOwnerWithTransactionsNode(
 @Composable
 private fun AccountTreeView(
     accountList: List<AccountAndOwnerWithTransactions>,
-    delAccount: (AccountAndOwnerWithTransactions) -> Unit,
-    editAccount: (AccountAndOwnerWithTransactions) -> Unit,
+    delAccount: ((AccountAndOwnerWithTransactions) -> Unit)?,
+    editAccount: ((AccountAndOwnerWithTransactions) -> Unit)?,
+    detailAccount: (AccountAndOwnerWithTransactions) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     treeState: TreeState,
     colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
     viewHolder: @Composable (AccountAndOwnerWithTransactionsNode) -> Unit
 ) {
+    var menuIdExpanded: Int? by remember {
+        mutableStateOf(null)
+    }
     val nodes = accountList
         .filter {
             it.account.parentId == null
@@ -158,14 +160,38 @@ private fun AccountTreeView(
             }
             Card(
                 modifier = modifier.padding(vertical = 4.dp),
-                onClick = { editAccount(node.content) },
-                onLongClick = { delAccount(node.content) },
+                onClick = { detailAccount(node.content) },
+                onLongClick = { menuIdExpanded = node.content.account.id },
                 colors = colorSelector(node.content)
             ) {
                 Box(
                     Modifier.padding(8.dp)
                 ) {
                     viewHolder(node)
+                    if (editAccount != null || delAccount != null) {
+                        DropdownMenu(
+                            expanded = menuIdExpanded == node.content.account.id,
+                            onDismissRequest = { menuIdExpanded = null }
+                        ) {
+                            if (editAccount != null) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "Edit") },
+                                    onClick = {
+                                        menuIdExpanded = null
+                                        editAccount(node.content)
+                                    })
+                            }
+                            if (delAccount != null) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "Delete") },
+                                    onClick = {
+                                        menuIdExpanded = null
+                                        delAccount(node.content)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -178,8 +204,9 @@ fun AccountPage(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     accountList: List<AccountAndOwnerWithTransactions>,
     treeState: TreeState,
-    delAccount: (Account) -> Unit,
-    editAccount: (Account) -> Unit,
+    delAccount: ((Account) -> Unit)?,
+    editAccount: ((Account) -> Unit)?,
+    detailAccount: (Account) -> Unit,
     startDate: LocalDate?,
     endDate: LocalDate?,
     viewHolder: @Composable (AccountAndOwnerWithTransactionsNode) -> Unit = {
@@ -198,8 +225,17 @@ fun AccountPage(
     Column(modifier = modifier) {
         AccountTreeView(
             accountList = accountList,
-            delAccount = { delAccount(it.account) },
-            editAccount = { editAccount(it.account) },
+            delAccount = if (delAccount != null) {
+                { delAccount(it.account) }
+            } else {
+                null
+            },
+            editAccount = if (editAccount != null) {
+                { editAccount(it.account) }
+            } else {
+                null
+            },
+            detailAccount = { detailAccount(it.account) },
             itemHolderPaddingValues = itemHolderPaddingValues,
             treeState = treeState,
             colorSelector = colorSelector,
@@ -388,6 +424,7 @@ private fun PreviewAccountTreeView() {
                 accountList = accounts,
                 delAccount = {},
                 editAccount = {},
+                detailAccount = {},
                 treeState = treeState
             ) { acc ->
                 DefaultAccountViewHolder(
@@ -416,7 +453,8 @@ private fun PreviewPage() {
             editAccount = {},
             delAccount = {},
             startDate = null,
-            endDate = null
+            endDate = null,
+            detailAccount = {}
         ) {}
     }
 }

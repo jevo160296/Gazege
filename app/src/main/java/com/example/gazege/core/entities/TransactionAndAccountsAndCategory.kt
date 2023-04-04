@@ -17,13 +17,19 @@ data class TransactionAndAccountsAndCategory(
         ): List<TransactionAndAccountsAndCategory> {
             val accountMap: Map<Int?, Account> = accounts.associateBy { it.id }
             val categoriesMap: Map<Int?, Category> = categories.associateBy { it.id }
-            return transactions.map { transaction: Transaction ->
-                TransactionAndAccountsAndCategory(
-                    transaction,
-                    sourceAccount = accountMap[transaction.sourceId]!!,
-                    destinationAccount = accountMap[transaction.destinationId]!!,
-                    category = categoriesMap[transaction.categoryId]
-                )
+            return transactions.mapNotNull { transaction: Transaction ->
+                val sourceAccount = accountMap[transaction.sourceId]
+                val destinationAccount = accountMap[transaction.destinationId]
+                if (sourceAccount != null && destinationAccount != null) {
+                    TransactionAndAccountsAndCategory(
+                        transaction,
+                        sourceAccount = sourceAccount,
+                        destinationAccount = destinationAccount,
+                        category = categoriesMap[transaction.categoryId]
+                    )
+                } else {
+                    null
+                }
             }
         }
     }

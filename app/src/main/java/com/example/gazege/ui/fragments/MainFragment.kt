@@ -22,8 +22,11 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.accountDeleitionConfirmationBuilder
+import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
+import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.MediumHeadline
@@ -40,9 +43,11 @@ fun MainFragment(
     onAddPersonRequested: () -> Unit,
     onEditPersonRequested: (Person) -> Unit,
     delPerson: (Person) -> Unit,
+    onPersonDetailRequested: (Person) -> Unit,
     accountList: List<AccountAndOwnerWithTransactions>,
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
+    onAccountDetailRequested: (Account) -> Unit,
     delAccount: (Account) -> Unit,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
@@ -67,7 +72,7 @@ fun MainFragment(
     var action by remember {
         mutableStateOf({})
     }
-    var nombreItem by remember {
+    var modalSheetMsg by remember {
         mutableStateOf("")
     }
     var title: String by rememberSaveable {
@@ -83,18 +88,16 @@ fun MainFragment(
         sheetContent = {
             ModalSheetContent(
                 titleText = stringResource(id = R.string.confirmar_eliminacion),
-                bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
-                    nombreItem
-                ),
+                bodyText = modalSheetMsg,
                 onSiClicked = {
                     action()
                     action = {}
-                    nombreItem = ""
+                    modalSheetMsg = ""
                     scope.launch { sheetState.hide() }
                 },
                 onNoClicked = {
                     action = {}
-                    nombreItem = ""
+                    modalSheetMsg = ""
                     scope.launch { sheetState.hide() }
                 }
             )
@@ -205,7 +208,7 @@ fun MainFragment(
             }
             when (navPosition) {
                 NavPosition.TRANSACCIONES -> {
-                    val laTransaccion = stringResource(id = R.string.la_transaccion)
+                    val template = transactionDeleitionConfirmationBuilder()
                     Column {
                         TransactionPage(
                             transactionList = filteredTransactionList,
@@ -213,7 +216,7 @@ fun MainFragment(
                             state = transactionState,
                             delTransaction = { transaction ->
                                 action = { delTransaction(transaction) }
-                                nombreItem = laTransaccion
+                                modalSheetMsg = template()
                                 scope.launch { sheetState.show() }
                             },
                             editTransaction = onEditTransactionRequested,
@@ -222,7 +225,7 @@ fun MainFragment(
                     }
                 }
                 NavPosition.CUENTAS -> {
-                    val laCuenta = stringResource(id = R.string.la_cuenta)
+                    val template = accountDeleitionConfirmationBuilder()
                     AccountPage(
                         accountList = accountList.filter { person ->
                             person.owner.id == principalPerson?.id
@@ -231,16 +234,17 @@ fun MainFragment(
                         treeState = accountState,
                         delAccount = { account ->
                             action = { delAccount(account) }
-                            nombreItem = laCuenta.format(account.name)
+                            modalSheetMsg = template(account.name)
                             scope.launch { sheetState.show() }
                         },
                         editAccount = onEditAccountRequested,
                         startDate = null,
-                        endDate = null
+                        endDate = null,
+                        detailAccount = onAccountDetailRequested
                     ) { newTitle -> title = newTitle }
                 }
                 NavPosition.PERSONS -> {
-                    val laPersona = stringResource(R.string.la_persona)
+                    val template = personaDeleitionConfirmationBuilder()
                     PersonPage(
                         personList = personList.filter { person ->
                             person.person.id != principalPerson?.id
@@ -249,7 +253,7 @@ fun MainFragment(
                         state = personState,
                         delPerson = { person ->
                             action = { delPerson(person) }
-                            nombreItem = laPersona.format(person.name)
+                            modalSheetMsg = template(person.name)
                             scope.launch { sheetState.show() }
                         },
                         editPerson = onEditPersonRequested,
@@ -259,7 +263,8 @@ fun MainFragment(
                         },
                         onConfigurePrincipalPersonRequested = onSettingsClicked,
                         transacciones = allTransactionList
-                            .map { trans -> trans.toTransactionAndAccounts() }
+                            .map { trans -> trans.toTransactionAndAccounts() },
+                        detailPerson = onPersonDetailRequested
                     )
                 }
             }
@@ -358,7 +363,9 @@ private fun DefaultPreview() {
                 }
             },
             principalPerson = Person(name = "?"),
-            onSaldoActualClick = {}
+            onSaldoActualClick = {},
+            onAccountDetailRequested = {},
+            onPersonDetailRequested = {}
         )
     }
 }

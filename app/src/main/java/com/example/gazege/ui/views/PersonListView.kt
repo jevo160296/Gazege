@@ -2,7 +2,10 @@ package com.example.gazege.ui.views
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -62,22 +65,52 @@ private fun PersonRecyclerView(
     transacciones: List<TransactionAndAccounts>,
     delPerson: (PersonWithAccounts) -> Unit,
     editPerson: (PersonWithAccounts) -> Unit,
+    detailPerson: (PersonWithAccounts) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
 ) {
+    var menuIdExpanded: Int? by remember {
+        mutableStateOf(null)
+    }
     RecyclerView(
         elements = personList.filter {
             val flujo = PersonDao.getFlujo(principalPerson, it, transacciones)
             flujo != 0.0
         },
         modifier = modifier,
-        onItemTapped = editPerson,
-        onItemLongPressed = delPerson,
+        onItemTapped = detailPerson,
+        onItemLongPressed = {
+            menuIdExpanded = it.person.id
+        },
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state
     ) {
-        PersonViewHolder(person = it, principalPerson = principalPerson, transactions = listOf())
+        Box {
+            PersonViewHolder(
+                person = it,
+                principalPerson = principalPerson,
+                transactions = listOf()
+            )
+            DropdownMenu(
+                expanded = menuIdExpanded == it.person.id,
+                onDismissRequest = { menuIdExpanded = null }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(text = "Edit") },
+                    onClick = {
+                        menuIdExpanded = null
+                        editPerson(it)
+                    })
+                DropdownMenuItem(
+                    text = { Text(text = "Delete") },
+                    onClick = {
+                        menuIdExpanded = null
+                        delPerson(it)
+                    }
+                )
+            }
+        }
     }
 
 }
@@ -91,6 +124,7 @@ fun PersonPage(
     transacciones: List<TransactionAndAccounts>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
+    detailPerson: (Person) -> Unit,
     state: LazyListState,
     onConfigurePrincipalPersonRequested: () -> Unit,
     onTitleSetted: (String) -> Unit
@@ -113,6 +147,7 @@ fun PersonPage(
                 personList = personList,
                 delPerson = { delPerson(it.person) },
                 editPerson = { editPerson(it.person) },
+                detailPerson = { detailPerson(it.person) },
                 itemHolderPaddingValues = itemHolderPaddingValues,
                 state = state,
                 transacciones = transacciones
@@ -216,7 +251,8 @@ private fun PreviewPersonPage() {
             principalPerson = persons[0],
             onConfigurePrincipalPersonRequested = {},
             itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
-            transacciones = listOf()
+            transacciones = listOf(),
+            detailPerson = {}
         )
     }
 }
