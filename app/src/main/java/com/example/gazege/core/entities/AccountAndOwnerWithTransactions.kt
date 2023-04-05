@@ -32,6 +32,12 @@ data class AccountAndOwnerWithTransactions(
     @Ignore
     var range: Pair<LocalDate?, LocalDate?>? = null
 
+    val allTransactions: List<Transaction>
+        get() = listOf(
+            *inTransactions.toTypedArray(),
+            *outTransactions.toTypedArray()
+        )
+
     companion object {
         fun from(
             accounts: List<Account>,

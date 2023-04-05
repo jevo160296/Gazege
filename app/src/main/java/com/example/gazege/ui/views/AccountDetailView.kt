@@ -7,11 +7,14 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dateBetween
@@ -45,10 +48,9 @@ class Entry(
 }
 
 @Composable
-fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
+fun Plot(transactions: List<Transaction>) {
     val maxDate = transactions.maxOfOrNull { it.date }
     val minDate = transactions.minOfOrNull { it.date }
-    val ownerAccountsId = ownerAccounts.map { it.id }
     val monthSpan = if (maxDate != null && minDate != null) {
         Period.between(minDate, maxDate).toTotalMonths()
     } else {
@@ -62,7 +64,7 @@ fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
                         null,
                         0.0,
                         "",
-                        ownerAccountsId.firstOrNull() ?: -1,
+                        -1,
                         -1,
                         null,
                         minDate,
@@ -76,7 +78,7 @@ fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
                             null,
                             0.0,
                             "",
-                            ownerAccountsId.firstOrNull() ?: -1,
+                            -1,
                             -1,
                             null,
                             newDate,
@@ -97,15 +99,7 @@ fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
                 it.date
             }
         }
-        .map {
-            it.key to it.value.sumOf { trx ->
-                if (trx.sourceId in ownerAccountsId) {
-                    trx.amount
-                } else {
-                    0.0
-                }
-            }
-        }
+        .map { it.key to it.value.sumOf { trx -> trx.amount } }
         .let { listOf(*it.toTypedArray()) }
         .sortedBy { it.first }
         .mapIndexed { index, (date, y) ->
@@ -137,43 +131,107 @@ fun Plot(transactions: List<Transaction>, ownerAccounts: List<Account>) {
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun AccountDetail(
-    account: AccountAndOwnerWithTransactionsAndPockets,
-    allAccounts: List<Account>,
-    allCategories: List<Category>,
-    onAction: (account: Account, action: AccountAction) -> Unit,
-    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
-    startDate: LocalDate?,
-    endDate: LocalDate?
+data class AccountDetailData constructor(
+    val account: AccountAndOwnerWithTransactionsAndPockets,
+    val allAccounts: List<Account>,
+    val allCategories: List<Category>,
+    val startDate: LocalDate?,
+    val endDate: LocalDate?
 ) {
     val total = AccountDao.getTotal(account.accountAndOwnerWithTransactions, startDate, endDate)
-    val childrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val chilrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
+    private val allTransactions = account
+        .allTransactionsWithPocketTransactions
+        .sortedByDescending { it.date }
+        .filter { dateBetween(it.date, startDate, endDate) }
+    val outTransactions = account
+        .allOutTransactionsWithOutPocketTransactions
+        .sortedByDescending { it.date }
+        .filter { dateBetween(it.date, startDate, endDate) }
+    val allTransactionsAndAccountsAndCategory: List<TransactionAndAccountsAndCategory> =
+        TransactionAndAccountsAndCategory.from(
+            allTransactions,
+            allAccounts,
+            allCategories
+        )
+
+    companion object {
+        fun build(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            allAccounts: List<Account>,
+            allCategories: List<Category>,
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+        ): AccountDetailData {
+            return AccountDetailData(
+                account = account,
+                allAccounts = allAccounts,
+                allCategories = allCategories,
+                startDate = startDate,
+                endDate = endDate
+            )
+        }
+    }
+}
+
+@Composable
+fun AccountDetail(
+    account: AccountAndOwner,
+    liveData: LiveData<AccountDetailData?>,
+    onAction: (account: Account, action: AccountAction) -> Unit,
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+) {
+    val dataState by liveData.observeAsState()
+    val data = dataState
+    if (data == null) {
+        NullAccountDetail(account)
+    } else {
+        NotNullAccountDetail(
+            data = data,
+            onAction = onAction,
+            onTransactionAction = onTransactionAction
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun NotNullAccountDetail(
+    data: AccountDetailData,
+    onAction: (account: Account, action: AccountAction) -> Unit,
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+) {
+    val total = data.total
+    val childrenTotal = data.chilrenTotal
+    val outTransactions = data.outTransactions
+    val allTransactionsAndAccountsAndCategory = data.allTransactionsAndAccountsAndCategory
+    val accountWithPockets = data.account
+    val account = accountWithPockets.accountAndOwnerWithTransactions
+
     val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
     }
     EntityDetail(
         modalController = modalController,
         title = stringResource(id = R.string.cuenta) +
-                " ${account.accountAndOwnerWithTransactions.account.name}",
+                " ${account.account.name}",
         onEditClick = {
             onAction(
-                account.accountAndOwnerWithTransactions.account,
+                account.account,
                 AccountAction.EDIT
             )
         },
         onDeleteClick = {
             modalController = BottomSheetController(
                 getMsg = {
-                    val accountName = account.accountAndOwnerWithTransactions.account.name
+                    val accountName = account.account.name
                     accountDeleitionConfirmationBuilder()(accountName)
                 },
                 action = {
                     onAction(
-                        account.accountAndOwnerWithTransactions.account,
+                        account.account,
                         AccountAction.DELETE
                     )
                 }
@@ -187,7 +245,7 @@ fun AccountDetail(
         LargeEmphasis(
             text =
             stringResource(id = R.string.Propietario) +
-                    " ${account.accountAndOwnerWithTransactions.owner.name}"
+                    " ${account.owner.name}"
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DataView(
@@ -203,22 +261,11 @@ fun AccountDetail(
                 enabled = false
             )
         }
-        val transactions = listOf(
-            *account.accountAndOwnerWithTransactions.inTransactions.toTypedArray(),
-            *account.accountAndOwnerWithTransactions.outTransactions.toTypedArray()
-        )
-            .sortedByDescending { it.date }
-            .filter { dateBetween(it.date, startDate, endDate) }
         LargeEmphasis(text = stringResource(id = R.string.Gastos))
-        Plot(transactions, listOf(account.accountAndOwnerWithTransactions.account))
+        Plot(outTransactions)
         MediumHeadline(text = stringResource(id = R.string.transacciones))
-        val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(
-            transactions,
-            allAccounts,
-            allCategories
-        )
         TransactionPage(
-            transactionList = transactionsAndAccountsAndCategory,
+            transactionList = allTransactionsAndAccountsAndCategory,
             delTransaction = {
                 modalController = BottomSheetController(
                     getMsg = {
@@ -236,6 +283,32 @@ fun AccountDetail(
         )
     }
 }
+
+@Composable
+private fun NullAccountDetail(
+    account: AccountAndOwner
+) {
+    NotNullAccountDetail(
+        AccountDetailData(
+            AccountAndOwnerWithTransactionsAndPockets.from(
+                AccountAndOwnerWithTransactions(
+                    account.account,
+                    account.owner,
+                    listOf(),
+                    listOf()
+                ),
+                listOf()
+            ),
+            listOf(),
+            listOf(),
+            null,
+            null
+        ),
+        onAction = { _, _ -> },
+        onTransactionAction = { _, _ -> }
+    )
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, widthDp = 300, heightDp = 600)
@@ -256,11 +329,21 @@ private fun AccountDetailPreview() {
         ) {
             Box(Modifier.padding(it)) {
                 AccountDetail(
-                    account = account,
-                    startDate = null,
-                    endDate = null,
-                    allAccounts = accounts.map { it.account },
-                    allCategories = categories,
+                    account = account.accountAndOwnerWithTransactions.let { acc ->
+                        AccountAndOwner(
+                            acc.account,
+                            acc.owner
+                        )
+                    },
+                    liveData = MutableLiveData(
+                        AccountDetailData(
+                            account = account,
+                            allAccounts = accounts.map { it.account },
+                            allCategories = categories,
+                            startDate = null,
+                            endDate = null
+                        )
+                    ),
                     onAction = { account, action ->
                         scope.launch {
                             snackBackState.showSnackbar(

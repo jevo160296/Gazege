@@ -2,14 +2,9 @@ package com.example.gazege
 
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.Person
-import com.example.gazege.core.entities.Transaction
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import com.example.gazege.core.entities.*
+import com.example.gazege.ui.views.AccountDetailData
+import kotlinx.coroutines.*
 import java.time.LocalDate
 
 enum class NavPosition {
@@ -50,7 +45,29 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
     val categories = repository.getCategories().asLiveData()
+    private val _accountDetailData = MutableLiveData<AccountDetailData?>(null)
+    val accountDetailData: LiveData<AccountDetailData?> = _accountDetailData
 
+    fun updateAccountDetailData(
+        initialState: AccountDetailData?,
+        account: AccountAndOwnerWithTransactionsAndPockets,
+        allAccounts: List<Account>,
+        allCategories: List<Category>,
+        startDate: LocalDate?,
+        endDate: LocalDate?
+    ) = viewModelScope.launch {
+        _accountDetailData.postValue(initialState)
+        val result = withContext(Dispatchers.Default) {
+            AccountDetailData.build(
+                account = account,
+                allAccounts = allAccounts,
+                allCategories = allCategories,
+                startDate = startDate,
+                endDate = endDate
+            )
+        }
+        _accountDetailData.postValue(result)
+    }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
         range.value = Pair(startDate, endDate)
