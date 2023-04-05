@@ -84,34 +84,35 @@ private fun PersonRecyclerView(
             menuIdExpanded = it.person.id
         },
         itemHolderPaddingValues = itemHolderPaddingValues,
-        state = state
-    ) {
-        Box {
-            PersonViewHolder(
-                person = it,
-                principalPerson = principalPerson,
-                transactions = listOf()
-            )
-            DropdownMenu(
-                expanded = menuIdExpanded == it.person.id,
-                onDismissRequest = { menuIdExpanded = null }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(text = "Edit") },
-                    onClick = {
-                        menuIdExpanded = null
-                        editPerson(it)
-                    })
-                DropdownMenuItem(
-                    text = { Text(text = "Delete") },
-                    onClick = {
-                        menuIdExpanded = null
-                        delPerson(it)
-                    }
+        state = state,
+        viewHolder = {
+            Box {
+                PersonViewHolder(
+                    person = it,
+                    principalPerson = principalPerson,
+                    transactions = listOf()
                 )
+                DropdownMenu(
+                    expanded = menuIdExpanded == it.person.id,
+                    onDismissRequest = { menuIdExpanded = null }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(text = "Edit") },
+                        onClick = {
+                            menuIdExpanded = null
+                            editPerson(it)
+                        })
+                    DropdownMenuItem(
+                        text = { Text(text = "Delete") },
+                        onClick = {
+                            menuIdExpanded = null
+                            delPerson(it)
+                        }
+                    )
+                }
             }
         }
-    }
+    )
 
 }
 

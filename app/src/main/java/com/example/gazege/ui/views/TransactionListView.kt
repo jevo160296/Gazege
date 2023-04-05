@@ -83,10 +83,11 @@ private fun TransactionRecyclerView(
         state = state,
         groupSelector = {
             localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
+        },
+        viewHolder = {
+            TransactionViewHolder(transaction = it)
         }
-    ) {
-        TransactionViewHolder(transaction = it)
-    }
+    )
 }
 
 @Composable
