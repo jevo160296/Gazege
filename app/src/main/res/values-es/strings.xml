@@ -33,4 +33,7 @@
     <string name="Sin_categoria">Sin categoría</string>
     <string name="Propietario">Propietario</string>
     <string name="Gastos">Gastos</string>
+    <string name="Ingresos">Ingresos</string>
+    <string name="Flujo">Flujo</string>
+    <string name="MostrarGraficos">Mostrar gráficos</string>
 </resources>

@@ -33,4 +33,7 @@
     <string name="Sin_categoria">No category</string>
     <string name="Propietario">Owner</string>
     <string name="Gastos">Expenses</string>
+    <string name="Ingresos">Income</string>
+    <string name="Flujo">Flow</string>
+    <string name="MostrarGraficos">Show graphs</string>
 </resources>

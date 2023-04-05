@@ -2,7 +2,10 @@ package com.example.gazege.ui.views
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,10 +19,7 @@ import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.RecyclerView
-import com.example.gazege.ui.widgets.SmallBody
-import com.example.gazege.ui.widgets.SmallEmphasis
+import com.example.gazege.ui.widgets.*
 import java.time.LocalDate
 import java.util.*
 
@@ -83,9 +83,17 @@ private fun TransactionRecyclerView(
         state = state,
         groupSelector = {
             localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
+        },
+        viewHolder = {
+            TransactionViewHolder(transaction = it)
         }
     ) {
-        TransactionViewHolder(transaction = it)
+        transactionLazyListItems(
+            itemHolderPaddingValues,
+            transactionList,
+            editTransaction,
+            delTransaction
+        )
     }
 }
 
@@ -113,6 +121,26 @@ fun TransactionPage(
             state = state
         )
     }
+}
+
+fun LazyListScope.transactionLazyListItems(
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    transactionList: List<TransactionAndAccountsAndCategory>,
+    editTransaction: (TransactionAndAccountsAndCategory) -> Unit,
+    delTransaction: (TransactionAndAccountsAndCategory) -> Unit,
+    colorSelector: @Composable (TransactionAndAccountsAndCategory) -> CardColors = { CardDefaults.cardColors() },
+    groupSelector: (TransactionAndAccountsAndCategory) -> String = {
+        localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
+    }
+) = itemsGrouped(
+    itemHolderPaddingValues,
+    transactionList,
+    editTransaction,
+    delTransaction,
+    colorSelector,
+    groupSelector,
+) {
+    TransactionViewHolder(transaction = it)
 }
 
 fun getTransactionSample(): List<TransactionAndAccountsAndCategory> {

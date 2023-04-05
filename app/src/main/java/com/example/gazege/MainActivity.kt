@@ -39,7 +39,9 @@ import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -623,29 +625,20 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         ) { navStack ->
-                            val data = mainViewModel.accountDetailData
+                            val data by mainViewModel.accountDetailData.observeAsState()
                             val accountId = navStack.arguments?.getInt("accountId")
                             val account = accountAndOwnerWithTransactionsAndPockets
                                 .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
                             if (account != null) {
-                                mainViewModel.updateAccountDetailData(
-                                    account = account,
-                                    allAccounts = accountList,
-                                    allCategories = categories,
-                                    startDate = range.first,
-                                    endDate = range.second,
-                                    initialState = if (accountId ==
-                                        data.value?.account?.accountAndOwnerWithTransactions?.account?.id
-                                    ) {
-                                        data.value
-                                    } else {
-                                        null
-                                    }
-                                )
+                                var showGraphs by remember {
+                                    mutableStateOf(false)
+                                }
                                 AccountDetail(
-                                    account = account.accountAndOwnerWithTransactions
-                                        .let { AccountAndOwner(it.account, it.owner) },
-                                    liveData = data,
+                                    accountAndOwnerWithTransactionsAndPockets = account,
+                                    data = data,
+                                    onDataUpdateRequested = { newAccount ->
+                                        mainViewModel.updateAccountDetailData(account = newAccount)
+                                    },
                                     onAction = { actionAccount, action ->
                                         when (action) {
                                             AccountAction.EDIT -> navController.navigate("editAccount/${accountId}")
@@ -662,6 +655,14 @@ class MainActivity : ComponentActivity() {
                                             TransactionAction.DELETE -> mainViewModel.deleteTransaction(
                                                 transaction
                                             )
+                                        }
+                                    },
+                                    showGraphs = showGraphs,
+                                    onShowGraphsChanged = {
+                                        coroutineScope.launch {
+                                            withContext(Dispatchers.Default) {
+                                                showGraphs = it
+                                            }
                                         }
                                     }
                                 )
