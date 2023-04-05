@@ -28,6 +28,21 @@ fun PersonDetail(
     }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val personAccountsIds = allAccounts
+        .filter { it.ownerId == person.id }
+        .map { it.id }
+    val transactions = allTransactions
+        .filter {
+            it.aNombreDe == person.id ||
+                    it.sourceId in personAccountsIds ||
+                    it.destinationId in personAccountsIds
+        }
+        .sortedByDescending { it.date }
+    val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(
+        transactions,
+        allAccounts,
+        allCategories
+    )
     EntityDetail(
         modalController = modalController,
         title = person.name,
@@ -46,21 +61,6 @@ fun PersonDetail(
         sheetState = sheetState
     ) {
         MediumHeadline(text = stringResource(id = R.string.transacciones))
-        val personAccountsIds = allAccounts
-            .filter { it.ownerId == person.id }
-            .map { it.id }
-        val transactions = allTransactions
-            .filter {
-                it.aNombreDe == person.id ||
-                        it.sourceId in personAccountsIds ||
-                        it.destinationId in personAccountsIds
-            }
-            .sortedByDescending { it.date }
-        val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(
-            transactions,
-            allAccounts,
-            allCategories
-        )
         TransactionPage(
             transactionList = transactionsAndAccountsAndCategory,
             delTransaction = {
