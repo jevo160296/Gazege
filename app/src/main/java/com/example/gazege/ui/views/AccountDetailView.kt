@@ -287,6 +287,7 @@ private fun NotNullAccountDetail(
         Plot(plotData)
         MediumHeadline(text = stringResource(id = R.string.transacciones))
         TransactionPage(
+            modifier = Modifier.navigationBarsPadding(),
             transactionList = allTransactionsAndAccountsAndCategory,
             delTransaction = {
                 modalController = BottomSheetController(
