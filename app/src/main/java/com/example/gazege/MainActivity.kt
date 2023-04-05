@@ -623,29 +623,17 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         ) { navStack ->
-                            val data = mainViewModel.accountDetailData
+                            val data by mainViewModel.accountDetailData.observeAsState()
                             val accountId = navStack.arguments?.getInt("accountId")
                             val account = accountAndOwnerWithTransactionsAndPockets
                                 .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
                             if (account != null) {
-                                mainViewModel.updateAccountDetailData(
-                                    account = account,
-                                    allAccounts = accountList,
-                                    allCategories = categories,
-                                    startDate = range.first,
-                                    endDate = range.second,
-                                    initialState = if (accountId ==
-                                        data.value?.account?.accountAndOwnerWithTransactions?.account?.id
-                                    ) {
-                                        data.value
-                                    } else {
-                                        null
-                                    }
-                                )
                                 AccountDetail(
-                                    account = account.accountAndOwnerWithTransactions
-                                        .let { AccountAndOwner(it.account, it.owner) },
-                                    liveData = data,
+                                    accountAndOwnerWithTransactionsAndPockets = account,
+                                    data = data,
+                                    onDataUpdateRequested = { newAccount ->
+                                        mainViewModel.updateAccountDetailData(account = newAccount)
+                                    },
                                     onAction = { actionAccount, action ->
                                         when (action) {
                                             AccountAction.EDIT -> navController.navigate("editAccount/${accountId}")

@@ -45,28 +45,80 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
     val categories = repository.getCategories().asLiveData()
+    private val accountDetail = MutableLiveData<AccountAndOwnerWithTransactionsAndPockets?>(null)
     private val _accountDetailData = MutableLiveData<AccountDetailData?>(null)
-    val accountDetailData: LiveData<AccountDetailData?> = _accountDetailData
+    val accountDetailData: LiveData<AccountDetailData?> = MediatorLiveData<AccountDetailData?>()
+        .apply {
+            addSource(accountDetail) {
+                calculateAccountDetailData(
+                    accountDetail.value,
+                    allAccount.value,
+                    categories.value,
+                    range.value
+                )
+            }
+            addSource(allAccount) {
+                calculateAccountDetailData(
+                    accountDetail.value,
+                    allAccount.value,
+                    categories.value,
+                    range.value
+                )
+            }
+            addSource(categories) {
+                calculateAccountDetailData(
+                    accountDetail.value,
+                    allAccount.value,
+                    categories.value,
+                    range.value
+                )
+            }
+            addSource(range) {
+                calculateAccountDetailData(
+                    accountDetail.value,
+                    allAccount.value,
+                    categories.value,
+                    range.value
+                )
+            }
+            addSource(_accountDetailData) {
+                value = it
+            }
+        }
+
+    private fun calculateAccountDetailData(
+        account: AccountAndOwnerWithTransactionsAndPockets?,
+        allAccount: List<Account>?,
+        categories: List<Category>?,
+        range: Pair<LocalDate?, LocalDate?>?
+    ) {
+        if (account?.accountAndOwnerWithTransactions?.account?.id !=
+            _accountDetailData.value?.account?.accountAndOwnerWithTransactions?.account?.id
+        ) {
+            _accountDetailData.postValue(null)
+        }
+        viewModelScope.launch {
+            if (account != null) {
+                val result = withContext(Dispatchers.Default) {
+                    AccountDetailData.build(
+                        account = account,
+                        allAccounts = allAccount ?: listOf(),
+                        allCategories = categories ?: listOf(),
+                        startDate = range?.first,
+                        endDate = range?.second
+                    )
+                }
+                _accountDetailData.postValue(result)
+            } else {
+                _accountDetailData.postValue(null)
+            }
+        }
+    }
 
     fun updateAccountDetailData(
-        initialState: AccountDetailData?,
-        account: AccountAndOwnerWithTransactionsAndPockets,
-        allAccounts: List<Account>,
-        allCategories: List<Category>,
-        startDate: LocalDate?,
-        endDate: LocalDate?
-    ) = viewModelScope.launch {
-        _accountDetailData.postValue(initialState)
-        val result = withContext(Dispatchers.Default) {
-            AccountDetailData.build(
-                account = account,
-                allAccounts = allAccounts,
-                allCategories = allCategories,
-                startDate = startDate,
-                endDate = endDate
-            )
-        }
-        _accountDetailData.postValue(result)
+        account: AccountAndOwnerWithTransactionsAndPockets?,
+    ) {
+        accountDetail.value = account
     }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {

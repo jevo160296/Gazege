@@ -7,14 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dateBetween
@@ -39,16 +36,54 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period
 
-class Entry(
-    val date: LocalDate,
-    override val x: Float,
-    override val y: Float
-) : ChartEntry {
-    override fun withY(y: Float): ChartEntry = Entry(date, x, y)
+data class AccountDetailData constructor(
+    val account: AccountAndOwnerWithTransactionsAndPockets,
+    val allAccounts: List<Account>,
+    val allCategories: List<Category>,
+    val startDate: LocalDate?,
+    val endDate: LocalDate?
+) {
+    val total = AccountDao.getTotal(account.accountAndOwnerWithTransactions, startDate, endDate)
+    val chilrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
+    private val allTransactions = account
+        .allTransactionsWithPocketTransactions
+        .sortedByDescending { it.date }
+        .filter { dateBetween(it.date, startDate, endDate) }
+    private val outTransactions = account
+        .allOutTransactionsWithOutPocketTransactions
+        .sortedByDescending { it.date }
+        .filter { dateBetween(it.date, startDate, endDate) }
+    val allTransactionsAndAccountsAndCategory: List<TransactionAndAccountsAndCategory> =
+        TransactionAndAccountsAndCategory.from(
+            allTransactions,
+            allAccounts,
+            allCategories
+        )
+
+    val plotData: PlotData = PlotData(outTransactions)
+
+    companion object {
+        fun build(
+            account: AccountAndOwnerWithTransactionsAndPockets,
+            allAccounts: List<Account>,
+            allCategories: List<Category>,
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+        ): AccountDetailData {
+            return AccountDetailData(
+                account = account,
+                allAccounts = allAccounts,
+                allCategories = allCategories,
+                startDate = startDate,
+                endDate = endDate
+            )
+        }
+    }
 }
 
-@Composable
-fun Plot(transactions: List<Transaction>) {
+data class PlotData(
+    val transactions: List<Transaction>
+) {
     val maxDate = transactions.maxOfOrNull { it.date }
     val minDate = transactions.minOfOrNull { it.date }
     val monthSpan = if (maxDate != null && minDate != null) {
@@ -56,7 +91,8 @@ fun Plot(transactions: List<Transaction>) {
     } else {
         null
     }
-    val groupedGastos = listOf(*transactions.toTypedArray(),
+    val groupedGastos = listOf(
+        *transactions.toTypedArray(),
         *if (minDate != null && maxDate != null) {
             generateSequence(
                 seedFunction = {
@@ -106,6 +142,30 @@ fun Plot(transactions: List<Transaction>) {
             Entry(date, index.toFloat(), y.toFloat())
         }
     val chartEntryModel = ChartEntryModelProducer(groupedGastos).getModel()
+}
+
+class Entry(
+    val date: LocalDate,
+    override val x: Float,
+    override val y: Float
+) : ChartEntry {
+    override fun withY(y: Float): ChartEntry = Entry(date, x, y)
+}
+
+@Composable
+fun Plot(plotData: PlotData?) {
+    if (plotData == null) {
+        MediumHeadline("Null")
+    } else {
+        NotNullPlot(plotData)
+    }
+}
+
+@Composable
+fun NotNullPlot(
+    data: PlotData
+) {
+    val chartEntryModel = data.chartEntryModel
     val horizontalAxisValueFormatter =
         AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
             (chartValues.chartEntryModel.entries.first().getOrNull(value.toInt()) as? Entry)
@@ -131,58 +191,17 @@ fun Plot(transactions: List<Transaction>) {
     }
 }
 
-data class AccountDetailData constructor(
-    val account: AccountAndOwnerWithTransactionsAndPockets,
-    val allAccounts: List<Account>,
-    val allCategories: List<Category>,
-    val startDate: LocalDate?,
-    val endDate: LocalDate?
-) {
-    val total = AccountDao.getTotal(account.accountAndOwnerWithTransactions, startDate, endDate)
-    val chilrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
-    private val allTransactions = account
-        .allTransactionsWithPocketTransactions
-        .sortedByDescending { it.date }
-        .filter { dateBetween(it.date, startDate, endDate) }
-    val outTransactions = account
-        .allOutTransactionsWithOutPocketTransactions
-        .sortedByDescending { it.date }
-        .filter { dateBetween(it.date, startDate, endDate) }
-    val allTransactionsAndAccountsAndCategory: List<TransactionAndAccountsAndCategory> =
-        TransactionAndAccountsAndCategory.from(
-            allTransactions,
-            allAccounts,
-            allCategories
-        )
-
-    companion object {
-        fun build(
-            account: AccountAndOwnerWithTransactionsAndPockets,
-            allAccounts: List<Account>,
-            allCategories: List<Category>,
-            startDate: LocalDate?,
-            endDate: LocalDate?,
-        ): AccountDetailData {
-            return AccountDetailData(
-                account = account,
-                allAccounts = allAccounts,
-                allCategories = allCategories,
-                startDate = startDate,
-                endDate = endDate
-            )
-        }
-    }
-}
-
 @Composable
 fun AccountDetail(
-    account: AccountAndOwner,
-    liveData: LiveData<AccountDetailData?>,
+    accountAndOwnerWithTransactionsAndPockets: AccountAndOwnerWithTransactionsAndPockets,
+    data: AccountDetailData?,
+    onDataUpdateRequested: (account: AccountAndOwnerWithTransactionsAndPockets?) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
-    val dataState by liveData.observeAsState()
-    val data = dataState
+    val account = accountAndOwnerWithTransactionsAndPockets
+        .accountAndOwnerWithTransactions
+        .let { AccountAndOwner(it.account, it.owner) }
     if (data == null) {
         NullAccountDetail(account)
     } else {
@@ -191,6 +210,9 @@ fun AccountDetail(
             onAction = onAction,
             onTransactionAction = onTransactionAction
         )
+    }
+    LaunchedEffect(key1 = accountAndOwnerWithTransactionsAndPockets) {
+        onDataUpdateRequested(accountAndOwnerWithTransactionsAndPockets)
     }
 }
 
@@ -203,10 +225,10 @@ private fun NotNullAccountDetail(
 ) {
     val total = data.total
     val childrenTotal = data.chilrenTotal
-    val outTransactions = data.outTransactions
     val allTransactionsAndAccountsAndCategory = data.allTransactionsAndAccountsAndCategory
     val accountWithPockets = data.account
     val account = accountWithPockets.accountAndOwnerWithTransactions
+    val plotData = data.plotData
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -262,7 +284,7 @@ private fun NotNullAccountDetail(
             )
         }
         LargeEmphasis(text = stringResource(id = R.string.Gastos))
-        Plot(outTransactions)
+        Plot(plotData)
         MediumHeadline(text = stringResource(id = R.string.transacciones))
         TransactionPage(
             transactionList = allTransactionsAndAccountsAndCategory,
@@ -329,20 +351,13 @@ private fun AccountDetailPreview() {
         ) {
             Box(Modifier.padding(it)) {
                 AccountDetail(
-                    account = account.accountAndOwnerWithTransactions.let { acc ->
-                        AccountAndOwner(
-                            acc.account,
-                            acc.owner
-                        )
-                    },
-                    liveData = MutableLiveData(
-                        AccountDetailData(
-                            account = account,
-                            allAccounts = accounts.map { it.account },
-                            allCategories = categories,
-                            startDate = null,
-                            endDate = null
-                        )
+                    accountAndOwnerWithTransactionsAndPockets = account,
+                    data = AccountDetailData(
+                        account = account,
+                        allAccounts = accounts.map { it.account },
+                        allCategories = categories,
+                        startDate = null,
+                        endDate = null
                     ),
                     onAction = { account, action ->
                         scope.launch {
@@ -363,7 +378,8 @@ private fun AccountDetailPreview() {
                                 }
                             )
                         }
-                    }
+                    },
+                    onDataUpdateRequested = {}
                 )
             }
         }
