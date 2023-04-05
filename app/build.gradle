@@ -7,14 +7,6 @@ plugins {
 }
 
 android {
-    signingConfigs {
-        debug {
-            storeFile file('C:\\Users\\jevo1\\android_studio_keystore\\jevomiguel.jks')
-            keyAlias 'jevomiguel_debug'
-            storePassword 'manchas'
-            keyPassword '0123456789'
-        }
-    }
     namespace 'com.example.gazege'
     compileSdk 33
 
@@ -52,7 +44,6 @@ android {
                     roundIcon: '@mipmap/ic_launcher_round',
                     appName  : '@string/app_name'
             ]
-            signingConfig signingConfigs.debug
         }
         debug {
             applicationIdSuffix '.debug'
