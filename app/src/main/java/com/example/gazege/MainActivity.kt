@@ -39,7 +39,9 @@ import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -628,6 +630,9 @@ class MainActivity : ComponentActivity() {
                             val account = accountAndOwnerWithTransactionsAndPockets
                                 .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
                             if (account != null) {
+                                var showGraphs by remember {
+                                    mutableStateOf(false)
+                                }
                                 AccountDetail(
                                     accountAndOwnerWithTransactionsAndPockets = account,
                                     data = data,
@@ -650,6 +655,14 @@ class MainActivity : ComponentActivity() {
                                             TransactionAction.DELETE -> mainViewModel.deleteTransaction(
                                                 transaction
                                             )
+                                        }
+                                    },
+                                    showGraphs = showGraphs,
+                                    onShowGraphsChanged = {
+                                        coroutineScope.launch {
+                                            withContext(Dispatchers.Default) {
+                                                showGraphs = it
+                                            }
                                         }
                                     }
                                 )

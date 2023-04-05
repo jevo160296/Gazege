@@ -1,14 +1,17 @@
 package com.example.gazege.ui.views
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.*
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +56,10 @@ data class AccountDetailData constructor(
         .allOutTransactionsWithOutPocketTransactions
         .sortedByDescending { it.date }
         .filter { dateBetween(it.date, startDate, endDate) }
+    private val inTransactions = account
+        .allInTransactionsWithInPocketTransactions
+        .sortedByDescending { it.date }
+        .filter { dateBetween(it.date, startDate, endDate) }
     val allTransactionsAndAccountsAndCategory: List<TransactionAndAccountsAndCategory> =
         TransactionAndAccountsAndCategory.from(
             allTransactions,
@@ -60,7 +67,16 @@ data class AccountDetailData constructor(
             allCategories
         )
 
-    val plotData: PlotData = PlotData(outTransactions)
+    val expensesPlotData: PlotData = PlotData(outTransactions)
+    val incomePlotData: PlotData = PlotData(inTransactions)
+    val flowPlotData: PlotData = PlotData(listOf(
+        *inTransactions.toTypedArray(),
+        *outTransactions
+            .map {
+                it.copy(amount = -it.amount)
+            }
+            .toTypedArray()
+    ))
 
     companion object {
         fun build(
@@ -84,14 +100,14 @@ data class AccountDetailData constructor(
 data class PlotData(
     val transactions: List<Transaction>
 ) {
-    val maxDate = transactions.maxOfOrNull { it.date }
-    val minDate = transactions.minOfOrNull { it.date }
-    val monthSpan = if (maxDate != null && minDate != null) {
+    private val maxDate = transactions.maxOfOrNull { it.date }
+    private val minDate = transactions.minOfOrNull { it.date }
+    private val monthSpan = if (maxDate != null && minDate != null) {
         Period.between(minDate, maxDate).toTotalMonths()
     } else {
         null
     }
-    val groupedGastos = listOf(
+    private val groupedTransactions = listOf(
         *transactions.toTypedArray(),
         *if (minDate != null && maxDate != null) {
             generateSequence(
@@ -141,7 +157,7 @@ data class PlotData(
         .mapIndexed { index, (date, y) ->
             Entry(date, index.toFloat(), y.toFloat())
         }
-    val chartEntryModel = ChartEntryModelProducer(groupedGastos).getModel()
+    val chartEntryModel = ChartEntryModelProducer(groupedTransactions).getModel()
 }
 
 class Entry(
@@ -195,10 +211,15 @@ fun NotNullPlot(
 fun AccountDetail(
     accountAndOwnerWithTransactionsAndPockets: AccountAndOwnerWithTransactionsAndPockets,
     data: AccountDetailData?,
+    showGraphs: Boolean,
+    onShowGraphsChanged: (Boolean) -> Unit,
     onDataUpdateRequested: (account: AccountAndOwnerWithTransactionsAndPockets?) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
+    var innerShowGraphs by remember {
+        mutableStateOf(showGraphs)
+    }
     val account = accountAndOwnerWithTransactionsAndPockets
         .accountAndOwnerWithTransactions
         .let { AccountAndOwner(it.account, it.owner) }
@@ -208,7 +229,13 @@ fun AccountDetail(
         NotNullAccountDetail(
             data = data,
             onAction = onAction,
-            onTransactionAction = onTransactionAction
+            onTransactionAction = onTransactionAction,
+            showGraphs = showGraphs,
+            switchEnabled = innerShowGraphs,
+            onShowGraphsChanged = {
+                innerShowGraphs = it
+                onShowGraphsChanged(it)
+            }
         )
     }
     LaunchedEffect(key1 = accountAndOwnerWithTransactionsAndPockets) {
@@ -216,10 +243,13 @@ fun AccountDetail(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun NotNullAccountDetail(
     data: AccountDetailData,
+    showGraphs: Boolean,
+    switchEnabled: Boolean,
+    onShowGraphsChanged: (Boolean) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
@@ -228,7 +258,6 @@ private fun NotNullAccountDetail(
     val allTransactionsAndAccountsAndCategory = data.allTransactionsAndAccountsAndCategory
     val accountWithPockets = data.account
     val account = accountWithPockets.accountAndOwnerWithTransactions
-    val plotData = data.plotData
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -283,27 +312,74 @@ private fun NotNullAccountDetail(
                 enabled = false
             )
         }
-        LargeEmphasis(text = stringResource(id = R.string.Gastos))
-        Plot(plotData)
-        MediumHeadline(text = stringResource(id = R.string.transacciones))
-        TransactionPage(
-            modifier = Modifier.navigationBarsPadding(),
-            transactionList = allTransactionsAndAccountsAndCategory,
-            delTransaction = {
-                modalController = BottomSheetController(
-                    getMsg = {
-                        transactionDeleitionConfirmationBuilder()()
-                    },
-                    action = {
-                        onTransactionAction(it, TransactionAction.DELETE)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Switch(
+                checked = switchEnabled,
+                onCheckedChange = onShowGraphsChanged,
+                thumbContent = if (switchEnabled) {
+                    @Composable {
+                        Icon(
+                            modifier = Modifier
+                                .size(SwitchDefaults.IconSize),
+                            painter = painterResource(id = R.drawable.ic_round_check_24),
+                            contentDescription = "Check",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
-                )
-                scope.launch { sheetState.show() }
-            },
-            editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
-            state = rememberLazyListState(),
-            onTitleSetted = {}
-        )
+                } else {
+                    null
+                }
+            )
+            LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+        }
+        LazyColumn {
+            if (showGraphs) {
+                item(contentType = "plotTitle") {
+                    LargeEmphasis(text = stringResource(id = R.string.Gastos))
+                }
+                item(contentType = "plot") {
+                    Plot(data.expensesPlotData)
+                }
+                item(contentType = "plotTitle") {
+                    LargeEmphasis(text = stringResource(id = R.string.Ingresos))
+                }
+                item(contentType = "plot") {
+                    Plot(data.incomePlotData)
+                }
+                item(contentType = "plotTitle") {
+                    LargeEmphasis(
+                        text =
+                        "${stringResource(id = R.string.Flujo)} (" +
+                                "${stringResource(id = R.string.Ingresos)} -" +
+                                "${stringResource(id = R.string.Gastos)})"
+                    )
+                }
+                item(contentType = "plot") {
+                    Plot(data.flowPlotData)
+                }
+            }
+            stickyHeader(contentType = "transactionsTitle") {
+                MediumHeadline(text = stringResource(id = R.string.transacciones))
+            }
+            transactionLazyListItems(
+                transactionList = allTransactionsAndAccountsAndCategory,
+                editTransaction = { onTransactionAction(it.transaction, TransactionAction.EDIT) },
+                delTransaction = {
+                    modalController = BottomSheetController(
+                        getMsg = {
+                            transactionDeleitionConfirmationBuilder()()
+                        },
+                        action = {
+                            onTransactionAction(it.transaction, TransactionAction.DELETE)
+                        }
+                    )
+                    scope.launch { sheetState.show() }
+                }
+            )
+        }
     }
 }
 
@@ -328,7 +404,10 @@ private fun NullAccountDetail(
             null
         ),
         onAction = { _, _ -> },
-        onTransactionAction = { _, _ -> }
+        onTransactionAction = { _, _ -> },
+        showGraphs = false,
+        onShowGraphsChanged = {},
+        switchEnabled = false
     )
 }
 
@@ -380,7 +459,9 @@ private fun AccountDetailPreview() {
                             )
                         }
                     },
-                    onDataUpdateRequested = {}
+                    onDataUpdateRequested = {},
+                    showGraphs = false,
+                    onShowGraphsChanged = {}
                 )
             }
         }

@@ -9,6 +9,11 @@ data class AccountAndOwnerWithTransactionsAndPockets(
             *accountAndOwnerWithTransactions.outTransactions.toTypedArray(),
             *pockets.flatMap { it.allOutTransactionsWithOutPocketTransactions }.toTypedArray()
         )
+    val allInTransactionsWithInPocketTransactions: List<Transaction>
+        get() = listOf(
+            *accountAndOwnerWithTransactions.inTransactions.toTypedArray(),
+            *pockets.flatMap { it.allInTransactionsWithInPocketTransactions }.toTypedArray()
+        )
     val allTransactionsWithPocketTransactions: List<Transaction>
         get() = listOf(
             *accountAndOwnerWithTransactions.allTransactions.toTypedArray(),
