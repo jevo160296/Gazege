@@ -49,7 +49,7 @@ fun PersonFormFragment(
             val fullPerson = personState.toFull()
             onPersonAddRequested(fullPerson, snackbarHostState)
         },
-        isSavedButtonEnabled = true,
+        isSavedButtonEnabled = personState.isComplete(),
         title = "Person",
         snackbarHostState = snackbarHostState
     ) {
