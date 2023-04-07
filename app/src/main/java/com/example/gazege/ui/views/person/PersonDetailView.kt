@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.person
 
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -10,6 +10,8 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
+import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.widgets.MediumHeadline
 import kotlinx.coroutines.launch
 

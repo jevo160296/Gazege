@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +22,7 @@ import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialAccountAndOwner
+import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.SignedBigDecimal

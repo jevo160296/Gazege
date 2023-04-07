@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.*
-import com.example.gazege.ui.views.AccountAndOwnerForm
-import com.example.gazege.ui.views.PersonForm
-import com.example.gazege.ui.views.TransactionAndAccountsForm
+import com.example.gazege.ui.views.account.AccountAndOwnerForm
+import com.example.gazege.ui.views.person.PersonForm
+import com.example.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.toSignedBigDecimal
 import java.time.LocalDate

@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.transaction
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,6 +22,8 @@ import com.example.gazege.core.entities.AccountAndOwnerWithPockets
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
+import com.example.gazege.ui.views.account.AccountDropDownMenu
+import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId

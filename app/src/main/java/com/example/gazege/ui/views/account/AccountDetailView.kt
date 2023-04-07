@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -24,6 +24,9 @@ import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
+import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.category.getCategoriesSample
+import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline

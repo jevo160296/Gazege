@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,6 +16,7 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
