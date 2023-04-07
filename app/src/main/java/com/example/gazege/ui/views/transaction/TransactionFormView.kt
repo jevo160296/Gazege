@@ -1,6 +1,7 @@
 package com.example.gazege.ui.views.transaction
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -92,6 +93,8 @@ fun TransactionAndAccountsForm(
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     categoryList: List<Category>,
+    onDoneAction: () -> Unit,
+    isComplete: Boolean,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
@@ -106,6 +109,11 @@ fun TransactionAndAccountsForm(
                 transaction = transaction.copy(date = date)
             }
         )
+    }
+    val nextAction: ImeAction = if (isComplete) {
+        ImeAction.Done
+    } else {
+        ImeAction.Next
     }
     Column(
         modifier = modifier.padding(contentPadding),
@@ -124,7 +132,10 @@ fun TransactionAndAccountsForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
+                imeAction = nextAction
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { onDoneAction() }
             )
         )
         TextField(
@@ -140,8 +151,11 @@ fun TransactionAndAccountsForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next,
+                imeAction = nextAction,
                 capitalization = KeyboardCapitalization.Sentences
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { onDoneAction() }
             )
         )
         val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
@@ -189,7 +203,11 @@ fun TransactionAndAccountsForm(
                 },
                 deactivatedAccountList = deactivatedSourceAccountList,
                 canClearSelection = false,
-                onClearSelectionClicked = {}
+                onClearSelectionClicked = {},
+                keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                )
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -214,7 +232,11 @@ fun TransactionAndAccountsForm(
                 label = { Text("Destination account") },
                 deactivatedAccountList = deactivatedDestinationAccountList,
                 canClearSelection = false,
-                onClearSelectionClicked = {}
+                onClearSelectionClicked = {},
+                keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                )
             )
         } else {
             ButtonField(onClick = onAccountAddRequested) {
@@ -233,7 +255,11 @@ fun TransactionAndAccountsForm(
             CategoryDropDown(
                 categoryList = categoryList,
                 selectedCategory = selectedCategory,
-                label = { Text(stringResource(id = R.string.Categoria)) }
+                label = { Text(stringResource(id = R.string.Categoria)) },
+                keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                )
             ) {
                 onTransactionAndAccountsChanged(
                     transactionAndAccounts.copy().apply {
@@ -267,7 +293,11 @@ fun TransactionAndAccountsForm(
                 selectedItem = selectedItem,
                 itemToString = { it?.name ?: "" },
                 onItemClick = { onRealizarAnombreDeIdChanged(it.id) },
-                label = { Text("Persona") }
+                label = { Text("Persona") },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                )
             )
         }
     }

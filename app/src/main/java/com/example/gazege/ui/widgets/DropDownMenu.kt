@@ -103,6 +103,8 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
     viewHolder: @Composable (C) -> Unit,
     canClearSelection: Boolean = false,
     onClearSelectionClicked: () -> Unit = {},
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     groupByKeySelector: ((C) -> String)? = null
 ) {
     val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
@@ -138,7 +140,9 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
             },
             label = label,
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            maxLines = 1
+            maxLines = 1,
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions
         )
         ExposedDropdownMenu(
             expanded = dropDownExpanded,

@@ -198,14 +198,15 @@ fun TransactionFormFragment(
         mutableStateOf(transactionAndAccountsState.transaction.aNombreDe != null)
     }
     val completeState = transactionAndAccountsState.isComplete()
+    val saveTransaction = {
+        val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
+        onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
+    }
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
         title = "Transaction",
-        onSaveClicked = {
-            val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
-            onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
-        }
+        onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
@@ -230,7 +231,9 @@ fun TransactionFormFragment(
                     transaction = this.transaction.copy(aNombreDe = it)
                 }
             },
-            categoryList = categoryList
+            categoryList = categoryList,
+            onDoneAction = saveTransaction,
+            isComplete = completeState
         )
     }
 }
