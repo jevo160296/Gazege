@@ -68,7 +68,9 @@ fun MainFragment(
     snackbarHostState: SnackbarHostState,
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
-    principalPerson: Person?
+    principalPerson: Person?,
+    personFilterValue: Boolean,
+    onPersonFilterValueChanged: (Boolean) -> Unit
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
@@ -189,7 +191,10 @@ fun MainFragment(
                     Modifier.fillMaxWidth(),
                     startDate,
                     endDate,
-                    onRangeChanged = onRangeChanged
+                    onRangeChanged = onRangeChanged,
+                    personFilterVisible = navPosition == NavPosition.PERSONS,
+                    personFilterValue = personFilterValue,
+                    onPersonFilterValueChanged = onPersonFilterValueChanged
                 )
                 PersonMonthSummaryView(
                     saldoActual = principalPersonWithAccounts?.let {
@@ -247,9 +252,26 @@ fun MainFragment(
                     }
                     NavPosition.PERSONS -> {
                         val template = personaDeleitionConfirmationBuilder()
+                        val transacciones =
+                            allTransactionList.map { trans -> trans.toTransactionAndAccounts() }
                         PersonPage(
                             personList = personList.filter { person ->
                                 person.person.id != principalPerson?.id
+                            }.filter { personWithAccounts ->
+                                if (personFilterValue) {
+                                    val flujo = principalPersonWithAccounts
+                                        ?.let {
+                                            PersonDao.getFlujo(
+                                                principalPersonWithAccounts,
+                                                personWithAccounts,
+                                                transacciones
+                                            )
+                                        }
+                                        ?: 0.0
+                                    flujo != 0.0
+                                } else {
+                                    true
+                                }
                             },
                             itemHolderPaddingValues = paddingValues,
                             state = personState,
@@ -260,9 +282,7 @@ fun MainFragment(
                             },
                             editPerson = onEditPersonRequested,
                             onTitleSetted = { newTitle -> title = newTitle },
-                            principalPerson = personList.firstOrNull { person ->
-                                person.person.id == principalPerson?.id
-                            },
+                            principalPerson = principalPersonWithAccounts,
                             onConfigurePrincipalPersonRequested = onSettingsClicked,
                             transacciones = allTransactionList
                                 .map { trans -> trans.toTransactionAndAccounts() },
@@ -368,7 +388,9 @@ private fun DefaultPreview() {
             principalPerson = Person(name = "?"),
             onSaldoActualClick = {},
             onAccountDetailRequested = {},
-            onPersonDetailRequested = {}
+            onPersonDetailRequested = {},
+            personFilterValue = false,
+            onPersonFilterValueChanged = {}
         )
     }
 }

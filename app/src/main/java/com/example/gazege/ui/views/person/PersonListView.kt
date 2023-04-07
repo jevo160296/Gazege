@@ -74,10 +74,7 @@ private fun PersonRecyclerView(
         mutableStateOf(null)
     }
     RecyclerView(
-        elements = personList.filter {
-            val flujo = PersonDao.getFlujo(principalPerson, it, transacciones)
-            flujo != 0.0
-        },
+        elements = personList,
         modifier = modifier,
         onItemTapped = detailPerson,
         onItemLongPressed = {
@@ -90,7 +87,7 @@ private fun PersonRecyclerView(
                 PersonViewHolder(
                     person = it,
                     principalPerson = principalPerson,
-                    transactions = listOf()
+                    transactions = transacciones
                 )
                 DropdownMenu(
                     expanded = menuIdExpanded == it.person.id,

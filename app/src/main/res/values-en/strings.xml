@@ -36,4 +36,5 @@
     <string name="Ingresos">Income</string>
     <string name="Flujo">Flow</string>
     <string name="MostrarGraficos">Show graphs</string>
+    <string name="Deuda_diferente_a_cero"><![CDATA[Debt != 0]]></string>
 </resources>
