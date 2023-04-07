@@ -1,10 +1,13 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +25,7 @@ import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import java.time.LocalDate
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun Filter(
     modifier: Modifier = Modifier,
@@ -32,18 +36,25 @@ fun Filter(
     personFilterValue: Boolean = false,
     onPersonFilterValueChanged: (newValue: Boolean) -> Unit = {}
 ) {
-    val isFiltered = startDate != null || endDate != null
+    val isFiltered = startDate != null || endDate != null || personFilterValue
     Row(
-        modifier = modifier,
+        modifier = modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (personFilterVisible) {
+        AnimatedVisibility(
+            visible = personFilterVisible,
+            enter = scaleIn() + fadeIn(),
+            exit = scaleOut() + fadeOut()
+        ) {
             PersonFilter(personFilterValue, onValueChanged = onPersonFilterValueChanged)
         }
         DateFilterItems(startDate = startDate, endDate = endDate, onRangeChanged = onRangeChanged)
         IconButton(
-            onClick = { onRangeChanged(null, null) },
+            onClick = {
+                onRangeChanged(null, null)
+                onPersonFilterValueChanged(false)
+            },
             enabled = isFiltered
         ) {
             Icon(

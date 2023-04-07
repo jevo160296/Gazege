@@ -29,7 +29,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     }
     val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
-    val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(false)
+    val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
