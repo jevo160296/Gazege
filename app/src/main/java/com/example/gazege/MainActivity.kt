@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
                 val incomeAccount by mainViewModel.incomeAccount.observeAsState()
                 val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
                 val principalPersonState = mainViewModel.principalPerson.observeAsState()
+                val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
                 val principalPerson = principalPersonState.value
 
                 val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
@@ -143,7 +144,7 @@ class MainActivity : ComponentActivity() {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
                             val snackbarHostState = SnackbarHostState()
                             MainFragment(
-                                personWithAccounts,
+                                personList = personWithAccounts,
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
@@ -212,6 +213,12 @@ class MainActivity : ComponentActivity() {
                                 onPersonDetailRequested = {
                                     val personId = it.id
                                     navController.navigate("personDetail/${personId}")
+                                },
+                                personFilterValue = personFilterValue,
+                                onPersonFilterValueChanged = {
+                                    mainViewModel.updatePersonFilterValue(
+                                        it
+                                    )
                                 }
                             )
                         }

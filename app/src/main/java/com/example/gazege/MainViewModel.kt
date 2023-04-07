@@ -29,6 +29,12 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     }
     val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
+    val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    fun updatePersonFilterValue(newValue: Boolean) {
+        personFilterValue.value = newValue
+    }
+
     val allPerson = repository.getPersons().asLiveData()
     val principalPerson = allPerson.switchMap { persons ->
         MutableLiveData(getPrincipalPerson(persons))

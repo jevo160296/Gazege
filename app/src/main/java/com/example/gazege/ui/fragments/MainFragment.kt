@@ -68,7 +68,9 @@ fun MainFragment(
     snackbarHostState: SnackbarHostState,
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
-    principalPerson: Person?
+    principalPerson: Person?,
+    personFilterValue: Boolean,
+    onPersonFilterValueChanged: (Boolean) -> Unit
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
@@ -189,7 +191,10 @@ fun MainFragment(
                     Modifier.fillMaxWidth(),
                     startDate,
                     endDate,
-                    onRangeChanged = onRangeChanged
+                    onRangeChanged = onRangeChanged,
+                    personFilterVisible = navPosition == NavPosition.PERSONS,
+                    personFilterValue = personFilterValue,
+                    onPersonFilterValueChanged = onPersonFilterValueChanged
                 )
                 PersonMonthSummaryView(
                     saldoActual = principalPersonWithAccounts?.let {
@@ -368,7 +373,9 @@ private fun DefaultPreview() {
             principalPerson = Person(name = "?"),
             onSaldoActualClick = {},
             onAccountDetailRequested = {},
-            onPersonDetailRequested = {}
+            onPersonDetailRequested = {},
+            personFilterValue = false,
+            onPersonFilterValueChanged = {}
         )
     }
 }
