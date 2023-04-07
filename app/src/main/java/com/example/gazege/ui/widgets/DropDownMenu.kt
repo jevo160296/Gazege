@@ -2,6 +2,8 @@ package com.example.gazege.ui.widgets
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -52,6 +54,8 @@ fun <T> DropDownMenu(
     itemToString: (T?) -> String,
     onItemClick: (T) -> Unit,
     label: @Composable () -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     groupByKeySelector: ((T) -> String)? = null
 ) {
     val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
@@ -68,7 +72,10 @@ fun <T> DropDownMenu(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
             },
             label = label,
-            colors = ExposedDropdownMenuDefaults.textFieldColors()
+            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            maxLines = 1,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions
         )
         ExposedDropdownMenu(
             expanded = dropDownExpanded,
@@ -96,6 +103,8 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
     viewHolder: @Composable (C) -> Unit,
     canClearSelection: Boolean = false,
     onClearSelectionClicked: () -> Unit = {},
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     groupByKeySelector: ((C) -> String)? = null
 ) {
     val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
@@ -130,7 +139,10 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
                 }
             },
             label = label,
-            colors = ExposedDropdownMenuDefaults.textFieldColors()
+            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            maxLines = 1,
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions
         )
         ExposedDropdownMenu(
             expanded = dropDownExpanded,

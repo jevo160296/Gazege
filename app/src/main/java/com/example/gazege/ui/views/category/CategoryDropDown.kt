@@ -1,7 +1,9 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
@@ -36,6 +38,8 @@ fun CategoryDropDown(
     categoryList: List<Category>,
     selectedCategory: Category?,
     label: @Composable () -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     onItemClick: (Category?) -> Unit
 ) {
     val selectedNode = selectedCategory
@@ -84,6 +88,8 @@ fun CategoryDropDown(
         canClearSelection = true,
         onClearSelectionClicked = {
             onItemClick(null)
-        }
+        },
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions
     )
 }

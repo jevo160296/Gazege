@@ -1,7 +1,9 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
@@ -12,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.DefaultDropDownViewHolder
 import com.example.gazege.ui.widgets.DropDownTreeMenu
 
@@ -24,6 +27,8 @@ fun AccountDropDownMenu(
     label: @Composable () -> Unit,
     canClearSelection: Boolean,
     onClearSelectionClicked: () -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     onItemClick: (AccountAndOwnerNode) -> Unit
 ) {
     val accountNodes = accountsList
@@ -77,7 +82,9 @@ fun AccountDropDownMenu(
             )
         },
         canClearSelection = canClearSelection,
-        onClearSelectionClicked = onClearSelectionClicked
+        onClearSelectionClicked = onClearSelectionClicked,
+        keyboardActions = keyboardActions,
+        keyboardOptions = keyboardOptions
     ) {
         it.content.owner.name
     }

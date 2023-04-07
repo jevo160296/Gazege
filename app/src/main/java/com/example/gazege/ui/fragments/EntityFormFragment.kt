@@ -8,13 +8,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.*
-import com.example.gazege.ui.views.AccountAndOwnerForm
-import com.example.gazege.ui.views.PersonForm
-import com.example.gazege.ui.views.TransactionAndAccountsForm
+import com.example.gazege.ui.views.account.AccountAndOwnerForm
+import com.example.gazege.ui.views.person.PersonForm
+import com.example.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.toSignedBigDecimal
 import java.time.LocalDate
@@ -43,13 +44,15 @@ fun PersonFormFragment(
         )
     }
     val snackbarHostState = SnackbarHostState()
+    val isComplete = personState.isComplete()
+    val savePerson = {
+        val fullPerson = personState.toFull()
+        onPersonAddRequested(fullPerson, snackbarHostState)
+    }
     Form(
         modifier = modifier,
-        onSaveClicked = {
-            val fullPerson = personState.toFull()
-            onPersonAddRequested(fullPerson, snackbarHostState)
-        },
-        isSavedButtonEnabled = true,
+        onSaveClicked = savePerson,
+        isSavedButtonEnabled = isComplete,
         title = "Person",
         snackbarHostState = snackbarHostState
     ) {
@@ -59,6 +62,13 @@ fun PersonFormFragment(
             person = personState,
             onPersonChanged = {
                 personState = it
+            },
+
+            onDoneAction = savePerson,
+            imeAction = if (isComplete) {
+                ImeAction.Done
+            } else {
+                ImeAction.None
             }
         )
     }
@@ -108,19 +118,19 @@ fun AccountFormFragment(
     }
     val completeState = accountAndOwnerState.isComplete()
     val snackbarHostState = SnackbarHostState()
+    val saveAccount = {
+        val fullAccountAndOwner = accountAndOwnerState.toFull()
+        onAccountAndOwnerAdd(
+            fullAccountAndOwner.account,
+            currentBalanceState.toDouble(),
+            snackbarHostState,
+            incomeAccount?.id,
+            outcomeAccount?.id
+        )
+    }
     Form(
         modifier = modifier,
-        onSaveClicked = {
-
-            val fullAccountAndOwner = accountAndOwnerState.toFull()
-            onAccountAndOwnerAdd(
-                fullAccountAndOwner.account,
-                currentBalanceState.toDouble(),
-                snackbarHostState,
-                incomeAccount?.id,
-                outcomeAccount?.id
-            )
-        },
+        onSaveClicked = saveAccount,
         isSavedButtonEnabled = completeState,
         snackbarHostState = snackbarHostState,
         title = "Account"
@@ -139,7 +149,9 @@ fun AccountFormFragment(
             },
             incomeAccount = incomeAccount,
             outcomeAccount = outcomeAccount,
-            onSetIncomeOutcomeAccount = onSetIncomeOutcomeAccount
+            onSetIncomeOutcomeAccount = onSetIncomeOutcomeAccount,
+            onDoneAction = saveAccount,
+            isComplete = completeState
         )
     }
 }
@@ -188,14 +200,15 @@ fun TransactionFormFragment(
         mutableStateOf(transactionAndAccountsState.transaction.aNombreDe != null)
     }
     val completeState = transactionAndAccountsState.isComplete()
+    val saveTransaction = {
+        val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
+        onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
+    }
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
         title = "Transaction",
-        onSaveClicked = {
-            val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
-            onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
-        }
+        onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
@@ -220,7 +233,9 @@ fun TransactionFormFragment(
                     transaction = this.transaction.copy(aNombreDe = it)
                 }
             },
-            categoryList = categoryList
+            categoryList = categoryList,
+            onDoneAction = saveTransaction,
+            isComplete = completeState
         )
     }
 }

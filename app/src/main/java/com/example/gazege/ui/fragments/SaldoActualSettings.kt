@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.ui.views.AccountPage
+import com.example.gazege.ui.views.account.AccountPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.treeview.rememberTreeState

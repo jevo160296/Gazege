@@ -3,7 +3,7 @@ package com.example.gazege
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.views.AccountDetailData
+import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
 import java.time.LocalDate
 

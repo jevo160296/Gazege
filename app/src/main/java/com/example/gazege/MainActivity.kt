@@ -38,6 +38,9 @@ import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.account.AccountDetail
+import com.example.gazege.ui.views.category.CategoryForm
+import com.example.gazege.ui.views.person.PersonDetail
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

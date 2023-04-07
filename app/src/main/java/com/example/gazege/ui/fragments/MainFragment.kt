@@ -28,6 +28,12 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.account.AccountPage
+import com.example.gazege.ui.views.account.getAccountSample
+import com.example.gazege.ui.views.person.PersonPage
+import com.example.gazege.ui.views.person.getPersonWithAccountsSample
+import com.example.gazege.ui.views.transaction.TransactionPage
+import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetContent

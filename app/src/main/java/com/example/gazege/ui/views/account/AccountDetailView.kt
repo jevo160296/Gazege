@@ -1,4 +1,4 @@
-package com.example.gazege.ui.views
+package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -24,6 +24,9 @@ import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
+import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.category.getCategoriesSample
+import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline
@@ -296,9 +299,13 @@ private fun NotNullAccountDetail(
         LargeEmphasis(
             text =
             stringResource(id = R.string.Propietario) +
-                    " ${account.owner.name}"
+                    " ${account.owner.name}",
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.total),
@@ -314,7 +321,8 @@ private fun NotNullAccountDetail(
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         ) {
             Switch(
                 checked = switchEnabled,
@@ -335,7 +343,10 @@ private fun NotNullAccountDetail(
             )
             LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
         }
-        LazyColumn {
+        LazyColumn(
+            contentPadding =
+            PaddingValues(dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
             if (showGraphs) {
                 item(contentType = "plotTitle") {
                     LargeEmphasis(text = stringResource(id = R.string.Gastos))
@@ -379,6 +390,9 @@ private fun NotNullAccountDetail(
                     scope.launch { sheetState.show() }
                 }
             )
+            item {
+                Spacer(modifier = Modifier.navigationBarsPadding())
+            }
         }
     }
 }

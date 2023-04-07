@@ -15,8 +15,8 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
-import com.example.gazege.ui.views.AccountAndOwnerNode
-import com.example.gazege.ui.views.AccountDropDownMenu
+import com.example.gazege.ui.views.account.AccountDropDownMenu
+import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.Form

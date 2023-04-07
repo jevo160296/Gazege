@@ -15,7 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.CategoryWithSubCategories
-import com.example.gazege.ui.views.CategoryListView
+import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.FAB
 import com.example.gazege.ui.widgets.ModalSheetContent
 import kotlinx.coroutines.launch
