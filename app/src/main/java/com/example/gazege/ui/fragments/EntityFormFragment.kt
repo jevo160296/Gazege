@@ -118,19 +118,19 @@ fun AccountFormFragment(
     }
     val completeState = accountAndOwnerState.isComplete()
     val snackbarHostState = SnackbarHostState()
+    val saveAccount = {
+        val fullAccountAndOwner = accountAndOwnerState.toFull()
+        onAccountAndOwnerAdd(
+            fullAccountAndOwner.account,
+            currentBalanceState.toDouble(),
+            snackbarHostState,
+            incomeAccount?.id,
+            outcomeAccount?.id
+        )
+    }
     Form(
         modifier = modifier,
-        onSaveClicked = {
-
-            val fullAccountAndOwner = accountAndOwnerState.toFull()
-            onAccountAndOwnerAdd(
-                fullAccountAndOwner.account,
-                currentBalanceState.toDouble(),
-                snackbarHostState,
-                incomeAccount?.id,
-                outcomeAccount?.id
-            )
-        },
+        onSaveClicked = saveAccount,
         isSavedButtonEnabled = completeState,
         snackbarHostState = snackbarHostState,
         title = "Account"
@@ -149,7 +149,9 @@ fun AccountFormFragment(
             },
             incomeAccount = incomeAccount,
             outcomeAccount = outcomeAccount,
-            onSetIncomeOutcomeAccount = onSetIncomeOutcomeAccount
+            onSetIncomeOutcomeAccount = onSetIncomeOutcomeAccount,
+            onDoneAction = saveAccount,
+            isComplete = completeState
         )
     }
 }

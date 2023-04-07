@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,8 @@ fun AccountAndOwnerForm(
     incomeAccount: Account?,
     outcomeAccount: Account?,
     onSetIncomeOutcomeAccount: () -> Unit,
+    onDoneAction: () -> Unit,
+    isComplete: Boolean,
     onAccountAndOwnerChanged: (PartialAccountAndOwner) -> Unit
 ) {
     val name: String = accountAndOwner.account.name ?: ""
@@ -65,6 +69,11 @@ fun AccountAndOwnerForm(
                 selectable(it)
     }
     val selectedParentAccountAndOwnerId = selectedParentAccountAndOwner?.account?.id
+    val nextAction: ImeAction = if (isComplete) {
+        ImeAction.Done
+    } else {
+        ImeAction.Next
+    }
     if (selectedParentAccountAndOwnerId != accountAndOwner.account.parentId) {
         onAccountAndOwnerChanged(accountAndOwner.copy().apply {
             account = account.copy(parentId = selectedParentAccountAndOwnerId)
@@ -87,8 +96,10 @@ fun AccountAndOwnerForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
-            )
+                imeAction = nextAction,
+                capitalization = KeyboardCapitalization.Sentences
+            ),
+            keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
         )
         if (personList.isNotEmpty()) {
             var dropDownExpanded by rememberSaveable {
@@ -109,7 +120,9 @@ fun AccountAndOwnerForm(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     },
                     label = { Text("Owner") },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors()
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
+                    keyboardOptions = KeyboardOptions(imeAction = nextAction)
                 )
                 ExposedDropdownMenu(
                     expanded = dropDownExpanded,
@@ -167,13 +180,17 @@ fun AccountAndOwnerForm(
                         account = account.copy(parentId = null)
                     }
                 )
-            }
+            },
+            keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
+            keyboardOptions = KeyboardOptions(imeAction = nextAction)
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(
                 value = currentBalance,
                 onValueChange = { onCurrentBalanceChanged(it) },
-                label = { Text(stringResource(id = R.string.balance_actual)) }
+                label = { Text(stringResource(id = R.string.balance_actual)) },
+                keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
             )
         } else {
             ButtonField(onClick = onSetIncomeOutcomeAccount) {
