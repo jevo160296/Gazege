@@ -12,7 +12,8 @@ data class PartialPerson(
 ): PartialEntity<Person>
 {
     override fun isComplete(): Boolean{
-        return name != null
+        val immutableName = name
+        return immutableName != null && immutableName.isNotEmpty()
     }
 
     override fun toFull(): Person {
