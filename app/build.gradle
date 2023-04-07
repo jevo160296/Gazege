@@ -75,6 +75,16 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    flavorDimensions 'theme'
+    productFlavors {
+        full {
+            dimension 'theme'
+        }
+        nofull {
+            dimension 'theme'
+            applicationIdSuffix '.nofull'
+        }
+    }
 }
 
 dependencies {
