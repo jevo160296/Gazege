@@ -299,9 +299,13 @@ private fun NotNullAccountDetail(
         LargeEmphasis(
             text =
             stringResource(id = R.string.Propietario) +
-                    " ${account.owner.name}"
+                    " ${account.owner.name}",
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.total),
@@ -317,7 +321,8 @@ private fun NotNullAccountDetail(
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         ) {
             Switch(
                 checked = switchEnabled,
@@ -338,7 +343,10 @@ private fun NotNullAccountDetail(
             )
             LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
         }
-        LazyColumn {
+        LazyColumn(
+            contentPadding =
+            PaddingValues(dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
             if (showGraphs) {
                 item(contentType = "plotTitle") {
                     LargeEmphasis(text = stringResource(id = R.string.Gastos))
@@ -382,6 +390,9 @@ private fun NotNullAccountDetail(
                     scope.launch { sheetState.show() }
                 }
             )
+            item {
+                Spacer(modifier = Modifier.navigationBarsPadding())
+            }
         }
     }
 }
