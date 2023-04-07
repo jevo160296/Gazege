@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.*
@@ -43,13 +44,15 @@ fun PersonFormFragment(
         )
     }
     val snackbarHostState = SnackbarHostState()
+    val isComplete = personState.isComplete()
+    val savePerson = {
+        val fullPerson = personState.toFull()
+        onPersonAddRequested(fullPerson, snackbarHostState)
+    }
     Form(
         modifier = modifier,
-        onSaveClicked = {
-            val fullPerson = personState.toFull()
-            onPersonAddRequested(fullPerson, snackbarHostState)
-        },
-        isSavedButtonEnabled = personState.isComplete(),
+        onSaveClicked = savePerson,
+        isSavedButtonEnabled = isComplete,
         title = "Person",
         snackbarHostState = snackbarHostState
     ) {
@@ -59,6 +62,13 @@ fun PersonFormFragment(
             person = personState,
             onPersonChanged = {
                 personState = it
+            },
+
+            onDoneAction = savePerson,
+            imeAction = if (isComplete) {
+                ImeAction.Done
+            } else {
+                ImeAction.None
             }
         )
     }

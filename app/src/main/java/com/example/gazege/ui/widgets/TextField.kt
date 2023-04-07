@@ -57,6 +57,7 @@ fun TextField(
         label = label,
         singleLine = singleLine,
         keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         trailingIcon = trailingIcon,
         visualTransformation = visualTransformation
     )
@@ -134,6 +135,7 @@ fun NumberField(
         keyboardOptions = keyboardOptions.copy(
             keyboardType = KeyboardType.Number
         ),
+        keyboardActions = keyboardActions,
         visualTransformation = numberTransformation,
         trailingIcon = trailingIcon
     )
