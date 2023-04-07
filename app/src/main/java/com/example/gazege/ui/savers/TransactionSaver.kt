@@ -22,7 +22,6 @@ data class PartialTransaction(
 {
     override fun isComplete(): Boolean {
         return amount != null &&
-                description != null &&
                 sourceId != null &&
                 destinationId != null &&
                 date != null
@@ -33,7 +32,7 @@ data class PartialTransaction(
             return Transaction(
                 id = id,
                 amount = amount!!.toDouble(),
-                description = description!!,
+                description = description ?: "",
                 sourceId = sourceId!!,
                 destinationId = destinationId!!,
                 date = date!!,
