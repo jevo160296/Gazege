@@ -68,7 +68,7 @@ fun MainFragment(
     snackbarHostState: SnackbarHostState,
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
-    principalPerson: Person?,
+    principalPersonWithAccounts: PersonWithAccounts?,
     personFilterValue: Boolean,
     onPersonFilterValueChanged: (Boolean) -> Unit
 ) {
@@ -184,8 +184,6 @@ fun MainFragment(
                     end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
                 )
             }
-            val principalPersonWithAccounts = personList
-                .firstOrNull { person -> person.person.id == principalPerson?.id }
             Column {
                 Filter(
                     Modifier.fillMaxWidth(),
@@ -235,7 +233,7 @@ fun MainFragment(
                         val template = accountDeleitionConfirmationBuilder()
                         AccountPage(
                             accountList = accountList.filter { person ->
-                                person.owner.id == principalPerson?.id
+                                person.owner.id == principalPersonWithAccounts?.person?.id
                             },
                             itemHolderPaddingValues = paddingValues,
                             treeState = accountState,
@@ -256,7 +254,7 @@ fun MainFragment(
                             allTransactionList.map { trans -> trans.toTransactionAndAccounts() }
                         PersonPage(
                             personList = personList.filter { person ->
-                                person.person.id != principalPerson?.id
+                                person.person.id != principalPersonWithAccounts?.person?.id
                             }.filter { personWithAccounts ->
                                 if (personFilterValue) {
                                     val flujo = principalPersonWithAccounts
@@ -385,7 +383,10 @@ private fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Settings clicked")
                 }
             },
-            principalPerson = Person(name = "?"),
+            principalPersonWithAccounts = PersonWithAccounts(
+                person = Person(name = "?"),
+                emptyList()
+            ),
             onSaldoActualClick = {},
             onAccountDetailRequested = {},
             onPersonDetailRequested = {},

@@ -67,10 +67,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GazegeTheme {
-                val personList by mainViewModel.allPerson.observeAsState(emptyList())
-                val accountList by mainViewModel.allAccount.observeAsState(emptyList())
+                val allPerson by mainViewModel.allPerson.observeAsState(emptyList())
+                val allAccount by mainViewModel.allAccount.observeAsState(emptyList())
                 val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
-                val filteredTransactions by mainViewModel.rangeTransactions.observeAsState(emptyList())
                 val categories by mainViewModel.categories.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
@@ -80,28 +79,26 @@ class MainActivity : ComponentActivity() {
                 )
                 val incomeAccount by mainViewModel.incomeAccount.observeAsState()
                 val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
-                val principalPersonState = mainViewModel.principalPerson.observeAsState()
                 val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
-                val principalPerson = principalPersonState.value
+                val principalPerson by mainViewModel.principalPerson.observeAsState()
+                val principalPersonWithAccounts by mainViewModel.principalPersonWithAccounts.observeAsState()
 
-                val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
-                    .from(accountList, personList, allTransactions)
-                val accountAndOwnerWithTransactionsAndPockets = accountAndOwnerWithTransactions
-                    .map {
-                        AccountAndOwnerWithTransactionsAndPockets
-                            .from(it, accountAndOwnerWithTransactions)
-                    }
-                val personWithAccounts =
-                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
-                val filteredTransactionAndAccountsAndCategory =
-                    TransactionAndAccountsAndCategory.from(
-                        filteredTransactions,
-                        accountList,
-                        categories
-                    )
-                val allTransactionAndAccountsAndCategory =
-                    TransactionAndAccountsAndCategory.from(allTransactions, accountList, categories)
-                val categoriesWithSubCategories = CategoryWithSubCategories.from(categories)
+                val accountAndOwnerWithTransactions by mainViewModel.accountAndOwnerWithTransactions.observeAsState(
+                    emptyList()
+                )
+                val accountAndOwnerWithTransactionsAndPockets by mainViewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
+                    emptyList()
+                )
+                val personWithAccounts by mainViewModel.personWithAccounts.observeAsState(emptyList())
+                val filteredTransactionAndAccountsAndCategory by mainViewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
+                    emptyList()
+                )
+                val allTransactionAndAccountsAndCategory by mainViewModel.allTransactionAndAccountsAndCategory.observeAsState(
+                    emptyList()
+                )
+                val categoriesWithSubCategories by mainViewModel.categoriesWithSubCategories.observeAsState(
+                    emptyList()
+                )
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -112,7 +109,7 @@ class MainActivity : ComponentActivity() {
                 val useDarkIcons = !isSystemInDarkTheme()
                 val coroutineScope = rememberCoroutineScope()
 
-                DisposableEffect(systemUiController, useDarkIcons) {
+                LaunchedEffect(systemUiController, useDarkIcons) {
                     // Update all of the system bar colors to be transparent, and use
                     // dark icons if we're in light theme
                     systemUiController.setStatusBarColor(
@@ -120,8 +117,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                     // setStatusBarColor() and setNavigationBarColor() also exist
-
-                    onDispose {}
                 }
 
                 var modifier = Modifier
@@ -202,7 +197,7 @@ class MainActivity : ComponentActivity() {
                                 onSettingsClicked = {
                                     navController.navigate("settings")
                                 },
-                                principalPerson = principalPerson,
+                                principalPersonWithAccounts = principalPersonWithAccounts,
                                 onSaldoActualClick = {
                                     navController.navigate("saldoActualSettings")
                                 },
@@ -226,12 +221,12 @@ class MainActivity : ComponentActivity() {
                             AccountFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                personList = personList,
+                                personList = allPerson,
                                 onPersonAddRequested = {
                                     navController.navigate("addPerson")
                                 },
                                 onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
-                                    val accountOwnerIdList = accountList.map {
+                                    val accountOwnerIdList = allAccount.map {
                                         Pair(it.name, it.ownerId)
                                     }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
@@ -301,12 +296,12 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             AccountFormFragment(
-                                personList = personList,
+                                personList = allPerson,
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
                                 onPersonAddRequested = { navController.navigate("addPerson") },
                                 onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
-                                    val accountOwnerIdList = accountList
+                                    val accountOwnerIdList = allAccount
                                         .filter { it.id != account.id }
                                         .map { Pair(it.name, it.ownerId) }
                                     val accountOwnerId = Pair(account.name, account.ownerId)
@@ -361,7 +356,7 @@ class MainActivity : ComponentActivity() {
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
                                     val namesList =
-                                        personList.map { persona -> persona.name }
+                                        allPerson.map { persona -> persona.name }
                                     val sePuedeAgregar = person.name !in namesList
                                     if (sePuedeAgregar) {
                                         mainViewModel.insertPerson(person, onErrorAction = {
@@ -386,14 +381,14 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("personId") { type = NavType.IntType })
                         ) { navBack ->
                             val personId = navBack.arguments?.getInt("personId")
-                            val selectedPerson = personList
+                            val selectedPerson = allPerson
                                 .firstOrNull { it.id == personId }
                             PersonFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
                                     val namesList =
-                                        personList.map { persona -> persona.name }
+                                        allPerson.map { persona -> persona.name }
                                     val sePuedeEditar = person.name !in namesList
                                     if (sePuedeEditar) {
                                         mainViewModel.updatePerson(person, onErrorAction = {
@@ -443,7 +438,7 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(10000).div(100),
                                     yearMonthDay.mod(100)
                                 ),
-                                personList = personList,
+                                personList = allPerson,
                                 categoryList = categories
                             )
                         }
@@ -472,18 +467,19 @@ class MainActivity : ComponentActivity() {
                                     navController.navigateUp()
                                 },
                                 transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
-                                personList = personList,
+                                personList = allPerson,
                                 categoryList = categories
                             )
                         }
                         composable("settings") {
                             SettingsFragment(
-                                personList = personList,
+                                personList = allPerson,
                                 principalPerson = principalPerson,
                                 onPrincipalPersonChanged = {
-                                    if (principalPerson != null) {
+                                    val notNullPrincipalPerson = principalPerson
+                                    if (notNullPrincipalPerson != null) {
                                         mainViewModel.updatePerson(
-                                            principalPerson.copy(importance = null)
+                                            notNullPrincipalPerson.copy(importance = null)
                                         ) {}
                                     }
                                     mainViewModel.updatePerson(it.copy(importance = 1)) {}
@@ -689,7 +685,7 @@ class MainActivity : ComponentActivity() {
                             )
                         ) { navStack ->
                             val personId = navStack.arguments?.getInt("personId")
-                            val person = personList.firstOrNull { it.id == personId }
+                            val person = allPerson.firstOrNull { it.id == personId }
                             if (person != null) {
                                 PersonDetail(
                                     person = person,
@@ -703,7 +699,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     allTransactions = allTransactions,
-                                    allAccounts = accountList,
+                                    allAccounts = allAccount,
                                     allCategories = categories,
                                     onTransactionAction = { transaction, action ->
                                         val transactionId = transaction.id
