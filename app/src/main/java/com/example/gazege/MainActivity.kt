@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
                                     else if (esMesPosterior) startDate.withDayOfMonth(1) else
                                         startDate.withDayOfMonth(1).plusMonths(1L)
                                             .minusDays(1L)
-                                    navController.navigate(route = addTransactionRoute(date))
+                                    navController.navigate(route = addTransactionRoute(date, it))
                                 },
                                 delTransaction = { mainViewModel.deleteTransaction(it) },
                                 navPosition = navPosition,
@@ -405,19 +405,41 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(
-                            "addTransaction/{yearmonthday}",
-                            arguments = listOf(navArgument("yearmonthday") {
-                                type = NavType.IntType
-                            })
+                            "addTransaction/{yearmonthday}/{transactionaction}",
+                            arguments = listOf(
+                                navArgument("yearmonthday") {
+                                    type = NavType.IntType
+                                },
+                                navArgument("transactionaction") {
+                                    type = NavType.StringType
+                                }
+                            )
                         ) { navBackStackEntry ->
                             val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
                                 ?: LocalDate.now().let {
                                     it.year * 100 + it.monthValue
                                 }
+                            val transactionActionName =
+                                navBackStackEntry.arguments?.getString("transactionaction")
+                            val transactionAction =
+                                transactionActionName?.let { AddTransactionAction.valueOf(it) }
+                                    ?: AddTransactionAction.ADD_TRANSFER
+                            val initialSourceAccount: Account? =
+                                incomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_INCOME }
+                            val initialDestinationAccount: Account? =
+                                outcomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_EXPENSE }
+                            val orderedAccounts =
+                                if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
+                                    accountAndOwnerWithTransactions
+                                } else {
+                                    mainViewModel.accountAndOwnerWithTransactionsUserFirst.observeAsState(
+                                        emptyList()
+                                    ).value
+                                }
                             TransactionFormFragment(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
-                                accountList = accountAndOwnerWithTransactions.map {
+                                accountList = orderedAccounts.map {
                                     AccountAndOwner(
                                         it.account,
                                         it.owner
@@ -434,7 +456,9 @@ class MainActivity : ComponentActivity() {
                                     yearMonthDay.mod(100)
                                 ),
                                 personList = allPerson,
-                                categoryList = categories
+                                categoryList = categories,
+                                fixedSourceAccount = initialSourceAccount,
+                                fixedDestinationAccount = initialDestinationAccount
                             )
                         }
                         composable(

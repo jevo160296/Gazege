@@ -43,6 +43,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 addSource(allPerson) { update() }
                 addSource(allTransactions) { update() }
             }
+    val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
+        accountAndOwnerWithTransactions.map { it.sortedByDescending { acc -> acc.owner.importance } }
     val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.switchMap { lista ->
             liveData {

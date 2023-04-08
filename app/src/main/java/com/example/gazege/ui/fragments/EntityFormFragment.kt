@@ -168,7 +168,9 @@ fun TransactionFormFragment(
     onTransactionAndAccountsAdd: (Transaction) -> Unit,
     personList: List<Person>,
     categoryList: List<Category>,
-    defaultDate: LocalDate = LocalDate.now()
+    defaultDate: LocalDate = LocalDate.now(),
+    fixedSourceAccount: Account? = null,
+    fixedDestinationAccount: Account? = null
 ) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
@@ -192,7 +194,12 @@ fun TransactionFormFragment(
                     destinationAccount = transactionAndAccounts.destinationAccount
                 )
             } else {
-                PartialTransactionAndAccounts.blankEntity()
+                PartialTransactionAndAccounts
+                    .blankEntity()
+                    .apply {
+                        sourceAccount = fixedSourceAccount
+                        destinationAccount = fixedDestinationAccount
+                    }
             }
         )
     }
@@ -235,7 +242,9 @@ fun TransactionFormFragment(
             },
             categoryList = categoryList,
             onDoneAction = saveTransaction,
-            isComplete = completeState
+            isComplete = completeState,
+            showSourceAccountField = fixedSourceAccount == null,
+            showDestinationAccountField = fixedDestinationAccount == null
         )
     }
 }
