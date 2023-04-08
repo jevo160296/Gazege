@@ -10,8 +10,5 @@ fun ExpandableFAB(
     icon: @Composable () -> Unit,
     options: @Composable ColumnScope.() -> Unit
 ) {
-    FAB(
-        onClick = onClick,
-        icon = icon
-    )
+    FAB(onClick = onClick, icon = icon)
 }
