@@ -140,11 +140,11 @@ fun MainFragment(
                         },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                painter = painterResource(id = R.drawable.transfer_icon),
                                 contentDescription = "Add"
                             )
                         },
-                        label = { Text(text = "Transaccion") }
+                        label = { Text(text = stringResource(id = R.string.Transferencia)) }
                     )
                     DropDownMenuItem(
                         modifier = Modifier.fillMaxWidth(),
@@ -154,11 +154,11 @@ fun MainFragment(
                         },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                painter = painterResource(id = R.drawable.gasto_icon),
                                 contentDescription = "Add"
                             )
                         },
-                        label = { Text(text = "Gasto") }
+                        label = { Text(text = stringResource(id = R.string.Gasto)) }
                     )
                     DropDownMenuItem(
                         modifier = Modifier.fillMaxWidth(),
@@ -168,11 +168,11 @@ fun MainFragment(
                         },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                painter = painterResource(id = R.drawable.ingreso_icon),
                                 contentDescription = "Add"
                             )
                         },
-                        label = { Text(text = "Ingreso") }
+                        label = { Text(text = stringResource(id = R.string.Ingreso)) }
                     )
                 }
         },
