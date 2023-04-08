@@ -34,11 +34,9 @@ import com.example.gazege.ui.views.person.PersonPage
 import com.example.gazege.ui.views.person.getPersonWithAccountsSample
 import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.views.transaction.getTransactionSample
-import com.example.gazege.ui.widgets.Filter
-import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetContent
-import com.example.gazege.ui.widgets.PersonMonthSummaryView
+import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.fab.ExpandableFAB
+import com.example.gazege.ui.widgets.menu.DropDownMenuItem
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -87,6 +85,9 @@ fun MainFragment(
     var title: String by rememberSaveable {
         mutableStateOf("Gazedge")
     }
+    var fabExpanded: Boolean by remember {
+        mutableStateOf(false)
+    }
 
     val startDate = range.first
     val endDate = range.second
@@ -114,22 +115,66 @@ fun MainFragment(
         Scaffold(
             floatingActionButton = {
                 ExpandableFAB(
-                    onClick = {
-                        when (navPosition) {
-                            NavPosition.PERSONS -> onAddPersonRequested()
-                            NavPosition.CUENTAS -> onAddAccountRequested()
-                            NavPosition.TRANSACCIONES -> onAddTransactionRequested(
-                                AddTransactionAction.ADD_TRANSFER
-                            )
-                        }
-                    },
+                    columnModifier = Modifier.width(IntrinsicSize.Max),
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_baseline_add_24),
                             contentDescription = "Add"
                         )
-                    }
-                ) {}
+                    },
+                    isExpanded = fabExpanded,
+                    onClick = {
+                        when (navPosition) {
+                            NavPosition.PERSONS -> onAddPersonRequested()
+                            NavPosition.CUENTAS -> onAddAccountRequested()
+                            NavPosition.TRANSACCIONES -> fabExpanded = true
+                        }
+                    },
+                    onDismissRequest = { fabExpanded = false }
+                ) {
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_TRANSFER)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = "Transaccion") }
+                    )
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_EXPENSE)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = "Gasto") }
+                    )
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_INCOME)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = "Ingreso") }
+                    )
+                }
         },
             floatingActionButtonPosition = FabPosition.End,
             isFloatingActionButtonDocked = false,
