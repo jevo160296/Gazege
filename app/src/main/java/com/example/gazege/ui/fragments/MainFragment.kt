@@ -1,5 +1,6 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -114,12 +116,20 @@ fun MainFragment(
         }) {
         Scaffold(
             floatingActionButton = {
+                val rotation by animateFloatAsState(
+                    targetValue = if (fabExpanded) {
+                        45f
+                    } else {
+                        0f
+                    }
+                )
                 ExpandableFAB(
                     columnModifier = Modifier.width(IntrinsicSize.Max),
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                            contentDescription = "Add"
+                            contentDescription = "Add",
+                            modifier = Modifier.rotate(rotation),
                         )
                     },
                     isExpanded = fabExpanded,
