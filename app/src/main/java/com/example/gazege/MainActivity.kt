@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
                 val useDarkIcons = !isSystemInDarkTheme()
                 val coroutineScope = rememberCoroutineScope()
 
-                DisposableEffect(systemUiController, useDarkIcons) {
+                LaunchedEffect(systemUiController, useDarkIcons) {
                     // Update all of the system bar colors to be transparent, and use
                     // dark icons if we're in light theme
                     systemUiController.setStatusBarColor(
@@ -116,8 +116,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                     // setStatusBarColor() and setNavigationBarColor() also exist
-
-                    onDispose {}
                 }
 
                 var modifier = Modifier
