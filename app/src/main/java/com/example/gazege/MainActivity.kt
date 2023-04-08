@@ -36,6 +36,7 @@ import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
+import com.example.gazege.ui.navigation.addTransactionRoute
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountDetail
@@ -166,13 +167,7 @@ class MainActivity : ComponentActivity() {
                                     else if (esMesPosterior) startDate.withDayOfMonth(1) else
                                         startDate.withDayOfMonth(1).plusMonths(1L)
                                             .minusDays(1L)
-                                    navController.navigate(route = "addTransaction/" +
-                                            "${
-                                                date.let {
-                                                    it.year * 10000 + it.monthValue * 100 + it.dayOfMonth
-                                                }
-                                            }"
-                                    )
+                                    navController.navigate(route = addTransactionRoute(date))
                                 },
                                 delTransaction = { mainViewModel.deleteTransaction(it) },
                                 navPosition = navPosition,

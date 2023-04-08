@@ -38,6 +38,7 @@ import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetContent
 import com.example.gazege.ui.widgets.PersonMonthSummaryView
+import com.example.gazege.ui.widgets.fab.ExpandableFAB
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -57,7 +58,7 @@ fun MainFragment(
     delAccount: (Account) -> Unit,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
-    onAddTransactionRequested: () -> Unit,
+    onAddTransactionRequested: (action: AddTransactionAction) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
@@ -112,20 +113,23 @@ fun MainFragment(
         }) {
         Scaffold(
             floatingActionButton = {
-                FloatingActionButton(
+                ExpandableFAB(
                     onClick = {
                         when (navPosition) {
                             NavPosition.PERSONS -> onAddPersonRequested()
                             NavPosition.CUENTAS -> onAddAccountRequested()
-                            NavPosition.TRANSACCIONES -> onAddTransactionRequested()
+                            NavPosition.TRANSACCIONES -> onAddTransactionRequested(
+                                AddTransactionAction.ADD_TRANSFER
+                            )
                         }
-                    }, shape = Shapes.small
-                ) {
-                    Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                    contentDescription = "Add"
-                )
-            }
+                    },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                            contentDescription = "Add"
+                        )
+                    }
+                ) {}
         },
             floatingActionButtonPosition = FabPosition.End,
             isFloatingActionButtonDocked = false,
