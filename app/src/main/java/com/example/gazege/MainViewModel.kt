@@ -126,6 +126,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 addSource(allPerson) { update() }
                 addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
             }
+    val principalPersonWithAccounts = personWithAccounts.switchMap {
+        liveData { emit(getPrincipalPersonWithAccounts(it)) }
+    }
     val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
             .apply {
@@ -312,6 +315,19 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 .filter { it.importance != null }
                 .sortedBy { it.id }
                 .sortedBy { it.importance }
+                .firstOrNull()
+        }
+    }
+
+    private fun getPrincipalPersonWithAccounts(personWithAccountsList: List<PersonWithAccounts>):
+            PersonWithAccounts? {
+        return if (personWithAccountsList.isEmpty()) {
+            null
+        } else {
+            personWithAccountsList
+                .filter { it.person.importance != null }
+                .sortedBy { it.person.id }
+                .sortedBy { it.person.importance }
                 .firstOrNull()
         }
     }

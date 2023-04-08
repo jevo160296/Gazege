@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
                 val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
                 val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
                 val principalPerson by mainViewModel.principalPerson.observeAsState()
+                val principalPersonWithAccounts by mainViewModel.principalPersonWithAccounts.observeAsState()
 
                 val accountAndOwnerWithTransactions by mainViewModel.accountAndOwnerWithTransactions.observeAsState(
                     emptyList()
@@ -196,7 +197,7 @@ class MainActivity : ComponentActivity() {
                                 onSettingsClicked = {
                                     navController.navigate("settings")
                                 },
-                                principalPerson = principalPerson,
+                                principalPersonWithAccounts = principalPersonWithAccounts,
                                 onSaldoActualClick = {
                                     navController.navigate("saldoActualSettings")
                                 },
