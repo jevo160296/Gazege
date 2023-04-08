@@ -70,7 +70,6 @@ class MainActivity : ComponentActivity() {
                 val personList by mainViewModel.allPerson.observeAsState(emptyList())
                 val accountList by mainViewModel.allAccount.observeAsState(emptyList())
                 val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
-                val filteredTransactions by mainViewModel.rangeTransactions.observeAsState(emptyList())
                 val categories by mainViewModel.categories.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
@@ -80,28 +79,25 @@ class MainActivity : ComponentActivity() {
                 )
                 val incomeAccount by mainViewModel.incomeAccount.observeAsState()
                 val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
-                val principalPersonState = mainViewModel.principalPerson.observeAsState()
                 val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
-                val principalPerson = principalPersonState.value
+                val principalPerson by mainViewModel.principalPerson.observeAsState()
 
-                val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions
-                    .from(accountList, personList, allTransactions)
-                val accountAndOwnerWithTransactionsAndPockets = accountAndOwnerWithTransactions
-                    .map {
-                        AccountAndOwnerWithTransactionsAndPockets
-                            .from(it, accountAndOwnerWithTransactions)
-                    }
-                val personWithAccounts =
-                    PersonWithAccounts.from(personList, accountAndOwnerWithTransactionsAndPockets)
-                val filteredTransactionAndAccountsAndCategory =
-                    TransactionAndAccountsAndCategory.from(
-                        filteredTransactions,
-                        accountList,
-                        categories
-                    )
-                val allTransactionAndAccountsAndCategory =
-                    TransactionAndAccountsAndCategory.from(allTransactions, accountList, categories)
-                val categoriesWithSubCategories = CategoryWithSubCategories.from(categories)
+                val accountAndOwnerWithTransactions by mainViewModel.accountAndOwnerWithTransactions.observeAsState(
+                    emptyList()
+                )
+                val accountAndOwnerWithTransactionsAndPockets by mainViewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
+                    emptyList()
+                )
+                val personWithAccounts by mainViewModel.personWithAccounts.observeAsState(emptyList())
+                val filteredTransactionAndAccountsAndCategory by mainViewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
+                    emptyList()
+                )
+                val allTransactionAndAccountsAndCategory by mainViewModel.allTransactionAndAccountsAndCategory.observeAsState(
+                    emptyList()
+                )
+                val categoriesWithSubCategories by mainViewModel.categoriesWithSubCategories.observeAsState(
+                    emptyList()
+                )
 
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
@@ -481,9 +477,10 @@ class MainActivity : ComponentActivity() {
                                 personList = personList,
                                 principalPerson = principalPerson,
                                 onPrincipalPersonChanged = {
-                                    if (principalPerson != null) {
+                                    val notNullPrincipalPerson = principalPerson
+                                    if (notNullPrincipalPerson != null) {
                                         mainViewModel.updatePerson(
-                                            principalPerson.copy(importance = null)
+                                            notNullPrincipalPerson.copy(importance = null)
                                         ) {}
                                     }
                                     mainViewModel.updatePerson(it.copy(importance = 1)) {}

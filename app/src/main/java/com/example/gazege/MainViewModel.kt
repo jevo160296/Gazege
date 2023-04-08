@@ -37,14 +37,14 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
 
     val allPerson = repository.getPersons().asLiveData()
     val principalPerson = allPerson.switchMap { persons ->
-        MutableLiveData(getPrincipalPerson(persons))
+        liveData { emit(getPrincipalPerson(persons)) }
     }
     val allAccount = repository.getAccounts().asLiveData()
     val incomeAccount = allAccount.switchMap { accounts ->
-        MutableLiveData(getIncomeAccount(accounts))
+        liveData { emit(getIncomeAccount(accounts)) }
     }
     val outcomeAccount = allAccount.switchMap { accounts ->
-        MutableLiveData(getOutcomeAccount(accounts))
+        liveData { emit(getOutcomeAccount(accounts)) }
     }
     val allTransactions = repository.getTransactions(null, null).asLiveData()
     val rangeTransactions = range.switchMap { range ->
@@ -91,6 +91,71 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 value = it
             }
         }
+    val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
+        MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())
+            .apply {
+                val update = {
+                    value = AccountAndOwnerWithTransactions.from(
+                        allAccount.value ?: emptyList(),
+                        allPerson.value ?: emptyList(),
+                        allTransactions.value ?: emptyList()
+                    )
+                }
+                addSource(allAccount) { update() }
+                addSource(allPerson) { update() }
+                addSource(allTransactions) { update() }
+            }
+    val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
+        accountAndOwnerWithTransactions.switchMap { lista ->
+            liveData {
+                emit(
+                    lista.map { item ->
+                        AccountAndOwnerWithTransactionsAndPockets.from(item, lista)
+                    })
+            }
+        }
+    val personWithAccounts: LiveData<List<PersonWithAccounts>> =
+        MediatorLiveData<List<PersonWithAccounts>>(listOf())
+            .apply {
+                val update = {
+                    value = PersonWithAccounts.from(
+                        allPerson.value ?: emptyList(),
+                        accountAndOwnerWithTransactionsAndPockets.value ?: emptyList()
+                    )
+                }
+                addSource(allPerson) { update() }
+                addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
+            }
+    val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+        MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
+            .apply {
+                val update = {
+                    value = TransactionAndAccountsAndCategory.from(
+                        rangeTransactions.value ?: emptyList(),
+                        allAccount.value ?: emptyList(),
+                        categories.value ?: emptyList()
+                    )
+                }
+                addSource(rangeTransactions) { update() }
+                addSource(allAccount) { update() }
+                addSource(categories) { update() }
+            }
+    val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+        MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
+            .apply {
+                val update = {
+                    value = TransactionAndAccountsAndCategory.from(
+                        allTransactions.value ?: emptyList(),
+                        allAccount.value ?: emptyList(),
+                        categories.value ?: emptyList()
+                    )
+                }
+                addSource(allTransactions) { update() }
+                addSource(allAccount) { update() }
+                addSource(categories) { update() }
+            }
+    val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
+        .switchMap { liveData { emit(CategoryWithSubCategories.from(it)) } }
 
     private fun calculateAccountDetailData(
         account: AccountAndOwnerWithTransactionsAndPockets?,
