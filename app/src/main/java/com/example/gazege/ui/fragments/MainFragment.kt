@@ -110,17 +110,18 @@ fun MainFragment(
                 }
             )
         }) {
-        Scaffold(floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    when (navPosition) {
-                        NavPosition.PERSONS -> onAddPersonRequested()
-                        NavPosition.CUENTAS -> onAddAccountRequested()
-                        NavPosition.TRANSACCIONES -> onAddTransactionRequested()
-                    }
-                }, shape = Shapes.small
-            ) {
-                Icon(
+        Scaffold(
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        when (navPosition) {
+                            NavPosition.PERSONS -> onAddPersonRequested()
+                            NavPosition.CUENTAS -> onAddAccountRequested()
+                            NavPosition.TRANSACCIONES -> onAddTransactionRequested()
+                        }
+                    }, shape = Shapes.small
+                ) {
+                    Icon(
                     painter = painterResource(id = R.drawable.ic_baseline_add_24),
                     contentDescription = "Add"
                 )
