@@ -95,6 +95,8 @@ fun TransactionAndAccountsForm(
     categoryList: List<Category>,
     onDoneAction: () -> Unit,
     isComplete: Boolean,
+    showSourceAccountField: Boolean = true,
+    showDestinationAccountField: Boolean = true,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
@@ -186,61 +188,65 @@ fun TransactionAndAccountsForm(
                 null
             )
         }
-        if (accountList.isNotEmpty()) {
-            AccountDropDownMenu(
-                accountsList = accountList,
-                selectedAccountNode = selectedSourceNode,
-                label = { Text("Source account") },
-                onItemClick = {
-                    if (it.content.account.id != null) {
-                        onTransactionAndAccountsChanged(
-                            transactionAndAccounts.copy().apply {
-                                sourceAccount = it.content.account
-                                transaction = transaction.copy(sourceId = it.content.account.id)
-                            }
-                        )
-                    }
-                },
-                deactivatedAccountList = deactivatedSourceAccountList,
-                canClearSelection = false,
-                onClearSelectionClicked = {},
-                keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
+        if (showSourceAccountField) {
+            if (accountList.isNotEmpty()) {
+                AccountDropDownMenu(
+                    accountsList = accountList,
+                    selectedAccountNode = selectedSourceNode,
+                    label = { Text("Source account") },
+                    onItemClick = {
+                        if (it.content.account.id != null) {
+                            onTransactionAndAccountsChanged(
+                                transactionAndAccounts.copy().apply {
+                                    sourceAccount = it.content.account
+                                    transaction = transaction.copy(sourceId = it.content.account.id)
+                                }
+                            )
+                        }
+                    },
+                    deactivatedAccountList = deactivatedSourceAccountList,
+                    canClearSelection = false,
+                    onClearSelectionClicked = {},
+                    keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                    keyboardActions = KeyboardActions(
+                        onDone = { onDoneAction() }
+                    )
                 )
-            )
-        } else {
-            ButtonField(onClick = onAccountAddRequested) {
-                Text("New account")
+            } else {
+                ButtonField(onClick = onAccountAddRequested) {
+                    Text("New account")
+                }
             }
         }
-        if (accountList.isNotEmpty()) {
-            AccountDropDownMenu(
-                accountsList = accountList,
-                selectedAccountNode = selectedDestinationNode,
-                onItemClick = {
-                    if (it.content.account.id != null) {
-                        onTransactionAndAccountsChanged(
-                            transactionAndAccounts.copy().apply {
-                                destinationAccount = it.content.account
-                                transaction =
-                                    transaction.copy(destinationId = it.content.account.id)
-                            }
-                        )
-                    }
-                },
-                label = { Text("Destination account") },
-                deactivatedAccountList = deactivatedDestinationAccountList,
-                canClearSelection = false,
-                onClearSelectionClicked = {},
-                keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
+        if (showDestinationAccountField) {
+            if (accountList.isNotEmpty()) {
+                AccountDropDownMenu(
+                    accountsList = accountList,
+                    selectedAccountNode = selectedDestinationNode,
+                    onItemClick = {
+                        if (it.content.account.id != null) {
+                            onTransactionAndAccountsChanged(
+                                transactionAndAccounts.copy().apply {
+                                    destinationAccount = it.content.account
+                                    transaction =
+                                        transaction.copy(destinationId = it.content.account.id)
+                                }
+                            )
+                        }
+                    },
+                    label = { Text("Destination account") },
+                    deactivatedAccountList = deactivatedDestinationAccountList,
+                    canClearSelection = false,
+                    onClearSelectionClicked = {},
+                    keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                    keyboardActions = KeyboardActions(
+                        onDone = { onDoneAction() }
+                    )
                 )
-            )
-        } else {
-            ButtonField(onClick = onAccountAddRequested) {
-                Text("New account")
+            } else {
+                ButtonField(onClick = onAccountAddRequested) {
+                    Text("New account")
+                }
             }
         }
 

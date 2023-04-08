@@ -5,6 +5,12 @@ enum class AccountAction {
     DELETE
 }
 
+enum class AddTransactionAction {
+    ADD_EXPENSE,
+    ADD_INCOME,
+    ADD_TRANSFER
+}
+
 enum class TransactionAction {
     EDIT,
     DELETE

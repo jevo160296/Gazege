@@ -16,8 +16,8 @@ import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.views.category.CategoryListView
-import com.example.gazege.ui.widgets.FAB
 import com.example.gazege.ui.widgets.ModalSheetContent
+import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)

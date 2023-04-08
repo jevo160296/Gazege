@@ -1,4 +1,4 @@
-package com.example.gazege.ui.widgets
+package com.example.gazege.ui.widgets.fab
 
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.Composable

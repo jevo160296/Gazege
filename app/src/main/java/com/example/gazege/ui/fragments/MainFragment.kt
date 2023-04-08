@@ -1,5 +1,6 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -34,10 +36,9 @@ import com.example.gazege.ui.views.person.PersonPage
 import com.example.gazege.ui.views.person.getPersonWithAccountsSample
 import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.views.transaction.getTransactionSample
-import com.example.gazege.ui.widgets.Filter
-import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetContent
-import com.example.gazege.ui.widgets.PersonMonthSummaryView
+import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.fab.ExpandableFAB
+import com.example.gazege.ui.widgets.menu.DropDownMenuItem
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -57,7 +58,7 @@ fun MainFragment(
     delAccount: (Account) -> Unit,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
-    onAddTransactionRequested: () -> Unit,
+    onAddTransactionRequested: (action: AddTransactionAction) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     delTransaction: (Transaction) -> Unit,
     navPosition: NavPosition,
@@ -86,6 +87,9 @@ fun MainFragment(
     var title: String by rememberSaveable {
         mutableStateOf("Gazedge")
     }
+    var fabExpanded: Boolean by remember {
+        mutableStateOf(false)
+    }
 
     val startDate = range.first
     val endDate = range.second
@@ -110,21 +114,77 @@ fun MainFragment(
                 }
             )
         }) {
-        Scaffold(floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    when (navPosition) {
-                        NavPosition.PERSONS -> onAddPersonRequested()
-                        NavPosition.CUENTAS -> onAddAccountRequested()
-                        NavPosition.TRANSACCIONES -> onAddTransactionRequested()
+        Scaffold(
+            floatingActionButton = {
+                val rotation by animateFloatAsState(
+                    targetValue = if (fabExpanded) {
+                        45f
+                    } else {
+                        0f
                     }
-                }, shape = Shapes.small
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                    contentDescription = "Add"
                 )
-            }
+                ExpandableFAB(
+                    columnModifier = Modifier.width(IntrinsicSize.Max),
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                            contentDescription = "Add",
+                            modifier = Modifier.rotate(rotation),
+                        )
+                    },
+                    isExpanded = fabExpanded,
+                    onClick = {
+                        when (navPosition) {
+                            NavPosition.PERSONS -> onAddPersonRequested()
+                            NavPosition.CUENTAS -> onAddAccountRequested()
+                            NavPosition.TRANSACCIONES -> fabExpanded = true
+                        }
+                    },
+                    onDismissRequest = { fabExpanded = false }
+                ) {
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_TRANSFER)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.transfer_icon),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = stringResource(id = R.string.Transferencia)) }
+                    )
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_EXPENSE)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.gasto_icon),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = stringResource(id = R.string.Gasto)) }
+                    )
+                    DropDownMenuItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onAddTransactionRequested(AddTransactionAction.ADD_INCOME)
+                            fabExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ingreso_icon),
+                                contentDescription = "Add"
+                            )
+                        },
+                        label = { Text(text = stringResource(id = R.string.Ingreso)) }
+                    )
+                }
         },
             floatingActionButtonPosition = FabPosition.End,
             isFloatingActionButtonDocked = false,
