@@ -199,6 +199,10 @@ fun TransactionFormFragment(
                     .apply {
                         sourceAccount = fixedSourceAccount
                         destinationAccount = fixedDestinationAccount
+                        transaction.apply {
+                            sourceId = fixedSourceAccount?.id
+                            destinationId = fixedDestinationAccount?.id
+                        }
                     }
             }
         )
