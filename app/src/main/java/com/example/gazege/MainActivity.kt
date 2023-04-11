@@ -74,8 +74,6 @@ class MainActivity : ComponentActivity() {
                         LocalDate.now()
                     )
                 )
-                val incomeAccount by mainViewModel.incomeAccount.observeAsState()
-                val outcomeAccount by mainViewModel.outcomeAccount.observeAsState()
                 val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
                 val principalPerson by mainViewModel.principalPerson.observeAsState()
                 val principalPersonWithAccounts by mainViewModel.principalPersonWithAccounts.observeAsState()
@@ -196,7 +194,7 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.updateRange(startDate, endDate)
                                 },
                                 onSettingsClicked = {
-                                    navController.navigate("settings")
+                                    navController.navigateToSettings()
                                 },
                                 onSaldoActualClick = {
                                     navController.navigate("saldoActualSettings")
@@ -211,12 +209,12 @@ class MainActivity : ComponentActivity() {
                             viewModel = mainViewModel,
                             onNavigateToAddPerson = { navController.navigateToAddPerson() },
                             onNavigateUp = { navController.navigateUp() },
-                            onNavigateToSettings = { navController.navigate("settings") }
+                            onNavigateToSettings = navController::navigateToSettings
                         )
                         screenEditAccount(
                             viewModel = mainViewModel,
                             onNavigateUp = navController::navigateUp,
-                            onNavigateToSettings = { navController.navigate("settings") },
+                            onNavigateToSettings = navController::navigateToSettings,
                             onNavigateToAddPerson = navController::navigateToAddPerson
                         )
                         screenAddPerson(
@@ -237,67 +235,13 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = navController::navigateUp,
                             onNavigateToAddAccount = navController::navigateToAddAccount
                         )
-                        composable("settings") {
-                            SettingsFragment(
-                                personList = allPerson,
-                                principalPerson = principalPerson,
-                                onPrincipalPersonChanged = {
-                                    val notNullPrincipalPerson = principalPerson
-                                    if (notNullPrincipalPerson != null) {
-                                        mainViewModel.updatePerson(
-                                            notNullPrincipalPerson.copy(importance = null)
-                                        ) {}
-                                    }
-                                    mainViewModel.updatePerson(it.copy(importance = 1)) {}
-                                },
-                                onNavigateUpRequested = {
-                                    navController.navigateUp()
-                                },
-                                onAddPersonRequested = { navController.navigateToAddPerson() },
-                                accountList = accountAndOwnerWithTransactions.map {
-                                    AccountAndOwner(
-                                        it.account,
-                                        it.owner
-                                    )
-                                },
-                                incomeAccount = incomeAccount,
-                                outcomeAccount = outcomeAccount,
-                                onAddAccountRequested = { navController.navigateToAddAccount() },
-                                onIncomeOutcomeAccountChanged = { newIncome, newOutcome ->
-                                    val castedIncomeAccount = incomeAccount
-                                    val castedOutcomeAccount = outcomeAccount
-                                    if (castedIncomeAccount != null) {
-                                        mainViewModel.updateAccount(
-                                            castedIncomeAccount.copy(
-                                                isIncome = false
-                                            ), onCompleitionAction = {}, onErrorAction = {})
-                                    }
-                                    if (castedOutcomeAccount != null) {
-                                        mainViewModel.updateAccount(
-                                            castedOutcomeAccount.copy(
-                                                isOutcome = false
-                                            ), onCompleitionAction = {}, onErrorAction = {})
-                                    }
-                                    if (newIncome != null) {
-                                        mainViewModel.updateAccount(
-                                            newIncome.copy(
-                                                isIncome = true,
-                                                isOutcome = false
-                                            ), onErrorAction = {}, onCompleitionAction = {})
-                                    }
-                                    if (newOutcome != null) {
-                                        mainViewModel.updateAccount(
-                                            newOutcome.copy(
-                                                isIncome = false,
-                                                isOutcome = true
-                                            ), onErrorAction = {}, onCompleitionAction = {})
-                                    }
-                                },
-                                onEditCategoriesRequested = {
-                                    navController.navigate("editCategories")
-                                }
-                            )
-                        }
+                        screenSettings(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToAddAccount = navController::navigateToAddAccount,
+                            onNavigateToAddPerson = navController::navigateToAddPerson,
+                            onNavigateToEditCategories = { navController.navigate("editCategories") }
+                        )
                         composable("saldoActualSettings") {
                             var saving: Int by remember {
                                 mutableStateOf(0)
