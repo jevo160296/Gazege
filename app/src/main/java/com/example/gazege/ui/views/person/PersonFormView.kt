@@ -9,11 +9,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.ui.savers.PartialPerson
 import com.example.gazege.ui.widgets.TextField
 
@@ -40,7 +42,7 @@ fun PersonForm(
                     person.copy(name = it)
                 )
             },
-            label = { Text("Nombre") },
+            label = { Text(stringResource(R.string.nombre)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,

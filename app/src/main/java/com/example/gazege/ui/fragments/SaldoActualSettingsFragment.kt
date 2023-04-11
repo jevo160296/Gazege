@@ -8,6 +8,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
@@ -28,11 +29,11 @@ fun SaldoActualSettings(
     Column {
         TopAppBar(
             title = {
-                MediumHeadline(text = "Saldo actual settings")
+                MediumHeadline(text = stringResource(R.string.Ajustes_saldo_actual))
             }
         )
         Box(Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))) {
-            LargeBody(text = "A continuación seleccione las cuentas incluídas en el cálculo del saldo actual")
+            LargeBody(text = stringResource(R.string.Ajustes_saldo_actual_desc))
         }
         if (saving > 0) {
             LinearProgressIndicator(

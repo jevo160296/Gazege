@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 
 @Composable
 fun ModalSheetContent(
@@ -40,7 +42,7 @@ fun ModalSheetContent(
                     onSiClicked()
                 }) {
                 Text(
-                    text = "Si"
+                    text = stringResource(R.string.Si)
                 )
             }
             TextButton(
@@ -49,7 +51,7 @@ fun ModalSheetContent(
                 }
             ) {
                 Text(
-                    text = "No"
+                    text = stringResource(R.string.No)
                 )
             }
         }

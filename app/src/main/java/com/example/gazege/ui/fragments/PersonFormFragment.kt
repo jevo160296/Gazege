@@ -8,9 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialPerson
 import com.example.gazege.ui.savers.personSaver
@@ -50,8 +52,8 @@ fun PersonFormFragment(
         modifier = modifier,
         onSaveClicked = savePerson,
         isSavedButtonEnabled = isComplete,
-        title = "Person",
-        snackbarHostState = snackbarHostState
+        title = stringResource(R.string.persona),
+        snackbarHostState = snackbarHostState,
     ) {
         PersonForm(
             contentPadding = contentPadding,

@@ -94,13 +94,13 @@ private fun PersonRecyclerView(
                     onDismissRequest = { menuIdExpanded = null }
                 ) {
                     DropdownMenuItem(
-                        text = { Text(text = "Edit") },
+                        text = { Text(text = stringResource(R.string.Editar)) },
                         onClick = {
                             menuIdExpanded = null
                             editPerson(it)
                         })
                     DropdownMenuItem(
-                        text = { Text(text = "Delete") },
+                        text = { Text(text = stringResource(R.string.Eliminar)) },
                         onClick = {
                             menuIdExpanded = null
                             delPerson(it)

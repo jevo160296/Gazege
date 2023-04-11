@@ -92,7 +92,7 @@ fun AccountAndOwnerForm(
                     }
                 )
             },
-            label = { Text("Nombre") },
+            label = { Text(stringResource(id = R.string.nombre)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
@@ -119,7 +119,7 @@ fun AccountAndOwnerForm(
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
                     },
-                    label = { Text("Owner") },
+                    label = { Text(stringResource(R.string.Propietario)) },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(),
                     keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
                     keyboardOptions = KeyboardOptions(imeAction = nextAction)
@@ -149,7 +149,7 @@ fun AccountAndOwnerForm(
             }
         } else {
             ButtonField(onClick = onPersonAddRequested) {
-                Text("New person")
+                Text(stringResource(R.string.Nueva_persona))
             }
         }
         AccountDropDownMenu(
@@ -194,7 +194,7 @@ fun AccountAndOwnerForm(
             )
         } else {
             ButtonField(onClick = onSetIncomeOutcomeAccount) {
-                Text("Configurar income y/o outcome account")
+                Text(stringResource(R.string.Configurar_income_outcome))
             }
         }
     }

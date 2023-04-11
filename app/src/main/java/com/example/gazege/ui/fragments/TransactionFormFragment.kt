@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.savers.PartialTransaction
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
@@ -80,7 +82,7 @@ fun TransactionFormFragment(
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
-        title = "Transaction",
+        title = stringResource(R.string.Transaccion),
         onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(

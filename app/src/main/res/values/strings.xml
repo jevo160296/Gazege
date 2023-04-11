@@ -38,4 +38,18 @@
     <string name="MostrarGraficos">Mostrar gráficos</string>
     <string name="Deuda_diferente_a_cero"><![CDATA[Deuda != 0]]></string>
     <string name="Transferencia">Transferencia</string>
+    <string name="Cuenta_origen">Cuenta de origen</string>
+    <string name="Cuenta_destino">Cuenta de destino</string>
+    <string name="Realizar_a_nombre_de_otra_persona">Realizar a nombre de otra persona</string>
+    <string name="Configurar_income_outcome">Configurar income y/o outcome cuenta</string>
+    <string name="Ajustes_saldo_actual">Ajustes saldo actual</string>
+    <string name="Ajustes_saldo_actual_desc">A continuación seleccione las cuentas incluídas en el cálculo del saldo actual</string>
+    <string name="Transaccion">Transacción</string>
+    <string name="Editar">Editar</string>
+    <string name="Eliminar">Eliminar</string>
+    <string name="Saldo_actual">Saldo actual</string>
+    <string name="Fecha">Fecha</string>
+    <string name="Todo">Todo</string>
+    <string name="Si">Sí</string>
+    <string name="No">No</string>
 </resources>
