@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
                         composable("main") {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
                             val snackbarHostState = SnackbarHostState()
-                            MainFragment(
+                            MainScreen(
                                 personList = personWithAccounts,
                                 accountList = accountAndOwnerWithTransactions,
                                 allTransactionList = allTransactionAndAccountsAndCategory,
@@ -212,7 +212,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         composable("addAccount") {
-                            AccountFormFragment(
+                            AccountFormScreen(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 personList = allPerson,
@@ -289,7 +289,7 @@ class MainActivity : ComponentActivity() {
                                         owner = it.accountAndOwnerWithTransactions.owner
                                     )
                                 }
-                            AccountFormFragment(
+                            AccountFormScreen(
                                 personList = allPerson,
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
@@ -345,7 +345,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("addPerson") {
-                            PersonFormFragment(
+                            PersonFormScreen(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
@@ -377,7 +377,7 @@ class MainActivity : ComponentActivity() {
                             val personId = navBack.arguments?.getInt("personId")
                             val selectedPerson = allPerson
                                 .firstOrNull { it.id == personId }
-                            PersonFormFragment(
+                            PersonFormScreen(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 onPersonAddRequested = { person, snackBarHostSate ->
@@ -435,7 +435,7 @@ class MainActivity : ComponentActivity() {
                                         emptyList()
                                     ).value
                                 }
-                            TransactionFormFragment(
+                            TransactionFormScreen(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
                                 accountList = orderedAccounts.map {
@@ -444,21 +444,20 @@ class MainActivity : ComponentActivity() {
                                         it.owner
                                     )
                                 },
-                                onAccountAddRequested = { navController.navigate("addAccount") },
-                                onTransactionAndAccountsAdd = {
-                                    mainViewModel.insertTransaction(it)
-                                    navController.navigateUp()
-                                },
+                                personList = allPerson,
+                                categoryList = categories,
                                 defaultDate = LocalDate.of(
                                     yearMonthDay.div(10000),
                                     yearMonthDay.mod(10000).div(100),
                                     yearMonthDay.mod(100)
                                 ),
-                                personList = allPerson,
-                                categoryList = categories,
                                 fixedSourceAccount = initialSourceAccount,
-                                fixedDestinationAccount = initialDestinationAccount
-                            )
+                                fixedDestinationAccount = initialDestinationAccount,
+                                onAccountAddRequested = { navController.navigate("addAccount") }
+                            ) {
+                                mainViewModel.insertTransaction(it)
+                                navController.navigateUp()
+                            }
                         }
                         composable(
                             "editTransaction/{transactionId}",
@@ -470,24 +469,23 @@ class MainActivity : ComponentActivity() {
                             val selectedTransactionAndAccounts =
                                 filteredTransactionAndAccountsAndCategory
                                     .firstOrNull { it.transaction.id == transactionId }
-                            TransactionFormFragment(
+                            TransactionFormScreen(
                                 contentPadding = PaddingValues(8.dp),
                                 itemSpacing = 8.dp,
+                                transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
                                 accountList = accountAndOwnerWithTransactions.map {
                                     AccountAndOwner(
                                         it.account,
                                         it.owner
                                     )
                                 },
-                                onAccountAddRequested = { navController.navigate("addAccount") },
-                                onTransactionAndAccountsAdd = {
-                                    mainViewModel.updateTransaction(it)
-                                    navController.navigateUp()
-                                },
-                                transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
                                 personList = allPerson,
-                                categoryList = categories
-                            )
+                                categoryList = categories,
+                                onAccountAddRequested = { navController.navigate("addAccount") }
+                            ) {
+                                mainViewModel.updateTransaction(it)
+                                navController.navigateUp()
+                            }
                         }
                         composable("settings") {
                             SettingsFragment(

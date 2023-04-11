@@ -45,7 +45,7 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MainFragment(
+fun MainScreen(
     personList: List<PersonWithAccounts>,
     accountList: List<AccountAndOwnerWithTransactions>,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
@@ -380,7 +380,7 @@ private fun DefaultPreview() {
     }
     val snackbarHostState = SnackbarHostState()
     GazegeTheme(darkTheme = true) {
-        MainFragment(
+        MainScreen(
             personList = personList,
             accountList = accounts,
             allTransactionList = transactions,

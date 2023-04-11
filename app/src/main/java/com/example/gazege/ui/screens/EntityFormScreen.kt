@@ -21,7 +21,7 @@ import com.example.gazege.ui.widgets.toSignedBigDecimal
 import java.time.LocalDate
 
 @Composable
-fun PersonFormFragment(
+fun PersonFormScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
@@ -75,7 +75,7 @@ fun PersonFormFragment(
 }
 
 @Composable
-fun AccountFormFragment(
+fun AccountFormScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
@@ -158,19 +158,19 @@ fun AccountFormFragment(
 
 
 @Composable
-fun TransactionFormFragment(
+fun TransactionFormScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
     transactionAndAccounts: TransactionAndAccounts? = null,
     accountList: List<AccountAndOwner>,
-    onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (Transaction) -> Unit,
     personList: List<Person>,
     categoryList: List<Category>,
     defaultDate: LocalDate = LocalDate.now(),
     fixedSourceAccount: Account? = null,
-    fixedDestinationAccount: Account? = null
+    fixedDestinationAccount: Account? = null,
+    onAccountAddRequested: () -> Unit,
+    onTransactionAndAccountsAdd: (Transaction) -> Unit
 ) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver
