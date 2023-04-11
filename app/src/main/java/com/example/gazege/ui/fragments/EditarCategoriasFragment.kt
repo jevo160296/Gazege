@@ -10,43 +10,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
-import com.example.gazege.MainViewModel
 import com.example.gazege.R
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.ModalSheetContent
 import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
-
-fun NavGraphBuilder.screenEditarCategorias(
-    viewModel: MainViewModel,
-    onNavigateToAddCategory: () -> Unit,
-    onNavigateToEditCategory: (Int?) -> Unit
-) {
-    composable("editCategories") {
-        val categoriesWithSubCategories by viewModel.categoriesWithSubCategories.observeAsState(
-            emptyList()
-        )
-
-        EditarCategorias(
-            categoriesWithSubCategories,
-            onAddCategoryRequested = onNavigateToAddCategory,
-            onEditCategoryRequested = { onNavigateToEditCategory(it.category.id) },
-            onDeleteCategoryRequested = { viewModel.deleteCategory(it.category) }
-        )
-    }
-}
-
-fun NavController.navigateToEditarCategorias() {
-    navigate("editCategories")
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable

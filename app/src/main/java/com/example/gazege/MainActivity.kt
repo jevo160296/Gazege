@@ -33,6 +33,7 @@ import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.fragments.*
+import com.example.gazege.ui.navigation.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountDetail
