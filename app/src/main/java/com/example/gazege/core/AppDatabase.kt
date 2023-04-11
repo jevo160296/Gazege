@@ -3,13 +3,8 @@ package com.example.gazege.core
 import android.content.Context
 import androidx.room.*
 import com.example.gazege.core.converters.Converters
-import com.example.gazege.core.dao.AccountDao
-import com.example.gazege.core.dao.CategoryDao
-import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.dao.TransactionDao
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.Person
+import com.example.gazege.core.dao.*
+import com.example.gazege.core.entities.*
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.migrations.Migrate34
 import com.example.gazege.core.migrations.MigrateSpec56
@@ -19,16 +14,18 @@ import com.example.gazege.core.migrations.MigrateSpec56
         Person::class,
         Account::class,
         Transaction::class,
-        Category::class
+        Category::class,
+        Budget::class
     ],
-    version = 9,
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6, MigrateSpec56::class),
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
-        AutoMigration(8, 9)
+        AutoMigration(8, 9),
+        AutoMigration(9, 10)
     ]
 )
 @TypeConverters(Converters::class)
@@ -38,6 +35,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
     abstract fun categoryDao(): CategoryDao
+
+    abstract fun budgetDao(): BudgetDao
 
     companion object {
         private var INSTANCE: AppDatabase? = null
