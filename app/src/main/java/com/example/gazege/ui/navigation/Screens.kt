@@ -8,7 +8,6 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -49,19 +48,13 @@ fun NavGraphBuilder.screenMain(
     onNavigateToSaldoActualSettings: () -> Unit,
 ) {
     composable("main") {
-        val personWithAccounts by viewModel.personWithAccounts.observeAsState(emptyList())
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
-        val allTransactionAndAccountsAndCategory by viewModel.allTransactionAndAccountsAndCategory.observeAsState(
-            emptyList()
-        )
-        val filteredTransactionAndAccountsAndCategory by viewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
-            emptyList()
-        )
-        val principalPersonWithAccounts by viewModel.principalPersonWithAccounts.observeAsState()
-        val range by viewModel.range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
-        val personFilterValue by viewModel.personFilterValue.observeAsState(false)
+        val personWithAccounts by viewModel.rememberPersonWithAccounts()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val allTransactionAndAccountsAndCategory by viewModel.rememberAllTransactionAndAccountsAndCategory()
+        val filteredTransactionAndAccountsAndCategory by viewModel.rememberFilteredTransactionAndAccountsAndCategory()
+        val principalPersonWithAccounts by viewModel.rememberPrincipalPersonWithAccounts()
+        val range by viewModel.rememberRange()
+        val personFilterValue by viewModel.rememberPersonFilterValue()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
@@ -121,13 +114,11 @@ fun NavGraphBuilder.screenAddAccount(
     onNavigateToSettings: () -> Unit
 ) {
     composable("addAccount") {
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val allAccount by viewModel.allAccount.observeAsState(emptyList())
-        val incomeAccount by viewModel.incomeAccount.observeAsState()
-        val outcomeAccount by viewModel.outcomeAccount.observeAsState()
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
+        val allPerson by viewModel.rememberAllPerson()
+        val allAccount by viewModel.rememberAllAccount()
+        val incomeAccount by viewModel.rememberIncomeAccount()
+        val outcomeAccount by viewModel.rememberOutcomeAccount()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
 
         val coroutineScope = rememberCoroutineScope()
         AccountFormFragment(
@@ -195,16 +186,12 @@ fun NavGraphBuilder.screenEditAccount(
         "editAccount/{accountId}",
         arguments = listOf(navArgument("accountId") { type = NavType.IntType })
     ) { navStack ->
-        val accountAndOwnerWithTransactionsAndPockets by viewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
-            emptyList()
-        )
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val allAccount by viewModel.allAccount.observeAsState(emptyList())
-        val incomeAccount by viewModel.incomeAccount.observeAsState()
-        val outcomeAccount by viewModel.outcomeAccount.observeAsState()
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
+        val accountAndOwnerWithTransactionsAndPockets by viewModel.rememberAccountAndOwnerWithTransactionsAndPockets()
+        val allPerson by viewModel.rememberAllPerson()
+        val allAccount by viewModel.rememberAllAccount()
+        val incomeAccount by viewModel.rememberIncomeAccount()
+        val outcomeAccount by viewModel.rememberOutcomeAccount()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -293,9 +280,7 @@ fun NavGraphBuilder.screenEditarCategorias(
     onNavigateToEditCategory: (Int?) -> Unit
 ) {
     composable("editCategories") {
-        val categoriesWithSubCategories by viewModel.categoriesWithSubCategories.observeAsState(
-            emptyList()
-        )
+        val categoriesWithSubCategories by viewModel.rememberCategoriesWithSubCategories()
 
         EditarCategorias(
             categoriesWithSubCategories,
@@ -315,7 +300,7 @@ fun NavGraphBuilder.screenAddPerson(
     onNavigateUp: () -> Unit
 ) {
     composable("addPerson") {
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
+        val allPerson by viewModel.rememberAllPerson()
 
         val coroutineScope = rememberCoroutineScope()
         PersonFormFragment(
@@ -357,7 +342,7 @@ fun NavGraphBuilder.screenEditPerson(
         "editPerson/{personId}",
         arguments = listOf(navArgument("personId") { type = NavType.IntType })
     ) { navBack ->
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
+        val allPerson by viewModel.rememberAllPerson()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -400,10 +385,8 @@ fun NavGraphBuilder.screenSaldoActualSettings(
     viewModel: MainViewModel
 ) {
     composable("saldoActualSettings") {
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
-        val principalPerson by viewModel.principalPerson.observeAsState()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val principalPerson by viewModel.rememberPrincipalPerson()
         val coroutineScope = rememberCoroutineScope()
 
         var saving: Int by remember {
@@ -438,13 +421,11 @@ fun NavGraphBuilder.screenSettings(
     onNavigateToEditCategories: () -> Unit
 ) {
     composable("settings") {
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val principalPerson by viewModel.principalPerson.observeAsState()
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
-        val incomeAccount by viewModel.incomeAccount.observeAsState()
-        val outcomeAccount by viewModel.outcomeAccount.observeAsState()
+        val allPerson by viewModel.rememberAllPerson()
+        val principalPerson by viewModel.rememberPrincipalPerson()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val incomeAccount by viewModel.rememberIncomeAccount()
+        val outcomeAccount by viewModel.rememberOutcomeAccount()
 
         SettingsFragment(
             personList = allPerson,
@@ -524,13 +505,11 @@ fun NavGraphBuilder.screenAddTransaction(
             }
         )
     ) { navBackStackEntry ->
-        val incomeAccount by viewModel.incomeAccount.observeAsState()
-        val outcomeAccount by viewModel.outcomeAccount.observeAsState()
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val categories by viewModel.categories.observeAsState(emptyList())
+        val incomeAccount by viewModel.rememberIncomeAccount()
+        val outcomeAccount by viewModel.rememberOutcomeAccount()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val allPerson by viewModel.rememberAllPerson()
+        val categories by viewModel.rememberCategories()
 
         val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
             ?: LocalDate.now().let {
@@ -549,9 +528,7 @@ fun NavGraphBuilder.screenAddTransaction(
             if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
                 accountAndOwnerWithTransactions
             } else {
-                viewModel.accountAndOwnerWithTransactionsUserFirst.observeAsState(
-                    emptyList()
-                ).value
+                viewModel.rememberAccountAndOwnerWithTransactionsUserFirst().value
             }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
@@ -599,14 +576,10 @@ fun NavGraphBuilder.screenEditTransaction(
             type = NavType.IntType
         })
     ) { navBackStackEntry ->
-        val filteredTransactionAndAccountsAndCategory by viewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
-            emptyList()
-        )
-        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
-            emptyList()
-        )
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val categories by viewModel.categories.observeAsState(emptyList())
+        val filteredTransactionAndAccountsAndCategory by viewModel.rememberFilteredTransactionAndAccountsAndCategory()
+        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val allPerson by viewModel.rememberAllPerson()
+        val categories by viewModel.rememberCategories()
 
         val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
         val selectedTransactionAndAccounts =
@@ -641,7 +614,7 @@ fun NavGraphBuilder.screenAddCategory(
     onNavigateUp: () -> Unit
 ) {
     composable("addCategory") {
-        val categories by viewModel.categories.observeAsState(emptyList())
+        val categories by viewModel.rememberCategories()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -686,7 +659,7 @@ fun NavGraphBuilder.screenEditCategory(
             }
         )
     ) { navStack ->
-        val categories by viewModel.categories.observeAsState(emptyList())
+        val categories by viewModel.rememberCategories()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -735,10 +708,8 @@ fun NavGraphBuilder.screenAccountDetail(
             }
         )
     ) { navStack ->
-        val data by viewModel.accountDetailData.observeAsState()
-        val accountAndOwnerWithTransactionsAndPockets by viewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
-            emptyList()
-        )
+        val data by viewModel.rememberAccountDetailData()
+        val accountAndOwnerWithTransactionsAndPockets by viewModel.rememberAccountAndOwnerWithTransactionsAndPockets()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -806,10 +777,10 @@ fun NavGraphBuilder.screenPersonDetail(
             }
         )
     ) { navStack ->
-        val allPerson by viewModel.allPerson.observeAsState(emptyList())
-        val allTransactions by viewModel.allTransactions.observeAsState(emptyList())
-        val allAccount by viewModel.allAccount.observeAsState(emptyList())
-        val categories by viewModel.categories.observeAsState(emptyList())
+        val allPerson by viewModel.rememberAllPerson()
+        val allTransactions by viewModel.rememberAllTransactions()
+        val allAccount by viewModel.rememberAllAccount()
+        val categories by viewModel.rememberCategories()
 
 
         val personId = navStack.arguments?.getInt("personId")
