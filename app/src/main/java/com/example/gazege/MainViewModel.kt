@@ -1,5 +1,7 @@
 package com.example.gazege
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
@@ -24,12 +26,72 @@ fun CoroutineScope.safeLaunch(
 }
 
 class MainViewModel(private val repository: AppRepository) : ViewModel() {
-    val allPerson = repository.getPersons().asLiveData()
-    val allAccount = repository.getAccounts().asLiveData()
-    val allTransactions = repository.getTransactions(null, null).asLiveData()
-    val categories = repository.getCategories().asLiveData()
+    @Composable
+    fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
-    val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
+    @Composable
+    fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAllTransactions() = allTransactions.observeAsState(emptyList())
+
+    @Composable
+    fun rememberCategories() = categories.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAccountAndOwnerWithTransactions() =
+        accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAccountAndOwnerWithTransactionsUserFirst() =
+        accountAndOwnerWithTransactionsUserFirst.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAccountAndOwnerWithTransactionsAndPockets() =
+        accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
+
+    @Composable
+    fun rememberPersonWithAccounts() = personWithAccounts.observeAsState(emptyList())
+
+    @Composable
+    fun rememberCategoriesWithSubCategories() =
+        categoriesWithSubCategories.observeAsState(emptyList())
+
+    @Composable
+    fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
+
+    @Composable
+    fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
+
+    @Composable
+    fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+    @Composable
+    fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+    @Composable
+    fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+    @Composable
+    fun rememberAccountDetailData() = accountDetailData.observeAsState()
+
+    @Composable
+    fun rememberPrincipalPersonWithAccounts() = principalPersonWithAccounts.observeAsState()
+
+    @Composable
+    fun rememberFilteredTransactionAndAccountsAndCategory() =
+        filteredTransactionAndAccountsAndCategory.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAllTransactionAndAccountsAndCategory() =
+        allTransactionAndAccountsAndCategory.observeAsState(emptyList())
+
+    private val allPerson = repository.getPersons().asLiveData()
+    private val allAccount = repository.getAccounts().asLiveData()
+    private val allTransactions = repository.getTransactions(null, null).asLiveData()
+    private val categories = repository.getCategories().asLiveData()
+
+    private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
         MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())
             .apply {
                 val update = {
@@ -43,9 +105,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 addSource(allPerson) { update() }
                 addSource(allTransactions) { update() }
             }
-    val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
+    private val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
         accountAndOwnerWithTransactions.map { it.sortedByDescending { acc -> acc.owner.importance } }
-    val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
+    private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.switchMap { lista ->
             liveData {
                 emit(
@@ -54,7 +116,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     })
             }
         }
-    val personWithAccounts: LiveData<List<PersonWithAccounts>> =
+    private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
         MediatorLiveData<List<PersonWithAccounts>>(listOf())
             .apply {
                 val update = {
@@ -66,30 +128,30 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 addSource(allPerson) { update() }
                 addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
             }
-    val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
+    private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
         .switchMap { liveData { emit(CategoryWithSubCategories.from(it)) } }
 
 
     private val initialRange = LocalDate.now().withDayOfMonth(1).let {
         Pair(it, it.plusMonths(1L).minusDays(1L))
     }
-    val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
+    private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
-    val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
     }
 
 
-    val principalPerson = allPerson.switchMap { persons ->
+    private val principalPerson = allPerson.switchMap { persons ->
         liveData { emit(getPrincipalPerson(persons)) }
     }
 
-    val incomeAccount = allAccount.switchMap { accounts ->
+    private val incomeAccount = allAccount.switchMap { accounts ->
         liveData { emit(getIncomeAccount(accounts)) }
     }
-    val outcomeAccount = allAccount.switchMap { accounts ->
+    private val outcomeAccount = allAccount.switchMap { accounts ->
         liveData { emit(getOutcomeAccount(accounts)) }
     }
 
@@ -98,17 +160,18 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     }
     private val accountDetail = MutableLiveData<AccountAndOwnerWithTransactionsAndPockets?>(null)
     private val _accountDetailData = MutableLiveData<AccountDetailData?>(null)
-    val accountDetailData: LiveData<AccountDetailData?> = MediatorLiveData<AccountDetailData?>()
-        .apply {
-            addSource(accountDetail) {
-                calculateAccountDetailData(
-                    accountDetail.value,
-                    allAccount.value,
-                    categories.value,
-                    range.value
-                )
-            }
-            addSource(allAccount) {
+    private val accountDetailData: LiveData<AccountDetailData?> =
+        MediatorLiveData<AccountDetailData?>()
+            .apply {
+                addSource(accountDetail) {
+                    calculateAccountDetailData(
+                        accountDetail.value,
+                        allAccount.value,
+                        categories.value,
+                        range.value
+                    )
+                }
+                addSource(allAccount) {
                 calculateAccountDetailData(
                     accountDetail.value,
                     allAccount.value,
@@ -132,14 +195,14 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     range.value
                 )
             }
-            addSource(_accountDetailData) {
-                value = it
+                addSource(_accountDetailData) {
+                    value = it
+                }
             }
-        }
-    val principalPersonWithAccounts = personWithAccounts.switchMap {
+    private val principalPersonWithAccounts = personWithAccounts.switchMap {
         liveData { emit(getPrincipalPersonWithAccounts(it)) }
     }
-    val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+    private val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
             .apply {
                 val update = {
@@ -153,7 +216,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 addSource(allAccount) { update() }
                 addSource(categories) { update() }
             }
-    val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+    private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
             .apply {
                 val update = {
