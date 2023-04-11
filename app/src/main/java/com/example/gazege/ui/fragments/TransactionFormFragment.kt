@@ -1,4 +1,4 @@
-package com.example.gazege.ui.screens
+package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -72,7 +72,7 @@ fun NavGraphBuilder.screenAddTransaction(
                     emptyList()
                 ).value
             }
-        TransactionFormScreen(
+        TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
             accountList = orderedAccounts.map {
@@ -131,7 +131,7 @@ fun NavGraphBuilder.screenEditTransaction(
         val selectedTransactionAndAccounts =
             filteredTransactionAndAccountsAndCategory
                 .firstOrNull { it.transaction.id == transactionId }
-        TransactionFormScreen(
+        TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
             transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
@@ -156,7 +156,7 @@ fun NavController.navigateToEditTransaction(transactionId: Int?) {
 }
 
 @Composable
-fun TransactionFormScreen(
+fun TransactionFormFragment(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,

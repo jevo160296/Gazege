@@ -1,4 +1,4 @@
-package com.example.gazege.ui.screens
+package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.SnackbarHostState
@@ -42,7 +42,7 @@ fun NavGraphBuilder.screenAddAccount(
         )
 
         val coroutineScope = rememberCoroutineScope()
-        AccountFormScreen(
+        AccountFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
             personList = allPerson,
@@ -141,7 +141,7 @@ fun NavGraphBuilder.screenEditAccount(
                     owner = it.accountAndOwnerWithTransactions.owner
                 )
             }
-        AccountFormScreen(
+        AccountFormFragment(
             personList = allPerson,
             itemSpacing = 8.dp,
             contentPadding = PaddingValues(8.dp),
@@ -201,7 +201,7 @@ fun NavController.navigateToEditAccount(accountId: Int?) {
 }
 
 @Composable
-fun AccountFormScreen(
+fun AccountFormFragment(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,

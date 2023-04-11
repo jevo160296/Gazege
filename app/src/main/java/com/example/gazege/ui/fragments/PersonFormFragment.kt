@@ -1,4 +1,4 @@
-package com.example.gazege.ui.screens
+package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.SnackbarHostState
@@ -30,7 +30,7 @@ fun NavGraphBuilder.screenAddPerson(
         val allPerson by viewModel.allPerson.observeAsState(emptyList())
 
         val coroutineScope = rememberCoroutineScope()
-        PersonFormScreen(
+        PersonFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
             onPersonAddRequested = { person, snackBarHostSate ->
@@ -76,7 +76,7 @@ fun NavGraphBuilder.screenEditPerson(
         val personId = navBack.arguments?.getInt("personId")
         val selectedPerson = allPerson
             .firstOrNull { it.id == personId }
-        PersonFormScreen(
+        PersonFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
             onPersonAddRequested = { person, snackBarHostSate ->
@@ -109,7 +109,7 @@ fun NavController.navigateToEditPerson(personId: Int?) {
 }
 
 @Composable
-fun PersonFormScreen(
+fun PersonFormFragment(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,

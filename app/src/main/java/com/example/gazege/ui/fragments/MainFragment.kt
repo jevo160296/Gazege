@@ -1,4 +1,4 @@
-package com.example.gazege.ui.screens
+package com.example.gazege.ui.fragments
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
@@ -45,7 +45,7 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(
+fun MainFragment(
     personList: List<PersonWithAccounts>,
     accountList: List<AccountAndOwnerWithTransactions>,
     allTransactionList: List<TransactionAndAccountsAndCategory>,
@@ -380,7 +380,7 @@ private fun DefaultPreview() {
     }
     val snackbarHostState = SnackbarHostState()
     GazegeTheme(darkTheme = true) {
-        MainScreen(
+        MainFragment(
             personList = personList,
             accountList = accounts,
             allTransactionList = transactions,

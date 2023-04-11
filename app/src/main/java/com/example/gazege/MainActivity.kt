@@ -32,7 +32,7 @@ import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.screens.*
+import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountDetail
@@ -128,7 +128,7 @@ class MainActivity : ComponentActivity() {
                         composable("main") {
                             val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
                             val snackbarHostState = SnackbarHostState()
-                            MainScreen(
+                            MainFragment(
                                 personList = personWithAccounts,
                                 accountList = accountAndOwnerWithTransactions,
                                 allTransactionList = allTransactionAndAccountsAndCategory,

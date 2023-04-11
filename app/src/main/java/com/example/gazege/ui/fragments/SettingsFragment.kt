@@ -1,4 +1,4 @@
-package com.example.gazege.ui.screens
+package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -42,7 +42,7 @@ fun NavGraphBuilder.screenSettings(
         val incomeAccount by viewModel.incomeAccount.observeAsState()
         val outcomeAccount by viewModel.outcomeAccount.observeAsState()
 
-        SettingsScreen(
+        SettingsFragment(
             personList = allPerson,
             principalPerson = principalPerson,
             onPrincipalPersonChanged = {
@@ -105,7 +105,7 @@ fun NavController.navigateToSettings() {
 }
 
 @Composable
-fun SettingsScreen(
+fun SettingsFragment(
     personList: List<Person>,
     principalPerson: Person?,
     onPrincipalPersonChanged: (Person) -> Unit,
