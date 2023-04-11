@@ -2,9 +2,14 @@ package com.example.gazege.ui.navigation
 
 import android.database.sqlite.SQLiteConstraintException
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -12,6 +17,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.gazege.MainViewModel
+import com.example.gazege.NavPosition
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
@@ -27,6 +33,86 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+
+@OptIn(ExperimentalMaterialApi::class)
+fun NavGraphBuilder.screenMain(
+    viewModel: MainViewModel,
+    onNavigateToAddPerson: () -> Unit,
+    onNavigateToEditPerson: (Int?) -> Unit,
+    onNavigateToPersonDetail: (Int?) -> Unit,
+    onNavigateToAddAccount: () -> Unit,
+    onNavigateToEditAccount: (Int?) -> Unit,
+    onNavigateToAccountDetail: (Int?) -> Unit,
+    onNavigateToAddTransaction: (date: LocalDate, action: AddTransactionAction) -> Unit,
+    onNavigateToEditTransaction: (Int?) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToSaldoActualSettings: () -> Unit,
+) {
+    composable("main") {
+        val personWithAccounts by viewModel.personWithAccounts.observeAsState(emptyList())
+        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
+            emptyList()
+        )
+        val allTransactionAndAccountsAndCategory by viewModel.allTransactionAndAccountsAndCategory.observeAsState(
+            emptyList()
+        )
+        val filteredTransactionAndAccountsAndCategory by viewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
+            emptyList()
+        )
+        val principalPersonWithAccounts by viewModel.principalPersonWithAccounts.observeAsState()
+        val range by viewModel.range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
+        val personFilterValue by viewModel.personFilterValue.observeAsState(false)
+
+        var navPosition: NavPosition by rememberSaveable {
+            mutableStateOf(NavPosition.TRANSACCIONES)
+        }
+        val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+        val snackbarHostState = SnackbarHostState()
+        MainFragment(
+            personList = personWithAccounts,
+            accountList = accountAndOwnerWithTransactions,
+            allTransactionList = allTransactionAndAccountsAndCategory,
+            filteredTransactionList = filteredTransactionAndAccountsAndCategory,
+            principalPersonWithAccounts = principalPersonWithAccounts,
+            navPosition = navPosition,
+            range = range,
+            personFilterValue = personFilterValue,
+            sheetState = sheetState,
+            snackbarHostState = snackbarHostState,
+            delPerson = viewModel::deletePerson,
+            delAccount = viewModel::deleteAccount,
+            delTransaction = viewModel::deleteTransaction,
+            onAddPersonRequested = onNavigateToAddPerson,
+            onEditPersonRequested = { onNavigateToEditPerson(it.id) },
+            onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
+            onAddAccountRequested = onNavigateToAddAccount,
+            onEditAccountRequested = { onNavigateToEditAccount(it.id) },
+            onAccountDetailRequested = { onNavigateToAccountDetail(it.id) },
+            onAddTransactionRequested = {
+                val startDate = range.first
+                val esMesActual =
+                    range.first?.withDayOfMonth(1) == LocalDate.now()
+                        .withDayOfMonth(1)
+                val esMesPosterior =
+                    startDate != null &&
+                            startDate.withDayOfMonth(1) > LocalDate.now()
+                        .withDayOfMonth(1)
+                val date = if (esMesActual || startDate == null) LocalDate.now()
+                else if (esMesPosterior) startDate.withDayOfMonth(1) else
+                    startDate.withDayOfMonth(1).plusMonths(1L)
+                        .minusDays(1L)
+                onNavigateToAddTransaction(date, it)
+            },
+            onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
+            onNavStatusChanged = { navPosition = it },
+            onRangeChanged = { startDate, endDate -> viewModel.updateRange(startDate, endDate) },
+            onSettingsClicked = onNavigateToSettings,
+            onSaldoActualClick = onNavigateToSaldoActualSettings
+        ) {
+            viewModel.updatePersonFilterValue(it)
+        }
+    }
+}
 
 fun NavGraphBuilder.screenAddAccount(
     viewModel: MainViewModel,
