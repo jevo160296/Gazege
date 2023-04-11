@@ -33,7 +33,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
-import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.navigation.addTransactionRoute
 import com.example.gazege.ui.screens.*
@@ -217,85 +216,12 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = { navController.navigateUp() },
                             onNavigateToSettings = { navController.navigate("settings") }
                         )
-                        composable(
-                            "editAccount/{accountId}",
-                            arguments = listOf(navArgument("accountId") { type = NavType.IntType })
-                        ) { navStack ->
-                            val accountId = navStack.arguments?.getInt("accountId")
-                            val selectedAccountAndOwnerWithTransactions =
-                                accountAndOwnerWithTransactionsAndPockets
-                                    .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
-                            val selectedAccountAndOwnerBalance =
-                                selectedAccountAndOwnerWithTransactions?.let {
-                                    AccountDao.getTotal(
-                                        it.accountAndOwnerWithTransactions,
-                                        null,
-                                        null
-                                    ) +
-                                            AccountDao.getChildrenTotal(it, null, null)
-                                }
-                            val selectedAccountAndOwner = selectedAccountAndOwnerWithTransactions
-                                ?.let {
-                                    AccountAndOwner(
-                                        account = it.accountAndOwnerWithTransactions.account,
-                                        owner = it.accountAndOwnerWithTransactions.owner
-                                    )
-                                }
-                            AccountFormScreen(
-                                personList = allPerson,
-                                itemSpacing = 8.dp,
-                                contentPadding = PaddingValues(8.dp),
-                                onPersonAddRequested = { navController.navigateToAddPerson() },
-                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
-                                    val accountOwnerIdList = allAccount
-                                        .filter { it.id != account.id }
-                                        .map { Pair(it.name, it.ownerId) }
-                                    val accountOwnerId = Pair(account.name, account.ownerId)
-                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
-                                    if (sePuedeAgregar) {
-                                        mainViewModel.updateAccount(
-                                            account,
-                                            onErrorAction = {
-                                                coroutineScope.launch {
-                                                    snackBarHostState.showSnackbar("Error añadiendo la cuenta: $it")
-                                                }
-                                            },
-                                            onCompleitionAction = { addedId ->
-                                                if (incomeAccountId != null && outcomeAccountId != null) {
-                                                    val valorAjuste =
-                                                        newBalance - (selectedAccountAndOwnerBalance
-                                                            ?: 0.0)
-                                                    mainViewModel.realizarAjuste(
-                                                        accountId = addedId.toInt(),
-                                                        amount = valorAjuste,
-                                                        incomeAccountId = incomeAccountId,
-                                                        outcomeAccountId = outcomeAccountId
-                                                    )
-                                                }
-                                            }
-                                        ).invokeOnCompletion {
-                                            if (it == null) {
-                                                navController.navigateUp()
-                                            }
-                                        }
-                                    } else {
-                                        coroutineScope.launch {
-                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
-                                        }
-                                    }
-                                },
-                                accountAndOwner = selectedAccountAndOwner,
-                                currentBalance = selectedAccountAndOwnerBalance ?: 0.0,
-                                incomeAccount = incomeAccount,
-                                outcomeAccount = outcomeAccount,
-                                onSetIncomeOutcomeAccount = {
-                                    navController.navigate("settings")
-                                },
-                                accountAndOwnerList = accountAndOwnerWithTransactions.map {
-                                    AccountAndOwner(it.account, it.owner)
-                                }
-                            )
-                        }
+                        screenEditAccount(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToSettings = { navController.navigate("settings") },
+                            onNavigateToAddPerson = navController::navigateToAddPerson
+                        )
                         screenAddPerson(
                             viewModel = mainViewModel,
                             onNavigateUp = { navController.navigateUp() }
@@ -564,7 +490,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onAction = { actionAccount, action ->
                                         when (action) {
-                                            AccountAction.EDIT -> navController.navigate("editAccount/${accountId}")
+                                            AccountAction.EDIT -> navController.navigateToEditAccount(
+                                                accountId
+                                            )
                                             AccountAction.DELETE -> {
                                                 navController.navigateUp()
                                                 mainViewModel.deleteAccount(actionAccount)
