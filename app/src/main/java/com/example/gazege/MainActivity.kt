@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                                 delAccount = { mainViewModel.deleteAccount(it) },
                                 delTransaction = { mainViewModel.deleteTransaction(it) },
                                 onAddPersonRequested = {
-                                    navController.navigate("addPerson")
+                                    navController.navigateToAddPerson()
                                 },
                                 onEditPersonRequested = {
                                     navController.navigate("editPerson/${it.id}")
@@ -213,7 +213,7 @@ class MainActivity : ComponentActivity() {
                         }
                         screenAddAccount(
                             viewModel = mainViewModel,
-                            onNavigateToAddPerson = { navController.navigate("addPerson") },
+                            onNavigateToAddPerson = { navController.navigateToAddPerson() },
                             onNavigateUp = { navController.navigateUp() },
                             onNavigateToSettings = { navController.navigate("settings") }
                         )
@@ -245,7 +245,7 @@ class MainActivity : ComponentActivity() {
                                 personList = allPerson,
                                 itemSpacing = 8.dp,
                                 contentPadding = PaddingValues(8.dp),
-                                onPersonAddRequested = { navController.navigate("addPerson") },
+                                onPersonAddRequested = { navController.navigateToAddPerson() },
                                 onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
                                     val accountOwnerIdList = allAccount
                                         .filter { it.id != account.id }
@@ -296,32 +296,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable("addPerson") {
-                            PersonFormScreen(
-                                contentPadding = PaddingValues(8.dp),
-                                itemSpacing = 8.dp,
-                                onPersonAddRequested = { person, snackBarHostSate ->
-                                    val namesList =
-                                        allPerson.map { persona -> persona.name }
-                                    val sePuedeAgregar = person.name !in namesList
-                                    if (sePuedeAgregar) {
-                                        mainViewModel.insertPerson(person, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostSate.showSnackbar("Error agregando a la persona: $it")
-                                            }
-                                        }).invokeOnCompletion {
-                                            if (it == null) {
-                                                navController.navigateUp()
-                                            }
-                                        }
-                                    } else {
-                                        coroutineScope.launch {
-                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
-                                        }
-                                    }
-                                }
-                            )
-                        }
+                        screenAddPerson(
+                            viewModel = mainViewModel,
+                            onNavigateUp = { navController.navigateUp() }
+                        )
                         composable(
                             "editPerson/{personId}",
                             arguments = listOf(navArgument("personId") { type = NavType.IntType })
@@ -455,7 +433,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateUpRequested = {
                                     navController.navigateUp()
                                 },
-                                onAddPersonRequested = { navController.navigate("addPerson") },
+                                onAddPersonRequested = { navController.navigateToAddPerson() },
                                 accountList = accountAndOwnerWithTransactions.map {
                                     AccountAndOwner(
                                         it.account,
