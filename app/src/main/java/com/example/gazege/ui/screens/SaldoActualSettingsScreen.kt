@@ -1,4 +1,4 @@
-package com.example.gazege.ui.fragments
+package com.example.gazege.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LinearProgressIndicator

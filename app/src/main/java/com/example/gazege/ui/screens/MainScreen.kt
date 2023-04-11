@@ -1,4 +1,4 @@
-package com.example.gazege.ui.fragments
+package com.example.gazege.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
