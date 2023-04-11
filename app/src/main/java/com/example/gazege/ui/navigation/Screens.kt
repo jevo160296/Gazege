@@ -1,12 +1,10 @@
 package com.example.gazege.ui.navigation
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -18,8 +16,14 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.*
+import com.example.gazege.ui.views.AccountAction
 import com.example.gazege.ui.views.AddTransactionAction
+import com.example.gazege.ui.views.TransactionAction
+import com.example.gazege.ui.views.account.AccountDetail
+import com.example.gazege.ui.views.category.CategoryForm
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenAddAccount(
@@ -542,4 +546,160 @@ fun NavGraphBuilder.screenEditTransaction(
 
 fun NavController.navigateToEditTransaction(transactionId: Int?) {
     navigate("editTransaction/$transactionId")
+}
+
+fun NavGraphBuilder.screenAddCategory(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit
+) {
+    composable("addCategory") {
+        val categories by viewModel.categories.observeAsState(emptyList())
+
+        val coroutineScope = rememberCoroutineScope()
+
+        CategoryForm(
+            null,
+            categories,
+            onCategorySave = { category, snackbar ->
+                viewModel.insertCategory(
+                    category,
+                    onCompleitionAction = { onNavigateUp() }
+                ) { error ->
+                    val msg = when (error) {
+                        is SQLiteConstraintException -> if (category.name in categories.map { it.name }) {
+                            "${category.name} ya existe."
+                        } else {
+                            "CONSTRAINT ERROR"
+                        }
+                        else -> error.toString()
+                    }
+                    coroutineScope.launch {
+                        snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
+                    }
+                }
+            }
+        )
+    }
+}
+
+fun NavController.navigateToAddCategory() {
+    navigate("addCategory")
+}
+
+fun NavGraphBuilder.screenEditCategory(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit
+) {
+    composable(
+        "editCategory/{categoryId}",
+        arguments = listOf(
+            navArgument("categoryId") {
+                type = NavType.IntType
+            }
+        )
+    ) { navStack ->
+        val categories by viewModel.categories.observeAsState(emptyList())
+
+        val coroutineScope = rememberCoroutineScope()
+
+        val categoryId = navStack.arguments?.getInt("categoryId")
+        val category = categories.firstOrNull { it.id == categoryId }
+        CategoryForm(
+            category,
+            categories,
+            onCategorySave = { newCategory, state ->
+                viewModel.updateCategory(
+                    newCategory,
+                    onCompleitionAction = onNavigateUp
+                ) { error ->
+                    val msg = when (error) {
+                        is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
+                            "${newCategory.name} ya existe."
+                        } else {
+                            "CONSTRAINT ERROR"
+                        }
+                        else -> error.toString()
+                    }
+                    coroutineScope.launch {
+                        state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
+                    }
+                }
+            }
+        )
+    }
+}
+
+fun NavController.navigateToEditCategory(categoryId: Int?) {
+    navigate("editCategory/$categoryId")
+}
+
+fun NavGraphBuilder.screenAccountDetail(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit,
+    onNavigateToEditAccount: (Int?) -> Unit,
+    onNavigateToEditTransaction: (Int?) -> Unit
+) {
+    composable(
+        "accountDetail/{accountId}",
+        arguments = listOf(
+            navArgument("accountId") {
+                type = NavType.IntType
+            }
+        )
+    ) { navStack ->
+        val data by viewModel.accountDetailData.observeAsState()
+        val accountAndOwnerWithTransactionsAndPockets by viewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
+            emptyList()
+        )
+
+        val coroutineScope = rememberCoroutineScope()
+
+        val accountId = navStack.arguments?.getInt("accountId")
+        val account = accountAndOwnerWithTransactionsAndPockets
+            .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
+        if (account != null) {
+            var showGraphs by remember {
+                mutableStateOf(false)
+            }
+            AccountDetail(
+                accountAndOwnerWithTransactionsAndPockets = account,
+                data = data,
+                onDataUpdateRequested = { newAccount ->
+                    viewModel.updateAccountDetailData(account = newAccount)
+                },
+                onAction = { actionAccount, action ->
+                    when (action) {
+                        AccountAction.EDIT -> onNavigateToEditAccount(accountId)
+                        AccountAction.DELETE -> {
+                            onNavigateUp()
+                            viewModel.deleteAccount(actionAccount)
+                        }
+                    }
+                },
+                onTransactionAction = { transaction, action ->
+                    val transactionId = transaction.id
+                    when (action) {
+                        TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
+                        TransactionAction.DELETE -> viewModel.deleteTransaction(
+                            transaction
+                        )
+                    }
+                },
+                showGraphs = showGraphs,
+                onShowGraphsChanged = {
+                    coroutineScope.launch {
+                        withContext(Dispatchers.Default) {
+                            showGraphs = it
+                        }
+                    }
+                }
+            )
+        } else {
+            Text("Cuenta vacía")
+        }
+    }
+}
+
+fun NavController.navigateToAccountDetail(accountId: Int?) {
+    navigate("accountDetail/$accountId")
 }

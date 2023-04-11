@@ -1,7 +1,6 @@
 package com.example.gazege
 
 import android.content.res.Configuration
-import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,13 +35,8 @@ import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.navigation.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
-import com.example.gazege.ui.views.account.AccountDetail
-import com.example.gazege.ui.views.category.CategoryForm
 import com.example.gazege.ui.views.person.PersonDetail
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -81,9 +75,6 @@ class MainActivity : ComponentActivity() {
                 val accountAndOwnerWithTransactions by mainViewModel.accountAndOwnerWithTransactions.observeAsState(
                     emptyList()
                 )
-                val accountAndOwnerWithTransactionsAndPockets by mainViewModel.accountAndOwnerWithTransactionsAndPockets.observeAsState(
-                    emptyList()
-                )
                 val personWithAccounts by mainViewModel.personWithAccounts.observeAsState(emptyList())
                 val filteredTransactionAndAccountsAndCategory by mainViewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
                     emptyList()
@@ -98,7 +89,6 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
-                val coroutineScope = rememberCoroutineScope()
 
                 LaunchedEffect(systemUiController, useDarkIcons) {
                     // Update all of the system bar colors to be transparent, and use
@@ -163,7 +153,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAccountDetailRequested = {
                                     val accountId = it.id
-                                    navController.navigate("accountDetail/${accountId}")
+                                    navController.navigateToAccountDetail(accountId)
                                 },
                                 onAddTransactionRequested = {
                                     val startDate = range.first
@@ -239,126 +229,23 @@ class MainActivity : ComponentActivity() {
                         screenSaldoActualSettings(viewModel = mainViewModel)
                         screenEditarCategorias(
                             viewModel = mainViewModel,
-                            onNavigateToAddCategory = { navController.navigate("addCategory") },
-                            onNavigateToEditCategory = { navController.navigate("editCategory/$it") }
+                            onNavigateToAddCategory = navController::navigateToAddCategory,
+                            onNavigateToEditCategory = navController::navigateToEditCategory
                         )
-                        composable("addCategory") {
-                            CategoryForm(
-                                null,
-                                categories,
-                                onCategorySave = { category, snackbar ->
-                                    mainViewModel.insertCategory(
-                                        category,
-                                        onCompleitionAction = {
-                                            navController.navigateUp()
-                                        }
-                                    ) { error ->
-                                        val msg = when (error) {
-                                            is SQLiteConstraintException -> if (category.name in categories.map { it.name }) {
-                                                "${category.name} ya existe."
-                                            } else {
-                                                "CONSTRAINT ERROR"
-                                            }
-                                            else -> error.toString()
-                                        }
-                                        coroutineScope.launch {
-                                            snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                        composable(
-                            "editCategory/{categoryId}",
-                            arguments = listOf(
-                                navArgument("categoryId") {
-                                    type = NavType.IntType
-                                }
-                            )
-                        ) { navStack ->
-                            val categoryId = navStack.arguments?.getInt("categoryId")
-                            val category = categories.firstOrNull { it.id == categoryId }
-                            CategoryForm(
-                                category,
-                                categories,
-                                onCategorySave = { newCategory, state ->
-                                    mainViewModel.updateCategory(newCategory,
-                                        onCompleitionAction = {
-                                            navController.navigateUp()
-                                        }
-                                    ) { error ->
-                                        val msg = when (error) {
-                                            is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
-                                                "${newCategory.name} ya existe."
-                                            } else {
-                                                "CONSTRAINT ERROR"
-                                            }
-                                            else -> error.toString()
-                                        }
-                                        coroutineScope.launch {
-                                            state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                        composable(
-                            "accountDetail/{accountId}",
-                            arguments = listOf(
-                                navArgument("accountId") {
-                                    type = NavType.IntType
-                                }
-                            )
-                        ) { navStack ->
-                            val data by mainViewModel.accountDetailData.observeAsState()
-                            val accountId = navStack.arguments?.getInt("accountId")
-                            val account = accountAndOwnerWithTransactionsAndPockets
-                                .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
-                            if (account != null) {
-                                var showGraphs by remember {
-                                    mutableStateOf(false)
-                                }
-                                AccountDetail(
-                                    accountAndOwnerWithTransactionsAndPockets = account,
-                                    data = data,
-                                    onDataUpdateRequested = { newAccount ->
-                                        mainViewModel.updateAccountDetailData(account = newAccount)
-                                    },
-                                    onAction = { actionAccount, action ->
-                                        when (action) {
-                                            AccountAction.EDIT -> navController.navigateToEditAccount(
-                                                accountId
-                                            )
-                                            AccountAction.DELETE -> {
-                                                navController.navigateUp()
-                                                mainViewModel.deleteAccount(actionAccount)
-                                            }
-                                        }
-                                    },
-                                    onTransactionAction = { transaction, action ->
-                                        val transactionId = transaction.id
-                                        when (action) {
-                                            TransactionAction.EDIT -> navController.navigateToEditTransaction(
-                                                transactionId
-                                            )
-                                            TransactionAction.DELETE -> mainViewModel.deleteTransaction(
-                                                transaction
-                                            )
-                                        }
-                                    },
-                                    showGraphs = showGraphs,
-                                    onShowGraphsChanged = {
-                                        coroutineScope.launch {
-                                            withContext(Dispatchers.Default) {
-                                                showGraphs = it
-                                            }
-                                        }
-                                    }
-                                )
-                            } else {
-                                Text("Cuenta vacía")
-                            }
-                        }
+                        screenAddCategory(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp
+                        )
+                        screenEditCategory(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp
+                        )
+                        screenAccountDetail(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToEditAccount = navController::navigateToEditAccount,
+                            onNavigateToEditTransaction = navController::navigateToEditTransaction
+                        )
                         composable(
                             "personDetail/{personId}",
                             arguments = listOf(
