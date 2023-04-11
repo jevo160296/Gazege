@@ -90,10 +90,6 @@ class MainActivity : ComponentActivity() {
                 val allTransactionAndAccountsAndCategory by mainViewModel.allTransactionAndAccountsAndCategory.observeAsState(
                     emptyList()
                 )
-                val categoriesWithSubCategories by mainViewModel.categoriesWithSubCategories.observeAsState(
-                    emptyList()
-                )
-
                 var navPosition: NavPosition by rememberSaveable {
                     mutableStateOf(NavPosition.TRANSACCIONES)
                 }
@@ -237,21 +233,14 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = navController::navigateUp,
                             onNavigateToAddAccount = navController::navigateToAddAccount,
                             onNavigateToAddPerson = navController::navigateToAddPerson,
-                            onNavigateToEditCategories = { navController.navigate("editCategories") }
+                            onNavigateToEditCategories = navController::navigateToEditarCategorias
                         )
                         screenSaldoActualSettings(viewModel = mainViewModel)
-                        composable("editCategories") {
-                            EditarCategorias(
-                                categoriesWithSubCategories,
-                                onAddCategoryRequested = {
-                                    navController.navigate("addCategory")
-                                },
-                                onEditCategoryRequested = {
-                                    navController.navigate("editCategory/${it.category.id}")
-                                },
-                                onDeleteCategoryRequested = { mainViewModel.deleteCategory(it.category) }
-                            )
-                        }
+                        screenEditarCategorias(
+                            viewModel = mainViewModel,
+                            onNavigateToAddCategory = { navController.navigate("addCategory") },
+                            onNavigateToEditCategory = { navController.navigate("editCategory/$it") }
+                        )
                         composable("addCategory") {
                             CategoryForm(
                                 null,
