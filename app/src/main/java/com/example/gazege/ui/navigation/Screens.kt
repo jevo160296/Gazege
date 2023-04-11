@@ -1,6 +1,7 @@
 package com.example.gazege.ui.navigation
 
 import android.database.sqlite.SQLiteConstraintException
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
@@ -61,48 +62,56 @@ fun NavGraphBuilder.screenMain(
         }
         val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
         val snackbarHostState = SnackbarHostState()
-        MainFragment(
-            personList = personWithAccounts,
-            accountList = accountAndOwnerWithTransactions,
-            allTransactionList = allTransactionAndAccountsAndCategory,
-            filteredTransactionList = filteredTransactionAndAccountsAndCategory,
-            principalPersonWithAccounts = principalPersonWithAccounts,
-            navPosition = navPosition,
-            range = range,
-            personFilterValue = personFilterValue,
-            sheetState = sheetState,
-            snackbarHostState = snackbarHostState,
-            delPerson = viewModel::deletePerson,
-            delAccount = viewModel::deleteAccount,
-            delTransaction = viewModel::deleteTransaction,
-            onAddPersonRequested = onNavigateToAddPerson,
-            onEditPersonRequested = { onNavigateToEditPerson(it.id) },
-            onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
-            onAddAccountRequested = onNavigateToAddAccount,
-            onEditAccountRequested = { onNavigateToEditAccount(it.id) },
-            onAccountDetailRequested = { onNavigateToAccountDetail(it.id) },
-            onAddTransactionRequested = {
-                val startDate = range.first
-                val esMesActual =
-                    range.first?.withDayOfMonth(1) == LocalDate.now()
-                        .withDayOfMonth(1)
-                val esMesPosterior =
-                    startDate != null &&
-                            startDate.withDayOfMonth(1) > LocalDate.now()
-                        .withDayOfMonth(1)
-                val date = if (esMesActual || startDate == null) LocalDate.now()
-                else if (esMesPosterior) startDate.withDayOfMonth(1) else
-                    startDate.withDayOfMonth(1).plusMonths(1L)
-                        .minusDays(1L)
-                onNavigateToAddTransaction(date, it)
-            },
-            onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
-            onNavStatusChanged = { navPosition = it },
-            onRangeChanged = { startDate, endDate -> viewModel.updateRange(startDate, endDate) },
-            onSettingsClicked = onNavigateToSettings,
-            onSaldoActualClick = onNavigateToSaldoActualSettings
-        ) {
-            viewModel.updatePersonFilterValue(it)
+        BoxWithConstraints {
+            val showVertical = maxWidth <= 700.dp
+            MainFragment(
+                personList = personWithAccounts,
+                accountList = accountAndOwnerWithTransactions,
+                allTransactionList = allTransactionAndAccountsAndCategory,
+                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
+                principalPersonWithAccounts = principalPersonWithAccounts,
+                navPosition = navPosition,
+                range = range,
+                personFilterValue = personFilterValue,
+                sheetState = sheetState,
+                snackbarHostState = snackbarHostState,
+                delPerson = viewModel::deletePerson,
+                delAccount = viewModel::deleteAccount,
+                delTransaction = viewModel::deleteTransaction,
+                onAddPersonRequested = onNavigateToAddPerson,
+                onEditPersonRequested = { onNavigateToEditPerson(it.id) },
+                onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
+                onAddAccountRequested = onNavigateToAddAccount,
+                onEditAccountRequested = { onNavigateToEditAccount(it.id) },
+                onAccountDetailRequested = { onNavigateToAccountDetail(it.id) },
+                onAddTransactionRequested = {
+                    val startDate = range.first
+                    val esMesActual =
+                        range.first?.withDayOfMonth(1) == LocalDate.now()
+                            .withDayOfMonth(1)
+                    val esMesPosterior =
+                        startDate != null &&
+                                startDate.withDayOfMonth(1) > LocalDate.now()
+                            .withDayOfMonth(1)
+                    val date = if (esMesActual || startDate == null) LocalDate.now()
+                    else if (esMesPosterior) startDate.withDayOfMonth(1) else
+                        startDate.withDayOfMonth(1).plusMonths(1L)
+                            .minusDays(1L)
+                    onNavigateToAddTransaction(date, it)
+                },
+                onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
+                onNavStatusChanged = { navPosition = it },
+                onRangeChanged = { startDate, endDate ->
+                    viewModel.updateRange(
+                        startDate,
+                        endDate
+                    )
+                },
+                onSettingsClicked = onNavigateToSettings,
+                onSaldoActualClick = onNavigateToSaldoActualSettings,
+                onPersonFilterValueChanged = viewModel::updatePersonFilterValue,
+                showVertical = showVertical
+            )
         }
     }
 }

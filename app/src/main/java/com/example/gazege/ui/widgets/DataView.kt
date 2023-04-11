@@ -52,6 +52,7 @@ fun DataView(
 
 @Composable
 fun PersonMonthSummaryView(
+    modifier: Modifier,
     saldoActual: Double,
     ingresos: Double,
     egresos: Double,
@@ -64,8 +65,7 @@ fun PersonMonthSummaryView(
     )
     val disabledColors = CardDefaults.cardColors()
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -74,12 +74,11 @@ fun PersonMonthSummaryView(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val modifier = Modifier.weight(1f)
             DataView(
                 title = "Saldo actual",
                 bigTitle = true,
                 value = doubleToString(saldoActual),
-                modifier = modifier,
+                modifier = Modifier.weight(1f),
                 colors = enabledColors,
                 onClick = onSaldoActualClick
             )
@@ -89,25 +88,24 @@ fun PersonMonthSummaryView(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val modifier = Modifier.weight(1f)
             DataView(
                 title = "Ingresos",
                 value = doubleToString(ingresos),
-                modifier = modifier,
+                modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
                 title = "Egresos",
                 value = doubleToString(egresos),
-                modifier = modifier,
+                modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
                 title = "Flujo",
                 value = doubleToString(flujo),
-                modifier = modifier,
+                modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
