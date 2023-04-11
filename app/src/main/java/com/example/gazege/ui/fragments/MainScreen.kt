@@ -47,30 +47,30 @@ import java.time.LocalDate
 @Composable
 fun MainFragment(
     personList: List<PersonWithAccounts>,
+    accountList: List<AccountAndOwnerWithTransactions>,
+    allTransactionList: List<TransactionAndAccountsAndCategory>,
+    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
+    principalPersonWithAccounts: PersonWithAccounts?,
+    navPosition: NavPosition,
+    range: Pair<LocalDate?, LocalDate?>,
+    personFilterValue: Boolean,
+    sheetState: ModalBottomSheetState,
+    snackbarHostState: SnackbarHostState,
+    delPerson: (Person) -> Unit,
+    delAccount: (Account) -> Unit,
+    delTransaction: (Transaction) -> Unit,
     onAddPersonRequested: () -> Unit,
     onEditPersonRequested: (Person) -> Unit,
-    delPerson: (Person) -> Unit,
     onPersonDetailRequested: (Person) -> Unit,
-    accountList: List<AccountAndOwnerWithTransactions>,
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     onAccountDetailRequested: (Account) -> Unit,
-    delAccount: (Account) -> Unit,
-    allTransactionList: List<TransactionAndAccountsAndCategory>,
-    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
     onAddTransactionRequested: (action: AddTransactionAction) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
-    delTransaction: (Transaction) -> Unit,
-    navPosition: NavPosition,
     onNavStatusChanged: (NavPosition) -> Unit,
-    range: Pair<LocalDate?, LocalDate?>,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
-    sheetState: ModalBottomSheetState,
-    snackbarHostState: SnackbarHostState,
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
-    principalPersonWithAccounts: PersonWithAccounts?,
-    personFilterValue: Boolean,
     onPersonFilterValueChanged: (Boolean) -> Unit
 ) {
     val transactionState = rememberLazyListState()
@@ -383,26 +383,20 @@ private fun DefaultPreview() {
         MainFragment(
             personList = personList,
             accountList = accounts,
-            onAddPersonRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add person requested.")
-                }
-            },
-            onAddAccountRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add account requested.")
-                }
-            },
+            allTransactionList = transactions,
+            filteredTransactionList = transactions,
+            principalPersonWithAccounts = PersonWithAccounts(
+                person = Person(name = "?"),
+                emptyList()
+            ),
+            navPosition = navPosition,
+            range = Pair(LocalDate.now(), LocalDate.now()),
+            personFilterValue = false,
+            sheetState = sheetState,
+            snackbarHostState = snackbarHostState,
             delPerson = {
                 scope.launch {
                     snackbarHostState.showSnackbar("Delete person requested")
-                }
-            },
-            allTransactionList = transactions,
-            filteredTransactionList = transactions,
-            onAddTransactionRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add transaction requested")
                 }
             },
             delAccount = {
@@ -415,14 +409,9 @@ private fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Del transaction ${it.amount}")
                 }
             },
-            navPosition = navPosition,
-            onNavStatusChanged = {
-                navPosition = it
-            },
-            sheetState = sheetState,
-            onEditAccountRequested = {
+            onAddPersonRequested = {
                 scope.launch {
-                    snackbarHostState.showSnackbar("Edit account ${it.name}")
+                    snackbarHostState.showSnackbar("Add person requested.")
                 }
             },
             onEditPersonRequested = {
@@ -430,28 +419,38 @@ private fun DefaultPreview() {
                     snackbarHostState.showSnackbar("Edit person ${it.name}")
                 }
             },
+            onPersonDetailRequested = {},
+            onAddAccountRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Add account requested.")
+                }
+            },
+            onEditAccountRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Edit account ${it.name}")
+                }
+            },
+            onAccountDetailRequested = {},
+            onAddTransactionRequested = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Add transaction requested")
+                }
+            },
             onEditTransactionRequested = {
                 scope.launch {
                     snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
                 }
             },
-            snackbarHostState = snackbarHostState,
+            onNavStatusChanged = {
+                navPosition = it
+            },
             onRangeChanged = { _, _ -> },
-            range = Pair(LocalDate.now(), LocalDate.now()),
             onSettingsClicked = {
                 scope.launch {
                     snackbarHostState.showSnackbar("Settings clicked")
                 }
             },
-            principalPersonWithAccounts = PersonWithAccounts(
-                person = Person(name = "?"),
-                emptyList()
-            ),
-            onSaldoActualClick = {},
-            onAccountDetailRequested = {},
-            onPersonDetailRequested = {},
-            personFilterValue = false,
-            onPersonFilterValueChanged = {}
-        )
+            onSaldoActualClick = {}
+        ) {}
     }
 }

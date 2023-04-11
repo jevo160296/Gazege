@@ -141,19 +141,40 @@ class MainActivity : ComponentActivity() {
                             val snackbarHostState = SnackbarHostState()
                             MainFragment(
                                 personList = personWithAccounts,
+                                accountList = accountAndOwnerWithTransactions,
+                                allTransactionList = allTransactionAndAccountsAndCategory,
+                                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
+                                principalPersonWithAccounts = principalPersonWithAccounts,
+                                navPosition = navPosition,
+                                range = range,
+                                personFilterValue = personFilterValue,
+                                sheetState = sheetState,
+                                snackbarHostState = snackbarHostState,
+                                delPerson = { mainViewModel.deletePerson(it) },
+                                delAccount = { mainViewModel.deleteAccount(it) },
+                                delTransaction = { mainViewModel.deleteTransaction(it) },
                                 onAddPersonRequested = {
                                     navController.navigate("addPerson")
                                 },
-                                delPerson = { mainViewModel.deletePerson(it) },
-                                accountList = accountAndOwnerWithTransactions,
+                                onEditPersonRequested = {
+                                    navController.navigate("editPerson/${it.id}")
+                                },
+                                onPersonDetailRequested = {
+                                    val personId = it.id
+                                    navController.navigate("personDetail/${personId}")
+                                },
                                 onAddAccountRequested = {
                                     navController.navigate(
                                         route = "addAccount"
                                     )
                                 },
-                                delAccount = { mainViewModel.deleteAccount(it) },
-                                allTransactionList = allTransactionAndAccountsAndCategory,
-                                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
+                                onEditAccountRequested = {
+                                    navController.navigate(route = "editAccount/${it.id}")
+                                },
+                                onAccountDetailRequested = {
+                                    val accountId = it.id
+                                    navController.navigate("accountDetail/${accountId}")
+                                },
                                 onAddTransactionRequested = {
                                     val startDate = range.first
                                     val esMesActual =
@@ -169,48 +190,26 @@ class MainActivity : ComponentActivity() {
                                             .minusDays(1L)
                                     navController.navigate(route = addTransactionRoute(date, it))
                                 },
-                                delTransaction = { mainViewModel.deleteTransaction(it) },
-                                navPosition = navPosition,
-                                onNavStatusChanged = {
-                                    navPosition = it
-                                },
-                                sheetState = sheetState,
                                 onEditTransactionRequested = {
                                     navController.navigate("editTransaction/${it.id}")
                                 },
-                                onEditPersonRequested = {
-                                    navController.navigate("editPerson/${it.id}")
+                                onNavStatusChanged = {
+                                    navPosition = it
                                 },
-                                onEditAccountRequested = {
-                                    navController.navigate(route = "editAccount/${it.id}")
-                                },
-                                snackbarHostState = snackbarHostState,
-                                range = range,
                                 onRangeChanged = { startDate, endDate ->
                                     mainViewModel.updateRange(startDate, endDate)
                                 },
                                 onSettingsClicked = {
                                     navController.navigate("settings")
                                 },
-                                principalPersonWithAccounts = principalPersonWithAccounts,
                                 onSaldoActualClick = {
                                     navController.navigate("saldoActualSettings")
-                                },
-                                onAccountDetailRequested = {
-                                    val accountId = it.id
-                                    navController.navigate("accountDetail/${accountId}")
-                                },
-                                onPersonDetailRequested = {
-                                    val personId = it.id
-                                    navController.navigate("personDetail/${personId}")
-                                },
-                                personFilterValue = personFilterValue,
-                                onPersonFilterValueChanged = {
-                                    mainViewModel.updatePersonFilterValue(
-                                        it
-                                    )
                                 }
-                            )
+                            ) {
+                                mainViewModel.updatePersonFilterValue(
+                                    it
+                                )
+                            }
                         }
                         composable("addAccount") {
                             AccountFormFragment(
