@@ -18,9 +18,11 @@ import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.views.AccountAction
 import com.example.gazege.ui.views.AddTransactionAction
+import com.example.gazege.ui.views.PersonAction
 import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.account.AccountDetail
 import com.example.gazege.ui.views.category.CategoryForm
+import com.example.gazege.ui.views.person.PersonDetail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -702,4 +704,59 @@ fun NavGraphBuilder.screenAccountDetail(
 
 fun NavController.navigateToAccountDetail(accountId: Int?) {
     navigate("accountDetail/$accountId")
+}
+
+fun NavGraphBuilder.screenPersonDetail(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit,
+    onNavigateToEditPerson: (Int?) -> Unit,
+    onNavigateToEditTransaction: (Int?) -> Unit
+) {
+    composable(
+        "personDetail/{personId}",
+        arguments = listOf(
+            navArgument("personId") {
+                type = NavType.IntType
+            }
+        )
+    ) { navStack ->
+        val allPerson by viewModel.allPerson.observeAsState(emptyList())
+        val allTransactions by viewModel.allTransactions.observeAsState(emptyList())
+        val allAccount by viewModel.allAccount.observeAsState(emptyList())
+        val categories by viewModel.categories.observeAsState(emptyList())
+
+
+        val personId = navStack.arguments?.getInt("personId")
+        val person = allPerson.firstOrNull { it.id == personId }
+        if (person != null) {
+            PersonDetail(
+                person = person,
+                onPersonAction = { _, action ->
+                    when (action) {
+                        PersonAction.EDIT -> onNavigateToEditPerson(personId)
+                        PersonAction.DELETE -> {
+                            onNavigateUp()
+                            viewModel.deletePerson(person)
+                        }
+                    }
+                },
+                allTransactions = allTransactions,
+                allAccounts = allAccount,
+                allCategories = categories,
+                onTransactionAction = { transaction, action ->
+                    val transactionId = transaction.id
+                    when (action) {
+                        TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
+                        TransactionAction.DELETE -> viewModel.deleteTransaction(transaction)
+                    }
+                }
+            )
+        } else {
+            Text(text = "Empty person")
+        }
+    }
+}
+
+fun NavController.navigateToPersonDetail(personId: Int?) {
+    navigate("personDetail/$personId")
 }

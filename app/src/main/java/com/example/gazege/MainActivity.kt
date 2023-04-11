@@ -16,18 +16,15 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
@@ -35,7 +32,6 @@ import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.navigation.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
-import com.example.gazege.ui.views.person.PersonDetail
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.time.LocalDate
 
@@ -59,10 +55,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GazegeTheme {
-                val allPerson by mainViewModel.allPerson.observeAsState(emptyList())
-                val allAccount by mainViewModel.allAccount.observeAsState(emptyList())
-                val allTransactions by mainViewModel.allTransactions.observeAsState(emptyList())
-                val categories by mainViewModel.categories.observeAsState(emptyList())
                 val range by mainViewModel.range.observeAsState(
                     Pair(
                         LocalDate.now(),
@@ -141,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onPersonDetailRequested = {
                                     val personId = it.id
-                                    navController.navigate("personDetail/${personId}")
+                                    navController.navigateToPersonDetail(personId)
                                 },
                                 onAddAccountRequested = {
                                     navController.navigate(
@@ -246,49 +238,12 @@ class MainActivity : ComponentActivity() {
                             onNavigateToEditAccount = navController::navigateToEditAccount,
                             onNavigateToEditTransaction = navController::navigateToEditTransaction
                         )
-                        composable(
-                            "personDetail/{personId}",
-                            arguments = listOf(
-                                navArgument("personId") {
-                                    type = NavType.IntType
-                                }
-                            )
-                        ) { navStack ->
-                            val personId = navStack.arguments?.getInt("personId")
-                            val person = allPerson.firstOrNull { it.id == personId }
-                            if (person != null) {
-                                PersonDetail(
-                                    person = person,
-                                    onPersonAction = { _, action ->
-                                        when (action) {
-                                            PersonAction.EDIT -> navController.navigateToEditPerson(
-                                                personId
-                                            )
-                                            PersonAction.DELETE -> {
-                                                navController.navigateUp()
-                                                mainViewModel.deletePerson(person)
-                                            }
-                                        }
-                                    },
-                                    allTransactions = allTransactions,
-                                    allAccounts = allAccount,
-                                    allCategories = categories,
-                                    onTransactionAction = { transaction, action ->
-                                        val transactionId = transaction.id
-                                        when (action) {
-                                            TransactionAction.EDIT -> navController.navigateToEditTransaction(
-                                                transactionId
-                                            )
-                                            TransactionAction.DELETE -> mainViewModel.deleteTransaction(
-                                                transaction
-                                            )
-                                        }
-                                    }
-                                )
-                            } else {
-                                Text(text = "Empty person")
-                            }
-                        }
+                        screenPersonDetail(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToEditTransaction = navController::navigateToEditTransaction,
+                            onNavigateToEditPerson = navController::navigateToEditPerson
+                        )
                     }
                 }
             }
