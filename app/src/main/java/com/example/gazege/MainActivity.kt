@@ -157,7 +157,7 @@ class MainActivity : ComponentActivity() {
                                     navController.navigateToAddPerson()
                                 },
                                 onEditPersonRequested = {
-                                    navController.navigate("editPerson/${it.id}")
+                                    navController.navigateToEditPerson(it.id)
                                 },
                                 onPersonDetailRequested = {
                                     val personId = it.id
@@ -300,39 +300,10 @@ class MainActivity : ComponentActivity() {
                             viewModel = mainViewModel,
                             onNavigateUp = { navController.navigateUp() }
                         )
-                        composable(
-                            "editPerson/{personId}",
-                            arguments = listOf(navArgument("personId") { type = NavType.IntType })
-                        ) { navBack ->
-                            val personId = navBack.arguments?.getInt("personId")
-                            val selectedPerson = allPerson
-                                .firstOrNull { it.id == personId }
-                            PersonFormScreen(
-                                contentPadding = PaddingValues(8.dp),
-                                itemSpacing = 8.dp,
-                                onPersonAddRequested = { person, snackBarHostSate ->
-                                    val namesList =
-                                        allPerson.map { persona -> persona.name }
-                                    val sePuedeEditar = person.name !in namesList
-                                    if (sePuedeEditar) {
-                                        mainViewModel.updatePerson(person, onErrorAction = {
-                                            coroutineScope.launch {
-                                                snackBarHostSate.showSnackbar("Error editando persona $it")
-                                            }
-                                        }).invokeOnCompletion {
-                                            if (it == null) {
-                                                navController.navigateUp()
-                                            }
-                                        }
-                                    } else {
-                                        coroutineScope.launch {
-                                            snackBarHostSate.showSnackbar("Error, nombre repetido.")
-                                        }
-                                    }
-                                },
-                                person = selectedPerson
-                            )
-                        }
+                        screenEditPerson(
+                            viewModel = mainViewModel,
+                            onNavigateUp = { navController.navigateUp() }
+                        )
                         composable(
                             "addTransaction/{yearmonthday}/{transactionaction}",
                             arguments = listOf(
@@ -637,7 +608,9 @@ class MainActivity : ComponentActivity() {
                                     person = person,
                                     onPersonAction = { _, action ->
                                         when (action) {
-                                            PersonAction.EDIT -> navController.navigate("editPerson/${personId}")
+                                            PersonAction.EDIT -> navController.navigateToEditPerson(
+                                                personId
+                                            )
                                             PersonAction.DELETE -> {
                                                 navController.navigateUp()
                                                 mainViewModel.deletePerson(person)
