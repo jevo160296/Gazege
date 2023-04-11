@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
                     )
                 )
                 val personFilterValue by mainViewModel.personFilterValue.observeAsState(false)
-                val principalPerson by mainViewModel.principalPerson.observeAsState()
                 val principalPersonWithAccounts by mainViewModel.principalPersonWithAccounts.observeAsState()
 
                 val accountAndOwnerWithTransactions by mainViewModel.accountAndOwnerWithTransactions.observeAsState(
@@ -196,9 +195,7 @@ class MainActivity : ComponentActivity() {
                                 onSettingsClicked = {
                                     navController.navigateToSettings()
                                 },
-                                onSaldoActualClick = {
-                                    navController.navigate("saldoActualSettings")
-                                }
+                                onSaldoActualClick = navController::navigateToSaldoActualSettings
                             ) {
                                 mainViewModel.updatePersonFilterValue(
                                     it
@@ -242,25 +239,7 @@ class MainActivity : ComponentActivity() {
                             onNavigateToAddPerson = navController::navigateToAddPerson,
                             onNavigateToEditCategories = { navController.navigate("editCategories") }
                         )
-                        composable("saldoActualSettings") {
-                            var saving: Int by remember {
-                                mutableStateOf(0)
-                            }
-                            SaldoActualSettings(
-                                accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
-                                saving = saving
-                            ) { account, nuevoEstado ->
-                                saving += 1
-                                coroutineScope.launch {
-                                    mainViewModel.updateAccount(
-                                        account = account.copy(includedInTotal = nuevoEstado),
-                                        onErrorAction = {},
-                                        onCompleitionAction = {}).join()
-                                }.invokeOnCompletion {
-                                    saving -= 1
-                                }
-                            }
-                        }
+                        screenSaldoActualSettings(viewModel = mainViewModel)
                         composable("editCategories") {
                             EditarCategorias(
                                 categoriesWithSubCategories,
