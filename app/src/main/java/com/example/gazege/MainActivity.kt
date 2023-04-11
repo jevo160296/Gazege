@@ -34,7 +34,6 @@ import androidx.navigation.navArgument
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.navigation.addTransactionRoute
 import com.example.gazege.ui.screens.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
@@ -187,7 +186,7 @@ class MainActivity : ComponentActivity() {
                                     else if (esMesPosterior) startDate.withDayOfMonth(1) else
                                         startDate.withDayOfMonth(1).plusMonths(1L)
                                             .minusDays(1L)
-                                    navController.navigate(route = addTransactionRoute(date, it))
+                                    navController.navigateToAddTransaction(date, it)
                                 },
                                 onEditTransactionRequested = {
                                     navController.navigate("editTransaction/${it.id}")
@@ -230,62 +229,11 @@ class MainActivity : ComponentActivity() {
                             viewModel = mainViewModel,
                             onNavigateUp = { navController.navigateUp() }
                         )
-                        composable(
-                            "addTransaction/{yearmonthday}/{transactionaction}",
-                            arguments = listOf(
-                                navArgument("yearmonthday") {
-                                    type = NavType.IntType
-                                },
-                                navArgument("transactionaction") {
-                                    type = NavType.StringType
-                                }
-                            )
-                        ) { navBackStackEntry ->
-                            val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
-                                ?: LocalDate.now().let {
-                                    it.year * 100 + it.monthValue
-                                }
-                            val transactionActionName =
-                                navBackStackEntry.arguments?.getString("transactionaction")
-                            val transactionAction =
-                                transactionActionName?.let { AddTransactionAction.valueOf(it) }
-                                    ?: AddTransactionAction.ADD_TRANSFER
-                            val initialSourceAccount: Account? =
-                                incomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_INCOME }
-                            val initialDestinationAccount: Account? =
-                                outcomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_EXPENSE }
-                            val orderedAccounts =
-                                if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
-                                    accountAndOwnerWithTransactions
-                                } else {
-                                    mainViewModel.accountAndOwnerWithTransactionsUserFirst.observeAsState(
-                                        emptyList()
-                                    ).value
-                                }
-                            TransactionFormScreen(
-                                contentPadding = PaddingValues(8.dp),
-                                itemSpacing = 8.dp,
-                                accountList = orderedAccounts.map {
-                                    AccountAndOwner(
-                                        it.account,
-                                        it.owner
-                                    )
-                                },
-                                personList = allPerson,
-                                categoryList = categories,
-                                defaultDate = LocalDate.of(
-                                    yearMonthDay.div(10000),
-                                    yearMonthDay.mod(10000).div(100),
-                                    yearMonthDay.mod(100)
-                                ),
-                                fixedSourceAccount = initialSourceAccount,
-                                fixedDestinationAccount = initialDestinationAccount,
-                                onAccountAddRequested = { navController.navigateToAddAccount() }
-                            ) {
-                                mainViewModel.insertTransaction(it)
-                                navController.navigateUp()
-                            }
-                        }
+                        screenAddTransaction(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToAddAccount = navController::navigateToAddAccount
+                        )
                         composable(
                             "editTransaction/{transactionId}",
                             arguments = listOf(navArgument("transactionId") {
