@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.ui.doubleToString
 
 @Composable
@@ -75,7 +77,7 @@ fun PersonMonthSummaryView(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             DataView(
-                title = "Saldo actual",
+                title = stringResource(R.string.Saldo_actual),
                 bigTitle = true,
                 value = doubleToString(saldoActual),
                 modifier = Modifier.weight(1f),
@@ -89,21 +91,21 @@ fun PersonMonthSummaryView(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             DataView(
-                title = "Ingresos",
+                title = stringResource(R.string.Ingresos),
                 value = doubleToString(ingresos),
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
-                title = "Egresos",
+                title = stringResource(id = R.string.Gastos),
                 value = doubleToString(egresos),
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
-                title = "Flujo",
+                title = stringResource(R.string.Flujo),
                 value = doubleToString(flujo),
                 modifier = Modifier.weight(1f),
                 enabled = false,

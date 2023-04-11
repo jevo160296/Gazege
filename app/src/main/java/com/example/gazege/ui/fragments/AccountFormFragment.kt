@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.Person
@@ -80,7 +82,7 @@ fun AccountFormFragment(
         onSaveClicked = saveAccount,
         isSavedButtonEnabled = completeState,
         snackbarHostState = snackbarHostState,
-        title = "Account"
+        title = stringResource(R.string.cuenta)
     ) {
         AccountAndOwnerForm(
             contentPadding = contentPadding,

@@ -89,7 +89,7 @@ fun MainFragment(
         mutableStateOf("")
     }
     var title: String by rememberSaveable {
-        mutableStateOf("Gazedge")
+        mutableStateOf("Gazege")
     }
     var fabExpanded: Boolean by remember {
         mutableStateOf(false)

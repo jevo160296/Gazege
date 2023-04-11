@@ -67,7 +67,7 @@ fun SettingsFragment(
             onNavigateUpRequested()
         },
         isSavedButtonEnabled = true,
-        title = "Settings",
+        title = stringResource(R.string.Ajustes),
         itemSpacing = 8.dp,
         itemsColumnsModifier = Modifier.padding(PaddingValues(8.dp))
     ) {

@@ -130,7 +130,7 @@ fun TransactionAndAccountsForm(
                     }
                 )
             },
-            label = { Text("Amount") },
+            label = { Text(stringResource(id = R.string.Valor)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -149,7 +149,7 @@ fun TransactionAndAccountsForm(
                     }
                 )
             },
-            label = { Text(text = "Description") },
+            label = { Text(text = stringResource(id = R.string.descripcion)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
@@ -193,7 +193,7 @@ fun TransactionAndAccountsForm(
                 AccountDropDownMenu(
                     accountsList = accountList,
                     selectedAccountNode = selectedSourceNode,
-                    label = { Text("Source account") },
+                    label = { Text(stringResource(R.string.Cuenta_origen)) },
                     onItemClick = {
                         if (it.content.account.id != null) {
                             onTransactionAndAccountsChanged(
@@ -214,7 +214,7 @@ fun TransactionAndAccountsForm(
                 )
             } else {
                 ButtonField(onClick = onAccountAddRequested) {
-                    Text("New account")
+                    Text(stringResource(R.string.Nueva_cuenta))
                 }
             }
         }
@@ -234,7 +234,7 @@ fun TransactionAndAccountsForm(
                             )
                         }
                     },
-                    label = { Text("Destination account") },
+                    label = { Text(stringResource(R.string.Cuenta_destino)) },
                     deactivatedAccountList = deactivatedDestinationAccountList,
                     canClearSelection = false,
                     onClearSelectionClicked = {},
@@ -245,7 +245,7 @@ fun TransactionAndAccountsForm(
                 )
             } else {
                 ButtonField(onClick = onAccountAddRequested) {
-                    Text("New account")
+                    Text(stringResource(R.string.Nueva_cuenta))
                 }
             }
         }
@@ -284,7 +284,7 @@ fun TransactionAndAccountsForm(
                 }
                 onRealizarANombreDeChanged(it)
             })
-            Text(text = "Realizar a nombre de otra persona")
+            Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
         }
         if (realizarANombreDe) {
             var dropDownExpanded by rememberSaveable {
@@ -299,7 +299,7 @@ fun TransactionAndAccountsForm(
                 selectedItem = selectedItem,
                 itemToString = { it?.name ?: "" },
                 onItemClick = { onRealizarAnombreDeIdChanged(it.id) },
-                label = { Text("Persona") },
+                label = { Text(stringResource(R.string.persona)) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { onDoneAction() }

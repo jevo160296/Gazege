@@ -135,8 +135,9 @@ fun PersonFilter(
     )
 }
 
+@Composable
 fun rangeToString(startDate: LocalDate?, endDate: LocalDate?) =
-    if (startDate == null && endDate == null) "Todo"
+    if (startDate == null && endDate == null) stringResource(R.string.Todo)
     else if (startDate != null && endDate != null)
         localDateToString(startDate, DateFormat.YEARMONTHNAME)
     else "?"
