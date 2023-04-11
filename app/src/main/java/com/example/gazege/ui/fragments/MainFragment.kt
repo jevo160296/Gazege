@@ -439,7 +439,7 @@ private fun MainFragmentResponsiveContent(
         }
     } else {
         Row {
-            Column(modifier = Modifier.widthIn(max = 400.dp)) {
+            Column(modifier = Modifier.widthIn(max = 350.dp)) {
                 filter()
                 personMonthSummaryView()
             }
