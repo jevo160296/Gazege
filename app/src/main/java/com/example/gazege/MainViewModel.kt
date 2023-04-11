@@ -39,6 +39,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun rememberCategories() = categories.observeAsState(emptyList())
 
     @Composable
+    fun rememberBudget() = budget.observeAsState(emptyList())
+
+    @Composable
     fun rememberAccountAndOwnerWithTransactions() =
         accountAndOwnerWithTransactions.observeAsState(emptyList())
 
@@ -90,6 +93,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
     private val categories = repository.getCategories().asLiveData()
+    private val budget = repository.getBudgets().asLiveData()
 
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
         MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())

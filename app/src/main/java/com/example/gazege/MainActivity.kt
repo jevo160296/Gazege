@@ -31,7 +31,8 @@ class MainActivity : ComponentActivity() {
             personDao = database.personDao(),
             accountDao = database.accountDao(),
             transactionDao = database.transactionDao(),
-            categoryDao = database.categoryDao()
+            categoryDao = database.categoryDao(),
+            budgetDao = database.budgetDao()
         )
     }
 
