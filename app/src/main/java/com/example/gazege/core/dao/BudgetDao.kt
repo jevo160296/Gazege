@@ -2,7 +2,6 @@ package com.example.gazege.core.dao
 
 import androidx.room.*
 import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.Category
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,5 +21,5 @@ interface BudgetDao {
     suspend fun deleteAll(vararg budget: Budget): Int
 
     @Update
-    suspend fun update(account: Category)
+    suspend fun update(budget: Budget)
 }
