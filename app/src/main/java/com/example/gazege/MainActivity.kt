@@ -183,8 +183,8 @@ class MainActivity : ComponentActivity() {
                         }
                         screenAddAccount(
                             viewModel = mainViewModel,
-                            onNavigateToAddPerson = { navController.navigateToAddPerson() },
-                            onNavigateUp = { navController.navigateUp() },
+                            onNavigateToAddPerson = navController::navigateToAddPerson,
+                            onNavigateUp = navController::navigateUp,
                             onNavigateToSettings = navController::navigateToSettings
                         )
                         screenEditAccount(
@@ -195,11 +195,11 @@ class MainActivity : ComponentActivity() {
                         )
                         screenAddPerson(
                             viewModel = mainViewModel,
-                            onNavigateUp = { navController.navigateUp() }
+                            onNavigateUp = navController::navigateUp
                         )
                         screenEditPerson(
                             viewModel = mainViewModel,
-                            onNavigateUp = { navController.navigateUp() }
+                            onNavigateUp = navController::navigateUp
                         )
                         screenAddTransaction(
                             viewModel = mainViewModel,
