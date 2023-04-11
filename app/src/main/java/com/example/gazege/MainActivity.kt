@@ -211,60 +211,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        composable("addAccount") {
-                            AccountFormScreen(
-                                contentPadding = PaddingValues(8.dp),
-                                itemSpacing = 8.dp,
-                                personList = allPerson,
-                                onPersonAddRequested = {
-                                    navController.navigate("addPerson")
-                                },
-                                onAccountAndOwnerAdd = { account, newBalance, snackBarHostState, incomeAccountId, outcomeAccountId ->
-                                    val accountOwnerIdList = allAccount.map {
-                                        Pair(it.name, it.ownerId)
-                                    }
-                                    val accountOwnerId = Pair(account.name, account.ownerId)
-                                    val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
-                                    if (sePuedeAgregar) {
-                                        mainViewModel.insertAccount(
-                                            account,
-                                            onErrorAction = {
-                                                coroutineScope.launch {
-                                                    snackBarHostState.showSnackbar("Error añadiento cuenta $it")
-                                                }
-                                            },
-                                            onCompleitionAction = { addedId ->
-                                                if (incomeAccountId != null && outcomeAccountId != null) {
-                                                    val valorAjuste = newBalance
-                                                    mainViewModel.realizarAjuste(
-                                                        accountId = addedId.toInt(),
-                                                        amount = valorAjuste,
-                                                        incomeAccountId = incomeAccountId,
-                                                        outcomeAccountId = outcomeAccountId
-                                                    )
-                                                }
-                                            }).invokeOnCompletion {
-                                            if (it == null) {
-                                                navController.navigateUp()
-                                            }
-                                        }
-                                    } else {
-                                        coroutineScope.launch {
-                                            snackBarHostState.showSnackbar("Las personas no pueden tener cuentas con nombres repetidos")
-                                        }
-                                    }
-                                },
-                                currentBalance = 0.0,
-                                incomeAccount = incomeAccount,
-                                outcomeAccount = outcomeAccount,
-                                onSetIncomeOutcomeAccount = {
-                                    navController.navigate("settings")
-                                },
-                                accountAndOwnerList = accountAndOwnerWithTransactions.map {
-                                    AccountAndOwner(it.account, it.owner)
-                                }
-                            )
-                        }
+                        screenAddAccount(
+                            viewModel = mainViewModel,
+                            onNavigateToAddPerson = { navController.navigate("addPerson") },
+                            onNavigateUp = { navController.navigateUp() },
+                            onNavigateToSettings = { navController.navigate("settings") }
+                        )
                         composable(
                             "editAccount/{accountId}",
                             arguments = listOf(navArgument("accountId") { type = NavType.IntType })
@@ -453,7 +405,7 @@ class MainActivity : ComponentActivity() {
                                 ),
                                 fixedSourceAccount = initialSourceAccount,
                                 fixedDestinationAccount = initialDestinationAccount,
-                                onAccountAddRequested = { navController.navigate("addAccount") }
+                                onAccountAddRequested = { navController.navigateToAddAccount() }
                             ) {
                                 mainViewModel.insertTransaction(it)
                                 navController.navigateUp()
@@ -481,7 +433,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 personList = allPerson,
                                 categoryList = categories,
-                                onAccountAddRequested = { navController.navigate("addAccount") }
+                                onAccountAddRequested = { navController.navigateToAddAccount() }
                             ) {
                                 mainViewModel.updateTransaction(it)
                                 navController.navigateUp()
@@ -512,7 +464,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 incomeAccount = incomeAccount,
                                 outcomeAccount = outcomeAccount,
-                                onAddAccountRequested = { navController.navigate("addAccount") },
+                                onAddAccountRequested = { navController.navigateToAddAccount() },
                                 onIncomeOutcomeAccountChanged = { newIncome, newOutcome ->
                                     val castedIncomeAccount = incomeAccount
                                     val castedOutcomeAccount = outcomeAccount
