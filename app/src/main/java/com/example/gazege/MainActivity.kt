@@ -8,7 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -234,34 +232,11 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = navController::navigateUp,
                             onNavigateToAddAccount = navController::navigateToAddAccount
                         )
-                        composable(
-                            "editTransaction/{transactionId}",
-                            arguments = listOf(navArgument("transactionId") {
-                                type = NavType.IntType
-                            })
-                        ) { navBackStackEntry ->
-                            val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-                            val selectedTransactionAndAccounts =
-                                filteredTransactionAndAccountsAndCategory
-                                    .firstOrNull { it.transaction.id == transactionId }
-                            TransactionFormScreen(
-                                contentPadding = PaddingValues(8.dp),
-                                itemSpacing = 8.dp,
-                                transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
-                                accountList = accountAndOwnerWithTransactions.map {
-                                    AccountAndOwner(
-                                        it.account,
-                                        it.owner
-                                    )
-                                },
-                                personList = allPerson,
-                                categoryList = categories,
-                                onAccountAddRequested = { navController.navigateToAddAccount() }
-                            ) {
-                                mainViewModel.updateTransaction(it)
-                                navController.navigateUp()
-                            }
-                        }
+                        screenEditTransaction(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp,
+                            onNavigateToAddAccount = navController::navigateToAddAccount
+                        )
                         composable("settings") {
                             SettingsFragment(
                                 personList = allPerson,
@@ -450,7 +425,9 @@ class MainActivity : ComponentActivity() {
                                     onTransactionAction = { transaction, action ->
                                         val transactionId = transaction.id
                                         when (action) {
-                                            TransactionAction.EDIT -> navController.navigate("editTransaction/${transactionId}")
+                                            TransactionAction.EDIT -> navController.navigateToEditTransaction(
+                                                transactionId
+                                            )
                                             TransactionAction.DELETE -> mainViewModel.deleteTransaction(
                                                 transaction
                                             )
@@ -499,7 +476,9 @@ class MainActivity : ComponentActivity() {
                                     onTransactionAction = { transaction, action ->
                                         val transactionId = transaction.id
                                         when (action) {
-                                            TransactionAction.EDIT -> navController.navigate("editTransaction/${transactionId}")
+                                            TransactionAction.EDIT -> navController.navigateToEditTransaction(
+                                                transactionId
+                                            )
                                             TransactionAction.DELETE -> mainViewModel.deleteTransaction(
                                                 transaction
                                             )

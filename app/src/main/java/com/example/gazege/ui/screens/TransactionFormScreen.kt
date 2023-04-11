@@ -107,6 +107,54 @@ fun NavController.navigateToAddTransaction(
     navigate("addTransaction/$yearmonthday/$transactionaction")
 }
 
+fun NavGraphBuilder.screenEditTransaction(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit,
+    onNavigateToAddAccount: () -> Unit
+) {
+    composable(
+        "editTransaction/{transactionId}",
+        arguments = listOf(navArgument("transactionId") {
+            type = NavType.IntType
+        })
+    ) { navBackStackEntry ->
+        val filteredTransactionAndAccountsAndCategory by viewModel.filteredTransactionAndAccountsAndCategory.observeAsState(
+            emptyList()
+        )
+        val accountAndOwnerWithTransactions by viewModel.accountAndOwnerWithTransactions.observeAsState(
+            emptyList()
+        )
+        val allPerson by viewModel.allPerson.observeAsState(emptyList())
+        val categories by viewModel.categories.observeAsState(emptyList())
+
+        val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
+        val selectedTransactionAndAccounts =
+            filteredTransactionAndAccountsAndCategory
+                .firstOrNull { it.transaction.id == transactionId }
+        TransactionFormScreen(
+            contentPadding = PaddingValues(8.dp),
+            itemSpacing = 8.dp,
+            transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
+            accountList = accountAndOwnerWithTransactions.map {
+                AccountAndOwner(
+                    it.account,
+                    it.owner
+                )
+            },
+            personList = allPerson,
+            categoryList = categories,
+            onAccountAddRequested = onNavigateToAddAccount
+        ) {
+            viewModel.updateTransaction(it)
+            onNavigateUp()
+        }
+    }
+}
+
+fun NavController.navigateToEditTransaction(transactionId: Int?) {
+    navigate("editTransaction/$transactionId")
+}
+
 @Composable
 fun TransactionFormScreen(
     modifier: Modifier = Modifier,
