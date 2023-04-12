@@ -2,6 +2,7 @@ package com.example.gazege.core.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 
@@ -24,6 +25,13 @@ data class Budget(
     val frequencyType: FrequencyType,
     val startDate: LocalDate
 ) {
+    @Ignore
+    val eachClass = when (frequencyType) {
+        FrequencyType.DAILY -> null
+        FrequencyType.MONTHLY -> AbsoluteMonthDays.from(each)
+        FrequencyType.WEEKLY -> WeekDays.from(each)
+    }
+
     companion object {
         fun fromDaily(
             id: Int? = null,
@@ -91,6 +99,10 @@ fun Boolean.toByte(position: Int) = (if (this) {
 
 fun Int.toByteString(length: Int) = this.toString(2).padStart(length, '0')
 
+interface IEach {
+    fun toInt(): Int
+}
+
 data class WeekDays(
     val sunday: Boolean,
     val monday: Boolean,
@@ -99,8 +111,8 @@ data class WeekDays(
     val thursday: Boolean,
     val friday: Boolean,
     val saturday: Boolean
-) {
-    fun toInt() = arrayOf(sunday, monday, tuesday, wednesday, thursday, friday, saturday)
+) : IEach {
+    override fun toInt() = arrayOf(sunday, monday, tuesday, wednesday, thursday, friday, saturday)
         .reversed()
         .mapIndexed { index, day ->
             day.toByte(index)
@@ -124,7 +136,7 @@ data class WeekDays(
 
 data class AbsoluteMonthDays(
     val days: Set<Int>
-) {
+) : IEach {
     init {
         val isValid = days.all { it in 1..31 }
         if (!isValid) {
@@ -132,7 +144,7 @@ data class AbsoluteMonthDays(
         }
     }
 
-    fun toInt() = (0..30)
+    override fun toInt() = (0..30)
         .reversed()
         .sumOf { index ->
             val day = 31 - index
