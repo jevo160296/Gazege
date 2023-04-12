@@ -1,0 +1,156 @@
+package com.example.gazege.core.entities
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import java.time.LocalDate
+
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["id"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class Budget(
+    @PrimaryKey(autoGenerate = true) val id: Int? = null,
+    val categoryId: Int,
+    val value: Double,
+    val each: Int,
+    val frequency: Int,
+    val frequencyType: FrequencyType,
+    val startDate: LocalDate
+) {
+    companion object {
+        fun fromDaily(
+            id: Int? = null,
+            categoryId: Int,
+            value: Double,
+            frequency: Int,
+            startDate: LocalDate
+        ): Budget = Budget(
+            id = id,
+            categoryId = categoryId,
+            value = value,
+            each = 1,
+            frequency = frequency,
+            frequencyType = FrequencyType.DAILY,
+            startDate = startDate
+        )
+
+        fun fromWeekly(
+            id: Int? = null,
+            categoryId: Int,
+            value: Double,
+            each: WeekDays,
+            frequency: Int,
+            startDate: LocalDate
+        ): Budget = Budget(
+            id = id,
+            categoryId = categoryId,
+            value = value,
+            each = each.toInt(),
+            frequency = frequency,
+            frequencyType = FrequencyType.WEEKLY,
+            startDate = startDate
+        )
+
+        fun fromMonthlyAbsoluteDays(
+            id: Int? = null,
+            categoryId: Int,
+            value: Double,
+            each: AbsoluteMonthDays,
+            frequency: Int,
+            startDate: LocalDate
+        ): Budget = Budget(
+            id = id,
+            categoryId = categoryId,
+            value = value,
+            each = each.toInt(),
+            frequency = frequency,
+            frequencyType = FrequencyType.MONTHLY,
+            startDate = startDate
+        )
+    }
+}
+
+enum class FrequencyType {
+    DAILY,
+    WEEKLY,
+    MONTHLY
+}
+
+fun Boolean.toByte(position: Int) = (if (this) {
+    0b1
+} else {
+    0b0
+}).shl(position)
+
+fun Int.toByteString(length: Int) = this.toString(2).padStart(length, '0')
+
+data class WeekDays(
+    val sunday: Boolean,
+    val monday: Boolean,
+    val tuesday: Boolean,
+    val wednesday: Boolean,
+    val thursday: Boolean,
+    val friday: Boolean,
+    val saturday: Boolean
+) {
+    fun toInt() = arrayOf(sunday, monday, tuesday, wednesday, thursday, friday, saturday)
+        .reversed()
+        .mapIndexed { index, day ->
+            day.toByte(index)
+        }
+        .sum()
+
+    companion object {
+        fun from(value: Int): WeekDays = value
+            .toByteString(7)
+            .map {
+                when (it) {
+                    '0' -> false
+                    '1' -> true
+                    else -> true
+                }
+            }
+            .toTypedArray()
+            .let { WeekDays(it[0], it[1], it[2], it[3], it[4], it[5], it[6]) }
+    }
+}
+
+data class AbsoluteMonthDays(
+    val days: Set<Int>
+) {
+    init {
+        val isValid = days.all { it in 1..31 }
+        if (!isValid) {
+            throw AssertionError("Los días deben estar entre 1 y 31")
+        }
+    }
+
+    fun toInt() = (0..30)
+        .reversed()
+        .sumOf { index ->
+            val day = 31 - index
+            (day in days).toByte(index)
+        }
+
+    companion object {
+        fun from(value: Int): AbsoluteMonthDays = value
+            .toByteString(31)
+            .mapIndexedNotNull { index, char ->
+                val day = index + 1
+                when (char) {
+                    '1' -> day
+                    else -> null
+                }
+            }
+            .let {
+                AbsoluteMonthDays(it.toSet())
+            }
+    }
+}

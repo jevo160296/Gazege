@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "fd4b73918576006db01949ecae2406ac",
+    "identityHash": "d1812b2204c5827ed14e80e3bb5c53bc",
     "entities": [
       {
         "tableName": "Person",
@@ -302,7 +302,7 @@
       },
       {
         "tableName": "Budget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `categoryId` INTEGER NOT NULL, `value` REAL NOT NULL, `frequency` INTEGER NOT NULL, `frequencyType` TEXT NOT NULL, `startDate` INTEGER NOT NULL, FOREIGN KEY(`categoryId`) REFERENCES `Category`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `categoryId` INTEGER NOT NULL, `value` REAL NOT NULL, `each` INTEGER NOT NULL, `frequency` INTEGER NOT NULL, `frequencyType` TEXT NOT NULL, `startDate` INTEGER NOT NULL, FOREIGN KEY(`categoryId`) REFERENCES `Category`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -320,6 +320,12 @@
             "fieldPath": "value",
             "columnName": "value",
             "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "each",
+            "columnName": "each",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -366,7 +372,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd4b73918576006db01949ecae2406ac')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd1812b2204c5827ed14e80e3bb5c53bc')"
     ]
   }
 }
