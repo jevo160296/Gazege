@@ -1,0 +1,55 @@
+package com.example.gazege.core.entities
+
+data class BudgetAndCategoryWithTransactions(
+    val budget: Budget,
+    val category: Category,
+    val inTransactions: List<Transaction>,
+    val outTransactions: List<Transaction>,
+    val person: Person
+) {
+    val categoryName get() = category.name
+
+    val budgetId get() = budget.id
+    val budgetStartDate get() = budget.startDate
+    val budgetEach get() = budget.each
+    val budgetFrequency get() = budget.frequency
+    val budgetFrequencyType get() = budget.frequencyType
+    val budgetValue get() = budget.value
+    val budgetEachClass get() = budget.eachClass
+
+    companion object {
+        fun from(
+            budget: List<Budget>,
+            category: List<Category>,
+            person: Person,
+            accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+        ): List<BudgetAndCategoryWithTransactions> {
+            val ownAccountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                .filter { it.account.ownerId == person.id }
+            val indexedInTransactions = ownAccountAndOwnerWithTransactions
+                .flatMap { it.inTransactions }
+                .groupBy { it.categoryId }
+            val indexedOutTransactions = ownAccountAndOwnerWithTransactions
+                .flatMap { it.outTransactions }
+                .groupBy { it.categoryId }
+            val categoryWithTransactions = category
+                .map {
+                    Triple(it, indexedInTransactions[it.id], indexedOutTransactions[it.id])
+                }
+                .associateBy {
+                    it.first.id
+                }
+            return budget
+                .map {
+                    val selectedCategoryWithTransactions = categoryWithTransactions[it.categoryId]
+                    BudgetAndCategoryWithTransactions(
+                        it,
+                        selectedCategoryWithTransactions?.first!!,
+                        selectedCategoryWithTransactions.second!!,
+                        selectedCategoryWithTransactions.third!!,
+                        person
+                    )
+                }
+        }
+    }
+}
