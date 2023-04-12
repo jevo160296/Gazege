@@ -427,7 +427,8 @@ fun NavGraphBuilder.screenSettings(
     onNavigateUp: () -> Unit,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
-    onNavigateToEditCategories: () -> Unit
+    onNavigateToEditCategories: () -> Unit,
+    onNavigateToEditBudget: () -> Unit
 ) {
     composable("settings") {
         val allPerson by viewModel.rememberAllPerson()
@@ -489,7 +490,8 @@ fun NavGraphBuilder.screenSettings(
                         ), onErrorAction = {}, onCompleitionAction = {})
                 }
             },
-            onEditCategoriesRequested = onNavigateToEditCategories
+            onEditCategoriesRequested = onNavigateToEditCategories,
+            onEditBudgetsRequested = onNavigateToEditBudget
         )
     }
 }
@@ -825,4 +827,17 @@ fun NavGraphBuilder.screenPersonDetail(
 
 fun NavController.navigateToPersonDetail(personId: Int?) {
     navigate("personDetail/$personId")
+}
+
+fun NavGraphBuilder.screenEditBudget(
+    viewModel: MainViewModel
+) {
+    composable("editarBudget") {
+        val budget by viewModel.rememberBudget()
+
+    }
+}
+
+fun NavController.navigateToEditBudget() {
+    navigate("editarBudget")
 }

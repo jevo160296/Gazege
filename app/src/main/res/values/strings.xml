@@ -52,4 +52,6 @@
     <string name="Todo">Todo</string>
     <string name="Si">Sí</string>
     <string name="No">No</string>
+    <string name="Presupuesto">Presupuesto</string>
+    <string name="ConfigurarPresupuesto">Configurar presupuesto</string>
 </resources>

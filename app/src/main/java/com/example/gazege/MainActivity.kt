@@ -124,7 +124,8 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = navController::navigateUp,
                             onNavigateToAddAccount = navController::navigateToAddAccount,
                             onNavigateToAddPerson = navController::navigateToAddPerson,
-                            onNavigateToEditCategories = navController::navigateToEditarCategorias
+                            onNavigateToEditCategories = navController::navigateToEditarCategorias,
+                            onNavigateToEditBudget = navController::navigateToEditBudget
                         )
                         screenSaldoActualSettings(viewModel = mainViewModel)
                         screenEditarCategorias(
@@ -151,6 +152,9 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = navController::navigateUp,
                             onNavigateToEditTransaction = navController::navigateToEditTransaction,
                             onNavigateToEditPerson = navController::navigateToEditPerson
+                        )
+                        screenEditBudget(
+                            viewModel = mainViewModel
                         )
                     }
                 }
