@@ -3,50 +3,50 @@ package com.example.gazege.ui.views.budget
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.FrequencyType
+import com.example.gazege.core.entities.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.views.category.getCategoriesSample
-import com.example.gazege.ui.widgets.Card
+import com.example.gazege.ui.views.person.getPersonSample
+import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.RecyclerView
 import java.time.LocalDate
 import kotlin.random.Random
+import kotlin.random.nextInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BudgetViewHolder(
-    budget: Budget
+    budget: BudgetAndCategoryWithTransactions
 ) {
-    Card(
-        Modifier.fillMaxWidth()
-    ) {
-        Box(Modifier.padding(PaddingValues(8.dp))) {
-            Text(text = budget.id.toString())
-        }
-    }
+    val supportingText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n" +
+            "${budget.budgetEachClass}"
+    ListItem(
+        headlineText = { Text(text = budget.categoryName) },
+        supportingText = { Text(text = supportingText) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+    )
 }
 
 @Composable
 fun BudgetRecyclerView(
     modifier: Modifier,
     itemHolderPaddingValues: PaddingValues,
-    budget: List<Budget>,
-    onItemClick: (budget: Budget) -> Unit,
-    onItemLongClick: (budget: Budget) -> Unit
+    budget: List<BudgetAndCategoryWithTransactions>,
+    onItemClick: (budget: BudgetAndCategoryWithTransactions) -> Unit,
+    onItemLongClick: (budget: BudgetAndCategoryWithTransactions) -> Unit
 ) {
     val state = rememberLazyListState()
     RecyclerView(
         elements = budget,
         modifier = modifier,
-        onItemTapped = {},
-        onItemLongPressed = {},
+        onItemTapped = onItemClick,
+        onItemLongPressed = onItemLongClick,
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state,
         viewHolder = {
@@ -63,24 +63,63 @@ fun getBudgetSample(
     val random = Random(3)
     val categorySize = categorySample.size
     val frequencyTypeSize = FrequencyType.values().size
+    val startDate = LocalDate.of(2023, 1, 1)
     return (0..20).map {
         val categoryIndex = random.nextInt(categorySize)
         val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
-        Budget(
-            id = it,
-            categoryId = categorySample[categoryIndex].id!!,
-            value = random.nextDouble(100.0, 1000.0),
-            frequency = random.nextInt(1, 5),
-            frequencyType = FrequencyType.values()[frequencyTypeOrdinal],
-            startDate = LocalDate.of(2023, 1, 1)
-        )
+        val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
+        val frequency = random.nextInt(1, 5)
+        val value = random.nextDouble(100.0, 1000.0)
+        val categoryId = categorySample[categoryIndex].id!!
+        when (frequencyType) {
+            FrequencyType.DAILY -> Budget.fromDaily(
+                id = it,
+                categoryId = categoryId,
+                value = value,
+                frequency = frequency,
+                startDate = startDate
+            )
+            FrequencyType.WEEKLY -> Budget.fromWeekly(
+                id = it,
+                categoryId = categoryId,
+                value = value,
+                frequency = frequency,
+                startDate = startDate,
+                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1)))
+            )
+            FrequencyType.MONTHLY -> Budget.fromMonthlyAbsoluteDays(
+                id = it,
+                categoryId = categoryId,
+                value = value,
+                frequency = frequency,
+                startDate = startDate,
+                each = AbsoluteMonthDays.from(random.nextInt(0..0b1111111111111111111111111111111))
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 private fun BudgetPreview() {
-    val budgetSample = getBudgetSample(getCategoriesSample())
+    val transactions = getTransactionSample()
+    val categories = getCategoriesSample()
+    val budgetSample = getBudgetSample(categories)
+    val accounts = getAccountSample()
+    val persons = getPersonSample()
+    val person = persons.first()
+    val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions.from(
+        accounts = accounts.map { it.account },
+        owners = persons,
+        transactions = transactions.map { it.transaction }
+    )
+    val budgetAndCategoryWithTransactions = BudgetAndCategoryWithTransactions.from(
+        budget = budgetSample,
+        category = categories,
+        person = person,
+        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+    )
+
     GazegeTheme {
         Surface(
             Modifier
@@ -90,7 +129,7 @@ private fun BudgetPreview() {
             BudgetRecyclerView(
                 modifier = Modifier,
                 itemHolderPaddingValues = PaddingValues(),
-                budget = budgetSample,
+                budget = budgetAndCategoryWithTransactions,
                 onItemClick = {},
                 onItemLongClick = {}
             )
