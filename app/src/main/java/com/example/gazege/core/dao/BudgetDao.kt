@@ -2,10 +2,7 @@ package com.example.gazege.core.dao
 
 import androidx.room.*
 import com.example.gazege.core.dateBetween
-import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
-import com.example.gazege.core.entities.FrequencyType
-import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.core.entities.*
 import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -64,6 +61,7 @@ interface BudgetDao {
                         cantDaysTotal - cantDaysOutInterval
                     }
                     FrequencyType.WEEKLY -> {
+                        val daysIncluded = (budget.eachClass as WeekDays).days
                         val countRepetitions = { start: LocalDate, end: LocalDate ->
                             val wholeWeeks = ChronoUnit.WEEKS.between(start, end)
                             val wholeDays = ChronoUnit.DAYS.between(start, end)
@@ -73,7 +71,6 @@ interface BudgetDao {
                                 (startWeekDay.value until startWeekDay.value + daysLeft)
                                     .map { DayOfWeek.of((it - 1).mod(7) + 1) }
                                     .toSet()
-                            val daysIncluded = (budget.eachClass as WeekDays).days
                             val cantWholeWeeks =
                                 ceil(wholeWeeks.div(budget.frequency.toDouble())).toInt()
                             val cantWholeRepetitions = cantWholeWeeks * daysIncluded.size
@@ -90,7 +87,32 @@ interface BudgetDao {
                             countRepetitions(budget.startDate, startDate)
                         cantRepetitionsTotal - cantRepetitionsOutInterval
                     }
-                    FrequencyType.MONTHLY -> TODO()
+                    FrequencyType.MONTHLY -> {
+                        val countRepetitions = { start: LocalDate, end: LocalDate ->
+                            if (start < end) {
+                                val wholeMonths = ChronoUnit.MONTHS.between(start, end).toInt()
+                                wholeMonths
+                            } else {
+                                0
+                            }
+                        }
+                        val startMonth = if (startDate.dayOfMonth == 1) {
+                            1
+                        } else {
+                            0
+                        }
+                        val endMonth =
+                            if (endDate.dayOfMonth >= 1 && endDate.monthValue > startDate.monthValue) {
+                                1
+                            } else {
+                                0
+                            }
+
+                        val adjustedStartDate = startDate.plusMonths(1).withDayOfMonth(1)
+                        val adjustedEndDate = endDate.withDayOfMonth(1)
+                        val wholeRepetitions = countRepetitions(adjustedStartDate, adjustedEndDate)
+                        wholeRepetitions + startMonth + endMonth
+                    }
                 }
             }
 

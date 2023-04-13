@@ -357,6 +357,73 @@ class BudgetTests {
 
         examples.forEach { it.assert() }
     }
+
+    @Test
+    fun testMonthlyFrequency() {
+        data class Example(
+            val id: Int,
+            val startDate: LocalDate,
+            val endDate: LocalDate,
+            val expectedCantRepetitions: Int
+        ) {
+            val calculatedCantRepetitions
+                get() = BudgetDao.calculateCantRepetitions(
+                    budget, startDate, endDate
+                )
+
+            private val budget
+                get() = Budget.fromMonthly(
+                    id = id,
+                    categoryId = 0,
+                    value = 0.0
+                )
+
+            fun assert() {
+                assertEquals(budget.toString(), expectedCantRepetitions, calculatedCantRepetitions)
+            }
+        }
+
+        val examples: List<Example> = listOf(
+            Example(
+                id = 0,
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 1
+            ),
+            Example(
+                id = 1,
+                startDate = LocalDate.of(2023, 1, 2),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 0
+            ),
+            Example(
+                id = 2,
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 2, 1),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                id = 3,
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 12, 31),
+                expectedCantRepetitions = 12
+            ),
+            Example(
+                id = 4,
+                startDate = LocalDate.of(2023, 1, 2),
+                endDate = LocalDate.of(2023, 12, 31),
+                expectedCantRepetitions = 11
+            ),
+            Example(
+                id = 5,
+                startDate = LocalDate.of(2023, 1, 2),
+                endDate = LocalDate.of(2023, 12, 1),
+                expectedCantRepetitions = 11
+            )
+        )
+
+        examples.forEach { it.assert() }
+    }
 }
 
 private inline fun <reified T : Enum<T>> ClosedRange<T>.toList(): List<T> {

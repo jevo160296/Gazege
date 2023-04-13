@@ -67,6 +67,11 @@ data class Budget(
             startDate = startDate
         )
 
+        @Deprecated(
+            message = "Esta función aún no está lista",
+            replaceWith = ReplaceWith("Expresion"),
+            level = DeprecationLevel.HIDDEN
+        )
         fun fromMonthlyAbsoluteDays(
             id: Int? = null,
             categoryId: Int,
@@ -82,6 +87,20 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.MONTHLY,
             startDate = startDate
+        )
+
+        fun fromMonthly(
+            id: Int? = null,
+            categoryId: Int,
+            value: Double
+        ): Budget = Budget(
+            id = id,
+            categoryId = categoryId,
+            value = value,
+            startDate = LocalDate.MIN,
+            each = AbsoluteMonthDays(setOf(1)).toInt(),
+            frequency = 1,
+            frequencyType = FrequencyType.MONTHLY
         )
     }
 }
@@ -157,7 +176,9 @@ data class AbsoluteMonthDays(
     val days: Set<Int>
 ) : IEach {
     init {
-        val isValid = days.all { it in 1..31 }
+        var isValid = days.all { it in 1..31 }
+        // TODO La siguiente linea se ingresa para desactivar los multiples días
+        isValid = isValid && days.size == 1
         if (!isValid) {
             throw AssertionError("Los días deben estar entre 1 y 31")
         }

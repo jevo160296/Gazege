@@ -17,7 +17,6 @@ import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.RecyclerView
 import java.time.LocalDate
 import kotlin.random.Random
-import kotlin.random.nextInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,13 +86,10 @@ fun getBudgetSample(
                 startDate = startDate,
                 each = WeekDays.from(random.nextInt(until = (0b1111111 + 1)))
             )
-            FrequencyType.MONTHLY -> Budget.fromMonthlyAbsoluteDays(
+            FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = it,
                 categoryId = categoryId,
-                value = value,
-                frequency = frequency,
-                startDate = startDate,
-                each = AbsoluteMonthDays.from(random.nextInt(0..0b1111111111111111111111111111111))
+                value = value
             )
         }
     }
