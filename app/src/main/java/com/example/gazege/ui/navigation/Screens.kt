@@ -848,10 +848,36 @@ fun NavController.navigateToEditBudget() {
     navigate("editarBudget")
 }
 
+fun NavGraphBuilder.screenOneBudgetDetail(
+    viewModel: MainViewModel
+) {
+    //TODO diseñar pantalla
+    composable(
+        "oneBudgetDetail/{budgetId}",
+        arguments = listOf(
+            navArgument("budgetId") {
+                type = NavType.IntType
+            }
+        )
+    ) { navStack ->
+        val budgetId = navStack.arguments?.getInt("budgetId")
+        Text("One budget detail of $budgetId")
+    }
+}
+
 fun NavController.navigateToOneBudgetDetail(budgetId: Int) {
-    TODO()
+    navigate("oneBudgetDetail/$budgetId")
+}
+
+fun NavGraphBuilder.screenAddOneBudget(
+    viewModel: MainViewModel
+) {
+    //TODO Diseñar pantalla
+    composable("addOneBudget") {
+        Text("Add one budget")
+    }
 }
 
 fun NavController.navigateToAddOneBudget() {
-    TODO()
+    navigate("addOneBudget")
 }

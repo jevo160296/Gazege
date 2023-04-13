@@ -158,6 +158,8 @@ class MainActivity : ComponentActivity() {
                             onNavigateToOneBudgetDetail = navController::navigateToOneBudgetDetail,
                             onNavigateToAddOneBudget = navController::navigateToAddOneBudget
                         )
+                        screenAddOneBudget(viewModel = mainViewModel)
+                        screenOneBudgetDetail(viewModel = mainViewModel)
                     }
                 }
             }

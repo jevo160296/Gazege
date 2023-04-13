@@ -7,7 +7,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
@@ -28,7 +30,7 @@ private fun BudgetViewHolder(
     val supportingText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n" +
             "${budget.budgetEachClass}"
     ListItem(
-        headlineText = { Text(text = budget.categoryName) },
+        headlineText = { Text(text = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}") },
         supportingText = { Text(text = supportingText) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
