@@ -55,4 +55,17 @@
     <string name="Presupuesto">Budget</string>
     <string name="ConfigurarPresupuesto">Set budget</string>
     <string name="Categorias">Categories</string>
+    <string name="Dias">Days</string>
+    <string name="Semanas">Weeks</string>
+    <string name="Meses">Months</string>
+    <string name="Tipo_frecuencia">Frequency type</string>
+    <string name="Cada">Each</string>
+    <string name="Dias_semana">Days of the week</string>
+    <string name="Lunes">Monday</string>
+    <string name="Martes">Tuesday</string>
+    <string name="Miercoles">Wednesday</string>
+    <string name="Jueves">Thursday</string>
+    <string name="Viernes">Friday</string>
+    <string name="Sabado">Saturday</string>
+    <string name="Domingo">Sunday</string>
 </resources>

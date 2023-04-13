@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -41,21 +41,44 @@ fun BudgetRecyclerView(
     modifier: Modifier,
     itemHolderPaddingValues: PaddingValues,
     budget: List<BudgetAndCategoryWithTransactions>,
-    onItemClick: (budget: BudgetAndCategoryWithTransactions) -> Unit,
-    onItemLongClick: (budget: BudgetAndCategoryWithTransactions) -> Unit
+    onBudgetDetailRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit,
+    onBudgetDeleteRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit,
+    onBudgetEditRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit
 ) {
     val state = rememberLazyListState()
+    var menuIdExpanded: Int? by remember {
+        mutableStateOf(null)
+    }
     RecyclerView(
         elements = budget,
         modifier = modifier,
-        onItemTapped = onItemClick,
-        onItemLongPressed = onItemLongClick,
+        onItemTapped = onBudgetDetailRequested,
+        onItemLongPressed = { menuIdExpanded = it.budgetId },
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state,
         viewHolder = {
-            BudgetViewHolder(
-                budget = it
-            )
+            Box {
+                BudgetViewHolder(
+                    budget = it
+                )
+                DropdownMenu(
+                    expanded = menuIdExpanded == it.budgetId,
+                    onDismissRequest = { menuIdExpanded = null }) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.Editar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            onBudgetEditRequested(it)
+                        })
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.Eliminar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            onBudgetDeleteRequested(it)
+                        }
+                    )
+                }
+            }
         }
     )
 }
@@ -134,8 +157,9 @@ private fun BudgetPreview() {
                 modifier = Modifier,
                 itemHolderPaddingValues = PaddingValues(),
                 budget = budgetAndCategoryWithTransactions,
-                onItemClick = {},
-                onItemLongClick = {}
+                onBudgetDetailRequested = {},
+                onBudgetDeleteRequested = {},
+                onBudgetEditRequested = {}
             )
         }
     }

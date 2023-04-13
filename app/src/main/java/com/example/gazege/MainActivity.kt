@@ -156,10 +156,18 @@ class MainActivity : ComponentActivity() {
                         screenEditBudget(
                             viewModel = mainViewModel,
                             onNavigateToOneBudgetDetail = navController::navigateToOneBudgetDetail,
-                            onNavigateToAddOneBudget = navController::navigateToAddOneBudget
+                            onNavigateToAddOneBudget = navController::navigateToAddOneBudget,
+                            onNavigateToOneBudgetEdit = navController::navigateToEditOneBudget
                         )
-                        screenAddOneBudget(viewModel = mainViewModel)
+                        screenAddOneBudget(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp
+                        )
                         screenOneBudgetDetail(viewModel = mainViewModel)
+                        screenEditOneBudget(
+                            viewModel = mainViewModel,
+                            onNavigateUp = navController::navigateUp
+                        )
                     }
                 }
             }

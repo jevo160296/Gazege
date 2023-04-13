@@ -208,3 +208,9 @@ data class AbsoluteMonthDays(
             }
     }
 }
+
+inline fun <reified T : Enum<T>> ClosedRange<T>.toList(): List<T> {
+    val values = enumValues<T>()
+    return (this.start.ordinal..this.endInclusive.ordinal)
+        .map { values[it] }
+}

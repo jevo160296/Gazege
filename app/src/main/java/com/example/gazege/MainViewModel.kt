@@ -410,6 +410,28 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         onCompleitionAction()
     }
 
+    fun insertBudget(
+        budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertBudget(budget)
+        onCompleitionAction()
+    }
+
+    fun updateBudget(
+        budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.updateBudget(budget)
+        onCompleitionAction()
+    }
+
+    fun deleteBudget(budget: Budget) = viewModelScope.launch {
+        repository.deleteBudget(budget)
+    }
+
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {
             null

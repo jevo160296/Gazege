@@ -27,6 +27,9 @@ import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.PersonAction
 import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.account.AccountDetail
+import com.example.gazege.ui.views.budget.BudgetDetailView
+import com.example.gazege.ui.views.budget.BudgetFormView
+import com.example.gazege.ui.views.budget.EmptyBudgetDetailView
 import com.example.gazege.ui.views.category.CategoryForm
 import com.example.gazege.ui.views.person.PersonDetail
 import kotlinx.coroutines.Dispatchers
@@ -832,14 +835,21 @@ fun NavController.navigateToPersonDetail(personId: Int?) {
 fun NavGraphBuilder.screenEditBudget(
     viewModel: MainViewModel,
     onNavigateToAddOneBudget: () -> Unit,
-    onNavigateToOneBudgetDetail: (budgetId: Int) -> Unit
+    onNavigateToOneBudgetDetail: (budgetId: Int) -> Unit,
+    onNavigateToOneBudgetEdit: (budgetId: Int) -> Unit
 ) {
     composable("editarBudget") {
         val budget by viewModel.rememberBudgetAndCategoryWithTransactions()
         EditBudgetFragment(
             budget = budget,
-            onNavigateToAddOneBudget = onNavigateToAddOneBudget,
-            onNavigateToOneBudgetDetail = onNavigateToOneBudgetDetail
+            onAddOneBudgetRequested = onNavigateToAddOneBudget,
+            onGetBudgetDetailRequested = onNavigateToOneBudgetDetail,
+            onDeleteBudgetRequested = { id ->
+                budget
+                    .firstOrNull { it.budgetId == id }
+                    ?.let { viewModel.deleteBudget(it.budget) }
+            },
+            onEditBudgetRequested = onNavigateToOneBudgetEdit
         )
     }
 }
@@ -851,7 +861,6 @@ fun NavController.navigateToEditBudget() {
 fun NavGraphBuilder.screenOneBudgetDetail(
     viewModel: MainViewModel
 ) {
-    //TODO diseñar pantalla
     composable(
         "oneBudgetDetail/{budgetId}",
         arguments = listOf(
@@ -861,7 +870,14 @@ fun NavGraphBuilder.screenOneBudgetDetail(
         )
     ) { navStack ->
         val budgetId = navStack.arguments?.getInt("budgetId")
-        Text("One budget detail of $budgetId")
+        val budgetAndCategoryWithTransactions by viewModel.rememberBudgetAndCategoryWithTransactions()
+        val selectedBudget = budgetAndCategoryWithTransactions
+            .firstOrNull { it.budgetId == budgetId }
+        if (selectedBudget != null) {
+            BudgetDetailView(selectedBudget)
+        } else {
+            EmptyBudgetDetailView()
+        }
     }
 }
 
@@ -870,14 +886,56 @@ fun NavController.navigateToOneBudgetDetail(budgetId: Int) {
 }
 
 fun NavGraphBuilder.screenAddOneBudget(
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit
 ) {
-    //TODO Diseñar pantalla
     composable("addOneBudget") {
-        Text("Add one budget")
+        val categories by viewModel.rememberCategories()
+        BudgetFormView(
+            budget = null,
+            categories = categories,
+            onSaveBudget = {
+                viewModel.insertBudget(
+                    it,
+                    onCompleitionAction = { onNavigateUp() },
+                    onErrorAction = {})
+            }
+        )
     }
 }
 
 fun NavController.navigateToAddOneBudget() {
     navigate("addOneBudget")
+}
+
+fun NavGraphBuilder.screenEditOneBudget(
+    viewModel: MainViewModel,
+    onNavigateUp: () -> Unit
+) {
+    composable(
+        "editOneBudget/{budgetId}",
+        arguments = listOf(
+            navArgument("budgetId") {
+                type = NavType.IntType
+            }
+        )
+    ) { navStack ->
+        val budgetId = navStack.arguments?.getInt("budgetId")
+        val budgets by viewModel.rememberBudget()
+        val categories by viewModel.rememberCategories()
+        BudgetFormView(
+            budget = budgets.firstOrNull { it.id == budgetId },
+            categories = categories,
+            onSaveBudget = {
+                viewModel.updateBudget(
+                    it,
+                    onCompleitionAction = { onNavigateUp() },
+                    onErrorAction = {})
+            }
+        )
+    }
+}
+
+fun NavController.navigateToEditOneBudget(budgetId: Int) {
+    navigate("editOneBudget/$budgetId")
 }

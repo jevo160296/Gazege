@@ -1,10 +1,7 @@
 package com.example.gazege.core
 
 import com.example.gazege.core.dao.BudgetDao
-import com.example.gazege.core.entities.AbsoluteMonthDays
-import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.WeekDays
-import com.example.gazege.core.entities.toByteString
+import com.example.gazege.core.entities.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -424,10 +421,4 @@ class BudgetTests {
 
         examples.forEach { it.assert() }
     }
-}
-
-private inline fun <reified T : Enum<T>> ClosedRange<T>.toList(): List<T> {
-    val values = enumValues<T>()
-    return (this.start.ordinal..this.endInclusive.ordinal)
-        .map { values[it] }
 }

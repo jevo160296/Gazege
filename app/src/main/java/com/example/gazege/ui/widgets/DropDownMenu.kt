@@ -53,7 +53,7 @@ fun <T> DropDownMenu(
     selectedItem: T?,
     itemToString: (T?) -> String,
     onItemClick: (T) -> Unit,
-    label: @Composable () -> Unit,
+    label: (@Composable () -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     groupByKeySelector: ((T) -> String)? = null
