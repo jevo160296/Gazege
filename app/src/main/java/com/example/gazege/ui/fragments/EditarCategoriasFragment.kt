@@ -9,6 +9,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -16,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.views.category.CategoryListView
+import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetContent
 import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
@@ -60,6 +62,11 @@ fun EditarCategorias(
                         contentDescription = "Save"
                     )
                 }
+            },
+            topBar = {
+                TopAppBar(
+                    title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
+                )
             }
         ) {
             Box(modifier = Modifier.padding(it)) {

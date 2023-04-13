@@ -97,7 +97,7 @@ data class Budget(
             id = id,
             categoryId = categoryId,
             value = value,
-            startDate = LocalDate.MIN,
+            startDate = LocalDate.of(1900, 1, 1),
             each = AbsoluteMonthDays(setOf(1)).toInt(),
             frequency = 1,
             frequencyType = FrequencyType.MONTHLY

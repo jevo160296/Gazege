@@ -42,6 +42,10 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun rememberBudget() = budget.observeAsState(emptyList())
 
     @Composable
+    fun rememberBudgetAndCategoryWithTransactions() =
+        budgetAndCategoryWithTransactions.observeAsState(emptyList())
+
+    @Composable
     fun rememberAccountAndOwnerWithTransactions() =
         accountAndOwnerWithTransactions.observeAsState(emptyList())
 
@@ -142,6 +146,30 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
+        MediatorLiveData<List<BudgetAndCategoryWithTransactions>>(emptyList())
+            .apply {
+                val update = {
+                    val person = principalPerson.value
+                    value = if (person == null) {
+                        emptyList()
+                    } else {
+                        BudgetAndCategoryWithTransactions.from(
+                            budget = budget.value ?: emptyList(),
+                            category = categories.value ?: emptyList(),
+                            person = person,
+                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.value
+                                ?: emptyList()
+                        )
+                    }
+                }
+
+                addSource(budget) { update() }
+                addSource(categories) { update() }
+                //addSource(principalPerson){ update() }
+                addSource(accountAndOwnerWithTransactions) { update() }
+            }
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue

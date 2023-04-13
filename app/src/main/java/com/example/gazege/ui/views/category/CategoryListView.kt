@@ -72,6 +72,6 @@ fun getCategoriesSample(): List<Category> {
                 }
             }
             .takeIf { hasParent }
-        Category(it, "Cuenta $parentId.$it", parentId)
+        Category(it, "Parent category $parentId.$it", parentId)
     }
 }

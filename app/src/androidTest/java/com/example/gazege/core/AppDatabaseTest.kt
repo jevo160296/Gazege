@@ -4,6 +4,11 @@ import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.views.account.getAccountSample
+import com.example.gazege.ui.views.budget.getBudgetSample
+import com.example.gazege.ui.views.category.getCategoriesSample
+import com.example.gazege.ui.views.person.getPersonSample
+import com.example.gazege.ui.views.transaction.getTransactionSample
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -214,6 +219,40 @@ class AppDatabaseTest {
         database.accountDao().insertAll(*newAccounts.toTypedArray())
         database.transactionDao().insertAll(*newTransactions.toTypedArray())
         database.categoryDao().insertAll(*newCategories)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun initDateBaseFromSamples() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = AppDatabase.getDatabase(appContext)
+
+        val persons = database.personDao().getAll().first()
+        persons.forEach {
+            database.personDao().delete(it)
+        }
+        database
+            .categoryDao()
+            .getAll()
+            .first()
+            .run { database.categoryDao().deleteAll(*this.toTypedArray()) }
+
+        val samplePerson = getPersonSample()
+        val sampleAccounts = getAccountSample(samplePerson)
+        val sampleCategories = getCategoriesSample()
+        val sampleTransactions = getTransactionSample(
+            sampleAccounts,
+            sampleCategories
+        )
+        val sampleBudget = getBudgetSample(sampleCategories)
+
+        database.personDao().insertAll(*samplePerson.toTypedArray())
+        database.accountDao().insertAll(*sampleAccounts.toTypedArray())
+        database.categoryDao()
+            .insertAll(*sampleCategories.map { it.copy(parentId = null) }.toTypedArray())
+        database.categoryDao().updateAll(*sampleCategories.toTypedArray())
+        database.transactionDao().insertAll(*sampleTransactions.toTypedArray())
+        database.budgetDao().insertAll(*sampleBudget.toTypedArray())
     }
 
     @Test

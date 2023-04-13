@@ -285,11 +285,10 @@ private fun PreviewAccountItem() {
     )
 }
 
-fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
-    val persons = getPersonSample()
+fun getAccountSample(personSample: List<Person>): List<Account> {
     var index = 0
     val random = Random(3)
-    val accounts: List<Account> = persons
+    return personSample
         .flatMap {
             when (it.name) {
                 "Pablo" -> Pair(
@@ -348,13 +347,22 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
                     }
                 }
         }
+}
+
+fun getAccountAndOwnerWithTransactionsSample(
+    accountSample: List<Account>,
+    personSample: List<Person>
+): List<AccountAndOwnerWithTransactions> {
+    var index = 0
+    val random = Random(3)
+    val accounts: List<Account> = accountSample
     val transactions: List<Transaction> = (0..500).map {
-        val from = persons
+        val from = personSample
             .let {
                 val selected = random.nextInt(it.size)
                 it[selected].id
             }
-        val to = persons
+        val to = personSample
             .filter { it.id != from }
             .let {
                 val selected = random.nextInt(it.size)
@@ -383,7 +391,15 @@ fun getAccountSample(): List<AccountAndOwnerWithTransactions> {
             categoryId = null
         )
     }
-    return AccountAndOwnerWithTransactions.from(accounts, persons, transactions)
+    return AccountAndOwnerWithTransactions.from(accounts, personSample, transactions)
+}
+
+fun getAccountAndOwnerWithTransactionsAndPocketsSample(
+    accountAndOwnerWithTransactionsSample: List<AccountAndOwnerWithTransactions>
+): List<AccountAndOwnerWithTransactionsAndPockets> {
+    return AccountAndOwnerWithTransactionsAndPockets.from(
+        accountAndOwnerWithTransactionsSample
+    )
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
@@ -395,8 +411,10 @@ private fun PreviewAccountList() {
                 .fillMaxSize()
                 .background(MaterialTheme.colors.background)
         ) {
+            val personSample = getPersonSample()
+            val accountSample = getAccountSample(personSample)
             AccountRecyclerView(
-                accountList = getAccountSample(),
+                accountList = getAccountAndOwnerWithTransactionsSample(accountSample, personSample),
                 delAccount = {},
                 editAccount = {},
                 state = LazyListState()
@@ -413,7 +431,10 @@ private fun PreviewAccountList() {
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountTreeView() {
-    val accounts = getAccountSample()
+    val personSample = getPersonSample()
+    val accountSample = getAccountSample(personSample)
+    val accountAndOwnerWithTransactions =
+        getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
     val treeState = rememberTreeState()
     GazegeTheme {
         Box(
@@ -422,7 +443,7 @@ private fun PreviewAccountTreeView() {
                 .background(MaterialTheme.colors.background)
         ) {
             AccountTreeView(
-                accountList = accounts,
+                accountList = accountAndOwnerWithTransactions,
                 delAccount = {},
                 editAccount = {},
                 detailAccount = {},
@@ -432,7 +453,7 @@ private fun PreviewAccountTreeView() {
                     account = acc.content,
                     startDate = null,
                     endDate = null,
-                    accounts = accounts,
+                    accounts = accountAndOwnerWithTransactions,
                     isExpanded = acc.expanded(treeState.expandedItems)
                 )
             }
@@ -448,8 +469,13 @@ private fun PreviewAccountTreeView() {
 @Composable
 private fun PreviewPage() {
     GazegeTheme(darkTheme = false) {
+        val personSample = getPersonSample()
+        val accountSample = getAccountSample(personSample)
+        val accountAndOwnerWithTransactions =
+            getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
+
         AccountPage(
-            accountList = getAccountSample(),
+            accountList = accountAndOwnerWithTransactions,
             treeState = rememberTreeState(),
             editAccount = {},
             delAccount = {},

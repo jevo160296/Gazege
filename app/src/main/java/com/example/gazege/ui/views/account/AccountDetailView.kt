@@ -26,6 +26,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.category.getCategoriesSample
+import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.LargeEmphasis
@@ -430,7 +431,9 @@ private fun NullAccountDetail(
 @Preview(showBackground = true, widthDp = 300, heightDp = 600)
 @Composable
 private fun AccountDetailPreview() {
-    val accounts = getAccountSample()
+    val personSample = getPersonSample()
+    val accountSample = getAccountSample(personSample)
+    val accounts = getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
     val categories = getCategoriesSample()
     val account = accounts.let {
         AccountAndOwnerWithTransactionsAndPockets.from(it.first(), it)

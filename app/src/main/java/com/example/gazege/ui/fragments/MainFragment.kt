@@ -32,10 +32,15 @@ import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountPage
+import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsAndPocketsSample
+import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
 import com.example.gazege.ui.views.account.getAccountSample
+import com.example.gazege.ui.views.category.getCategoriesSample
 import com.example.gazege.ui.views.person.PersonPage
+import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.views.person.getPersonWithAccountsSample
 import com.example.gazege.ui.views.transaction.TransactionPage
+import com.example.gazege.ui.views.transaction.getTransactionAndAccountsAndCategorySample
 import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.fab.ExpandableFAB
@@ -465,9 +470,18 @@ private fun ModalSheetContentPreview() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    val personList = getPersonWithAccountsSample()
-    val accounts = getAccountSample()
-    val transactions = getTransactionSample()
+    val personSample = getPersonSample()
+    val accountSample = getAccountSample(personSample)
+    val accountAndOwnerWithTransactionsSample =
+        getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
+    val accountAndOwnerWithTransactionsAndPocketsSample =
+        getAccountAndOwnerWithTransactionsAndPocketsSample(accountAndOwnerWithTransactionsSample)
+    val personWithAccountsSample =
+        getPersonWithAccountsSample(personSample, accountAndOwnerWithTransactionsAndPocketsSample)
+    val categorySample = getCategoriesSample()
+    val transactionSample = getTransactionSample(accountSample, categorySample)
+    val transactionsAndAccountAndCategorySample =
+        getTransactionAndAccountsAndCategorySample(transactionSample, accountSample, categorySample)
     val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
     var navPosition by remember {
@@ -476,10 +490,10 @@ private fun DefaultPreview() {
     val snackbarHostState = SnackbarHostState()
     GazegeTheme(darkTheme = true) {
         MainFragment(
-            personList = personList,
-            accountList = accounts,
-            allTransactionList = transactions,
-            filteredTransactionList = transactions,
+            personList = personWithAccountsSample,
+            accountList = accountAndOwnerWithTransactionsSample,
+            allTransactionList = transactionsAndAccountAndCategorySample,
+            filteredTransactionList = transactionsAndAccountAndCategorySample,
             principalPersonWithAccounts = PersonWithAccounts(
                 person = Person(name = "?"),
                 emptyList()

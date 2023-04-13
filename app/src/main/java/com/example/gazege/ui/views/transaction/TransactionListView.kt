@@ -21,6 +21,7 @@ import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.views.category.getCategoriesSample
+import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.widgets.*
 import java.time.LocalDate
 import java.util.*
@@ -145,35 +146,45 @@ fun LazyListScope.transactionLazyListItems(
     TransactionViewHolder(transaction = it)
 }
 
-fun getTransactionSample(): List<TransactionAndAccountsAndCategory> {
-    val accountList = getAccountSample()
-    val categories = getCategoriesSample()
+fun getTransactionSample(
+    accountsSample: List<Account>,
+    categoriesSample: List<Category>
+): List<Transaction> {
     val random = Random(3)
-    val transList = (0..100).map {
-        val selectedAccounts = accountList.shuffled(random).take(2)
+    return (0..100).map {
+        val selectedAccounts = accountsSample.shuffled(random).take(2)
         val sourceAccount = selectedAccounts[0]
         val destinationAccount = selectedAccounts[1]
         val category = random.nextBoolean()
             .let {
                 if (it) {
-                    categories.shuffled(random).first()
+                    categoriesSample.shuffled(random).first()
                 } else {
                     null
                 }
             }
         Transaction(
-            it, random.nextDouble(), "Esta es la transaccion $it, desde " +
-                    "${sourceAccount.account.name} hasta ${destinationAccount.account.name}, y " +
+            it,
+            (random.nextDouble() * (100000 - 1000)) + 1000,
+            "Esta es la transaccion $it, desde " +
+                    "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
                     "categoría ${category?.name}",
-            sourceAccount.account.id ?: -1,
-            destinationAccount.account.id ?: -1,
+            sourceAccount.id ?: -1,
+            destinationAccount.id ?: -1,
             category?.id,
-            date = LocalDate.now(),
+            date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong()),
             null
         )
     }
+}
+
+fun getTransactionAndAccountsAndCategorySample(
+    transactionSample: List<Transaction>,
+    accountsSample: List<Account>,
+    categoriesSample: List<Category>
+): List<TransactionAndAccountsAndCategory> {
     return TransactionAndAccountsAndCategory.from(
-        transList, accountList.map { it.account }, categories
+        transactionSample, accountsSample, categoriesSample
     )
 }
 
@@ -209,7 +220,15 @@ private fun PreviewTransactionItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionList() {
-    val transList = getTransactionSample()
+    val personSample = getPersonSample()
+    val accountSample = getAccountSample(personSample)
+    val categoriesSample = getCategoriesSample()
+    val transactionSample = getTransactionSample(accountSample, categoriesSample)
+    val transList = getTransactionAndAccountsAndCategorySample(
+        transactionSample,
+        accountSample,
+        categoriesSample
+    )
     TransactionRecyclerView(
         transactionList = transList,
         editTransaction = {},
@@ -222,8 +241,17 @@ private fun PreviewTransactionList() {
 @Composable
 private fun PreviewTransactionPage() {
     GazegeTheme(darkTheme = true) {
+        val personSample = getPersonSample()
+        val accountSample = getAccountSample(personSample)
+        val categoriesSample = getCategoriesSample()
+        val transactionSample = getTransactionSample(accountSample, categoriesSample)
+        val transList = getTransactionAndAccountsAndCategorySample(
+            transactionSample,
+            accountSample,
+            categoriesSample
+        )
         TransactionPage(
-            transactionList = getTransactionSample(),
+            transactionList = transList,
             state = LazyListState(),
             editTransaction = {},
             delTransaction = {},

@@ -54,4 +54,5 @@
     <string name="No">No</string>
     <string name="Presupuesto">Budget</string>
     <string name="ConfigurarPresupuesto">Set budget</string>
+    <string name="Categorias">Categories</string>
 </resources>

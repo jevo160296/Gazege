@@ -830,14 +830,28 @@ fun NavController.navigateToPersonDetail(personId: Int?) {
 }
 
 fun NavGraphBuilder.screenEditBudget(
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    onNavigateToAddOneBudget: () -> Unit,
+    onNavigateToOneBudgetDetail: (budgetId: Int) -> Unit
 ) {
     composable("editarBudget") {
-        val budget by viewModel.rememberBudget()
-
+        val budget by viewModel.rememberBudgetAndCategoryWithTransactions()
+        EditBudgetFragment(
+            budget = budget,
+            onNavigateToAddOneBudget = onNavigateToAddOneBudget,
+            onNavigateToOneBudgetDetail = onNavigateToOneBudgetDetail
+        )
     }
 }
 
 fun NavController.navigateToEditBudget() {
     navigate("editarBudget")
+}
+
+fun NavController.navigateToOneBudgetDetail(budgetId: Int) {
+    TODO()
+}
+
+fun NavController.navigateToAddOneBudget() {
+    TODO()
 }

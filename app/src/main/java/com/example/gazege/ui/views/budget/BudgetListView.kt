@@ -10,9 +10,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
 import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.views.category.getCategoriesSample
 import com.example.gazege.ui.views.person.getPersonSample
+import com.example.gazege.ui.views.transaction.getTransactionAndAccountsAndCategorySample
 import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.RecyclerView
 import java.time.LocalDate
@@ -98,14 +100,18 @@ fun getBudgetSample(
 @Preview
 @Composable
 private fun BudgetPreview() {
-    val transactions = getTransactionSample()
-    val categories = getCategoriesSample()
-    val budgetSample = getBudgetSample(categories)
-    val accounts = getAccountSample()
     val persons = getPersonSample()
+    val accountSample = getAccountSample(persons)
+    val categories = getCategoriesSample()
+    val transactionSample = getTransactionSample(accountSample, categories)
+    val accountsAndOwnerWithTransaction =
+        getAccountAndOwnerWithTransactionsSample(accountSample, persons)
+    val transactions =
+        getTransactionAndAccountsAndCategorySample(transactionSample, accountSample, categories)
+    val budgetSample = getBudgetSample(categories)
     val person = persons.first()
     val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions.from(
-        accounts = accounts.map { it.account },
+        accounts = accountsAndOwnerWithTransaction.map { it.account },
         owners = persons,
         transactions = transactions.map { it.transaction }
     )

@@ -154,7 +154,9 @@ class MainActivity : ComponentActivity() {
                             onNavigateToEditPerson = navController::navigateToEditPerson
                         )
                         screenEditBudget(
-                            viewModel = mainViewModel
+                            viewModel = mainViewModel,
+                            onNavigateToOneBudgetDetail = navController::navigateToOneBudgetDetail,
+                            onNavigateToAddOneBudget = navController::navigateToAddOneBudget
                         )
                     }
                 }

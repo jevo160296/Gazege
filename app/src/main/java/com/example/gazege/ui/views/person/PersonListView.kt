@@ -17,6 +17,9 @@ import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.doubleToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsAndPocketsSample
+import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
+import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
@@ -172,13 +175,14 @@ fun getPersonSample(): List<Person> {
     }
 }
 
-fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
-    val persons = getPersonSample()
-    return persons.map {
-        PersonWithAccounts(
-            person = it, accounts = listOf()
-        )
-    }
+fun getPersonWithAccountsSample(
+    personSample: List<Person>,
+    accountAndOwnerWithTransactionsAndPocketsSample: List<AccountAndOwnerWithTransactionsAndPockets>
+): List<PersonWithAccounts> {
+    return PersonWithAccounts.from(
+        personSample,
+        accountAndOwnerWithTransactionsAndPocketsSample
+    )
 }
 
 @Preview(showBackground = true)
@@ -225,8 +229,18 @@ private fun PreviewPersonItem() {
 @Composable
 private fun PreviewPersonList() {
     GazegeTheme {
+        val personSample = getPersonSample()
+        val accountSample = getAccountSample(personSample)
+        val accountAndOwnerWithTransactionsSample =
+            getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
+        val accountAndOwnerWithTransactionsAndPocketsSample =
+            getAccountAndOwnerWithTransactionsAndPocketsSample(accountAndOwnerWithTransactionsSample)
+        val personWithAccountSample = getPersonWithAccountsSample(
+            personSample,
+            accountAndOwnerWithTransactionsAndPocketsSample
+        )
         RecyclerView(
-            elements = getPersonWithAccountsSample(), viewHolder = { person ->
+            elements = personWithAccountSample, viewHolder = { person ->
                 PersonViewHolder(
                     person = person, principalPerson = person, transactions = listOf()
                 )
@@ -238,15 +252,22 @@ private fun PreviewPersonList() {
 @Preview(showBackground = true, widthDp = 420, heightDp = 620)
 @Composable
 private fun PreviewPersonPage() {
-    val persons = getPersonWithAccountsSample()
+    val personSample = getPersonSample()
+    val accountSample = getAccountSample(personSample)
+    val accountAndOwnerWithTransactionsSample =
+        getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
+    val accountAndOwnerWithTransactionsAndPocketsSample =
+        getAccountAndOwnerWithTransactionsAndPocketsSample(accountAndOwnerWithTransactionsSample)
+    val personsWithAccountsSample =
+        getPersonWithAccountsSample(personSample, accountAndOwnerWithTransactionsAndPocketsSample)
     GazegeTheme {
         PersonPage(
-            personList = getPersonWithAccountsSample(),
+            personList = personsWithAccountsSample,
             state = LazyListState(),
             editPerson = {},
             delPerson = {},
             onTitleSetted = {},
-            principalPerson = persons[0],
+            principalPerson = personsWithAccountsSample[0],
             onConfigurePrincipalPersonRequested = {},
             itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
             transacciones = listOf(),

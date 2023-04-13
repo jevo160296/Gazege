@@ -22,4 +22,7 @@ interface CategoryDao {
 
     @Update
     suspend fun update(account: Category)
+
+    @Update
+    suspend fun updateAll(vararg category: Category)
 }
