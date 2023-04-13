@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Entity(
@@ -101,36 +102,54 @@ fun Int.toByteString(length: Int) = this.toString(2).padStart(length, '0')
 
 interface IEach {
     fun toInt(): Int
+    fun toByteString(): String
 }
 
 data class WeekDays(
-    val sunday: Boolean,
-    val monday: Boolean,
-    val tuesday: Boolean,
-    val wednesday: Boolean,
-    val thursday: Boolean,
-    val friday: Boolean,
-    val saturday: Boolean
+    val days: Set<DayOfWeek>
 ) : IEach {
-    override fun toInt() = arrayOf(sunday, monday, tuesday, wednesday, thursday, friday, saturday)
-        .reversed()
-        .mapIndexed { index, day ->
-            day.toByte(index)
-        }
-        .sum()
+    override fun toInt() = days.sumOf { it.toByte() }
+
+    override fun toByteString(): String = this.toInt().toByteString(7)
 
     companion object {
         fun from(value: Int): WeekDays = value
             .toByteString(7)
             .map {
                 when (it) {
-                    '0' -> false
                     '1' -> true
+                    '0' -> false
                     else -> true
                 }
             }
             .toTypedArray()
-            .let { WeekDays(it[0], it[1], it[2], it[3], it[4], it[5], it[6]) }
+            .let {
+                WeekDays(it
+                    .zip(
+                        listOf(
+                            DayOfWeek.SUNDAY,
+                            DayOfWeek.MONDAY,
+                            DayOfWeek.TUESDAY,
+                            DayOfWeek.WEDNESDAY,
+                            DayOfWeek.THURSDAY,
+                            DayOfWeek.FRIDAY,
+                            DayOfWeek.SATURDAY
+                        )
+                    )
+                    .filter { pair -> pair.first }
+                    .map { pair -> pair.second }
+                    .toSet())
+            }
+
+        private fun DayOfWeek.toByte() = when (this) {
+            DayOfWeek.SUNDAY -> 0b1000000
+            DayOfWeek.MONDAY -> 0b0100000
+            DayOfWeek.TUESDAY -> 0b0010000
+            DayOfWeek.WEDNESDAY -> 0b0001000
+            DayOfWeek.THURSDAY -> 0b0000100
+            DayOfWeek.FRIDAY -> 0b0000010
+            DayOfWeek.SATURDAY -> 0b0000001
+        }
     }
 }
 
@@ -150,6 +169,8 @@ data class AbsoluteMonthDays(
             val day = 31 - index
             (day in days).toByte(index)
         }
+
+    override fun toByteString(): String = this.toInt().toByteString(31)
 
     companion object {
         fun from(value: Int): AbsoluteMonthDays = value

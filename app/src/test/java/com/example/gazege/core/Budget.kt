@@ -1,11 +1,15 @@
 package com.example.gazege.core
 
+import com.example.gazege.core.dao.BudgetDao
 import com.example.gazege.core.entities.AbsoluteMonthDays
+import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.WeekDays
 import com.example.gazege.core.entities.toByteString
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -35,41 +39,17 @@ class BudgetTests {
 
         val manualExamples = listOf(
             Example(
-                WeekDays(
-                    sunday = false,
-                    monday = false,
-                    tuesday = false,
-                    wednesday = false,
-                    thursday = false,
-                    friday = false,
-                    saturday = false
-                ),
+                WeekDays(emptySet()),
                 expectedStringRepresentation = "0000000",
                 expectedInt = 0b0000000
             ),
             Example(
-                WeekDays(
-                    sunday = true,
-                    monday = false,
-                    tuesday = false,
-                    wednesday = true,
-                    thursday = false,
-                    friday = false,
-                    saturday = true
-                ),
+                WeekDays(setOf(DayOfWeek.SUNDAY, DayOfWeek.WEDNESDAY, DayOfWeek.SATURDAY)),
                 expectedStringRepresentation = "1001001",
                 expectedInt = 0b1001001
             ),
             Example(
-                WeekDays(
-                    sunday = false,
-                    monday = true,
-                    tuesday = false,
-                    wednesday = false,
-                    thursday = false,
-                    friday = true,
-                    saturday = false
-                ),
+                WeekDays(setOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY)),
                 expectedStringRepresentation = "0100010",
                 expectedInt = 0b0100010
             )
@@ -142,4 +122,245 @@ class BudgetTests {
                 example.assert()
             }
     }
+
+    @Test
+    fun testDailyFrequency() {
+        data class Example(
+            val frequency: Int,
+            val budgetStartDate: LocalDate,
+            val startDate: LocalDate,
+            val endDate: LocalDate,
+            val expectedCantRepetitions: Int
+        ) {
+            val calculatedCantRepetitions
+                get() = BudgetDao.calculateCantRepetitions(
+                    Budget.fromDaily(0, 0, 0.0, frequency, budgetStartDate), startDate, endDate
+                )
+
+            fun assert() {
+                assertEquals(expectedCantRepetitions, calculatedCantRepetitions)
+            }
+        }
+
+        val examples = listOf(
+            Example(
+                frequency = 1,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 31
+            ),
+            Example(
+                frequency = 2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 16
+            ),
+            Example(
+                frequency = 3,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 11
+            ),
+            Example(
+                frequency = 2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 2, 1),
+                endDate = LocalDate.of(2023, 2, 28),
+                expectedCantRepetitions = 14
+            ),
+            Example(
+                frequency = 2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 2, 28),
+                expectedCantRepetitions = 30
+            ),
+            Example(
+                frequency = 31,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 1
+            ),
+            Example(
+                frequency = 32,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 1
+            ),
+            Example(
+                frequency = 100,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 1
+            )
+        )
+
+        examples.forEach { it.assert() }
+    }
+
+    @Test
+    fun testWeeklyFrequency() {
+        data class Example(
+            val id: Int,
+            val frequency: Int,
+            val budgetStartDate: LocalDate,
+            val each: WeekDays,
+            val startDate: LocalDate,
+            val endDate: LocalDate,
+            val expectedCantRepetitions: Int
+        ) {
+            val calculatedCantRepetitions
+                get() = BudgetDao.calculateCantRepetitions(
+                    budget, startDate, endDate
+                )
+
+            private val budget
+                get() = Budget.fromWeekly(
+                    id = id,
+                    categoryId = 0,
+                    value = 0.0,
+                    frequency = frequency,
+                    startDate = budgetStartDate,
+                    each = each
+                )
+
+            fun assert() {
+                assertEquals(budget.toString(), expectedCantRepetitions, calculatedCantRepetitions)
+            }
+        }
+
+        val examples: List<Example> = listOf(
+            Example(
+                0,
+                1,
+                LocalDate.of(2023, 1, 1),
+                WeekDays((DayOfWeek.MONDAY..DayOfWeek.SUNDAY).toList().toSet()),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 31
+            ),
+            Example(
+                1,
+                2,
+                LocalDate.of(2023, 1, 1),
+                WeekDays((DayOfWeek.MONDAY..DayOfWeek.SUNDAY).toList().toSet()),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 17
+            ),
+            Example(
+                2,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 3
+            ),
+            Example(
+                3,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 1, 2),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                4,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 1, 8),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                5,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 1, 16),
+                endDate = LocalDate.of(2023, 1, 31),
+                expectedCantRepetitions = 1
+            ),
+            Example(
+                6,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 2, 1),
+                endDate = LocalDate.of(2023, 2, 28),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                7,
+                2,
+                budgetStartDate = LocalDate.of(2023, 1, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 1, 1),
+                endDate = LocalDate.of(2023, 2, 28),
+                expectedCantRepetitions = 5
+            ),
+            Example(
+                8,
+                2,
+                budgetStartDate = LocalDate.of(2023, 4, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 4, 1),
+                endDate = LocalDate.of(2023, 4, 30),
+                expectedCantRepetitions = 3
+            ),
+            Example(
+                9,
+                2,
+                budgetStartDate = LocalDate.of(2023, 4, 1),
+                each = WeekDays(setOf(DayOfWeek.FRIDAY)),
+                startDate = LocalDate.of(2023, 4, 1),
+                endDate = LocalDate.of(2023, 4, 30),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                10,
+                2,
+                budgetStartDate = LocalDate.of(2023, 3, 25),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY)),
+                startDate = LocalDate.of(2023, 4, 1),
+                endDate = LocalDate.of(2023, 4, 30),
+                expectedCantRepetitions = 2
+            ),
+            Example(
+                11,
+                2,
+                budgetStartDate = LocalDate.of(2023, 3, 25),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY)),
+                startDate = LocalDate.of(2023, 4, 1),
+                endDate = LocalDate.of(2023, 4, 30),
+                expectedCantRepetitions = 4
+            ),
+            Example(
+                11,
+                2,
+                budgetStartDate = LocalDate.of(2023, 4, 1),
+                each = WeekDays(setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY)),
+                startDate = LocalDate.of(2023, 4, 1),
+                endDate = LocalDate.of(2023, 4, 30),
+                expectedCantRepetitions = 5
+            )
+        )
+
+        examples.forEach { it.assert() }
+    }
+}
+
+private inline fun <reified T : Enum<T>> ClosedRange<T>.toList(): List<T> {
+    val values = enumValues<T>()
+    return (this.start.ordinal..this.endInclusive.ordinal)
+        .map { values[it] }
 }
