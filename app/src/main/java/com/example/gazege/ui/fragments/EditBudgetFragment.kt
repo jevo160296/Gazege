@@ -16,7 +16,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
-import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
+import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
 import com.example.gazege.ui.views.budget.BudgetRecyclerView
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetContent
@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun EditBudgetFragment(
-    budget: List<BudgetAndCategoryWithTransactions>,
+    budget: List<BudgetAndCategoryWithCalculatedData>,
     onAddOneBudgetRequested: () -> Unit,
     onGetBudgetDetailRequested: (budgetId: Int) -> Unit,
     onEditBudgetRequested: (budgetId: Int) -> Unit,

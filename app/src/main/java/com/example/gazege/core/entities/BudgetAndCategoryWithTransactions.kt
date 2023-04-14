@@ -34,7 +34,11 @@ data class BudgetAndCategoryWithTransactions(
                 .groupBy { it.categoryId }
             val categoryWithTransactions = category
                 .map {
-                    Triple(it, indexedInTransactions[it.id], indexedOutTransactions[it.id])
+                    Triple(
+                        it,
+                        indexedInTransactions[it.id] ?: emptyList(),
+                        indexedOutTransactions[it.id] ?: emptyList()
+                    )
                 }
                 .associateBy {
                     it.first.id
@@ -45,8 +49,8 @@ data class BudgetAndCategoryWithTransactions(
                     BudgetAndCategoryWithTransactions(
                         it,
                         selectedCategoryWithTransactions?.first!!,
-                        selectedCategoryWithTransactions.second!!,
-                        selectedCategoryWithTransactions.third!!,
+                        selectedCategoryWithTransactions.second,
+                        selectedCategoryWithTransactions.third,
                         person
                     )
                 }

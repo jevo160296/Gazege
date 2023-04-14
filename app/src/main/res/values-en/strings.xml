@@ -42,12 +42,12 @@
     <string name="Cuenta_destino">Destination account</string>
     <string name="Realizar_a_nombre_de_otra_persona">Do as another person</string>
     <string name="Configurar_income_outcome">Set income and outcome accounts</string>
-    <string name="Ajustes_saldo_actual">Current flow settings</string>
+    <string name="Ajustes_saldo_actual">Current cash settings</string>
     <string name="Ajustes_saldo_actual_desc">Select the accounts that should be included in the current flow</string>
     <string name="Transaccion">Transaction</string>
     <string name="Editar">Edit</string>
     <string name="Eliminar">Delete</string>
-    <string name="Saldo_actual">Current flow</string>
+    <string name="Saldo_actual">Current cash</string>
     <string name="Fecha">Date</string>
     <string name="Todo">All</string>
     <string name="Si">Yes</string>
@@ -68,4 +68,5 @@
     <string name="Viernes">Friday</string>
     <string name="Sabado">Saturday</string>
     <string name="Domingo">Sunday</string>
+    <string name="Progreso">Progress</string>
 </resources>

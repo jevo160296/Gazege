@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsAndPocketsSample
 import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
@@ -51,10 +51,10 @@ private fun PersonViewHolder(
             ) {
                 if (flujo > 0) {
                     SmallEmphasis(text = stringResource(id = R.string.me_debe))
-                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
                 } else {
                     SmallEmphasis(text = stringResource(R.string.le_debo))
-                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
                 }
             }
         }

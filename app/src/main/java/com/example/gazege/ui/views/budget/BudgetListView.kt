@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.doubleToPercentageString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
 import com.example.gazege.ui.views.account.getAccountSample
@@ -25,13 +26,25 @@ import kotlin.random.Random
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BudgetViewHolder(
-    budget: BudgetAndCategoryWithTransactions
+    budget: BudgetAndCategoryWithCalculatedData
 ) {
-    val supportingText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n" +
-            "${budget.budgetEachClass}"
+    val overlineText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n"
+    val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
+    val supportingView = @Composable {
+        Column {
+            Text(text = "${stringResource(R.string.Progreso)}: ${doubleToPercentageString(budget.budgetCompleition)}")
+            LinearProgressIndicator(progress = budget.budgetCompleition.toFloat())
+            Text(text = "expectedTotalFlow ${budget.budgetExpectedTotalFlow}")
+            Text(text = "expectedRemeiningFlow ${budget.budgetExpectedRemainingFlow}")
+            Text(text = "realTotalFlow ${budget.budgetRealTotalFlow}")
+            Text(text = "expectedFlowUntilNow ${budget.budgetExpectedFlowUntilNow}")
+        }
+    }
+
     ListItem(
-        headlineText = { Text(text = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}") },
-        supportingText = { Text(text = supportingText) },
+        overlineText = { Text(text = overlineText) },
+        headlineText = { Text(text = headlineText) },
+        supportingText = { supportingView() },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }
@@ -40,10 +53,10 @@ private fun BudgetViewHolder(
 fun BudgetRecyclerView(
     modifier: Modifier,
     itemHolderPaddingValues: PaddingValues,
-    budget: List<BudgetAndCategoryWithTransactions>,
-    onBudgetDetailRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit,
-    onBudgetDeleteRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit,
-    onBudgetEditRequested: (budget: BudgetAndCategoryWithTransactions) -> Unit
+    budget: List<BudgetAndCategoryWithCalculatedData>,
+    onBudgetDetailRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit,
+    onBudgetDeleteRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit,
+    onBudgetEditRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit
 ) {
     val state = rememberLazyListState()
     var menuIdExpanded: Int? by remember {
@@ -146,17 +159,24 @@ private fun BudgetPreview() {
         person = person,
         accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
     )
+    val budgetAndCategoryWithCalculatedData = BudgetAndCategoryWithCalculatedData.from(
+        budgetAndCategoryWithTransactions,
+        LocalDate.of(2023, 1, 14),
+        LocalDate.of(2023, 1, 1),
+        LocalDate.of(2023, 1, 31)
+    )
 
     GazegeTheme {
         Surface(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding()
         ) {
             BudgetRecyclerView(
                 modifier = Modifier,
                 itemHolderPaddingValues = PaddingValues(),
-                budget = budgetAndCategoryWithTransactions,
+                budget = budgetAndCategoryWithCalculatedData,
                 onBudgetDetailRequested = {},
                 onBudgetDeleteRequested = {},
                 onBudgetEditRequested = {}

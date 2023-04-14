@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 
 @Composable
 fun DataView(
@@ -79,7 +79,7 @@ fun PersonMonthSummaryView(
             DataView(
                 title = stringResource(R.string.Saldo_actual),
                 bigTitle = true,
-                value = doubleToString(saldoActual),
+                value = doubleToMoneyString(saldoActual),
                 modifier = Modifier.weight(1f),
                 colors = enabledColors,
                 onClick = onSaldoActualClick
@@ -92,21 +92,21 @@ fun PersonMonthSummaryView(
         ) {
             DataView(
                 title = stringResource(R.string.Ingresos),
-                value = doubleToString(ingresos),
+                value = doubleToMoneyString(ingresos),
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
                 title = stringResource(id = R.string.Gastos),
-                value = doubleToString(egresos),
+                value = doubleToMoneyString(egresos),
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             DataView(
                 title = stringResource(R.string.Flujo),
-                value = doubleToString(flujo),
+                value = doubleToMoneyString(flujo),
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors

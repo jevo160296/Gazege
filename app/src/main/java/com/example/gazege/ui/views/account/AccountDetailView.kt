@@ -21,7 +21,7 @@ import com.example.gazege.core.dateBetween
 import com.example.gazege.core.entities.*
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
@@ -194,7 +194,7 @@ fun NotNullPlot(
                 .orEmpty()
         }
     val verticalAxisValueFormatter = AxisValueFormatter<AxisPosition.Vertical.Start> { value, _ ->
-        doubleToString(value.toDouble())
+        doubleToMoneyString(value.toDouble())
     }
     Box(
         Modifier
@@ -310,13 +310,13 @@ private fun NotNullAccountDetail(
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.total),
-                value = doubleToString(total),
+                value = doubleToMoneyString(total),
                 enabled = false
             )
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.TotalConBolsillos),
-                value = doubleToString(total + childrenTotal),
+                value = doubleToMoneyString(total + childrenTotal),
                 enabled = false
             )
         }

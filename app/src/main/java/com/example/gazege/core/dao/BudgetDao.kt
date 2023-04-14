@@ -29,7 +29,7 @@ interface BudgetDao {
     suspend fun update(budget: Budget)
 
     companion object {
-        private fun calculateOneBudgetRealFlow(
+        fun calculateOneBudgetRealFlow(
             budget: BudgetAndCategoryWithTransactions,
             startDate: LocalDate,
             endDate: LocalDate
@@ -116,12 +116,16 @@ interface BudgetDao {
                 }
             }
 
-        private fun calculateOneBudgetExpectedFlow(
+        fun calculateOneBudgetExpectedFlow(
             budget: Budget,
             startDate: LocalDate,
             endDate: LocalDate
         ) = budget.let {
-            val cantRepetitions = calculateCantRepetitions(it, startDate, endDate)
+            val cantRepetitions = if (startDate < endDate) {
+                calculateCantRepetitions(it, startDate, endDate)
+            } else {
+                0
+            }
             it.value * cantRepetitions
         }
 
@@ -141,7 +145,8 @@ interface BudgetDao {
                 startDate,
                 currentDate
             )
-            return realFlowUntilNow.div(expectedFLowEnd)
+            val budgetCompleition = realFlowUntilNow.div(expectedFLowEnd).takeIf { !it.isNaN() }
+            return budgetCompleition ?: 0.0
         }
     }
 }

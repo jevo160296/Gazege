@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.widgets.Card
@@ -56,7 +56,7 @@ private fun DefaultAccountViewHolder(
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = totalString)
-            LargeBody(text = doubleToString(total))
+            LargeBody(text = doubleToMoneyString(total))
         }
     }
 }

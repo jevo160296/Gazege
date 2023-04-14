@@ -839,7 +839,7 @@ fun NavGraphBuilder.screenEditBudget(
     onNavigateToOneBudgetEdit: (budgetId: Int) -> Unit
 ) {
     composable("editarBudget") {
-        val budget by viewModel.rememberBudgetAndCategoryWithTransactions()
+        val budget by viewModel.rememberBudgetAndCategoryWithCalculatedData()
         EditBudgetFragment(
             budget = budget,
             onAddOneBudgetRequested = onNavigateToAddOneBudget,

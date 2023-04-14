@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DateFormat
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.account.getAccountSample
@@ -63,7 +63,7 @@ private fun TransactionViewHolder(
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = stringResource(id = R.string.Valor))
-            LargeBody(text = doubleToString(transaction.transaction.amount))
+            LargeBody(text = doubleToMoneyString(transaction.transaction.amount))
         }
     }
 }
