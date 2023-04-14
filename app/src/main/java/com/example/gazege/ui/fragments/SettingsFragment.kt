@@ -39,13 +39,13 @@ fun SettingsFragment(
     var principalPersonExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    var incomeIdSelected by rememberSaveable {
+    var incomeIdSelected by rememberSaveable(incomeAccount?.id) {
         mutableStateOf(incomeAccount?.id)
     }
-    var outcomeIdSelected by rememberSaveable {
+    var outcomeIdSelected by rememberSaveable(outcomeAccount?.id) {
         mutableStateOf(outcomeAccount?.id)
     }
-    var personIdSelected by rememberSaveable {
+    var personIdSelected by rememberSaveable(principalPerson?.id) {
         mutableStateOf(principalPerson?.id)
     }
     val personSelected = personList.firstOrNull { it.id == personIdSelected }
@@ -59,12 +59,10 @@ fun SettingsFragment(
             if (personSelected != null) {
                 onPrincipalPersonChanged(personSelected)
             }
-            if (incomeSelected != null || outcomeSelected != null) {
-                onIncomeOutcomeAccountChanged(
-                    incomeSelected?.account,
-                    outcomeSelected?.account
-                )
-            }
+            onIncomeOutcomeAccountChanged(
+                incomeSelected?.account,
+                outcomeSelected?.account
+            )
             onNavigateUpRequested()
         },
         isSavedButtonEnabled = true,
