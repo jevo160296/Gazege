@@ -25,6 +25,7 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.theme.GazegeTheme
@@ -32,11 +33,8 @@ import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountPage
-import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.views.person.PersonPage
-import com.example.gazege.ui.views.person.getPersonWithAccountsSample
 import com.example.gazege.ui.views.transaction.TransactionPage
-import com.example.gazege.ui.views.transaction.getTransactionSample
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.fab.ExpandableFAB
 import com.example.gazege.ui.widgets.menu.DropDownMenuItem
@@ -439,7 +437,7 @@ private fun MainFragmentResponsiveContent(
         }
     } else {
         Row {
-            Column(modifier = Modifier.widthIn(max = 400.dp)) {
+            Column(modifier = Modifier.widthIn(max = 350.dp)) {
                 filter()
                 personMonthSummaryView()
             }
@@ -465,89 +463,88 @@ private fun ModalSheetContentPreview() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    val personList = getPersonWithAccountsSample()
-    val accounts = getAccountSample()
-    val transactions = getTransactionSample()
     val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
     var navPosition by remember {
         mutableStateOf(NavPosition.TRANSACCIONES)
     }
     val snackbarHostState = SnackbarHostState()
-    GazegeTheme(darkTheme = true) {
-        MainFragment(
-            personList = personList,
-            accountList = accounts,
-            allTransactionList = transactions,
-            filteredTransactionList = transactions,
-            principalPersonWithAccounts = PersonWithAccounts(
-                person = Person(name = "?"),
-                emptyList()
-            ),
-            navPosition = navPosition,
-            range = Pair(LocalDate.now(), LocalDate.now()),
-            personFilterValue = false,
-            sheetState = sheetState,
-            snackbarHostState = snackbarHostState,
-            delPerson = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Delete person requested")
-                }
-            },
-            delAccount = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Del account ${it.name}")
-                }
-            },
-            delTransaction = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Del transaction ${it.amount}")
-                }
-            },
-            onAddPersonRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add person requested.")
-                }
-            },
-            onEditPersonRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Edit person ${it.name}")
-                }
-            },
-            onPersonDetailRequested = {},
-            onAddAccountRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add account requested.")
-                }
-            },
-            onEditAccountRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Edit account ${it.name}")
-                }
-            },
-            onAccountDetailRequested = {},
-            onAddTransactionRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Add transaction requested")
-                }
-            },
-            onEditTransactionRequested = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
-                }
-            },
-            onNavStatusChanged = {
-                navPosition = it
-            },
-            onRangeChanged = { _, _ -> },
-            onSettingsClicked = {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Settings clicked")
-                }
-            },
-            onSaldoActualClick = {},
-            onPersonFilterValueChanged = {},
-            showVertical = true
-        )
+    DatabaseSample {
+        GazegeTheme(darkTheme = true) {
+            MainFragment(
+                personList = personWithAccountsSample,
+                accountList = accountAndOwnerWithTransactionsSample,
+                allTransactionList = transactionsAndAccountAndCategorySample,
+                filteredTransactionList = transactionsAndAccountAndCategorySample,
+                principalPersonWithAccounts = PersonWithAccounts(
+                    person = Person(name = "?"),
+                    emptyList()
+                ),
+                navPosition = navPosition,
+                range = Pair(LocalDate.now(), LocalDate.now()),
+                personFilterValue = false,
+                sheetState = sheetState,
+                snackbarHostState = snackbarHostState,
+                delPerson = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Delete person requested")
+                    }
+                },
+                delAccount = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Del account ${it.name}")
+                    }
+                },
+                delTransaction = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Del transaction ${it.amount}")
+                    }
+                },
+                onAddPersonRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Add person requested.")
+                    }
+                },
+                onEditPersonRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Edit person ${it.name}")
+                    }
+                },
+                onPersonDetailRequested = {},
+                onAddAccountRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Add account requested.")
+                    }
+                },
+                onEditAccountRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Edit account ${it.name}")
+                    }
+                },
+                onAccountDetailRequested = {},
+                onAddTransactionRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Add transaction requested")
+                    }
+                },
+                onEditTransactionRequested = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
+                    }
+                },
+                onNavStatusChanged = {
+                    navPosition = it
+                },
+                onRangeChanged = { _, _ -> },
+                onSettingsClicked = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Settings clicked")
+                    }
+                },
+                onSaldoActualClick = {},
+                onPersonFilterValueChanged = {},
+                showVertical = true
+            )
+        }
     }
 }

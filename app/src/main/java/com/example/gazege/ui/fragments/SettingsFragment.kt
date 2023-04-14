@@ -33,6 +33,7 @@ fun SettingsFragment(
     onAddAccountRequested: () -> Unit,
     onAddPersonRequested: () -> Unit,
     onEditCategoriesRequested: () -> Unit,
+    onEditBudgetsRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
@@ -129,6 +130,9 @@ fun SettingsFragment(
         }
         ButtonField(onClick = onEditCategoriesRequested) {
             Text(text = stringResource(id = R.string.ConfigurarCategorias))
+        }
+        ButtonField(onClick = onEditBudgetsRequested) {
+            Text(text = stringResource(id = R.string.ConfigurarPresupuesto))
         }
     }
 }

@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.DatabaseSample
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
@@ -48,10 +49,10 @@ private fun PersonViewHolder(
             ) {
                 if (flujo > 0) {
                     SmallEmphasis(text = stringResource(id = R.string.me_debe))
-                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
                 } else {
                     SmallEmphasis(text = stringResource(R.string.le_debo))
-                    LargeBody(text = doubleToString(flujo.absoluteValue))
+                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
                 }
             }
         }
@@ -154,33 +155,6 @@ fun PersonPage(
     }
 }
 
-fun getPersonSample(): List<Person> {
-    return listOf(
-        "Pablo",
-        "Banco",
-        "Petunia",
-        "Hortensia",
-        "__ESPECIAL__"
-    ).mapIndexed { index, s ->
-        Person(
-            index, s, if (index == 0) {
-                1
-            } else {
-                null
-            }
-        )
-    }
-}
-
-fun getPersonWithAccountsSample(): List<PersonWithAccounts> {
-    val persons = getPersonSample()
-    return persons.map {
-        PersonWithAccounts(
-            person = it, accounts = listOf()
-        )
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonItem() {
@@ -224,33 +198,36 @@ private fun PreviewPersonItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonList() {
-    GazegeTheme {
-        RecyclerView(
-            elements = getPersonWithAccountsSample(), viewHolder = { person ->
-                PersonViewHolder(
-                    person = person, principalPerson = person, transactions = listOf()
-                )
-            }, state = LazyListState()
-        )
+    DatabaseSample {
+        GazegeTheme {
+            RecyclerView(
+                elements = personWithAccountsSample, viewHolder = { person ->
+                    PersonViewHolder(
+                        person = person, principalPerson = person, transactions = listOf()
+                    )
+                }, state = LazyListState()
+            )
+        }
     }
 }
 
 @Preview(showBackground = true, widthDp = 420, heightDp = 620)
 @Composable
 private fun PreviewPersonPage() {
-    val persons = getPersonWithAccountsSample()
-    GazegeTheme {
-        PersonPage(
-            personList = getPersonWithAccountsSample(),
-            state = LazyListState(),
-            editPerson = {},
-            delPerson = {},
-            onTitleSetted = {},
-            principalPerson = persons[0],
-            onConfigurePrincipalPersonRequested = {},
-            itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
-            transacciones = listOf(),
-            detailPerson = {}
-        )
+    DatabaseSample {
+        GazegeTheme {
+            PersonPage(
+                personList = personWithAccountsSample,
+                state = LazyListState(),
+                editPerson = {},
+                delPerson = {},
+                onTitleSetted = {},
+                principalPerson = personWithAccountsSample[0],
+                onConfigurePrincipalPersonRequested = {},
+                itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
+                transacciones = listOf(),
+                detailPerson = {}
+            )
+        }
     }
 }

@@ -39,5 +39,13 @@ data class AccountAndOwnerWithTransactionsAndPockets(
                     }
             )
         }
+
+        fun from(
+            accountAndOwnerWithTransactionsList: List<AccountAndOwnerWithTransactions>
+        ): List<AccountAndOwnerWithTransactionsAndPockets> {
+            return accountAndOwnerWithTransactionsList
+                .filter { it.account.parentId == null }
+                .map { from(it, accountAndOwnerWithTransactionsList) }
+        }
     }
 }

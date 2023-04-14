@@ -15,15 +15,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.account.getAccountSample
-import com.example.gazege.ui.views.category.getCategoriesSample
 import com.example.gazege.ui.widgets.*
 import java.time.LocalDate
-import java.util.*
 
 @Composable
 private fun TransactionViewHolder(
@@ -62,7 +60,7 @@ private fun TransactionViewHolder(
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = stringResource(id = R.string.Valor))
-            LargeBody(text = doubleToString(transaction.transaction.amount))
+            LargeBody(text = doubleToMoneyString(transaction.transaction.amount))
         }
     }
 }
@@ -145,38 +143,6 @@ fun LazyListScope.transactionLazyListItems(
     TransactionViewHolder(transaction = it)
 }
 
-fun getTransactionSample(): List<TransactionAndAccountsAndCategory> {
-    val accountList = getAccountSample()
-    val categories = getCategoriesSample()
-    val random = Random(3)
-    val transList = (0..100).map {
-        val selectedAccounts = accountList.shuffled(random).take(2)
-        val sourceAccount = selectedAccounts[0]
-        val destinationAccount = selectedAccounts[1]
-        val category = random.nextBoolean()
-            .let {
-                if (it) {
-                    categories.shuffled(random).first()
-                } else {
-                    null
-                }
-            }
-        Transaction(
-            it, random.nextDouble(), "Esta es la transaccion $it, desde " +
-                    "${sourceAccount.account.name} hasta ${destinationAccount.account.name}, y " +
-                    "categoría ${category?.name}",
-            sourceAccount.account.id ?: -1,
-            destinationAccount.account.id ?: -1,
-            category?.id,
-            date = LocalDate.now(),
-            null
-        )
-    }
-    return TransactionAndAccountsAndCategory.from(
-        transList, accountList.map { it.account }, categories
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionItem() {
@@ -209,25 +175,28 @@ private fun PreviewTransactionItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionList() {
-    val transList = getTransactionSample()
-    TransactionRecyclerView(
-        transactionList = transList,
-        editTransaction = {},
-        delTransaction = {},
-        state = LazyListState()
-    )
+    DatabaseSample {
+        TransactionRecyclerView(
+            transactionList = transactionsAndAccountAndCategorySample,
+            editTransaction = {},
+            delTransaction = {},
+            state = LazyListState()
+        )
+    }
 }
 
 @Preview(showBackground = true, widthDp = 320, heightDp = 640)
 @Composable
 private fun PreviewTransactionPage() {
-    GazegeTheme(darkTheme = true) {
-        TransactionPage(
-            transactionList = getTransactionSample(),
-            state = LazyListState(),
-            editTransaction = {},
-            delTransaction = {},
-            onTitleSetted = {}
-        )
+    DatabaseSample {
+        GazegeTheme(darkTheme = true) {
+            TransactionPage(
+                transactionList = transactionsAndAccountAndCategorySample,
+                state = LazyListState(),
+                editTransaction = {},
+                delTransaction = {},
+                onTitleSetted = {}
+            )
+        }
     }
 }

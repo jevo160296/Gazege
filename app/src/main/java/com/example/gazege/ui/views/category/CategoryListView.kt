@@ -15,7 +15,6 @@ import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.treeview.DefaultItemHolderWithExpandIcon
 import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
-import kotlin.random.Random
 
 @Composable
 private fun CategoryViewHolder(
@@ -59,19 +58,3 @@ fun CategoryListView(
     }
 }
 
-fun getCategoriesSample(): List<Category> {
-    val random = Random(3)
-    return (0..20).map {
-        val hasParent = random.nextBoolean()
-        val parentId = random.nextInt(19)
-            .let { parentId ->
-                if (parentId < it) {
-                    parentId
-                } else {
-                    parentId + 1
-                }
-            }
-            .takeIf { hasParent }
-        Category(it, "Cuenta $parentId.$it", parentId)
-    }
-}

@@ -1,0 +1,93 @@
+package com.example.gazege.ui.fragments
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.example.gazege.R
+import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
+import com.example.gazege.ui.views.budget.BudgetRecyclerView
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.ModalSheetContent
+import com.example.gazege.ui.widgets.fab.FAB
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@Composable
+fun EditBudgetFragment(
+    budget: List<BudgetAndCategoryWithCalculatedData>,
+    onAddOneBudgetRequested: () -> Unit,
+    onGetBudgetDetailRequested: (budgetId: Int) -> Unit,
+    onEditBudgetRequested: (budgetId: Int) -> Unit,
+    onDeleteBudgetRequested: (budgetId: Int) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val defaultAction: () -> Unit = { scope.launch { sheetState.hide() } }
+    var action: (() -> Unit)? by remember { mutableStateOf(null) }
+    ModalBottomSheetLayout(
+        sheetContent = {
+            ModalSheetContent(
+                onSiClicked = action ?: defaultAction,
+                onNoClicked = { scope.launch { sheetState.hide() } },
+                titleText = stringResource(id = R.string.confirmar_eliminacion),
+                bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+                    stringResource(id = R.string.Presupuesto)
+                )
+            )
+        },
+        sheetState = sheetState
+    ) {
+        Scaffold(
+            floatingActionButton = {
+                FAB(onClick = onAddOneBudgetRequested) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_baseline_add_24),
+                        contentDescription = "Add"
+                    )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.End,
+            topBar = {
+                TopAppBar(
+                    title = { MediumHeadline(text = stringResource(id = R.string.Presupuesto)) }
+                )
+            }
+        ) { padding ->
+            val layoutDirection = LocalLayoutDirection.current
+            val itemHolderPaddingValues = PaddingValues(
+                start = padding.calculateStartPadding(layoutDirection) + dimensionResource(id = R.dimen.DefaultPadding),
+                end = padding.calculateEndPadding(layoutDirection) + dimensionResource(id = R.dimen.DefaultPadding),
+                top = padding.calculateTopPadding(),
+                bottom = dimensionResource(id = R.dimen.FABDefaultSpace)
+            )
+            BudgetRecyclerView(
+                modifier = Modifier.systemBarsPadding(),
+                itemHolderPaddingValues = itemHolderPaddingValues,
+                budget = budget,
+                onBudgetDetailRequested = { it.budgetId?.let { id -> onGetBudgetDetailRequested(id) } },
+                onBudgetDeleteRequested = {
+                    it.budgetId?.let { id ->
+                        action = {
+                            onDeleteBudgetRequested(id)
+                            scope.launch { sheetState.hide() }
+                        }
+                        scope.launch { sheetState.show() }
+                    }
+                },
+                onBudgetEditRequested = { it.budgetId?.let { id -> onEditBudgetRequested(id) } }
+            )
+        }
+    }
+}

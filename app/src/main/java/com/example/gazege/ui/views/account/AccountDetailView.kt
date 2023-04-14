@@ -20,12 +20,9 @@ import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dateBetween
 import com.example.gazege.core.entities.*
 import com.example.gazege.core.firstDayOfMonth
-import com.example.gazege.ui.accountDeleitionConfirmationBuilder
-import com.example.gazege.ui.doubleToString
+import com.example.gazege.ui.*
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
-import com.example.gazege.ui.views.category.getCategoriesSample
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.LargeEmphasis
@@ -193,7 +190,7 @@ fun NotNullPlot(
                 .orEmpty()
         }
     val verticalAxisValueFormatter = AxisValueFormatter<AxisPosition.Vertical.Start> { value, _ ->
-        doubleToString(value.toDouble())
+        doubleToMoneyString(value.toDouble())
     }
     Box(
         Modifier
@@ -309,13 +306,13 @@ private fun NotNullAccountDetail(
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.total),
-                value = doubleToString(total),
+                value = doubleToMoneyString(total),
                 enabled = false
             )
             DataView(
                 modifier = Modifier.weight(1f),
                 title = stringResource(id = R.string.TotalConBolsillos),
-                value = doubleToString(total + childrenTotal),
+                value = doubleToMoneyString(total + childrenTotal),
                 enabled = false
             )
         }
@@ -430,53 +427,50 @@ private fun NullAccountDetail(
 @Preview(showBackground = true, widthDp = 300, heightDp = 600)
 @Composable
 private fun AccountDetailPreview() {
-    val accounts = getAccountSample()
-    val categories = getCategoriesSample()
-    val account = accounts.let {
-        AccountAndOwnerWithTransactionsAndPockets.from(it.first(), it)
-    }
     val snackBackState = SnackbarHostState()
     val scope = rememberCoroutineScope()
-    GazegeTheme {
-        Scaffold(
-            snackbarHost = {
-                SnackbarHost(hostState = snackBackState)
-            }
-        ) {
-            Box(Modifier.padding(it)) {
-                AccountDetail(
-                    accountAndOwnerWithTransactionsAndPockets = account,
-                    data = AccountDetailData(
-                        account = account,
-                        allAccounts = accounts.map { it.account },
-                        allCategories = categories,
-                        startDate = null,
-                        endDate = null
-                    ),
-                    onAction = { account, action ->
-                        scope.launch {
-                            snackBackState.showSnackbar(
-                                when (action) {
-                                    AccountAction.EDIT -> "Edit ${account.name}"
-                                    AccountAction.DELETE -> "Delete ${account.name}"
-                                }
-                            )
-                        }
-                    },
-                    onTransactionAction = { transaction, action ->
-                        scope.launch {
-                            snackBackState.showSnackbar(
-                                when (action) {
-                                    TransactionAction.EDIT -> "Edit ${transaction.date}"
-                                    TransactionAction.DELETE -> "Delete ${transaction.date}"
-                                }
-                            )
-                        }
-                    },
-                    onDataUpdateRequested = {},
-                    showGraphs = false,
-                    onShowGraphsChanged = {}
-                )
+    DatabaseSample {
+        GazegeTheme {
+            Scaffold(
+                snackbarHost = {
+                    SnackbarHost(hostState = snackBackState)
+                }
+            ) {
+                Box(Modifier.padding(it)) {
+                    AccountDetail(
+                        accountAndOwnerWithTransactionsAndPockets = accountAndOwnerWithTransactionsAndPocketsSample.first(),
+                        data = AccountDetailData(
+                            account = accountAndOwnerWithTransactionsAndPocketsSample.first(),
+                            allAccounts = accountSample,
+                            allCategories = categorieSample,
+                            startDate = null,
+                            endDate = null
+                        ),
+                        onAction = { account, action ->
+                            scope.launch {
+                                snackBackState.showSnackbar(
+                                    when (action) {
+                                        AccountAction.EDIT -> "Edit ${account.name}"
+                                        AccountAction.DELETE -> "Delete ${account.name}"
+                                    }
+                                )
+                            }
+                        },
+                        onTransactionAction = { transaction, action ->
+                            scope.launch {
+                                snackBackState.showSnackbar(
+                                    when (action) {
+                                        TransactionAction.EDIT -> "Edit ${transaction.date}"
+                                        TransactionAction.DELETE -> "Delete ${transaction.date}"
+                                    }
+                                )
+                            }
+                        },
+                        onDataUpdateRequested = {},
+                        showGraphs = false,
+                        onShowGraphsChanged = {}
+                    )
+                }
             }
         }
     }

@@ -39,6 +39,17 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun rememberCategories() = categories.observeAsState(emptyList())
 
     @Composable
+    fun rememberBudget() = budget.observeAsState(emptyList())
+
+    @Composable
+    fun rememberBudgetAndCategoryWithTransactions() =
+        budgetAndCategoryWithTransactions.observeAsState(emptyList())
+
+    @Composable
+    fun rememberBudgetAndCategoryWithCalculatedData() =
+        budgetAndCategoryWithCalculatedData.observeAsState(emptyList())
+
+    @Composable
     fun rememberAccountAndOwnerWithTransactions() =
         accountAndOwnerWithTransactions.observeAsState(emptyList())
 
@@ -90,6 +101,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
     private val categories = repository.getCategories().asLiveData()
+    private val budget = repository.getBudgets().asLiveData()
 
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
         MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())
@@ -138,6 +150,52 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
+        MediatorLiveData<List<BudgetAndCategoryWithTransactions>>(emptyList())
+            .apply {
+                val update = {
+                    val person = principalPerson.value
+                    value = if (person == null) {
+                        emptyList()
+                    } else {
+                        BudgetAndCategoryWithTransactions.from(
+                            budget = budget.value ?: emptyList(),
+                            category = categories.value ?: emptyList(),
+                            person = person,
+                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.value
+                                ?: emptyList()
+                        )
+                    }
+                }
+
+                addSource(budget) { update() }
+                addSource(categories) { update() }
+                //addSource(principalPerson){ update() }
+                addSource(accountAndOwnerWithTransactions) { update() }
+            }
+
+    private val budgetAndCategoryWithCalculatedData: LiveData<List<BudgetAndCategoryWithCalculatedData>> =
+        MediatorLiveData<List<BudgetAndCategoryWithCalculatedData>>(emptyList())
+            .apply {
+                val update = {
+                    val budget = budgetAndCategoryWithTransactions.value
+                    val startDate = range.value?.first
+                    val endDate = range.value?.second
+
+                    if (budget != null && startDate != null && endDate != null) {
+                        value = BudgetAndCategoryWithCalculatedData.from(
+                            budget,
+                            LocalDate.now(),
+                            startDate,
+                            endDate
+                        )
+                    }
+                }
+
+                addSource(budgetAndCategoryWithTransactions) { update() }
+                addSource(range) { update() }
+            }
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
@@ -376,6 +434,28 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     ) = viewModelScope.safeLaunch(onErrorAction) {
         repository.updateCategory(newCategory)
         onCompleitionAction()
+    }
+
+    fun insertBudget(
+        budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertBudget(budget)
+        onCompleitionAction()
+    }
+
+    fun updateBudget(
+        budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.updateBudget(budget)
+        onCompleitionAction()
+    }
+
+    fun deleteBudget(budget: Budget) = viewModelScope.launch {
+        repository.deleteBudget(budget)
     }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {

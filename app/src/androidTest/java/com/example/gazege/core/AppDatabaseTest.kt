@@ -4,8 +4,10 @@ import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.databaseSample
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -214,6 +216,35 @@ class AppDatabaseTest {
         database.accountDao().insertAll(*newAccounts.toTypedArray())
         database.transactionDao().insertAll(*newTransactions.toTypedArray())
         database.categoryDao().insertAll(*newCategories)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun initDateBaseFromSamples() = runTest {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = AppDatabase.getDatabase(appContext)
+
+        val persons = database.personDao().getAll().first()
+        persons.forEach {
+            database.personDao().delete(it)
+        }
+        database
+            .categoryDao()
+            .getAll()
+            .first()
+            .run { database.categoryDao().deleteAll(*this.toTypedArray()) }
+
+        databaseSample {
+            this@runTest.launch {
+                database.personDao().insertAll(*personSample.toTypedArray())
+                database.accountDao().insertAll(*accountSample.toTypedArray())
+                database.categoryDao()
+                    .insertAll(*categorieSample.map { it.copy(parentId = null) }.toTypedArray())
+                database.categoryDao().updateAll(*categorieSample.toTypedArray())
+                database.transactionDao().insertAll(*transactionSample.toTypedArray())
+                database.budgetDao().insertAll(*budgetSample.toTypedArray())
+            }
+        }
     }
 
     @Test
