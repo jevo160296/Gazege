@@ -146,7 +146,7 @@ interface BudgetDao {
                 currentDate
             )
             val budgetCompleition = realFlowUntilNow.div(expectedFLowEnd).takeIf { !it.isNaN() }
-            return budgetCompleition ?: 0.0
+            return (budgetCompleition ?: 0.0).coerceIn(0.0..1.0)
         }
     }
 }

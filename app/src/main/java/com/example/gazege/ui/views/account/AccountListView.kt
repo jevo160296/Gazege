@@ -14,16 +14,15 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import com.example.gazege.ui.widgets.treeview.*
 import java.time.LocalDate
-import kotlin.random.Random
 
 @Composable
 private fun DefaultAccountViewHolder(
@@ -285,144 +284,27 @@ private fun PreviewAccountItem() {
     )
 }
 
-fun getAccountSample(personSample: List<Person>): List<Account> {
-    var index = 0
-    val random = Random(3)
-    return personSample
-        .flatMap {
-            when (it.name) {
-                "Pablo" -> Pair(
-                    0, (0..100).map {
-                        val pIndex = index++
-                        val hasParent = random.nextBoolean()
-                        val parentId = if (hasParent && pIndex > 0) {
-                            random.nextInt(pIndex)
-                        } else {
-                            null
-                        }
-                        Triple(pIndex, "Cuenta $pIndex", parentId)
-                    }
-                )
-                "Banco" -> Pair(
-                    1, listOf(
-                        Triple(index++, "Banco", null)
-                    )
-                )
-                "Petunia" -> Pair(
-                    2, listOf(
-                        Triple(index++, "Petunia", null)
-                    )
-                )
-                "Hortensia" -> Pair(
-                    3, listOf(
-                        Triple(index++, "Hortensia", null)
-                    )
-                )
-                "__ESPECIAL__" -> Pair(
-                    4, listOf(
-                        Triple(index++, "__INGRESOS__", null),
-                        Triple(index++, "__GASTOS__", null)
-                    )
-                )
-                else -> null
-            }
-                .let { pair ->
-                    if (pair != null) {
-                        val ownerId = pair.first
-                        val accounts = pair.second
-                        accounts.map { triple ->
-                            val isIncome = triple.second == "__INGRESOS__"
-                            val isOutcome = triple.second == "__GASTOS__"
-                            Account(
-                                triple.first,
-                                triple.second,
-                                ownerId,
-                                triple.third,
-                                isIncome = isIncome,
-                                isOutcome = isOutcome
-                            )
-                        }
-                    } else {
-                        listOf()
-                    }
-                }
-        }
-}
-
-fun getAccountAndOwnerWithTransactionsSample(
-    accountSample: List<Account>,
-    personSample: List<Person>
-): List<AccountAndOwnerWithTransactions> {
-    var index = 0
-    val random = Random(3)
-    val accounts: List<Account> = accountSample
-    val transactions: List<Transaction> = (0..500).map {
-        val from = personSample
-            .let {
-                val selected = random.nextInt(it.size)
-                it[selected].id
-            }
-        val to = personSample
-            .filter { it.id != from }
-            .let {
-                val selected = random.nextInt(it.size)
-                it[selected].id
-            }
-        val sourceAccount = accounts
-            .filter { it.ownerId == from }
-            .let {
-                val selected = random.nextInt(it.size)
-                it[selected].id
-            }
-        val destinationAccount = accounts
-            .filter { it.ownerId == to }
-            .let {
-                val selected = random.nextInt(it.size)
-                it[selected].id
-            }
-        Transaction(
-            index++,
-            random.nextDouble(100.0, 500000.0),
-            description = "",
-            sourceId = sourceAccount ?: 0,
-            destinationId = destinationAccount ?: 1,
-            date = LocalDate.now(),
-            aNombreDe = null,
-            categoryId = null
-        )
-    }
-    return AccountAndOwnerWithTransactions.from(accounts, personSample, transactions)
-}
-
-fun getAccountAndOwnerWithTransactionsAndPocketsSample(
-    accountAndOwnerWithTransactionsSample: List<AccountAndOwnerWithTransactions>
-): List<AccountAndOwnerWithTransactionsAndPockets> {
-    return AccountAndOwnerWithTransactionsAndPockets.from(
-        accountAndOwnerWithTransactionsSample
-    )
-}
-
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountList() {
-    GazegeTheme {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background)
-        ) {
-            val personSample = getPersonSample()
-            val accountSample = getAccountSample(personSample)
-            AccountRecyclerView(
-                accountList = getAccountAndOwnerWithTransactionsSample(accountSample, personSample),
-                delAccount = {},
-                editAccount = {},
-                state = LazyListState()
-            ) { acc ->
-                DefaultAccountViewHolder(
-                    account = acc, startDate = null, endDate = null,
-                    accounts = listOf(), isExpanded = false
-                )
+    DatabaseSample {
+        GazegeTheme {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colors.background)
+            ) {
+                AccountRecyclerView(
+                    accountList = accountAndOwnerWithTransactionsSample,
+                    delAccount = {},
+                    editAccount = {},
+                    state = LazyListState()
+                ) { acc ->
+                    DefaultAccountViewHolder(
+                        account = acc, startDate = null, endDate = null,
+                        accounts = listOf(), isExpanded = false
+                    )
+                }
             }
         }
     }
@@ -431,31 +313,29 @@ private fun PreviewAccountList() {
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)
 @Composable
 private fun PreviewAccountTreeView() {
-    val personSample = getPersonSample()
-    val accountSample = getAccountSample(personSample)
-    val accountAndOwnerWithTransactions =
-        getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
     val treeState = rememberTreeState()
-    GazegeTheme {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background)
-        ) {
-            AccountTreeView(
-                accountList = accountAndOwnerWithTransactions,
-                delAccount = {},
-                editAccount = {},
-                detailAccount = {},
-                treeState = treeState
-            ) { acc ->
-                DefaultAccountViewHolder(
-                    account = acc.content,
-                    startDate = null,
-                    endDate = null,
-                    accounts = accountAndOwnerWithTransactions,
-                    isExpanded = acc.expanded(treeState.expandedItems)
-                )
+    DatabaseSample {
+        GazegeTheme {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colors.background)
+            ) {
+                AccountTreeView(
+                    accountList = accountAndOwnerWithTransactionsSample,
+                    delAccount = {},
+                    editAccount = {},
+                    detailAccount = {},
+                    treeState = treeState
+                ) { acc ->
+                    DefaultAccountViewHolder(
+                        account = acc.content,
+                        startDate = null,
+                        endDate = null,
+                        accounts = accountAndOwnerWithTransactionsSample,
+                        isExpanded = acc.expanded(treeState.expandedItems)
+                    )
+                }
             }
         }
     }
@@ -468,20 +348,17 @@ private fun PreviewAccountTreeView() {
 )
 @Composable
 private fun PreviewPage() {
-    GazegeTheme(darkTheme = false) {
-        val personSample = getPersonSample()
-        val accountSample = getAccountSample(personSample)
-        val accountAndOwnerWithTransactions =
-            getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
-
-        AccountPage(
-            accountList = accountAndOwnerWithTransactions,
-            treeState = rememberTreeState(),
-            editAccount = {},
-            delAccount = {},
-            startDate = null,
-            endDate = null,
-            detailAccount = {}
-        ) {}
+    DatabaseSample {
+        GazegeTheme(darkTheme = false) {
+            AccountPage(
+                accountList = accountAndOwnerWithTransactionsSample,
+                treeState = rememberTreeState(),
+                editAccount = {},
+                delAccount = {},
+                startDate = null,
+                endDate = null,
+                detailAccount = {}
+            ) {}
+        }
     }
 }

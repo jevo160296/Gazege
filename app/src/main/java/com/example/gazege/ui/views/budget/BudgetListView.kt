@@ -11,17 +11,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
-import com.example.gazege.ui.doubleToPercentageString
+import com.example.gazege.ui.DatabaseSample
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
-import com.example.gazege.ui.views.account.getAccountSample
-import com.example.gazege.ui.views.category.getCategoriesSample
-import com.example.gazege.ui.views.person.getPersonSample
-import com.example.gazege.ui.views.transaction.getTransactionAndAccountsAndCategorySample
-import com.example.gazege.ui.views.transaction.getTransactionSample
+import com.example.gazege.ui.widgets.GazegeProgressIndicator
 import com.example.gazege.ui.widgets.RecyclerView
-import java.time.LocalDate
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,13 +25,15 @@ private fun BudgetViewHolder(
     val overlineText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n"
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
     val supportingView = @Composable {
-        Column {
-            Text(text = "${stringResource(R.string.Progreso)}: ${doubleToPercentageString(budget.budgetCompleition)}")
-            LinearProgressIndicator(progress = budget.budgetCompleition.toFloat())
-            Text(text = "expectedTotalFlow ${budget.budgetExpectedTotalFlow}")
-            Text(text = "expectedRemeiningFlow ${budget.budgetExpectedRemainingFlow}")
-            Text(text = "realTotalFlow ${budget.budgetRealTotalFlow}")
-            Text(text = "expectedFlowUntilNow ${budget.budgetExpectedFlowUntilNow}")
+        Column(Modifier.fillMaxWidth()) {
+            GazegeProgressIndicator(
+                budget.budgetCompleition,
+                stringResource(id = R.string.Progreso)
+            )
+            Text(text = "expectedTotalFlow ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
+            Text(text = "expectedRemeiningFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
+            Text(text = "realTotalFlow ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
+            Text(text = "expectedFlowUntilNow ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
         }
     }
 
@@ -96,122 +92,27 @@ fun BudgetRecyclerView(
     )
 }
 
-fun getBudgetSample(
-    categorySample: List<Category>
-): List<Budget> {
-    val random = Random(3)
-    val categorySize = categorySample.size
-    val frequencyTypeSize = FrequencyType.values().size
-    val startDate = LocalDate.of(2023, 1, 1)
-    return (0..20).map {
-        val categoryIndex = random.nextInt(categorySize)
-        val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
-        val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
-        val frequency = random.nextInt(1, 5)
-        val value = random.nextDouble(100.0, 1000.0)
-        val categoryId = categorySample[categoryIndex].id!!
-        when (frequencyType) {
-            FrequencyType.DAILY -> Budget.fromDaily(
-                id = it,
-                categoryId = categoryId,
-                value = value,
-                frequency = frequency,
-                startDate = startDate
-            )
-            FrequencyType.WEEKLY -> Budget.fromWeekly(
-                id = it,
-                categoryId = categoryId,
-                value = value,
-                frequency = frequency,
-                startDate = startDate,
-                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1)))
-            )
-            FrequencyType.MONTHLY -> Budget.fromMonthly(
-                id = it,
-                categoryId = categoryId,
-                value = value
-            )
-        }
-    }
-}
-
-fun getBudgetAndCategoryWithTransactionsSample(
-    budget: List<Budget>,
-    category: List<Category>,
-    person: Person,
-    accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
-): List<BudgetAndCategoryWithTransactions> = BudgetAndCategoryWithTransactions.from(
-    budget,
-    category,
-    person,
-    accountAndOwnerWithTransactions
-)
-
-fun getStartDateSample() = LocalDate.of(2023, 1, 1)
-
-fun getEndDateSample() = LocalDate.of(2023, 1, 31)
-
-fun getCurrentDateSample() = LocalDate.of(2023, 1, 14)
-
-fun getBudgetAndCategoryWithCalculatedData(
-    budget: List<BudgetAndCategoryWithTransactions>,
-    currentDate: LocalDate,
-    startDate: LocalDate,
-    endDate: LocalDate
-): List<BudgetAndCategoryWithCalculatedData> =
-    BudgetAndCategoryWithCalculatedData.from(
-        budget,
-        currentDate,
-        startDate,
-        endDate
-    )
-
 @Preview
 @Composable
 private fun BudgetPreview() {
-    val persons = getPersonSample()
-    val accountSample = getAccountSample(persons)
-    val categories = getCategoriesSample()
-    val transactionSample = getTransactionSample(accountSample, categories)
-    val accountsAndOwnerWithTransaction =
-        getAccountAndOwnerWithTransactionsSample(accountSample, persons)
-    val transactions =
-        getTransactionAndAccountsAndCategorySample(transactionSample, accountSample, categories)
-    val budgetSample = getBudgetSample(categories)
-    val person = persons.first()
-    val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions.from(
-        accounts = accountsAndOwnerWithTransaction.map { it.account },
-        owners = persons,
-        transactions = transactions.map { it.transaction }
-    )
-    val budgetAndCategoryWithTransactions = getBudgetAndCategoryWithTransactionsSample(
-        budget = budgetSample,
-        category = categories,
-        person = person,
-        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-    )
-    val budgetAndCategoryWithCalculatedData = getBudgetAndCategoryWithCalculatedData(
-        budgetAndCategoryWithTransactions,
-        getCurrentDateSample(),
-        getStartDateSample(),
-        getEndDateSample()
-    )
-
-    GazegeTheme {
-        Surface(
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .navigationBarsPadding()
-        ) {
-            BudgetRecyclerView(
-                modifier = Modifier,
-                itemHolderPaddingValues = PaddingValues(),
-                budget = budgetAndCategoryWithCalculatedData,
-                onBudgetDetailRequested = {},
-                onBudgetDeleteRequested = {},
-                onBudgetEditRequested = {}
-            )
+    DatabaseSample {
+        GazegeTheme {
+            Surface(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .navigationBarsPadding()
+                    .systemBarsPadding()
+            ) {
+                BudgetRecyclerView(
+                    modifier = Modifier,
+                    itemHolderPaddingValues = PaddingValues(),
+                    budget = budgetAndCategoryWithCalculatedDataSample,
+                    onBudgetDetailRequested = {},
+                    onBudgetDeleteRequested = {},
+                    onBudgetEditRequested = {}
+                )
+            }
         }
     }
 }

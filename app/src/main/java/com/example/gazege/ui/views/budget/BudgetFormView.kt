@@ -138,7 +138,9 @@ fun BudgetFormView(
             onValueChange = { value = it.toDouble() },
             label = { Text(stringResource(id = R.string.Valor)) }
         )
-        DatePicker(value = startDate, onValueChange = { startDate = it })
+        if (frequencyType != FrequencyType.MONTHLY) {
+            DatePicker(value = startDate, onValueChange = { startDate = it })
+        }
     }
 }
 

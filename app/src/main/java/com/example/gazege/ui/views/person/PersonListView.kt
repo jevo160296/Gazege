@@ -15,11 +15,9 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsAndPocketsSample
-import com.example.gazege.ui.views.account.getAccountAndOwnerWithTransactionsSample
-import com.example.gazege.ui.views.account.getAccountSample
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
@@ -157,34 +155,6 @@ fun PersonPage(
     }
 }
 
-fun getPersonSample(): List<Person> {
-    return listOf(
-        "Pablo",
-        "Banco",
-        "Petunia",
-        "Hortensia",
-        "__ESPECIAL__"
-    ).mapIndexed { index, s ->
-        Person(
-            index, s, if (index == 0) {
-                1
-            } else {
-                null
-            }
-        )
-    }
-}
-
-fun getPersonWithAccountsSample(
-    personSample: List<Person>,
-    accountAndOwnerWithTransactionsAndPocketsSample: List<AccountAndOwnerWithTransactionsAndPockets>
-): List<PersonWithAccounts> {
-    return PersonWithAccounts.from(
-        personSample,
-        accountAndOwnerWithTransactionsAndPocketsSample
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonItem() {
@@ -228,50 +198,36 @@ private fun PreviewPersonItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonList() {
-    GazegeTheme {
-        val personSample = getPersonSample()
-        val accountSample = getAccountSample(personSample)
-        val accountAndOwnerWithTransactionsSample =
-            getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
-        val accountAndOwnerWithTransactionsAndPocketsSample =
-            getAccountAndOwnerWithTransactionsAndPocketsSample(accountAndOwnerWithTransactionsSample)
-        val personWithAccountSample = getPersonWithAccountsSample(
-            personSample,
-            accountAndOwnerWithTransactionsAndPocketsSample
-        )
-        RecyclerView(
-            elements = personWithAccountSample, viewHolder = { person ->
-                PersonViewHolder(
-                    person = person, principalPerson = person, transactions = listOf()
-                )
-            }, state = LazyListState()
-        )
+    DatabaseSample {
+        GazegeTheme {
+            RecyclerView(
+                elements = personWithAccountsSample, viewHolder = { person ->
+                    PersonViewHolder(
+                        person = person, principalPerson = person, transactions = listOf()
+                    )
+                }, state = LazyListState()
+            )
+        }
     }
 }
 
 @Preview(showBackground = true, widthDp = 420, heightDp = 620)
 @Composable
 private fun PreviewPersonPage() {
-    val personSample = getPersonSample()
-    val accountSample = getAccountSample(personSample)
-    val accountAndOwnerWithTransactionsSample =
-        getAccountAndOwnerWithTransactionsSample(accountSample, personSample)
-    val accountAndOwnerWithTransactionsAndPocketsSample =
-        getAccountAndOwnerWithTransactionsAndPocketsSample(accountAndOwnerWithTransactionsSample)
-    val personsWithAccountsSample =
-        getPersonWithAccountsSample(personSample, accountAndOwnerWithTransactionsAndPocketsSample)
-    GazegeTheme {
-        PersonPage(
-            personList = personsWithAccountsSample,
-            state = LazyListState(),
-            editPerson = {},
-            delPerson = {},
-            onTitleSetted = {},
-            principalPerson = personsWithAccountsSample[0],
-            onConfigurePrincipalPersonRequested = {},
-            itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
-            transacciones = listOf(),
-            detailPerson = {}
-        )
+    DatabaseSample {
+        GazegeTheme {
+            PersonPage(
+                personList = personWithAccountsSample,
+                state = LazyListState(),
+                editPerson = {},
+                delPerson = {},
+                onTitleSetted = {},
+                principalPerson = personWithAccountsSample[0],
+                onConfigurePrincipalPersonRequested = {},
+                itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
+                transacciones = listOf(),
+                detailPerson = {}
+            )
+        }
     }
 }

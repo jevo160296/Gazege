@@ -15,16 +15,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.account.getAccountSample
-import com.example.gazege.ui.views.category.getCategoriesSample
-import com.example.gazege.ui.views.person.getPersonSample
 import com.example.gazege.ui.widgets.*
 import java.time.LocalDate
-import java.util.*
 
 @Composable
 private fun TransactionViewHolder(
@@ -146,48 +143,6 @@ fun LazyListScope.transactionLazyListItems(
     TransactionViewHolder(transaction = it)
 }
 
-fun getTransactionSample(
-    accountsSample: List<Account>,
-    categoriesSample: List<Category>
-): List<Transaction> {
-    val random = Random(3)
-    return (0..100).map {
-        val selectedAccounts = accountsSample.shuffled(random).take(2)
-        val sourceAccount = selectedAccounts[0]
-        val destinationAccount = selectedAccounts[1]
-        val category = random.nextBoolean()
-            .let {
-                if (it) {
-                    categoriesSample.shuffled(random).first()
-                } else {
-                    null
-                }
-            }
-        Transaction(
-            it,
-            (random.nextDouble() * (100000 - 1000)) + 1000,
-            "Esta es la transaccion $it, desde " +
-                    "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
-                    "categoría ${category?.name}",
-            sourceAccount.id ?: -1,
-            destinationAccount.id ?: -1,
-            category?.id,
-            date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong()),
-            null
-        )
-    }
-}
-
-fun getTransactionAndAccountsAndCategorySample(
-    transactionSample: List<Transaction>,
-    accountsSample: List<Account>,
-    categoriesSample: List<Category>
-): List<TransactionAndAccountsAndCategory> {
-    return TransactionAndAccountsAndCategory.from(
-        transactionSample, accountsSample, categoriesSample
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionItem() {
@@ -220,42 +175,28 @@ private fun PreviewTransactionItem() {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionList() {
-    val personSample = getPersonSample()
-    val accountSample = getAccountSample(personSample)
-    val categoriesSample = getCategoriesSample()
-    val transactionSample = getTransactionSample(accountSample, categoriesSample)
-    val transList = getTransactionAndAccountsAndCategorySample(
-        transactionSample,
-        accountSample,
-        categoriesSample
-    )
-    TransactionRecyclerView(
-        transactionList = transList,
-        editTransaction = {},
-        delTransaction = {},
-        state = LazyListState()
-    )
+    DatabaseSample {
+        TransactionRecyclerView(
+            transactionList = transactionsAndAccountAndCategorySample,
+            editTransaction = {},
+            delTransaction = {},
+            state = LazyListState()
+        )
+    }
 }
 
 @Preview(showBackground = true, widthDp = 320, heightDp = 640)
 @Composable
 private fun PreviewTransactionPage() {
-    GazegeTheme(darkTheme = true) {
-        val personSample = getPersonSample()
-        val accountSample = getAccountSample(personSample)
-        val categoriesSample = getCategoriesSample()
-        val transactionSample = getTransactionSample(accountSample, categoriesSample)
-        val transList = getTransactionAndAccountsAndCategorySample(
-            transactionSample,
-            accountSample,
-            categoriesSample
-        )
-        TransactionPage(
-            transactionList = transList,
-            state = LazyListState(),
-            editTransaction = {},
-            delTransaction = {},
-            onTitleSetted = {}
-        )
+    DatabaseSample {
+        GazegeTheme(darkTheme = true) {
+            TransactionPage(
+                transactionList = transactionsAndAccountAndCategorySample,
+                state = LazyListState(),
+                editTransaction = {},
+                delTransaction = {},
+                onTitleSetted = {}
+            )
+        }
     }
 }
