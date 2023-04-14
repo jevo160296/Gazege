@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "d1812b2204c5827ed14e80e3bb5c53bc",
+    "identityHash": "855768beb77ed536735856bf4a6e0148",
     "entities": [
       {
         "tableName": "Person",
@@ -302,7 +302,7 @@
       },
       {
         "tableName": "Budget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `categoryId` INTEGER NOT NULL, `value` REAL NOT NULL, `each` INTEGER NOT NULL, `frequency` INTEGER NOT NULL, `frequencyType` TEXT NOT NULL, `startDate` INTEGER NOT NULL, FOREIGN KEY(`categoryId`) REFERENCES `Category`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `categoryId` INTEGER NOT NULL, `value` REAL NOT NULL, `each` INTEGER NOT NULL, `frequency` INTEGER NOT NULL, `frequencyType` TEXT NOT NULL, `budgetType` TEXT NOT NULL, `startDate` INTEGER NOT NULL, FOREIGN KEY(`categoryId`) REFERENCES `Category`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -341,6 +341,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "budgetType",
+            "columnName": "budgetType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "startDate",
             "columnName": "startDate",
             "affinity": "INTEGER",
@@ -372,7 +378,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd1812b2204c5827ed14e80e3bb5c53bc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '855768beb77ed536735856bf4a6e0148')"
     ]
   }
 }

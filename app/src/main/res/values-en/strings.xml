@@ -69,4 +69,7 @@
     <string name="Sabado">Saturday</string>
     <string name="Domingo">Sunday</string>
     <string name="Progreso">Progress</string>
+    <string name="Tipo">Type</string>
+    <string name="Fijo">Fixed</string>
+    <string name="Variable">Variable</string>
 </resources>

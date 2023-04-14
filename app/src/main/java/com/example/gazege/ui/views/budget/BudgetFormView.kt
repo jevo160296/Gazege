@@ -2,9 +2,7 @@ package com.example.gazege.ui.views.budget
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -17,6 +15,7 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.TextField
 import java.lang.Integer.max
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -38,6 +37,7 @@ fun BudgetFormView(
     var weekDaysDays: Set<DayOfWeek> by rememberSaveable {
         mutableStateOf((budget?.eachClass as? WeekDays)?.days ?: WeekDays.from(0b1111111).days)
     }
+    var budgetType by rememberSaveable { mutableStateOf(budget?.budgetType ?: BudgetType.VARIABLE) }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val budgetId = budget?.id
@@ -52,7 +52,8 @@ fun BudgetFormView(
                 categoryId = selectedCategoryIdVal,
                 value = value,
                 frequency = frequency,
-                startDate = startDate
+                startDate = startDate,
+                budgetType = budgetType
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
                 id = budgetId,
@@ -60,12 +61,14 @@ fun BudgetFormView(
                 value = value,
                 each = weekDays,
                 frequency = frequency,
-                startDate = startDate
+                startDate = startDate,
+                budgetType = budgetType
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
-                value = value
+                value = value,
+                budgetType = budgetType
             )
         }
     } else {
@@ -138,8 +141,37 @@ fun BudgetFormView(
             onValueChange = { value = it.toDouble() },
             label = { Text(stringResource(id = R.string.Valor)) }
         )
+        BudgetTypeSelector(budgetType) { budgetType = it }
         if (frequencyType != FrequencyType.MONTHLY) {
             DatePicker(value = startDate, onValueChange = { startDate = it })
+        }
+    }
+}
+
+@Composable
+private fun budgetTypeMapper(budgetType: BudgetType) = when (budgetType) {
+    BudgetType.FIXED -> stringResource(id = R.string.Fijo)
+    BudgetType.VARIABLE -> stringResource(id = R.string.Variable)
+}
+
+@Composable
+private fun BudgetTypeSelector(
+    budgetType: BudgetType,
+    onBudgetTypeChanged: (newType: BudgetType) -> Unit
+) {
+    Column {
+        Text(text = stringResource(id = R.string.Tipo))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(
+                selected = budgetType == BudgetType.VARIABLE,
+                onClick = { onBudgetTypeChanged(BudgetType.VARIABLE) })
+            Text(budgetTypeMapper(BudgetType.VARIABLE))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(
+                selected = budgetType == BudgetType.FIXED,
+                onClick = { onBudgetTypeChanged(BudgetType.FIXED) })
+            Text(budgetTypeMapper(BudgetType.FIXED))
         }
     }
 }

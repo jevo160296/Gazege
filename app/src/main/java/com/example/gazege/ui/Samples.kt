@@ -95,6 +95,7 @@ private fun getBudgetSample(
         val categoryIndex = random.nextInt(categorySize)
         val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
         val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
+        val budgetType = BudgetType.values().toList().shuffled(random).first()
         val frequency = random.nextInt(1, 5)
         val value = random.nextDouble(100.0, 500000.0)
         val categoryId = categorySample[categoryIndex].id!!
@@ -104,7 +105,8 @@ private fun getBudgetSample(
                 categoryId = categoryId,
                 value = value,
                 frequency = frequency,
-                startDate = startDate
+                startDate = startDate,
+                budgetType = budgetType
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
                 id = it,
@@ -112,12 +114,14 @@ private fun getBudgetSample(
                 value = value,
                 frequency = frequency,
                 startDate = startDate,
-                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1)))
+                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1))),
+                budgetType = budgetType
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = it,
                 categoryId = categoryId,
-                value = value
+                value = value,
+                budgetType = budgetType
             )
         }
     }

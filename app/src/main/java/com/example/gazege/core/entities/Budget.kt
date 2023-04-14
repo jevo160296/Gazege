@@ -24,6 +24,7 @@ data class Budget(
     val each: Int,
     val frequency: Int,
     val frequencyType: FrequencyType,
+    val budgetType: BudgetType,
     val startDate: LocalDate
 ) {
     @Ignore
@@ -39,7 +40,8 @@ data class Budget(
             categoryId: Int,
             value: Double,
             frequency: Int,
-            startDate: LocalDate
+            startDate: LocalDate,
+            budgetType: BudgetType
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -47,7 +49,8 @@ data class Budget(
             each = 1,
             frequency = frequency,
             frequencyType = FrequencyType.DAILY,
-            startDate = startDate
+            startDate = startDate,
+            budgetType = budgetType
         )
 
         fun fromWeekly(
@@ -56,7 +59,8 @@ data class Budget(
             value: Double,
             each: WeekDays,
             frequency: Int,
-            startDate: LocalDate
+            startDate: LocalDate,
+            budgetType: BudgetType
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -64,7 +68,8 @@ data class Budget(
             each = each.toInt(),
             frequency = frequency,
             frequencyType = FrequencyType.WEEKLY,
-            startDate = startDate
+            startDate = startDate,
+            budgetType = budgetType
         )
 
         @Deprecated(
@@ -78,7 +83,8 @@ data class Budget(
             value: Double,
             each: AbsoluteMonthDays,
             frequency: Int,
-            startDate: LocalDate
+            startDate: LocalDate,
+            budgetType: BudgetType
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -86,13 +92,15 @@ data class Budget(
             each = each.toInt(),
             frequency = frequency,
             frequencyType = FrequencyType.MONTHLY,
-            startDate = startDate
+            startDate = startDate,
+            budgetType = budgetType
         )
 
         fun fromMonthly(
             id: Int? = null,
             categoryId: Int,
-            value: Double
+            value: Double,
+            budgetType: BudgetType
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -100,7 +108,8 @@ data class Budget(
             startDate = LocalDate.of(1900, 1, 1),
             each = AbsoluteMonthDays(setOf(1)).toInt(),
             frequency = 1,
-            frequencyType = FrequencyType.MONTHLY
+            frequencyType = FrequencyType.MONTHLY,
+            budgetType = budgetType
         )
     }
 }
@@ -109,6 +118,11 @@ enum class FrequencyType {
     DAILY,
     WEEKLY,
     MONTHLY
+}
+
+enum class BudgetType {
+    FIXED,
+    VARIABLE
 }
 
 fun Boolean.toByte(position: Int) = (if (this) {

@@ -69,4 +69,7 @@
     <string name="Sabado">Sábado</string>
     <string name="Domingo">Domingo</string>
     <string name="Progreso">Progreso</string>
+    <string name="Tipo">Tipo</string>
+    <string name="Fijo">Fijo</string>
+    <string name="Variable">Variable</string>
 </resources>
