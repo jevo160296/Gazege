@@ -135,6 +135,37 @@ fun getBudgetSample(
     }
 }
 
+fun getBudgetAndCategoryWithTransactionsSample(
+    budget: List<Budget>,
+    category: List<Category>,
+    person: Person,
+    accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+): List<BudgetAndCategoryWithTransactions> = BudgetAndCategoryWithTransactions.from(
+    budget,
+    category,
+    person,
+    accountAndOwnerWithTransactions
+)
+
+fun getStartDateSample() = LocalDate.of(2023, 1, 1)
+
+fun getEndDateSample() = LocalDate.of(2023, 1, 31)
+
+fun getCurrentDateSample() = LocalDate.of(2023, 1, 14)
+
+fun getBudgetAndCategoryWithCalculatedData(
+    budget: List<BudgetAndCategoryWithTransactions>,
+    currentDate: LocalDate,
+    startDate: LocalDate,
+    endDate: LocalDate
+): List<BudgetAndCategoryWithCalculatedData> =
+    BudgetAndCategoryWithCalculatedData.from(
+        budget,
+        currentDate,
+        startDate,
+        endDate
+    )
+
 @Preview
 @Composable
 private fun BudgetPreview() {
@@ -153,17 +184,17 @@ private fun BudgetPreview() {
         owners = persons,
         transactions = transactions.map { it.transaction }
     )
-    val budgetAndCategoryWithTransactions = BudgetAndCategoryWithTransactions.from(
+    val budgetAndCategoryWithTransactions = getBudgetAndCategoryWithTransactionsSample(
         budget = budgetSample,
         category = categories,
         person = person,
         accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
     )
-    val budgetAndCategoryWithCalculatedData = BudgetAndCategoryWithCalculatedData.from(
+    val budgetAndCategoryWithCalculatedData = getBudgetAndCategoryWithCalculatedData(
         budgetAndCategoryWithTransactions,
-        LocalDate.of(2023, 1, 14),
-        LocalDate.of(2023, 1, 1),
-        LocalDate.of(2023, 1, 31)
+        getCurrentDateSample(),
+        getStartDateSample(),
+        getEndDateSample()
     )
 
     GazegeTheme {
