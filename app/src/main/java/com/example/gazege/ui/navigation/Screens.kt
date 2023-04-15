@@ -874,7 +874,8 @@ fun NavGraphBuilder.screenOneBudgetDetail(
 }
 
 fun NavController.navigateToOneBudgetDetail(budgetId: Int) {
-    navigate("oneBudgetDetail/$budgetId")
+    //TODO Aún no se tiene lista la página de detalles para los presupupestos.
+    //navigate("oneBudgetDetail/$budgetId")
 }
 
 fun NavGraphBuilder.screenAddOneBudget(
