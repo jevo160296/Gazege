@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
@@ -36,6 +37,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun rememberAllTransactions() = allTransactions.observeAsState(emptyList())
 
     @Composable
+    fun rememberPersonSummaryState() = personSummaryState.observeAsState(null)
+
+    @Composable
     fun rememberCategories() = categories.observeAsState(emptyList())
 
     @Composable
@@ -54,15 +58,15 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         accountAndOwnerWithTransactions.observeAsState(emptyList())
 
     @Composable
+    fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+    @Composable
     fun rememberAccountAndOwnerWithTransactionsUserFirst() =
         accountAndOwnerWithTransactionsUserFirst.observeAsState(emptyList())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactionsAndPockets() =
         accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
-
-    @Composable
-    fun rememberPersonWithAccounts() = personWithAccounts.observeAsState(emptyList())
 
     @Composable
     fun rememberCategoriesWithSubCategories() =
@@ -87,15 +91,9 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun rememberAccountDetailData() = accountDetailData.observeAsState()
 
     @Composable
-    fun rememberPrincipalPersonWithAccounts() = principalPersonWithAccounts.observeAsState()
-
-    @Composable
     fun rememberFilteredTransactionAndAccountsAndCategory() =
         filteredTransactionAndAccountsAndCategory.observeAsState(emptyList())
 
-    @Composable
-    fun rememberAllTransactionAndAccountsAndCategory() =
-        allTransactionAndAccountsAndCategory.observeAsState(emptyList())
 
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
@@ -103,15 +101,35 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val categories = repository.getCategories().asLiveData()
     private val budget = repository.getBudgets().asLiveData()
 
+    private val accountAndOwner: LiveData<List<AccountAndOwner>> =
+        MediatorLiveData<List<AccountAndOwner>>(emptyList())
+            .apply {
+                val update = {
+                    value = AccountAndOwner.from(
+                        allAccount.value ?: emptyList(),
+                        allPerson.value ?: emptyList()
+                    )
+                }
+
+                addSource(allAccount) { update() }
+                addSource(allPerson) { update() }
+            }
+
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
         MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())
             .apply {
                 val update = {
-                    value = AccountAndOwnerWithTransactions.from(
-                        allAccount.value ?: emptyList(),
-                        allPerson.value ?: emptyList(),
-                        allTransactions.value ?: emptyList()
-                    )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            postValue(
+                                AccountAndOwnerWithTransactions.from(
+                                    allAccount.value ?: emptyList(),
+                                    allPerson.value ?: emptyList(),
+                                    allTransactions.value ?: emptyList()
+                                )
+                            )
+                        }
+                    }
                 }
                 addSource(allAccount) { update() }
                 addSource(allPerson) { update() }
@@ -122,20 +140,28 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.switchMap { lista ->
             liveData {
-                emit(
-                    lista.map { item ->
-                        AccountAndOwnerWithTransactionsAndPockets.from(item, lista)
-                    })
+                emit(lista.map { item ->
+                    AccountAndOwnerWithTransactionsAndPockets.from(
+                        item,
+                        lista
+                    )
+                })
             }
         }
     private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
         MediatorLiveData<List<PersonWithAccounts>>(listOf())
             .apply {
                 val update = {
-                    value = PersonWithAccounts.from(
-                        allPerson.value ?: emptyList(),
-                        accountAndOwnerWithTransactionsAndPockets.value ?: emptyList()
-                    )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            postValue(
+                                PersonWithAccounts.from(
+                                    allPerson.value ?: emptyList(),
+                                    accountAndOwnerWithTransactionsAndPockets.value ?: emptyList()
+                                )
+                            )
+                        }
+                    }
                 }
                 addSource(allPerson) { update() }
                 addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
@@ -156,16 +182,22 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
             .apply {
                 val update = {
                     val person = principalPerson.value
-                    value = if (person == null) {
-                        emptyList()
-                    } else {
-                        BudgetAndCategoryWithTransactions.from(
-                            budget = budget.value ?: emptyList(),
-                            category = categories.value ?: emptyList(),
-                            person = person,
-                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.value
-                                ?: emptyList()
-                        )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            postValue(
+                                if (person == null) {
+                                    emptyList()
+                                } else {
+                                    BudgetAndCategoryWithTransactions.from(
+                                        budget = budget.value ?: emptyList(),
+                                        category = categories.value ?: emptyList(),
+                                        person = person,
+                                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.value
+                                            ?: emptyList()
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -184,12 +216,18 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                     val endDate = range.value?.second
 
                     if (budget != null && startDate != null && endDate != null) {
-                        value = BudgetAndCategoryWithCalculatedData.from(
-                            budget,
-                            LocalDate.now(),
-                            startDate,
-                            endDate
-                        )
+                        viewModelScope.launch {
+                            withContext(Dispatchers.Default) {
+                                postValue(
+                                    BudgetAndCategoryWithCalculatedData.from(
+                                        budget,
+                                        LocalDate.now(),
+                                        startDate,
+                                        endDate
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -216,46 +254,43 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     private val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
-    private val accountDetail = MutableLiveData<AccountAndOwnerWithTransactionsAndPockets?>(null)
-    private val _accountDetailData = MutableLiveData<AccountDetailData?>(null)
+    private val accountDetailId = MutableLiveData<Int?>(null)
+    private val accountDetail = MediatorLiveData<AccountAndOwnerWithTransactionsAndPockets?>(null)
+        .apply {
+            val update = {
+                val newId = accountDetailId.value
+                value = accountAndOwnerWithTransactionsAndPockets.value?.firstOrNull {
+                    it.accountAndOwnerWithTransactions.account.id == newId
+                }
+            }
+
+            addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
+            addSource(accountDetailId) { update() }
+        }
     private val accountDetailData: LiveData<AccountDetailData?> =
         MediatorLiveData<AccountDetailData?>()
             .apply {
-                addSource(accountDetail) {
-                    calculateAccountDetailData(
-                        accountDetail.value,
-                        allAccount.value,
-                        categories.value,
-                        range.value
-                    )
+                val update = {
+                    val account = accountDetail.value
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            val value = account?.let {
+                                AccountDetailData.build(
+                                    account = account,
+                                    allAccounts = allAccount.value ?: emptyList(),
+                                    allCategories = categories.value ?: emptyList(),
+                                    startDate = range.value?.first,
+                                    endDate = range.value?.second
+                                )
+                            }
+                            postValue(value)
+                        }
+                    }
                 }
-                addSource(allAccount) {
-                calculateAccountDetailData(
-                    accountDetail.value,
-                    allAccount.value,
-                    categories.value,
-                    range.value
-                )
-            }
-            addSource(categories) {
-                calculateAccountDetailData(
-                    accountDetail.value,
-                    allAccount.value,
-                    categories.value,
-                    range.value
-                )
-            }
-            addSource(range) {
-                calculateAccountDetailData(
-                    accountDetail.value,
-                    allAccount.value,
-                    categories.value,
-                    range.value
-                )
-            }
-                addSource(_accountDetailData) {
-                    value = it
-                }
+                addSource(accountDetail) { update() }
+                addSource(allAccount) { update() }
+                addSource(categories) { update() }
+                addSource(range) { update() }
             }
     private val principalPersonWithAccounts = personWithAccounts.switchMap {
         liveData { emit(getPrincipalPersonWithAccounts(it)) }
@@ -264,11 +299,17 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
             .apply {
                 val update = {
-                    value = TransactionAndAccountsAndCategory.from(
-                        rangeTransactions.value ?: emptyList(),
-                        allAccount.value ?: emptyList(),
-                        categories.value ?: emptyList()
-                    )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            postValue(
+                                TransactionAndAccountsAndCategory.from(
+                                    rangeTransactions.value ?: emptyList(),
+                                    allAccount.value ?: emptyList(),
+                                    categories.value ?: emptyList()
+                                )
+                            )
+                        }
+                    }
                 }
                 addSource(rangeTransactions) { update() }
                 addSource(allAccount) { update() }
@@ -278,51 +319,56 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
             .apply {
                 val update = {
-                    value = TransactionAndAccountsAndCategory.from(
-                        allTransactions.value ?: emptyList(),
-                        allAccount.value ?: emptyList(),
-                        categories.value ?: emptyList()
-                    )
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            postValue(
+                                TransactionAndAccountsAndCategory.from(
+                                    allTransactions.value ?: emptyList(),
+                                    allAccount.value ?: emptyList(),
+                                    categories.value ?: emptyList()
+                                )
+                            )
+                        }
+                    }
                 }
                 addSource(allTransactions) { update() }
                 addSource(allAccount) { update() }
                 addSource(categories) { update() }
             }
 
-    private fun calculateAccountDetailData(
-        account: AccountAndOwnerWithTransactionsAndPockets?,
-        allAccount: List<Account>?,
-        categories: List<Category>?,
-        range: Pair<LocalDate?, LocalDate?>?
-    ) {
-        if (account?.accountAndOwnerWithTransactions?.account?.id !=
-            _accountDetailData.value?.account?.accountAndOwnerWithTransactions?.account?.id
-        ) {
-            _accountDetailData.postValue(null)
-        }
-        viewModelScope.launch {
-            if (account != null) {
-                val result = withContext(Dispatchers.Default) {
-                    AccountDetailData.build(
-                        account = account,
-                        allAccounts = allAccount ?: listOf(),
-                        allCategories = categories ?: listOf(),
-                        startDate = range?.first,
-                        endDate = range?.second
-                    )
+    private val personSummaryState: LiveData<PersonSummaryState?> =
+        MediatorLiveData<PersonSummaryState?>(null)
+            .apply {
+                val update = {
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            val state = principalPersonWithAccounts.value?.let { pp ->
+                                PersonSummaryState.from(
+                                    pp,
+                                    range.value?.first,
+                                    range.value?.second,
+                                    allPersons = personWithAccounts.value ?: emptyList(),
+                                    allTransactions = allTransactionAndAccountsAndCategory.value
+                                        ?.map {
+                                            TransactionAndAccounts(
+                                                it.transaction,
+                                                it.sourceAccount,
+                                                it.destinationAccount
+                                            )
+                                        }
+                                        ?: emptyList()
+                                )
+                            }
+                            postValue(state)
+                        }
+                    }
                 }
-                _accountDetailData.postValue(result)
-            } else {
-                _accountDetailData.postValue(null)
-            }
-        }
-    }
 
-    fun updateAccountDetailData(
-        account: AccountAndOwnerWithTransactionsAndPockets?,
-    ) {
-        accountDetail.value = account
-    }
+                addSource(principalPersonWithAccounts) { update() }
+                addSource(range) { update() }
+                addSource(personWithAccounts) { update() }
+                addSource(allTransactionAndAccountsAndCategory) { update() }
+            }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
         range.value = Pair(startDate, endDate)
@@ -398,6 +444,12 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 )
             }
             repository.insertTransaction(transaccionAjuste)
+        }
+    }
+
+    fun updateAccountDetailIdIfDifferent(newId: Int?) {
+        if (newId != accountDetailId.value) {
+            accountDetailId.value = newId
         }
     }
 
@@ -503,6 +555,38 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 .sortedBy { it.id }
                 .firstOrNull()
         }
+    }
+}
+
+data class PersonSummaryState(
+    val person: Person,
+    val saldoActual: Double,
+    val ingresos: Double,
+    val egresos: Double,
+    val deudasFlujo: Map<Person, Double>
+) {
+    val flujo: Double get() = ingresos - egresos
+
+    companion object {
+        fun from(
+            personWithAccounts: PersonWithAccounts,
+            startDate: LocalDate?,
+            endDate: LocalDate?,
+            allPersons: List<PersonWithAccounts>,
+            allTransactions: List<TransactionAndAccounts>
+        ): PersonSummaryState = PersonSummaryState(
+            person = personWithAccounts.person,
+            saldoActual = personWithAccounts.let { PersonDao.getTotal(it, null, null) },
+            ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
+            egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
+            deudasFlujo = allPersons.associate { otherPerson ->
+                otherPerson.person to PersonDao.getFlujo(
+                    personWithAccounts,
+                    otherPerson,
+                    allTransactions
+                )
+            }
+        )
     }
 }
 

@@ -1,6 +1,12 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -58,9 +64,9 @@ fun PersonMonthSummaryView(
     saldoActual: Double,
     ingresos: Double,
     egresos: Double,
+    flujo: Double,
     onSaldoActualClick: () -> Unit
 ) {
-    val flujo = ingresos - egresos
     val enabledColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
