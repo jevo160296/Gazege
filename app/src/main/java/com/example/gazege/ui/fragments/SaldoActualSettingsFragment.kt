@@ -2,10 +2,13 @@ package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.Text
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -23,6 +26,8 @@ import com.example.gazege.ui.widgets.treeview.rememberTreeState
 fun SaldoActualSettings(
     accountList: List<AccountAndOwnerWithTransactions>,
     saving: Int,
+    incluirPresupuestoEnSaldoActual: Boolean,
+    onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
     onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
 ) {
     val accountState = rememberTreeState()
@@ -44,7 +49,21 @@ fun SaldoActualSettings(
         } else {
             Spacer(modifier = Modifier.height(4.dp))
         }
-        Box(Modifier.navigationBarsPadding()) {
+        Column(
+            Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = incluirPresupuestoEnSaldoActual,
+                    onCheckedChange = onIncluirPresupuestoEnSaldoActualChanged
+                )
+                Text(text = stringResource(id = R.string.Incluir_presupuesto))
+            }
             AccountPage(
                 accountList = accountList,
                 itemHolderPaddingValues = PaddingValues(4.dp),

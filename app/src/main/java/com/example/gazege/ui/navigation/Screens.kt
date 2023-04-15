@@ -397,6 +397,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
     composable("saldoActualSettings") {
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val principalPerson by viewModel.rememberPrincipalPerson()
+        val incluirPresupuestoEnSaldoActual by viewModel.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
 
         var saving: Int by remember {
@@ -404,7 +405,9 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         }
         SaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
-            saving = saving
+            saving = saving,
+            incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+            onIncluirPresupuestoEnSaldoActualChanged = viewModel::settingsIncluirPresupuestoEnSaldoActualFlow
         ) { account, nuevoEstado ->
             saving += 1
             coroutineScope.launch {

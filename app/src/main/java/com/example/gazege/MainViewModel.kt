@@ -6,6 +6,7 @@ import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.Settings
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
 import java.time.LocalDate
@@ -26,7 +27,8 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
-class MainViewModel(private val repository: AppRepository) : ViewModel() {
+class MainViewModel(private val repository: AppRepository, private val settings: Settings) :
+    ViewModel() {
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
@@ -35,6 +37,10 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
 
     @Composable
     fun rememberAllTransactions() = allTransactions.observeAsState(emptyList())
+
+    @Composable
+    fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
+        incluirPresupuestoEnSaldoActual.observeAsState(false)
 
     @Composable
     fun rememberPersonSummaryState() = personSummaryState.observeAsState(null)
@@ -95,6 +101,8 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         filteredTransactionAndAccountsAndCategory.observeAsState(emptyList())
 
 
+    private val incluirPresupuestoEnSaldoActual =
+        settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
@@ -510,6 +518,12 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         repository.deleteBudget(budget)
     }
 
+    fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
+        withContext(Dispatchers.Default) {
+            settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
+        }
+    }
+
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {
             null
@@ -590,11 +604,12 @@ data class PersonSummaryState(
     }
 }
 
-class MainViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {
+class MainViewModelFactory(private val repository: AppRepository, private val settings: Settings) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository) as T
+            return MainViewModel(repository, settings) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
