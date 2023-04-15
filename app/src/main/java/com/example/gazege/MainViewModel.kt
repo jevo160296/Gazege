@@ -127,6 +127,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceA) { update("Source A") }
         addSource(sourceB) { update("Source B") }
     }
+        .distinctUntilChanged()
 
     private fun <T, A : Any?, B : Any?> MediatorLiveData<T>.mergeTwoNullableSources(
         name: String,
@@ -149,6 +150,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceA) { update() }
         addSource(sourceB) { update() }
     }
+        .distinctUntilChanged()
 
     private fun <T, A : Any, B : Any, C : Any> MediatorLiveData<T>.mergeThreeSources(
         name: String,
@@ -171,6 +173,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceB) { update() }
         addSource(sourceC) { update() }
     }
+        .distinctUntilChanged()
 
     private fun <T, A : Any?, B : Any?, C : Any?, D : Any?> MediatorLiveData<T>.mergeFourNullableSources(
         name: String,
@@ -202,6 +205,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceC) { update() }
         addSource(sourceD) { update() }
     }
+        .distinctUntilChanged()
 
     private fun <T, A, B, C, D, E, F> MediatorLiveData<T>.mergeSixNullableSources(
         name: String,
@@ -239,6 +243,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceE) { update("SourceE") }
         addSource(sourceF) { update("SourceF") }
     }
+        .distinctUntilChanged()
 
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
