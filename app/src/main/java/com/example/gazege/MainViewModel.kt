@@ -1,5 +1,6 @@
 package com.example.gazege
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.*
@@ -100,6 +101,144 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberFilteredTransactionAndAccountsAndCategory() =
         filteredTransactionAndAccountsAndCategory.observeAsState(emptyList())
 
+    private fun logPrintln(name: String, source: String? = null) = Log.println(
+        Log.INFO,
+        "Mediator",
+        "$name: runningUpdate ${source?.let { "from $it" } ?: ""}")
+
+    private fun <T, A : Any, B : Any> MediatorLiveData<T>.mergeTwoSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        merger: (A, B) -> T
+    ) = apply {
+        val update = { source: String ->
+            if (sourceA.isInitialized && sourceB.isInitialized) {
+                logPrintln(name, source)
+                val a = sourceA.value!!
+                val b = sourceB.value!!
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(merger(a, b))
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update("Source A") }
+        addSource(sourceB) { update("Source B") }
+    }
+
+    private fun <T, A : Any?, B : Any?> MediatorLiveData<T>.mergeTwoNullableSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        merger: (A?, B?) -> T
+    ) = apply {
+        val update = {
+            if (sourceA.isInitialized && sourceB.isInitialized) {
+                logPrintln(name)
+                val a = sourceA.value
+                val b = sourceB.value
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(merger(a, b))
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update() }
+        addSource(sourceB) { update() }
+    }
+
+    private fun <T, A : Any, B : Any, C : Any> MediatorLiveData<T>.mergeThreeSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        merger: (A, B, C) -> T
+    ) = apply {
+        val update = {
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized) {
+                logPrintln(name)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(merger(sourceA.value!!, sourceB.value!!, sourceC.value!!))
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update() }
+        addSource(sourceB) { update() }
+        addSource(sourceC) { update() }
+    }
+
+    private fun <T, A : Any?, B : Any?, C : Any?, D : Any?> MediatorLiveData<T>.mergeFourNullableSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        sourceD: LiveData<D>,
+        merger: (A?, B?, C?, D?) -> T
+    ) = apply {
+        val update = {
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized) {
+                logPrintln(name)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(
+                            merger(
+                                sourceA.value,
+                                sourceB.value,
+                                sourceC.value,
+                                sourceD.value
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update() }
+        addSource(sourceB) { update() }
+        addSource(sourceC) { update() }
+        addSource(sourceD) { update() }
+    }
+
+    private fun <T, A, B, C, D, E, F> MediatorLiveData<T>.mergeSixNullableSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        sourceD: LiveData<D>,
+        sourceE: LiveData<E>,
+        sourceF: LiveData<F>,
+        merger: (A?, B?, C?, D?, E?, F?) -> T
+    ) = apply {
+        val update = { source: String ->
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized && sourceF.isInitialized) {
+                logPrintln(name, source)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(
+                            merger(
+                                sourceA.value,
+                                sourceB.value,
+                                sourceC.value,
+                                sourceD.value,
+                                sourceE.value,
+                                sourceF.value
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update("SourceA") }
+        addSource(sourceB) { update("SourceB") }
+        addSource(sourceC) { update("SourceC") }
+        addSource(sourceD) { update("SourceD") }
+        addSource(sourceE) { update("SourceE") }
+        addSource(sourceF) { update("SourceF") }
+    }
 
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
@@ -111,72 +250,47 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
 
     private val accountAndOwner: LiveData<List<AccountAndOwner>> =
-        MediatorLiveData<List<AccountAndOwner>>(emptyList())
-            .apply {
-                val update = {
-                    value = AccountAndOwner.from(
-                        allAccount.value ?: emptyList(),
-                        allPerson.value ?: emptyList()
-                    )
-                }
-
-                addSource(allAccount) { update() }
-                addSource(allPerson) { update() }
+        MediatorLiveData<List<AccountAndOwner>>()
+            .mergeTwoSources("accountAndOwner", allAccount, allPerson) { allAccount, allPerson ->
+                AccountAndOwner.from(
+                    allAccount,
+                    allPerson
+                )
             }
 
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
-        MediatorLiveData<List<AccountAndOwnerWithTransactions>>(listOf())
-            .apply {
-                val update = {
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            postValue(
-                                AccountAndOwnerWithTransactions.from(
-                                    allAccount.value ?: emptyList(),
-                                    allPerson.value ?: emptyList(),
-                                    allTransactions.value ?: emptyList()
-                                )
-                            )
-                        }
-                    }
-                }
-                addSource(allAccount) { update() }
-                addSource(allPerson) { update() }
-                addSource(allTransactions) { update() }
+        MediatorLiveData<List<AccountAndOwnerWithTransactions>>()
+            .mergeThreeSources(
+                "accountAndOwnerWithTransactions",
+                allAccount,
+                allPerson,
+                allTransactions
+            ) { a, b, c ->
+                AccountAndOwnerWithTransactions.from(a, b, c)
             }
+
     private val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
         accountAndOwnerWithTransactions.map { it.sortedByDescending { acc -> acc.owner.importance } }
     private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
-        accountAndOwnerWithTransactions.switchMap { lista ->
-            liveData {
-                emit(lista.map { item ->
-                    AccountAndOwnerWithTransactionsAndPockets.from(
-                        item,
-                        lista
-                    )
-                })
+        accountAndOwnerWithTransactions.map { lista ->
+            lista.map { item ->
+                AccountAndOwnerWithTransactionsAndPockets.from(
+                    item,
+                    lista
+                )
             }
         }
     private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
-        MediatorLiveData<List<PersonWithAccounts>>(listOf())
-            .apply {
-                val update = {
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            postValue(
-                                PersonWithAccounts.from(
-                                    allPerson.value ?: emptyList(),
-                                    accountAndOwnerWithTransactionsAndPockets.value ?: emptyList()
-                                )
-                            )
-                        }
-                    }
-                }
-                addSource(allPerson) { update() }
-                addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
+        MediatorLiveData<List<PersonWithAccounts>>()
+            .mergeTwoSources(
+                "personWithAccounts",
+                allPerson,
+                accountAndOwnerWithTransactionsAndPockets
+            ) { a, b ->
+                PersonWithAccounts.from(a, b)
             }
     private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
-        .switchMap { liveData { emit(CategoryWithSubCategories.from(it)) } }
+        .map { CategoryWithSubCategories.from(it) }
 
 
     private val initialRange = LocalDate.now().withDayOfMonth(1).let {
@@ -187,61 +301,46 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
-        MediatorLiveData<List<BudgetAndCategoryWithTransactions>>(emptyList())
-            .apply {
-                val update = {
-                    val person = principalPerson.value
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            postValue(
-                                if (person == null) {
-                                    emptyList()
-                                } else {
-                                    BudgetAndCategoryWithTransactions.from(
-                                        budget = budget.value ?: emptyList(),
-                                        category = categories.value ?: emptyList(),
-                                        person = person,
-                                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.value
-                                            ?: emptyList()
-                                    )
-                                }
-                            )
-                        }
-                    }
+        MediatorLiveData<List<BudgetAndCategoryWithTransactions>>()
+            .mergeFourNullableSources(
+                "budgetAndCategoryWithTransactions",
+                budget,
+                categories,
+                accountAndOwnerWithTransactions,
+                principalPerson
+            ) { budget, categories, accountAndOwnerWithTransactions, person ->
+                if (person == null) {
+                    emptyList()
+                } else {
+                    BudgetAndCategoryWithTransactions.from(
+                        budget = budget ?: emptyList(),
+                        category = categories ?: emptyList(),
+                        person = person,
+                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                            ?: emptyList()
+                    )
                 }
-
-                addSource(budget) { update() }
-                addSource(categories) { update() }
-                addSource(principalPerson) { update() }
-                addSource(accountAndOwnerWithTransactions) { update() }
             }
 
     private val budgetAndCategoryWithCalculatedData: LiveData<List<BudgetAndCategoryWithCalculatedData>> =
-        MediatorLiveData<List<BudgetAndCategoryWithCalculatedData>>(emptyList())
-            .apply {
-                val update = {
-                    val budget = budgetAndCategoryWithTransactions.value
-                    val startDate = range.value?.first
-                    val endDate = range.value?.second
-
-                    if (budget != null && startDate != null && endDate != null) {
-                        viewModelScope.launch {
-                            withContext(Dispatchers.Default) {
-                                postValue(
-                                    BudgetAndCategoryWithCalculatedData.from(
-                                        budget,
-                                        LocalDate.now(),
-                                        startDate,
-                                        endDate
-                                    )
-                                )
-                            }
-                        }
-                    }
+        MediatorLiveData<List<BudgetAndCategoryWithCalculatedData>>()
+            .mergeTwoSources(
+                "budgetAndCategoryWithCalculatedData",
+                budgetAndCategoryWithTransactions,
+                range
+            ) { a, b ->
+                val startDate = b.first
+                val endDate = b.second
+                if (startDate != null && endDate != null) {
+                    BudgetAndCategoryWithCalculatedData.from(
+                        a,
+                        LocalDate.now(),
+                        startDate,
+                        endDate
+                    )
+                } else {
+                    emptyList()
                 }
-
-                addSource(budgetAndCategoryWithTransactions) { update() }
-                addSource(range) { update() }
             }
 
     fun updatePersonFilterValue(newValue: Boolean) {
@@ -255,124 +354,89 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
     private val accountDetailId = MutableLiveData<Int?>(null)
-    private val accountDetail = MediatorLiveData<AccountAndOwnerWithTransactionsAndPockets?>(null)
-        .apply {
-            val update = {
-                val newId = accountDetailId.value
-                value = accountAndOwnerWithTransactionsAndPockets.value?.firstOrNull {
-                    it.accountAndOwnerWithTransactions.account.id == newId
-                }
+    private val accountDetail = MediatorLiveData<AccountAndOwnerWithTransactionsAndPockets?>()
+        .mergeTwoNullableSources(
+            "accountDetail",
+            accountAndOwnerWithTransactionsAndPockets,
+            accountDetailId
+        ) { a, b ->
+            a?.firstOrNull {
+                it.accountAndOwnerWithTransactions.account.id == b
             }
-
-            addSource(accountAndOwnerWithTransactionsAndPockets) { update() }
-            addSource(accountDetailId) { update() }
         }
     private val accountDetailData: LiveData<AccountDetailData?> =
         MediatorLiveData<AccountDetailData?>()
-            .apply {
-                val update = {
-                    val account = accountDetail.value
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            val value = account?.let {
-                                AccountDetailData.build(
-                                    account = account,
-                                    allAccounts = allAccount.value ?: emptyList(),
-                                    allCategories = categories.value ?: emptyList(),
-                                    startDate = range.value?.first,
-                                    endDate = range.value?.second
-                                )
-                            }
-                            postValue(value)
-                        }
-                    }
+            .mergeFourNullableSources(
+                "accountDetailData",
+                accountDetail,
+                allAccount,
+                categories,
+                range
+            ) { a, b, c, d ->
+                a?.let {
+                    AccountDetailData.build(
+                        account = a,
+                        allAccounts = b ?: emptyList(),
+                        allCategories = c ?: emptyList(),
+                        startDate = d?.first,
+                        endDate = d?.second
+                    )
                 }
-                addSource(accountDetail) { update() }
-                addSource(allAccount) { update() }
-                addSource(categories) { update() }
-                addSource(range) { update() }
             }
-    private val principalPersonWithAccounts = personWithAccounts.switchMap {
-        liveData { emit(getPrincipalPersonWithAccounts(it)) }
-    }
+    private val principalPersonWithAccounts =
+        personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
     private val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
-        MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
-            .apply {
-                val update = {
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            postValue(
-                                TransactionAndAccountsAndCategory.from(
-                                    rangeTransactions.value ?: emptyList(),
-                                    allAccount.value ?: emptyList(),
-                                    categories.value ?: emptyList()
-                                )
-                            )
-                        }
-                    }
-                }
-                addSource(rangeTransactions) { update() }
-                addSource(allAccount) { update() }
-                addSource(categories) { update() }
+        MediatorLiveData<List<TransactionAndAccountsAndCategory>>()
+            .mergeThreeSources(
+                "filteredTransactionAndAccountsAndCategory",
+                rangeTransactions,
+                allAccount,
+                categories
+            ) { a, b, c ->
+                TransactionAndAccountsAndCategory.from(a, b, c)
             }
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
-        MediatorLiveData<List<TransactionAndAccountsAndCategory>>(listOf())
-            .apply {
-                val update = {
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            postValue(
-                                TransactionAndAccountsAndCategory.from(
-                                    allTransactions.value ?: emptyList(),
-                                    allAccount.value ?: emptyList(),
-                                    categories.value ?: emptyList()
-                                )
-                            )
-                        }
-                    }
-                }
-                addSource(allTransactions) { update() }
-                addSource(allAccount) { update() }
-                addSource(categories) { update() }
+        MediatorLiveData<List<TransactionAndAccountsAndCategory>>()
+            .mergeThreeSources(
+                "allTransactionAndAccountsAndCategory",
+                allTransactions,
+                allAccount,
+                categories
+            ) { a, b, c ->
+                TransactionAndAccountsAndCategory.from(a, b, c)
             }
 
     private val personSummaryState: LiveData<PersonSummaryState?> =
-        MediatorLiveData<PersonSummaryState?>(null)
-            .apply {
-                val update = {
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            val state = principalPersonWithAccounts.value?.let { pp ->
-                                PersonSummaryState.from(
-                                    pp,
-                                    range.value?.first,
-                                    range.value?.second,
-                                    allPersons = personWithAccounts.value ?: emptyList(),
-                                    allTransactions = allTransactionAndAccountsAndCategory.value
-                                        ?.map {
-                                            TransactionAndAccounts(
-                                                it.transaction,
-                                                it.sourceAccount,
-                                                it.destinationAccount
-                                            )
-                                        }
-                                        ?: emptyList(),
-                                    budgetAndCategoryWithCalculatedData = budgetAndCategoryWithCalculatedData.value
-                                        ?: emptyList(),
-                                    includeBudget = incluirPresupuestoEnSaldoActual.value ?: false
+        MediatorLiveData<PersonSummaryState?>()
+            .mergeSixNullableSources(
+                "personSummaryState",
+                principalPersonWithAccounts,
+                range,
+                personWithAccounts,
+                allTransactionAndAccountsAndCategory,
+                budgetAndCategoryWithCalculatedData,
+                incluirPresupuestoEnSaldoActual
+            ) { principalPersonWithAccounts, range, personWithAccounts, allTransactionAndAccountsAndCategory, budgetAndCategoryWithCalculatedData, incluirPresupuestoEnSaldoActual ->
+                principalPersonWithAccounts?.let { pp ->
+                    PersonSummaryState.from(
+                        pp,
+                        range?.first,
+                        range?.second,
+                        allPersons = personWithAccounts ?: emptyList(),
+                        allTransactions = allTransactionAndAccountsAndCategory
+                            ?.map {
+                                TransactionAndAccounts(
+                                    it.transaction,
+                                    it.sourceAccount,
+                                    it.destinationAccount
                                 )
                             }
-                            postValue(state)
-                        }
-                    }
+                            ?: emptyList(),
+                        budgetAndCategoryWithCalculatedData = budgetAndCategoryWithCalculatedData
+                            ?: emptyList(),
+                        includeBudget = incluirPresupuestoEnSaldoActual ?: false
+                    )
                 }
-
-                addSource(principalPersonWithAccounts) { update() }
-                addSource(range) { update() }
-                addSource(personWithAccounts) { update() }
-                addSource(allTransactionAndAccountsAndCategory) { update() }
-                addSource(budgetAndCategoryWithCalculatedData) { update() }
-                addSource(incluirPresupuestoEnSaldoActual) { update() }
             }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
