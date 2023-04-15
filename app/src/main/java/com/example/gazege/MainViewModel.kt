@@ -108,6 +108,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
     private val categories = repository.getCategories().asLiveData()
     private val budget = repository.getBudgets().asLiveData()
+    private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
 
     private val accountAndOwner: LiveData<List<AccountAndOwner>> =
         MediatorLiveData<List<AccountAndOwner>>(emptyList())
@@ -211,7 +212,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
                 addSource(budget) { update() }
                 addSource(categories) { update() }
-                //addSource(principalPerson){ update() }
+                addSource(principalPerson) { update() }
                 addSource(accountAndOwnerWithTransactions) { update() }
             }
 
@@ -247,17 +248,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         personFilterValue.value = newValue
     }
 
-
-    private val principalPerson = allPerson.switchMap { persons ->
-        liveData { emit(getPrincipalPerson(persons)) }
-    }
-
-    private val incomeAccount = allAccount.switchMap { accounts ->
-        liveData { emit(getIncomeAccount(accounts)) }
-    }
-    private val outcomeAccount = allAccount.switchMap { accounts ->
-        liveData { emit(getOutcomeAccount(accounts)) }
-    }
+    private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
+    private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
 
     private val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
