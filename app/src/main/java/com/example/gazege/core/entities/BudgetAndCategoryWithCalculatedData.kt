@@ -10,12 +10,15 @@ data class BudgetAndCategoryWithCalculatedData(
     val budgetExpectedRemainingFlow: Double,
     val budgetRealTotalFlow: Double,
     val budgetExpectedFlowUntilNow: Double,
-    val budgetCompleition: Double
+    val budgetCompleition: Double,
+    val budgetLeftToPay: Double
 ) {
     val budgetId get() = budget.id
     val budgetFrequency get() = budget.frequency
     val budgetFrequencyType get() = budget.frequencyType
     val budgetEachClass get() = budget.eachClass
+    val budgetType get() = budget.budgetType
+    val budgetValue get() = budget.value
     val categoryName get() = category.name
 
     companion object {
@@ -27,6 +30,21 @@ data class BudgetAndCategoryWithCalculatedData(
         ): List<BudgetAndCategoryWithCalculatedData> =
             budget
                 .map {
+                    val expectedRemainingFlow = BudgetDao.calculateOneBudgetExpectedFlow(
+                        it.budget,
+                        currentDate,
+                        endDate
+                    )
+                    val expectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
+                        it.budget,
+                        startDate,
+                        currentDate
+                    )
+                    val realTotalFlow = BudgetDao.calculateOneBudgetRealFlow(
+                        it,
+                        startDate,
+                        endDate
+                    )
                     BudgetAndCategoryWithCalculatedData(
                         budget = it.budget,
                         category = it.category,
@@ -35,26 +53,20 @@ data class BudgetAndCategoryWithCalculatedData(
                             startDate,
                             endDate
                         ),
-                        budgetExpectedRemainingFlow = BudgetDao.calculateOneBudgetExpectedFlow(
-                            it.budget,
-                            currentDate,
-                            endDate
-                        ),
-                        budgetRealTotalFlow = BudgetDao.calculateOneBudgetRealFlow(
-                            it,
-                            startDate,
-                            endDate
-                        ),
+                        budgetExpectedRemainingFlow = expectedRemainingFlow,
+                        budgetRealTotalFlow = realTotalFlow,
                         budgetCompleition = BudgetDao.calculateOneBudgetCompleition(
                             it,
                             currentDate,
                             startDate,
                             endDate
                         ),
-                        budgetExpectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
+                        budgetExpectedFlowUntilNow = expectedFlowUntilNow,
+                        budgetLeftToPay = BudgetDao.calculateLeftToPay(
                             it.budget,
-                            startDate,
-                            currentDate
+                            expectedRemainingFlow = expectedRemainingFlow,
+                            expectedFlowUntilNow = expectedFlowUntilNow,
+                            realTotalFlow = realTotalFlow
                         )
                     )
                 }

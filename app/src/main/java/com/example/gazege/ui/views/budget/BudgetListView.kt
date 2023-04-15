@@ -22,7 +22,8 @@ import com.example.gazege.ui.widgets.RecyclerView
 private fun BudgetViewHolder(
     budget: BudgetAndCategoryWithCalculatedData
 ) {
-    val overlineText = "each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n"
+    val overlineText =
+        " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}, type ${budget.budgetType}\n"
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
@@ -30,8 +31,9 @@ private fun BudgetViewHolder(
                 budget.budgetCompleition,
                 stringResource(id = R.string.Progreso)
             )
+            Text(text = "leftToPay ${doubleToMoneyString(budget.budgetLeftToPay)}")
             Text(text = "expectedTotalFlow ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
-            Text(text = "expectedRemeiningFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
+            Text(text = "expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
             Text(text = "realTotalFlow ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
             Text(text = "expectedFlowUntilNow ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
         }
@@ -104,14 +106,20 @@ private fun BudgetPreview() {
                     .navigationBarsPadding()
                     .systemBarsPadding()
             ) {
-                BudgetRecyclerView(
-                    modifier = Modifier,
-                    itemHolderPaddingValues = PaddingValues(),
-                    budget = budgetAndCategoryWithCalculatedDataSample,
-                    onBudgetDetailRequested = {},
-                    onBudgetDeleteRequested = {},
-                    onBudgetEditRequested = {}
-                )
+                Column {
+                    Text("$currentDateSample")
+                    Divider()
+                    Text("$startDateSample")
+                    Text("$endDateSample")
+                    BudgetRecyclerView(
+                        modifier = Modifier,
+                        itemHolderPaddingValues = PaddingValues(),
+                        budget = budgetAndCategoryWithCalculatedDataSample,
+                        onBudgetDetailRequested = {},
+                        onBudgetDeleteRequested = {},
+                        onBudgetEditRequested = {}
+                    )
+                }
             }
         }
     }

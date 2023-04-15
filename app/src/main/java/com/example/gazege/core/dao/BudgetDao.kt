@@ -148,5 +148,15 @@ interface BudgetDao {
             val budgetCompleition = realFlowUntilNow.div(expectedFLowEnd).takeIf { !it.isNaN() }
             return (budgetCompleition ?: 0.0).coerceIn(0.0..1.0)
         }
+
+        fun calculateLeftToPay(
+            budget: Budget,
+            expectedRemainingFlow: Double,
+            expectedFlowUntilNow: Double,
+            realTotalFlow: Double
+        ): Double = when (budget.budgetType) {
+            BudgetType.FIXED -> expectedFlowUntilNow - realTotalFlow
+            BudgetType.VARIABLE -> expectedRemainingFlow
+        }
     }
 }
