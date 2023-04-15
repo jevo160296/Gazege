@@ -1,5 +1,6 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -22,8 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
+import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
-import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
@@ -47,11 +48,10 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainFragment(
-    personList: List<PersonWithAccounts>,
+    allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
-    principalPersonWithAccounts: PersonWithAccounts?,
+    principalPersonSummaryState: PersonSummaryState?,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
@@ -237,11 +237,9 @@ fun MainFragment(
         ) {
             MainFragmentResponsiveContent(
                 it,
-                personList = personList,
+                allPerson = allPerson,
                 accountList = accountList,
-                allTransactionList = allTransactionList,
                 filteredTransactionList = filteredTransactionList,
-                principalPersonWithAccounts = principalPersonWithAccounts,
                 personFilterValue = personFilterValue,
                 delPerson = delPerson,
                 delAccount = delAccount,
@@ -259,13 +257,14 @@ fun MainFragment(
                 personState = personState,
                 navPosition = navPosition,
                 range = range,
-                onActionChanged = { action = it },
-                onModalSheetMsgChanged = { modalSheetMsg = it },
+                onActionChanged = { newAction -> action = newAction },
+                onModalSheetMsgChanged = { newMsg -> modalSheetMsg = newMsg },
                 scope = scope,
                 sheetState = sheetState,
-                onTitleChanged = { title = it },
+                onTitleChanged = { newTitle -> title = newTitle },
                 onSettingsClicked = onSettingsClicked,
-                showVertical = showVertical
+                showVertical = showVertical,
+                principalPersonSummaryState = principalPersonSummaryState
             )
         }
     }
@@ -275,11 +274,10 @@ fun MainFragment(
 @Composable
 private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
-    personList: List<PersonWithAccounts>,
+    allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    allTransactionList: List<TransactionAndAccountsAndCategory>,
     filteredTransactionList: List<TransactionAndAccountsAndCategory>,
-    principalPersonWithAccounts: PersonWithAccounts?,
+    principalPersonSummaryState: PersonSummaryState?,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
@@ -331,100 +329,95 @@ private fun MainFragmentResponsiveContent(
     val personMonthSummaryView = @Composable {
         PersonMonthSummaryView(
             modifier = Modifier.fillMaxWidth(),
-            saldoActual = principalPersonWithAccounts?.let {
-                PersonDao.getTotal(it, null, null)
-            } ?: 0.0,
-            ingresos = principalPersonWithAccounts?.let {
-                PersonDao.getIngresos(
-                    it,
-                    range.first,
-                    range.second
-                )
-            } ?: 0.0,
-            egresos = principalPersonWithAccounts?.let {
-                PersonDao.getEgresos(it, range.first, range.second)
-            }
-                ?: 0.0,
+            saldoActual = principalPersonSummaryState?.saldoActual ?: 0.0,
+            ingresos = principalPersonSummaryState?.ingresos ?: 0.0,
+            egresos = principalPersonSummaryState?.egresos ?: 0.0,
+            flujo = principalPersonSummaryState?.flujo ?: 0.0,
             onSaldoActualClick = onSaldoActualClick
         )
     }
 
-    val navigationView = @Composable {
-        when (navPosition) {
-            NavPosition.TRANSACCIONES -> {
-                val template = transactionDeleitionConfirmationBuilder()
-                Column {
-                    TransactionPage(
-                        transactionList = filteredTransactionList,
-                        itemHolderPaddingValues = paddingValues,
-                        state = transactionState,
-                        delTransaction = { transaction ->
-                            onActionChanged { delTransaction(transaction) }
-                            onModalSheetMsgChanged(template())
-                            scope.launch { sheetState.show() }
-                        },
-                        editTransaction = onEditTransactionRequested,
-                        onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
-                    )
+    val transactionPage = @Composable {
+        val template = transactionDeleitionConfirmationBuilder()
+        Column {
+            TransactionPage(
+                transactionList = filteredTransactionList,
+                itemHolderPaddingValues = paddingValues,
+                state = transactionState,
+                delTransaction = { transaction ->
+                    onActionChanged { delTransaction(transaction) }
+                    onModalSheetMsgChanged(template())
+                    scope.launch { sheetState.show() }
+                },
+                editTransaction = onEditTransactionRequested,
+                onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
+            )
+        }
+    }
+
+    val cuentasPage = @Composable {
+        val template = accountDeleitionConfirmationBuilder()
+        AccountPage(
+            accountList = accountList.filter { person ->
+                person.owner.id == principalPersonSummaryState?.person?.id
+            },
+            itemHolderPaddingValues = paddingValues,
+            treeState = accountState,
+            delAccount = { account ->
+                onActionChanged { delAccount(account) }
+                onModalSheetMsgChanged(template(account.name))
+                scope.launch { sheetState.show() }
+            },
+            editAccount = onEditAccountRequested,
+            startDate = null,
+            endDate = null,
+            detailAccount = onAccountDetailRequested
+        ) { newTitle -> onTitleChanged(newTitle) }
+    }
+
+    val personsPage = @Composable {
+        val template = personaDeleitionConfirmationBuilder()
+        PersonPage(
+            allPerson = allPerson.filter { person ->
+                person.id != principalPersonSummaryState?.person?.id
+            }.filter { personWithAccounts ->
+                if (personFilterValue) {
+                    val flujo =
+                        principalPersonSummaryState?.deudasFlujo?.get(personWithAccounts) ?: 0.0
+                    flujo != 0.0
+                } else {
+                    true
                 }
-            }
-            NavPosition.CUENTAS -> {
-                val template = accountDeleitionConfirmationBuilder()
-                AccountPage(
-                    accountList = accountList.filter { person ->
-                        person.owner.id == principalPersonWithAccounts?.person?.id
-                    },
-                    itemHolderPaddingValues = paddingValues,
-                    treeState = accountState,
-                    delAccount = { account ->
-                        onActionChanged { delAccount(account) }
-                        onModalSheetMsgChanged(template(account.name))
-                        scope.launch { sheetState.show() }
-                    },
-                    editAccount = onEditAccountRequested,
-                    startDate = null,
-                    endDate = null,
-                    detailAccount = onAccountDetailRequested
-                ) { newTitle -> onTitleChanged(newTitle) }
-            }
-            NavPosition.PERSONS -> {
-                val template = personaDeleitionConfirmationBuilder()
-                val transacciones =
-                    allTransactionList.map { trans -> trans.toTransactionAndAccounts() }
-                PersonPage(
-                    personList = personList.filter { person ->
-                        person.person.id != principalPersonWithAccounts?.person?.id
-                    }.filter { personWithAccounts ->
-                        if (personFilterValue) {
-                            val flujo = principalPersonWithAccounts
-                                ?.let {
-                                    PersonDao.getFlujo(
-                                        principalPersonWithAccounts,
-                                        personWithAccounts,
-                                        transacciones
-                                    )
-                                }
-                                ?: 0.0
-                            flujo != 0.0
-                        } else {
-                            true
-                        }
-                    },
-                    itemHolderPaddingValues = paddingValues,
-                    state = personState,
-                    delPerson = { person ->
-                        onActionChanged { delPerson(person) }
-                        onModalSheetMsgChanged(template(person.name))
-                        scope.launch { sheetState.show() }
-                    },
-                    editPerson = onEditPersonRequested,
-                    onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                    principalPerson = principalPersonWithAccounts,
-                    onConfigurePrincipalPersonRequested = onSettingsClicked,
-                    transacciones = allTransactionList
-                        .map { trans -> trans.toTransactionAndAccounts() },
-                    detailPerson = onPersonDetailRequested
-                )
+            },
+            itemHolderPaddingValues = paddingValues,
+            state = personState,
+            delPerson = { person ->
+                onActionChanged { delPerson(person) }
+                onModalSheetMsgChanged(template(person.name))
+                scope.launch { sheetState.show() }
+            },
+            editPerson = onEditPersonRequested,
+            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+            onConfigurePrincipalPersonRequested = onSettingsClicked,
+            detailPerson = onPersonDetailRequested,
+            principalPersonSummaryState = principalPersonSummaryState
+        )
+    }
+
+    val navigationView = @Composable {
+        Crossfade(targetState = navPosition) {
+            when (it) {
+                NavPosition.TRANSACCIONES -> {
+                    transactionPage()
+                }
+
+                NavPosition.CUENTAS -> {
+                    cuentasPage()
+                }
+
+                NavPosition.PERSONS -> {
+                    personsPage()
+                }
             }
         }
     }
@@ -472,14 +465,9 @@ private fun DefaultPreview() {
     DatabaseSample {
         GazegeTheme(darkTheme = true) {
             MainFragment(
-                personList = personWithAccountsSample,
+                allPerson = personSample,
                 accountList = accountAndOwnerWithTransactionsSample,
-                allTransactionList = transactionsAndAccountAndCategorySample,
                 filteredTransactionList = transactionsAndAccountAndCategorySample,
-                principalPersonWithAccounts = PersonWithAccounts(
-                    person = Person(name = "?"),
-                    emptyList()
-                ),
                 navPosition = navPosition,
                 range = Pair(LocalDate.now(), LocalDate.now()),
                 personFilterValue = false,
@@ -543,7 +531,8 @@ private fun DefaultPreview() {
                 },
                 onSaldoActualClick = {},
                 onPersonFilterValueChanged = {},
-                showVertical = true
+                showVertical = true,
+                principalPersonSummaryState = personSummaryStateSample
             )
         }
     }

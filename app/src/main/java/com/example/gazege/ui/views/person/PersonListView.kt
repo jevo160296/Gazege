@@ -1,20 +1,30 @@
 package com.example.gazege.ui.views.person
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
-import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
@@ -22,16 +32,14 @@ import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
-import java.time.LocalDate
 import kotlin.math.absoluteValue
 
 @Composable
 private fun PersonViewHolder(
-    principalPerson: PersonWithAccounts,
-    person: PersonWithAccounts,
-    transactions: List<TransactionAndAccounts>
+    principalPersonSummaryState: PersonSummaryState,
+    person: Person
 ) {
-    val flujo = PersonDao.getFlujo(principalPerson, person, transactions)
+    val flujo = principalPersonSummaryState.deudasFlujo[person] ?: 0.0
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -41,7 +49,7 @@ private fun PersonViewHolder(
             horizontalAlignment = Alignment.Start
         ) {
             SmallEmphasis(text = "${stringResource(id = R.string.nombre)}: ")
-            LargeBody(text = person.person.name)
+            LargeBody(text = person.name)
         }
         if (flujo != 0.0) {
             Column(
@@ -61,12 +69,11 @@ private fun PersonViewHolder(
 
 @Composable
 private fun PersonRecyclerView(
-    principalPerson: PersonWithAccounts,
-    personList: List<PersonWithAccounts>,
-    transacciones: List<TransactionAndAccounts>,
-    delPerson: (PersonWithAccounts) -> Unit,
-    editPerson: (PersonWithAccounts) -> Unit,
-    detailPerson: (PersonWithAccounts) -> Unit,
+    principalPersonSummaryState: PersonSummaryState,
+    personList: List<Person>,
+    delPerson: (Person) -> Unit,
+    editPerson: (Person) -> Unit,
+    detailPerson: (Person) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
@@ -79,7 +86,7 @@ private fun PersonRecyclerView(
         modifier = modifier,
         onItemTapped = detailPerson,
         onItemLongPressed = {
-            menuIdExpanded = it.person.id
+            menuIdExpanded = it.id
         },
         itemHolderPaddingValues = itemHolderPaddingValues,
         state = state,
@@ -87,11 +94,10 @@ private fun PersonRecyclerView(
             Box {
                 PersonViewHolder(
                     person = it,
-                    principalPerson = principalPerson,
-                    transactions = transacciones
+                    principalPersonSummaryState = principalPersonSummaryState
                 )
                 DropdownMenu(
-                    expanded = menuIdExpanded == it.person.id,
+                    expanded = menuIdExpanded == it.id,
                     onDismissRequest = { menuIdExpanded = null }
                 ) {
                     DropdownMenuItem(
@@ -118,9 +124,8 @@ private fun PersonRecyclerView(
 fun PersonPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    principalPerson: PersonWithAccounts?,
-    personList: List<PersonWithAccounts>,
-    transacciones: List<TransactionAndAccounts>,
+    principalPersonSummaryState: PersonSummaryState?,
+    allPerson: List<Person>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
     detailPerson: (Person) -> Unit,
@@ -131,7 +136,7 @@ fun PersonPage(
     onTitleSetted(stringResource(id = R.string.personas))
     Column(modifier = modifier) {
         val padding = Modifier.padding(horizontal = 8.dp)
-        if (principalPerson == null) {
+        if (principalPersonSummaryState == null) {
             LargeBody(
                 text = stringResource(id = R.string.persona_principal_vacia),
                 modifier = padding,
@@ -142,14 +147,13 @@ fun PersonPage(
             }
         } else {
             PersonRecyclerView(
-                principalPerson = principalPerson,
-                personList = personList,
-                delPerson = { delPerson(it.person) },
-                editPerson = { editPerson(it.person) },
-                detailPerson = { detailPerson(it.person) },
+                principalPersonSummaryState = principalPersonSummaryState,
+                personList = allPerson,
+                delPerson = { delPerson(it) },
+                editPerson = { editPerson(it) },
+                detailPerson = { detailPerson(it) },
                 itemHolderPaddingValues = itemHolderPaddingValues,
-                state = state,
-                transacciones = transacciones
+                state = state
             )
         }
     }
@@ -158,41 +162,12 @@ fun PersonPage(
 @Preview(showBackground = true)
 @Composable
 private fun PreviewPersonItem() {
-    val person = Person(name = "Persona")
-    val account = Account(name = "Acc", ownerId = 0)
-    val personWithAccounts = PersonWithAccounts(person = person, accounts = (0..10).map {
-        AccountAndOwnerWithTransactionsAndPockets.from(
-            AccountAndOwnerWithTransactions(
-                account = account, outTransactions = (1..2).map {
-                    Transaction(
-                        amount = it.toDouble(),
-                        description = "Trans",
-                        sourceId = 1,
-                        destinationId = 2,
-                        date = LocalDate.now(),
-                        aNombreDe = null,
-                        categoryId = null
-                    )
-                }, inTransactions = (1..4).map {
-                    Transaction(
-                        amount = it.toDouble(),
-                        description = "Trans2",
-                        sourceId = 1,
-                        destinationId = 2,
-                        date = LocalDate.now(),
-                        aNombreDe = null,
-                        categoryId = null
-                    )
-                }, owner = person
-            ),
-            listOf()
+    DatabaseSample {
+        PersonViewHolder(
+            person = personSample.first(),
+            principalPersonSummaryState = personSummaryStateSample
         )
-    })
-    PersonViewHolder(
-        person = personWithAccounts,
-        principalPerson = personWithAccounts,
-        transactions = listOf()
-    )
+    }
 }
 
 @Preview(showBackground = true)
@@ -201,9 +176,9 @@ private fun PreviewPersonList() {
     DatabaseSample {
         GazegeTheme {
             RecyclerView(
-                elements = personWithAccountsSample, viewHolder = { person ->
+                elements = personSample, viewHolder = { person ->
                     PersonViewHolder(
-                        person = person, principalPerson = person, transactions = listOf()
+                        person = person, principalPersonSummaryState = personSummaryStateSample
                     )
                 }, state = LazyListState()
             )
@@ -217,16 +192,15 @@ private fun PreviewPersonPage() {
     DatabaseSample {
         GazegeTheme {
             PersonPage(
-                personList = personWithAccountsSample,
+                allPerson = personSample,
                 state = LazyListState(),
                 editPerson = {},
                 delPerson = {},
                 onTitleSetted = {},
-                principalPerson = personWithAccountsSample[0],
                 onConfigurePrincipalPersonRequested = {},
                 itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
-                transacciones = listOf(),
-                detailPerson = {}
+                detailPerson = {},
+                principalPersonSummaryState = personSummaryStateSample
             )
         }
     }

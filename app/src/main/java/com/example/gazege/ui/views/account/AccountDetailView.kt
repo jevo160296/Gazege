@@ -209,22 +209,18 @@ fun NotNullPlot(
 
 @Composable
 fun AccountDetail(
-    accountAndOwnerWithTransactionsAndPockets: AccountAndOwnerWithTransactionsAndPockets,
+    accountAndOwner: AccountAndOwner,
     data: AccountDetailData?,
     showGraphs: Boolean,
     onShowGraphsChanged: (Boolean) -> Unit,
-    onDataUpdateRequested: (account: AccountAndOwnerWithTransactionsAndPockets?) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
     }
-    val account = accountAndOwnerWithTransactionsAndPockets
-        .accountAndOwnerWithTransactions
-        .let { AccountAndOwner(it.account, it.owner) }
     if (data == null) {
-        NullAccountDetail(account)
+        NullAccountDetail(accountAndOwner)
     } else {
         NotNullAccountDetail(
             data = data,
@@ -237,9 +233,6 @@ fun AccountDetail(
                 onShowGraphsChanged(it)
             }
         )
-    }
-    LaunchedEffect(key1 = accountAndOwnerWithTransactionsAndPockets) {
-        onDataUpdateRequested(accountAndOwnerWithTransactionsAndPockets)
     }
 }
 
@@ -438,7 +431,7 @@ private fun AccountDetailPreview() {
             ) {
                 Box(Modifier.padding(it)) {
                     AccountDetail(
-                        accountAndOwnerWithTransactionsAndPockets = accountAndOwnerWithTransactionsAndPocketsSample.first(),
+                        accountAndOwner = accountAndOwnerSample.first(),
                         data = AccountDetailData(
                             account = accountAndOwnerWithTransactionsAndPocketsSample.first(),
                             allAccounts = accountSample,
@@ -466,7 +459,6 @@ private fun AccountDetailPreview() {
                                 )
                             }
                         },
-                        onDataUpdateRequested = {},
                         showGraphs = false,
                         onShowGraphsChanged = {}
                     )

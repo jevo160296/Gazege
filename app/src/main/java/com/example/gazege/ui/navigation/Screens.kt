@@ -52,11 +52,10 @@ fun NavGraphBuilder.screenMain(
     onNavigateToSaldoActualSettings: () -> Unit,
 ) {
     composable("main") {
-        val personWithAccounts by viewModel.rememberPersonWithAccounts()
+        val allPerson by viewModel.rememberAllPerson()
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val allTransactionAndAccountsAndCategory by viewModel.rememberAllTransactionAndAccountsAndCategory()
         val filteredTransactionAndAccountsAndCategory by viewModel.rememberFilteredTransactionAndAccountsAndCategory()
-        val principalPersonWithAccounts by viewModel.rememberPrincipalPersonWithAccounts()
+        val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
         val range by viewModel.rememberRange()
         val personFilterValue by viewModel.rememberPersonFilterValue()
 
@@ -68,11 +67,9 @@ fun NavGraphBuilder.screenMain(
         BoxWithConstraints {
             val showVertical = maxWidth <= 700.dp
             MainFragment(
-                personList = personWithAccounts,
+                allPerson = allPerson,
                 accountList = accountAndOwnerWithTransactions,
-                allTransactionList = allTransactionAndAccountsAndCategory,
                 filteredTransactionList = filteredTransactionAndAccountsAndCategory,
-                principalPersonWithAccounts = principalPersonWithAccounts,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,
@@ -113,7 +110,8 @@ fun NavGraphBuilder.screenMain(
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
                 onPersonFilterValueChanged = viewModel::updatePersonFilterValue,
-                showVertical = showVertical
+                showVertical = showVertical,
+                principalPersonSummaryState = principalPersonSummaryState
             )
         }
     }
@@ -436,7 +434,7 @@ fun NavGraphBuilder.screenSettings(
     composable("settings") {
         val allPerson by viewModel.rememberAllPerson()
         val principalPerson by viewModel.rememberPrincipalPerson()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val accountAndOwner by viewModel.rememberAccountAndOwner()
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
 
@@ -454,12 +452,7 @@ fun NavGraphBuilder.screenSettings(
             },
             onNavigateUpRequested = onNavigateUp,
             onAddPersonRequested = onNavigateToAddPerson,
-            accountList = accountAndOwnerWithTransactions.map {
-                AccountAndOwner(
-                    it.account,
-                    it.owner
-                )
-            },
+            accountList = accountAndOwner,
             incomeAccount = incomeAccount,
             outcomeAccount = outcomeAccount,
             onAddAccountRequested = onNavigateToAddAccount,
@@ -722,24 +715,23 @@ fun NavGraphBuilder.screenAccountDetail(
             }
         )
     ) { navStack ->
+        val accountId = navStack.arguments?.getInt("accountId")
+        viewModel.updateAccountDetailIdIfDifferent(accountId)
         val data by viewModel.rememberAccountDetailData()
-        val accountAndOwnerWithTransactionsAndPockets by viewModel.rememberAccountAndOwnerWithTransactionsAndPockets()
+
+        val accountAndOwner by viewModel.rememberAccountAndOwner()
 
         val coroutineScope = rememberCoroutineScope()
 
-        val accountId = navStack.arguments?.getInt("accountId")
-        val account = accountAndOwnerWithTransactionsAndPockets
-            .firstOrNull { it.accountAndOwnerWithTransactions.account.id == accountId }
+        val account = accountAndOwner
+            .firstOrNull { it.account.id == accountId }
         if (account != null) {
             var showGraphs by remember {
                 mutableStateOf(false)
             }
             AccountDetail(
-                accountAndOwnerWithTransactionsAndPockets = account,
+                accountAndOwner = account,
                 data = data,
-                onDataUpdateRequested = { newAccount ->
-                    viewModel.updateAccountDetailData(account = newAccount)
-                },
                 onAction = { actionAccount, action ->
                     when (action) {
                         AccountAction.EDIT -> onNavigateToEditAccount(accountId)

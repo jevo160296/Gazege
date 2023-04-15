@@ -11,4 +11,12 @@ data class AccountAndOwner(
     )
     val owner: Person
 ){
+    companion object {
+        fun from(account: List<Account>, persons: List<Person>): List<AccountAndOwner> {
+            val indexedPersons = persons.associateBy { it.id }
+            return account.map {
+                AccountAndOwner(it, indexedPersons[it.ownerId]!!)
+            }
+        }
+    }
 }

@@ -1,7 +1,23 @@
 package com.example.gazege.ui
 
 import androidx.compose.runtime.Composable
-import com.example.gazege.core.entities.*
+import com.example.gazege.PersonSummaryState
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
+import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
+import com.example.gazege.core.entities.BudgetType
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.FrequencyType
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.TransactionAndAccountsAndCategory
+import com.example.gazege.core.entities.WeekDays
 import java.time.LocalDate
 import kotlin.random.Random
 
@@ -40,6 +56,9 @@ class DatabaseSampleScope {
             transactionSample
         )
     }
+    val accountAndOwnerSample by lazy {
+        getAccountAndOwnerSample(accountSample, personSample)
+    }
     val accountAndOwnerWithTransactionsAndPocketsSample by lazy {
         getAccountAndOwnerWithTransactionsAndPocketsSample(
             accountAndOwnerWithTransactionsSample
@@ -68,6 +87,18 @@ class DatabaseSampleScope {
         getPersonWithAccountsSample(
             personSample,
             accountAndOwnerWithTransactionsAndPocketsSample
+        )
+    }
+    val transactionAndAccountsSample: List<TransactionAndAccounts> by lazy {
+        TransactionAndAccounts.from(transactionSample, accountSample)
+    }
+    val personSummaryStateSample: PersonSummaryState by lazy {
+        PersonSummaryState.from(
+            personWithAccountsSample.first(),
+            startDateSample,
+            endDateSample,
+            personWithAccountsSample,
+            transactionAndAccountsSample
         )
     }
 }
@@ -213,6 +244,11 @@ private fun getAccountAndOwnerWithTransactionsSample(
     transactionSample: List<Transaction>
 ): List<AccountAndOwnerWithTransactions> {
     return AccountAndOwnerWithTransactions.from(accountSample, personSample, transactionSample)
+}
+
+private fun getAccountAndOwnerSample(accountSample: List<Account>, personSample: List<Person>)
+        : List<AccountAndOwner> {
+    return AccountAndOwner.from(accountSample, personSample)
 }
 
 private fun getAccountAndOwnerWithTransactionsAndPocketsSample(
