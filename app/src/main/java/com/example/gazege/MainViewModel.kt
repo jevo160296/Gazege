@@ -364,7 +364,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                                                 it.destinationAccount
                                             )
                                         }
-                                        ?: emptyList()
+                                        ?: emptyList(),
+                                    budgetAndCategoryWithCalculatedData = budgetAndCategoryWithCalculatedData.value
+                                        ?: emptyList(),
+                                    includeBudget = incluirPresupuestoEnSaldoActual.value ?: false
                                 )
                             }
                             postValue(state)
@@ -376,6 +379,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 addSource(range) { update() }
                 addSource(personWithAccounts) { update() }
                 addSource(allTransactionAndAccountsAndCategory) { update() }
+                addSource(budgetAndCategoryWithCalculatedData) { update() }
+                addSource(incluirPresupuestoEnSaldoActual) { update() }
             }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
@@ -587,10 +592,22 @@ data class PersonSummaryState(
             startDate: LocalDate?,
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
-            allTransactions: List<TransactionAndAccounts>
+            allTransactions: List<TransactionAndAccounts>,
+            budgetAndCategoryWithCalculatedData: List<BudgetAndCategoryWithCalculatedData>,
+            includeBudget: Boolean
         ): PersonSummaryState = PersonSummaryState(
             person = personWithAccounts.person,
-            saldoActual = personWithAccounts.let { PersonDao.getTotal(it, null, null) },
+            saldoActual = personWithAccounts.let {
+                PersonDao.getTotal(
+                    it,
+                    null,
+                    null
+                )
+            } + if (includeBudget) {
+                budgetAndCategoryWithCalculatedData.sumOf { it.budgetLeftToPay }
+            } else {
+                0.0
+            },
             ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
             egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
             deudasFlujo = allPersons.associate { otherPerson ->
