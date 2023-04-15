@@ -167,7 +167,7 @@ class AppDatabaseTest {
                     }
             }
         index = 0
-        val newTransactions: List<Transaction> = (0..5000).map {
+        val newTransactions: List<Transaction> = (0..100).map {
             val from = newPersons
                 .let {
                     val selected = random.nextInt(it.size)

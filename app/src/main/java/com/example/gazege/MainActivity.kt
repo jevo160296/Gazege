@@ -20,7 +20,42 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
-import com.example.gazege.ui.navigation.*
+import com.example.gazege.ui.Settings
+import com.example.gazege.ui.navigation.navigateToAccountDetail
+import com.example.gazege.ui.navigation.navigateToAddAccount
+import com.example.gazege.ui.navigation.navigateToAddCategory
+import com.example.gazege.ui.navigation.navigateToAddOneBudget
+import com.example.gazege.ui.navigation.navigateToAddPerson
+import com.example.gazege.ui.navigation.navigateToAddTransaction
+import com.example.gazege.ui.navigation.navigateToEditAccount
+import com.example.gazege.ui.navigation.navigateToEditBudget
+import com.example.gazege.ui.navigation.navigateToEditCategory
+import com.example.gazege.ui.navigation.navigateToEditOneBudget
+import com.example.gazege.ui.navigation.navigateToEditPerson
+import com.example.gazege.ui.navigation.navigateToEditTransaction
+import com.example.gazege.ui.navigation.navigateToEditarCategorias
+import com.example.gazege.ui.navigation.navigateToOneBudgetDetail
+import com.example.gazege.ui.navigation.navigateToPersonDetail
+import com.example.gazege.ui.navigation.navigateToSaldoActualSettings
+import com.example.gazege.ui.navigation.navigateToSettings
+import com.example.gazege.ui.navigation.screenAccountDetail
+import com.example.gazege.ui.navigation.screenAddAccount
+import com.example.gazege.ui.navigation.screenAddCategory
+import com.example.gazege.ui.navigation.screenAddOneBudget
+import com.example.gazege.ui.navigation.screenAddPerson
+import com.example.gazege.ui.navigation.screenAddTransaction
+import com.example.gazege.ui.navigation.screenEditAccount
+import com.example.gazege.ui.navigation.screenEditBudget
+import com.example.gazege.ui.navigation.screenEditCategory
+import com.example.gazege.ui.navigation.screenEditOneBudget
+import com.example.gazege.ui.navigation.screenEditPerson
+import com.example.gazege.ui.navigation.screenEditTransaction
+import com.example.gazege.ui.navigation.screenEditarCategorias
+import com.example.gazege.ui.navigation.screenMain
+import com.example.gazege.ui.navigation.screenOneBudgetDetail
+import com.example.gazege.ui.navigation.screenPersonDetail
+import com.example.gazege.ui.navigation.screenSaldoActualSettings
+import com.example.gazege.ui.navigation.screenSettings
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -35,9 +70,10 @@ class MainActivity : ComponentActivity() {
             budgetDao = database.budgetDao()
         )
     }
+    private val settings by lazy { Settings(this) }
 
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(repository)
+        MainViewModelFactory(repository, settings)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

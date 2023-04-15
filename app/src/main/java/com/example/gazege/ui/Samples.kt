@@ -98,9 +98,12 @@ class DatabaseSampleScope {
             startDateSample,
             endDateSample,
             personWithAccountsSample,
-            transactionAndAccountsSample
+            transactionAndAccountsSample,
+            budgetAndCategoryWithCalculatedDataSample,
+            includeBudgetSample
         )
     }
+    val includeBudgetSample: Boolean = false
 }
 
 private fun getBudgetAndCategoryWithTransactionsSample(

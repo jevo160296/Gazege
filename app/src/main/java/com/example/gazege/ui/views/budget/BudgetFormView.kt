@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -19,29 +20,46 @@ import com.example.gazege.ui.widgets.TextField
 import java.lang.Integer.max
 import java.time.DayOfWeek
 import java.time.LocalDate
+import kotlin.math.abs
+import kotlin.math.withSign
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetFormView(
     budget: Budget?,
     categories: List<Category>,
     onSaveBudget: (Budget) -> Unit
 ) {
-    var selectedCategoryId by rememberSaveable { mutableStateOf(budget?.categoryId) }
-    var frequencyType: FrequencyType by rememberSaveable {
+    var isGasto by rememberSaveable(budget) {
+        mutableStateOf(budget?.value?.let { it < 0 } ?: true)
+    }
+    var selectedCategoryId by rememberSaveable(budget) { mutableStateOf(budget?.categoryId) }
+    var frequencyType: FrequencyType by rememberSaveable(budget) {
         mutableStateOf(budget?.frequencyType ?: FrequencyType.MONTHLY)
     }
-    var frequency by rememberSaveable { mutableStateOf(budget?.frequency ?: 1) }
-    var value by rememberSaveable { mutableStateOf(budget?.value ?: 0.0) }
-    var startDate by rememberSaveable { mutableStateOf(budget?.startDate ?: LocalDate.now()) }
-    var weekDaysDays: Set<DayOfWeek> by rememberSaveable {
+    var frequency by rememberSaveable(budget) { mutableStateOf(budget?.frequency ?: 1) }
+    var startDate by rememberSaveable(budget) {
+        mutableStateOf(
+            budget?.startDate ?: LocalDate.now()
+        )
+    }
+    var weekDaysDays: Set<DayOfWeek> by rememberSaveable(budget) {
         mutableStateOf((budget?.eachClass as? WeekDays)?.days ?: WeekDays.from(0b1111111).days)
     }
-    var budgetType by rememberSaveable { mutableStateOf(budget?.budgetType ?: BudgetType.VARIABLE) }
+    var budgetType by rememberSaveable(budget) {
+        mutableStateOf(
+            budget?.budgetType ?: BudgetType.VARIABLE
+        )
+    }
+    var value by rememberSaveable(budget) { mutableStateOf(abs(budget?.value ?: 0.0)) }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val budgetId = budget?.id
     val weekDays = WeekDays(weekDaysDays)
+    val sign = if (isGasto) {
+        -1.0
+    } else {
+        1.0
+    }
 
     val selectedCategoryIdVal = selectedCategoryId
 
@@ -50,7 +68,7 @@ fun BudgetFormView(
             FrequencyType.DAILY -> Budget.fromDaily(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
-                value = value,
+                value = value.withSign(sign),
                 frequency = frequency,
                 startDate = startDate,
                 budgetType = budgetType
@@ -58,7 +76,7 @@ fun BudgetFormView(
             FrequencyType.WEEKLY -> Budget.fromWeekly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
-                value = value,
+                value = value.withSign(sign),
                 each = weekDays,
                 frequency = frequency,
                 startDate = startDate,
@@ -67,7 +85,7 @@ fun BudgetFormView(
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
-                value = value,
+                value = value.withSign(sign),
                 budgetType = budgetType
             )
         }
@@ -101,6 +119,19 @@ fun BudgetFormView(
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding),
         itemsColumnsModifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))
     ) {
+        SegmentedButton(
+            selectedIndex = if (isGasto) {
+                0
+            } else {
+                1
+            },
+            items = listOf(
+                Pair(stringResource(R.string.Gasto), painterResource(R.drawable.gasto_icon)),
+                Pair(stringResource(R.string.Ingreso), painterResource(R.drawable.ingreso_icon))
+            )
+                .map { (text, painter) -> SegmentedButtonItem.from(text, painter) },
+            onItemClicked = { isGasto = it == 0 }
+        )
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

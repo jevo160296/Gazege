@@ -2,6 +2,7 @@ package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
@@ -53,7 +55,9 @@ fun CategoryForm(
             onValueChange = {
                 partialCategory = partialCategory.copy(name = it)
             },
-            label = { Text(text = stringResource(R.string.nombre)) }
+            label = { Text(text = stringResource(R.string.nombre)) },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            singleLine = true
         )
         CategoryDropDown(
             categoryList = filteredCategories,

@@ -397,6 +397,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
     composable("saldoActualSettings") {
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val principalPerson by viewModel.rememberPrincipalPerson()
+        val incluirPresupuestoEnSaldoActual by viewModel.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
 
         var saving: Int by remember {
@@ -404,7 +405,9 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         }
         SaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
-            saving = saving
+            saving = saving,
+            incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+            onIncluirPresupuestoEnSaldoActualChanged = viewModel::settingsIncluirPresupuestoEnSaldoActualFlow
         ) { account, nuevoEstado ->
             saving += 1
             coroutineScope.launch {
@@ -874,7 +877,8 @@ fun NavGraphBuilder.screenOneBudgetDetail(
 }
 
 fun NavController.navigateToOneBudgetDetail(budgetId: Int) {
-    navigate("oneBudgetDetail/$budgetId")
+    //TODO Aún no se tiene lista la página de detalles para los presupupestos.
+    //navigate("oneBudgetDetail/$budgetId")
 }
 
 fun NavGraphBuilder.screenAddOneBudget(
