@@ -34,6 +34,7 @@ import com.example.gazege.ui.navigation.navigateToEditOneBudget
 import com.example.gazege.ui.navigation.navigateToEditPerson
 import com.example.gazege.ui.navigation.navigateToEditTransaction
 import com.example.gazege.ui.navigation.navigateToEditarCategorias
+import com.example.gazege.ui.navigation.navigateToMainScreen
 import com.example.gazege.ui.navigation.navigateToOneBudgetDetail
 import com.example.gazege.ui.navigation.navigateToPersonDetail
 import com.example.gazege.ui.navigation.navigateToSaldoActualSettings
@@ -56,6 +57,7 @@ import com.example.gazege.ui.navigation.screenOneBudgetDetail
 import com.example.gazege.ui.navigation.screenPersonDetail
 import com.example.gazege.ui.navigation.screenSaldoActualSettings
 import com.example.gazege.ui.navigation.screenSettings
+import com.example.gazege.ui.navigation.screenSplashScreen
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -110,8 +112,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NavHost(
                         navController = navController,
-                        startDestination = "main",
+                        startDestination = "splashScreen",
                     ) {
+                        screenSplashScreen(
+                            onNavigateToInitialScreen = navController::navigateToMainScreen
+                        )
                         screenMain(
                             viewModel = mainViewModel,
                             onNavigateToEditPerson = navController::navigateToEditPerson,

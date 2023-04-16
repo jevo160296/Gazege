@@ -117,6 +117,10 @@ fun NavGraphBuilder.screenMain(
     }
 }
 
+fun NavController.navigateToMainScreen() {
+    navigate("main")
+}
+
 fun NavGraphBuilder.screenAddAccount(
     viewModel: MainViewModel,
     onNavigateToAddPerson: () -> Unit,
@@ -934,4 +938,12 @@ fun NavGraphBuilder.screenEditOneBudget(
 
 fun NavController.navigateToEditOneBudget(budgetId: Int) {
     navigate("editOneBudget/$budgetId")
+}
+
+fun NavGraphBuilder.screenSplashScreen(
+    onNavigateToInitialScreen: () -> Unit
+) {
+    composable("splashScreen") {
+        SplashScreenFragment(onNavigateToInitialScreen = onNavigateToInitialScreen)
+    }
 }
