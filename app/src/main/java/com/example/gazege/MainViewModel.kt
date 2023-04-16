@@ -98,8 +98,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberAccountDetailData() = accountDetailData.observeAsState()
 
     @Composable
-    fun rememberFilteredTransactionAndAccountsAndCategory() =
-        filteredTransactionAndAccountsAndCategory.observeAsState(emptyList())
+    fun rememberFilteredTransactionListItemDetails() =
+        filteredTransactionListitemDetails.observeAsState(emptyList())
 
     private fun logPrintln(name: String, source: String? = null) = Log.println(
         Log.INFO,
@@ -175,6 +175,38 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
+    private fun <T, A : Any, B : Any, C : Any, D : Any> MediatorLiveData<T>.mergeFourSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        sourceD: LiveData<D>,
+        merger: (A, B, C, D) -> T
+    ) = apply {
+        val update = {
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized) {
+                logPrintln(name)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(
+                            merger(
+                                sourceA.value!!,
+                                sourceB.value!!,
+                                sourceC.value!!,
+                                sourceD.value!!
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update() }
+        addSource(sourceB) { update() }
+        addSource(sourceC) { update() }
+        addSource(sourceD) { update() }
+    }
+        .distinctUntilChanged()
+
     private fun <T, A : Any?, B : Any?, C : Any?, D : Any?> MediatorLiveData<T>.mergeFourNullableSources(
         name: String,
         sourceA: LiveData<A>,
@@ -204,6 +236,41 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         addSource(sourceB) { update() }
         addSource(sourceC) { update() }
         addSource(sourceD) { update() }
+    }
+        .distinctUntilChanged()
+
+    private fun <T, A : Any?, B : Any?, C : Any?, D : Any?, E : Any?> MediatorLiveData<T>.mergeFiveNullableSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        sourceD: LiveData<D>,
+        sourceE: LiveData<E>,
+        merger: (A?, B?, C?, D?, E?) -> T
+    ) = apply {
+        val update = {
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized) {
+                logPrintln(name)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(
+                            merger(
+                                sourceA.value,
+                                sourceB.value,
+                                sourceC.value,
+                                sourceD.value,
+                                sourceE.value
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update() }
+        addSource(sourceB) { update() }
+        addSource(sourceC) { update() }
+        addSource(sourceD) { update() }
+        addSource(sourceE) { update() }
     }
         .distinctUntilChanged()
 
@@ -371,34 +438,36 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     private val accountDetailData: LiveData<AccountDetailData?> =
         MediatorLiveData<AccountDetailData?>()
-            .mergeFourNullableSources(
+            .mergeFiveNullableSources(
                 "accountDetailData",
                 accountDetail,
                 allAccount,
                 categories,
+                budget,
                 range
-            ) { a, b, c, d ->
+            ) { a, b, c, d, e ->
                 a?.let {
                     AccountDetailData.build(
                         account = a,
                         allAccounts = b ?: emptyList(),
                         allCategories = c ?: emptyList(),
-                        startDate = d?.first,
-                        endDate = d?.second
+                        budget = d ?: emptyList(),
+                        startDate = e?.first,
+                        endDate = e?.second
                     )
                 }
             }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
-    private val filteredTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
-        MediatorLiveData<List<TransactionAndAccountsAndCategory>>()
+    private val filteredTransactionListitemDetails: LiveData<List<TransactionListItemDetails>> =
+        MediatorLiveData<List<TransactionListItemDetails>>()
             .mergeThreeSources(
-                "filteredTransactionAndAccountsAndCategory",
+                "filteredTransactionListitemDetails",
                 rangeTransactions,
-                allAccount,
-                categories
+                categories,
+                allAccount
             ) { a, b, c ->
-                TransactionAndAccountsAndCategory.from(a, b, c)
+                TransactionListItemDetails.from(a, b, c)
             }
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>()

@@ -50,7 +50,7 @@ import java.time.LocalDate
 fun MainFragment(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
+    filteredTransactionList: List<TransactionListItemDetails>,
     principalPersonSummaryState: PersonSummaryState?,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
@@ -276,7 +276,7 @@ private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: List<TransactionAndAccountsAndCategory>,
+    filteredTransactionList: List<TransactionListItemDetails>,
     principalPersonSummaryState: PersonSummaryState?,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
@@ -467,7 +467,7 @@ private fun DefaultPreview() {
             MainFragment(
                 allPerson = personSample,
                 accountList = accountAndOwnerWithTransactionsSample,
-                filteredTransactionList = transactionsAndAccountAndCategorySample,
+                filteredTransactionList = transactionListItemDetailsSample,
                 navPosition = navPosition,
                 range = Pair(LocalDate.now(), LocalDate.now()),
                 personFilterValue = false,

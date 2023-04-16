@@ -54,7 +54,7 @@ fun NavGraphBuilder.screenMain(
     composable("main") {
         val allPerson by viewModel.rememberAllPerson()
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val filteredTransactionAndAccountsAndCategory by viewModel.rememberFilteredTransactionAndAccountsAndCategory()
+        val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
         val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
         val range by viewModel.rememberRange()
         val personFilterValue by viewModel.rememberPersonFilterValue()
@@ -69,7 +69,7 @@ fun NavGraphBuilder.screenMain(
             MainFragment(
                 allPerson = allPerson,
                 accountList = accountAndOwnerWithTransactions,
-                filteredTransactionList = filteredTransactionAndAccountsAndCategory,
+                filteredTransactionList = filteredTransactionListItemDetails,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,
@@ -586,19 +586,19 @@ fun NavGraphBuilder.screenEditTransaction(
             type = NavType.IntType
         })
     ) { navBackStackEntry ->
-        val filteredTransactionAndAccountsAndCategory by viewModel.rememberFilteredTransactionAndAccountsAndCategory()
+        val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val allPerson by viewModel.rememberAllPerson()
         val categories by viewModel.rememberCategories()
 
         val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-        val selectedTransactionAndAccounts =
-            filteredTransactionAndAccountsAndCategory
+        val selectedTransactionListItemDetails =
+            filteredTransactionListItemDetails
                 .firstOrNull { it.transaction.id == transactionId }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
-            transactionAndAccounts = selectedTransactionAndAccounts?.toTransactionAndAccounts(),
+            transactionAndAccounts = selectedTransactionListItemDetails?.toTransactionAndAccounts(),
             accountList = accountAndOwnerWithTransactions.map {
                 AccountAndOwner(
                     it.account,

@@ -43,6 +43,7 @@ data class AccountDetailData constructor(
     val account: AccountAndOwnerWithTransactionsAndPockets,
     val allAccounts: List<Account>,
     val allCategories: List<Category>,
+    val budget: List<Budget>,
     val startDate: LocalDate?,
     val endDate: LocalDate?
 ) {
@@ -60,29 +61,31 @@ data class AccountDetailData constructor(
         .allInTransactionsWithInPocketTransactions
         .sortedByDescending { it.date }
         .filter { dateBetween(it.date, startDate, endDate) }
-    val allTransactionsAndAccountsAndCategory: List<TransactionAndAccountsAndCategory> =
-        TransactionAndAccountsAndCategory.from(
-            allTransactions,
-            allAccounts,
-            allCategories
+    val allTransactionsListItemDetails: List<TransactionListItemDetails> =
+        TransactionListItemDetails.from(
+            transactions = allTransactions,
+            accounts = allAccounts,
+            categories = allCategories
         )
 
     val expensesPlotData: PlotData = PlotData(outTransactions)
     val incomePlotData: PlotData = PlotData(inTransactions)
-    val flowPlotData: PlotData = PlotData(listOf(
-        *inTransactions.toTypedArray(),
-        *outTransactions
-            .map {
-                it.copy(amount = -it.amount)
-            }
-            .toTypedArray()
-    ))
+    val flowPlotData: PlotData = PlotData(
+        listOf(
+            *inTransactions.toTypedArray(),
+            *outTransactions
+                .map {
+                    it.copy(amount = -it.amount)
+                }
+                .toTypedArray()
+        ))
 
     companion object {
         fun build(
             account: AccountAndOwnerWithTransactionsAndPockets,
             allAccounts: List<Account>,
             allCategories: List<Category>,
+            budget: List<Budget>,
             startDate: LocalDate?,
             endDate: LocalDate?,
         ): AccountDetailData {
@@ -90,6 +93,7 @@ data class AccountDetailData constructor(
                 account = account,
                 allAccounts = allAccounts,
                 allCategories = allCategories,
+                budget = budget,
                 startDate = startDate,
                 endDate = endDate
             )
@@ -248,7 +252,7 @@ private fun NotNullAccountDetail(
 ) {
     val total = data.total
     val childrenTotal = data.chilrenTotal
-    val allTransactionsAndAccountsAndCategory = data.allTransactionsAndAccountsAndCategory
+    val allTransactionsAndAccountsAndCategory = data.allTransactionsListItemDetails
     val accountWithPockets = data.account
     val account = accountWithPockets.accountAndOwnerWithTransactions
 
@@ -404,6 +408,7 @@ private fun NullAccountDetail(
             ),
             listOf(),
             listOf(),
+            listOf(),
             null,
             null
         ),
@@ -436,6 +441,7 @@ private fun AccountDetailPreview() {
                             account = accountAndOwnerWithTransactionsAndPocketsSample.first(),
                             allAccounts = accountSample,
                             allCategories = categorieSample,
+                            budget = budgetSample,
                             startDate = null,
                             endDate = null
                         ),

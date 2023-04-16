@@ -40,10 +40,10 @@ fun PersonDetail(
                     it.destinationId in personAccountsIds
         }
         .sortedByDescending { it.date }
-    val transactionsAndAccountsAndCategory = TransactionAndAccountsAndCategory.from(
-        transactions,
-        allAccounts,
-        allCategories
+    val transactionListItemDetails = TransactionListItemDetails.from(
+        transactions = transactions,
+        accounts = allAccounts,
+        categories = allCategories
     )
     EntityDetail(
         modalController = modalController,
@@ -64,7 +64,7 @@ fun PersonDetail(
     ) {
         MediumHeadline(text = stringResource(id = R.string.transacciones))
         TransactionPage(
-            transactionList = transactionsAndAccountsAndCategory,
+            transactionList = transactionListItemDetails,
             delTransaction = {
                 modalController = BottomSheetController(
                     getMsg = {
