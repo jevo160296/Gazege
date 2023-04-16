@@ -11,7 +11,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.savers.PartialTransaction
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.savers.transactionSaver
@@ -37,7 +42,8 @@ fun TransactionFormFragment(
     onTransactionAndAccountsAdd: (Transaction) -> Unit
 ) {
     var transactionAndAccountsState by rememberSaveable(
-        stateSaver = transactionSaver
+        stateSaver = transactionSaver,
+        inputs = arrayOf(transactionAndAccounts, fixedSourceAccount, fixedDestinationAccount)
     ) {
         mutableStateOf(
             if (transactionAndAccounts != null) {
