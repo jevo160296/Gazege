@@ -50,6 +50,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         incluirPresupuestoEnSaldoActual.observeAsState(false)
 
     @Composable
+    fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
+        incluirDeudasEnSaldoActual.observeAsState(false)
+
+    @Composable
     fun rememberPersonSummaryState() = personSummaryState.observeAsState(null)
 
     @Composable
@@ -321,6 +325,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private var appInitialized = false
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
+    private val incluirDeudasEnSaldoActual =
+        settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
@@ -661,9 +667,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 
     fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
-        withContext(Dispatchers.Default) {
-            settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
-        }
+        settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
+    }
+
+    fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setIncluirDeudasEnSaldoActualFlow(newValue)
     }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {
