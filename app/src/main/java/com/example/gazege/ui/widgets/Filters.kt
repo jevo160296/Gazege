@@ -60,7 +60,9 @@ fun Filter(
             Icon(
                 painter = painterResource(
                     id = R.drawable.round_filter_list_off_24
-                ), contentDescription = "Clear filters"
+                ),
+                contentDescription = "Clear filters",
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
     }
@@ -88,7 +90,9 @@ fun DateFilterItems(
         Icon(
             painter = painterResource(
                 id = R.drawable.round_arrow_left_24
-            ), contentDescription = "Left"
+            ),
+            contentDescription = "Left",
+            tint = MaterialTheme.colorScheme.onBackground
         )
     }
     Text(
@@ -101,7 +105,9 @@ fun DateFilterItems(
                 )
             }
             onRangeChanged(newRange.first, newRange.second)
-        })
+        },
+        color = MaterialTheme.colorScheme.onBackground
+    )
     IconButton(
         onClick = {
             if (startDate != null && endDate != null) {
@@ -117,7 +123,9 @@ fun DateFilterItems(
         Icon(
             painter = painterResource(
                 id = R.drawable.round_arrow_right_24
-            ), contentDescription = "Right"
+            ),
+            contentDescription = "Right",
+            tint = MaterialTheme.colorScheme.onBackground
         )
     }
 }
@@ -148,11 +156,11 @@ private fun FilterPreview() {
     var startDate: LocalDate? by remember { mutableStateOf(null) }
     var endDate: LocalDate? by remember { mutableStateOf(null) }
     var personFilterValue by remember { mutableStateOf(false) }
-    GazegeTheme {
+    GazegeTheme(darkTheme = true) {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             Filter(
-                startDate = null,
-                endDate = null,
+                startDate = LocalDate.of(2022, 1, 1),
+                endDate = LocalDate.of(2022, 1, 31),
                 onRangeChanged = { newStart, newEnd ->
                     startDate = newStart
                     endDate = newEnd

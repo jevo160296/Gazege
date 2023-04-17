@@ -1,7 +1,14 @@
 package com.example.gazege.ui.views.transaction
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.CardColors
@@ -14,49 +21,61 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionListItemDetails
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.LargeEmphasis
+import com.example.gazege.ui.widgets.RecyclerView
+import com.example.gazege.ui.widgets.SmallEmphasis
+import com.example.gazege.ui.widgets.itemsGrouped
 import java.time.LocalDate
 
 @Composable
 private fun TransactionViewHolder(
-    transaction: TransactionAndAccountsAndCategory
+    transaction: TransactionListItemDetails
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(140.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.SpaceAround
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(0.7f),
+            verticalArrangement = Arrangement.Top
         ) {
-            Row(modifier = Modifier.weight(1f)) {
-                SmallEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
-                SmallBody(text = transaction.sourceAccount.name)
-                SmallEmphasis(text = " --> ")
-                SmallBody(text = transaction.destinationAccount.name)
+            Row(modifier = Modifier) {
+                LargeEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
+                LargeBody(text = transaction.sourceAccount.name)
+                LargeEmphasis(text = " --> ")
+                LargeBody(text = transaction.destinationAccount.name)
             }
-            Row(modifier = Modifier.weight(1f)) {
-                SmallEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
-                SmallBody(
+            Row(modifier = Modifier) {
+                LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
+                LargeBody(
                     text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
                 )
             }
-            Row(modifier = Modifier.weight(2f)) {
-                SmallEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
-                SmallBody(text = transaction.transaction.description)
+            Row(modifier = Modifier) {
+                LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
+                LargeBody(text = transaction.transaction.description)
             }
         }
         Column(
-            modifier = Modifier.align(Alignment.CenterVertically),
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .weight(0.3f),
             horizontalAlignment = Alignment.End
         ) {
             SmallEmphasis(text = stringResource(id = R.string.Valor))
@@ -67,9 +86,9 @@ private fun TransactionViewHolder(
 
 @Composable
 private fun TransactionRecyclerView(
-    transactionList: List<TransactionAndAccountsAndCategory>,
-    editTransaction: (TransactionAndAccountsAndCategory) -> Unit,
-    delTransaction: (TransactionAndAccountsAndCategory) -> Unit,
+    transactionList: List<TransactionListItemDetails>,
+    editTransaction: (TransactionListItemDetails) -> Unit,
+    delTransaction: (TransactionListItemDetails) -> Unit,
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     state: LazyListState
@@ -101,7 +120,7 @@ private fun TransactionRecyclerView(
 fun TransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    transactionList: List<TransactionAndAccountsAndCategory>,
+    transactionList: List<TransactionListItemDetails>,
     delTransaction: (Transaction) -> Unit,
     editTransaction: (Transaction) -> Unit,
     state: LazyListState,
@@ -125,11 +144,11 @@ fun TransactionPage(
 
 fun LazyListScope.transactionLazyListItems(
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    transactionList: List<TransactionAndAccountsAndCategory>,
-    editTransaction: (TransactionAndAccountsAndCategory) -> Unit,
-    delTransaction: (TransactionAndAccountsAndCategory) -> Unit,
-    colorSelector: @Composable (TransactionAndAccountsAndCategory) -> CardColors = { CardDefaults.cardColors() },
-    groupSelector: (TransactionAndAccountsAndCategory) -> String = {
+    transactionList: List<TransactionListItemDetails>,
+    editTransaction: (TransactionListItemDetails) -> Unit,
+    delTransaction: (TransactionListItemDetails) -> Unit,
+    colorSelector: @Composable (TransactionListItemDetails) -> CardColors = { CardDefaults.cardColors() },
+    groupSelector: (TransactionListItemDetails) -> String = {
         localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
     }
 ) = itemsGrouped(
@@ -161,13 +180,15 @@ private fun PreviewTransactionItem() {
         destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1,
         aNombreDe = null, categoryId = 0
     )
-    val transactionAndAccounts = TransactionAndAccountsAndCategory(
-        transaction = transaction, sourceAccount = sourceAccount,
-        destinationAccount = destinationAccount, category = categoria
+    val transactionListItemDetails = TransactionListItemDetails(
+        transaction = transaction,
+        category = categoria,
+        sourceAccount,
+        destinationAccount
     )
     GazegeTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            TransactionViewHolder(transaction = transactionAndAccounts)
+            TransactionViewHolder(transaction = transactionListItemDetails)
         }
     }
 }
@@ -177,7 +198,7 @@ private fun PreviewTransactionItem() {
 private fun PreviewTransactionList() {
     DatabaseSample {
         TransactionRecyclerView(
-            transactionList = transactionsAndAccountAndCategorySample,
+            transactionList = transactionListItemDetailsSample,
             editTransaction = {},
             delTransaction = {},
             state = LazyListState()
@@ -191,7 +212,7 @@ private fun PreviewTransactionPage() {
     DatabaseSample {
         GazegeTheme(darkTheme = true) {
             TransactionPage(
-                transactionList = transactionsAndAccountAndCategorySample,
+                transactionList = transactionListItemDetailsSample,
                 state = LazyListState(),
                 editTransaction = {},
                 delTransaction = {},

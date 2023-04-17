@@ -54,7 +54,7 @@ fun DropDownMenuItem(
     leadingIcon: @Composable () -> Unit,
     label: @Composable () -> Unit
 ) {
-    val containerColor = MaterialTheme.colorScheme.inverseSurface
+    val containerColor = MaterialTheme.colorScheme.primary
     AssistChip(
         modifier = modifier,
         onClick = onClick,
@@ -64,6 +64,9 @@ fun DropDownMenuItem(
             containerColor = containerColor,
             labelColor = MaterialTheme.colorScheme.contentColorFor(containerColor),
             leadingIconContentColor = MaterialTheme.colorScheme.contentColorFor(containerColor)
+        ),
+        border = AssistChipDefaults.assistChipBorder(
+            borderColor = MaterialTheme.colorScheme.primary
         )
     )
 }

@@ -73,4 +73,5 @@
     <string name="Fijo">Fijo</string>
     <string name="Variable">Variable</string>
     <string name="Incluir_presupuesto">Incluir presupuesto</string>
+    <string name="Proyeccion_presupuesto">Proyección presupuesto</string>
 </resources>

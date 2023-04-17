@@ -17,6 +17,7 @@ import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.core.entities.TransactionAndAccountsAndCategory
+import com.example.gazege.core.entities.TransactionListItemDetails
 import com.example.gazege.core.entities.WeekDays
 import java.time.LocalDate
 import kotlin.random.Random
@@ -104,6 +105,13 @@ class DatabaseSampleScope {
         )
     }
     val includeBudgetSample: Boolean = false
+    val transactionListItemDetailsSample by lazy {
+        getTransactionListItemDetailsSample(
+            transactionSample,
+            categorieSample,
+            accountSample
+        )
+    }
 }
 
 private fun getBudgetAndCategoryWithTransactionsSample(
@@ -348,3 +356,13 @@ private fun getTransactionAndAccountsAndCategorySample(
         transactionSample, accountsSample, categoriesSample
     )
 }
+
+private fun getTransactionListItemDetailsSample(
+    transactions: List<Transaction>,
+    categories: List<Category>,
+    accounts: List<Account>
+): List<TransactionListItemDetails> = TransactionListItemDetails.from(
+    transactions,
+    categories,
+    accounts
+)
