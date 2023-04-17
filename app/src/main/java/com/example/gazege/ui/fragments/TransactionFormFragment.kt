@@ -19,6 +19,7 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.savers.PartialTransaction
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
+import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.toSignedBigDecimal
@@ -108,10 +109,24 @@ fun TransactionFormFragment(
             onTransactionAndAccountsAdd(fullTransaction)
         }
     }
+    val addTransactionAction: AddTransactionAction =
+        if (sourceAccount?.account?.isIncome == true && destinationAccount?.account?.isOutcome != true) {
+            AddTransactionAction.ADD_INCOME
+        } else if (sourceAccount?.account?.isIncome != true && destinationAccount?.account?.isOutcome == true) {
+            AddTransactionAction.ADD_EXPENSE
+        } else {
+            AddTransactionAction.ADD_TRANSFER
+        }
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
-        title = stringResource(R.string.Transaccion),
+        title = stringResource(
+            when (addTransactionAction) {
+                AddTransactionAction.ADD_EXPENSE -> R.string.Gasto
+                AddTransactionAction.ADD_INCOME -> R.string.Ingreso
+                AddTransactionAction.ADD_TRANSFER -> R.string.Transaccion
+            }
+        ),
         onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(
