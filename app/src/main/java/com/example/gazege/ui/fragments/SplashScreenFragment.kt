@@ -102,7 +102,10 @@ fun SplashScreenFragment(
             exit = fadeOut(tween(transitionDuration, easing = EaseOutCirc)),
             label = "B"
         ) {
-            MediumHeadline(stringResource(id = R.string.app_name))
+            MediumHeadline(
+                stringResource(id = R.string.app_name),
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
     }
 }
