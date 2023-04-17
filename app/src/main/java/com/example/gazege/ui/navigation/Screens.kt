@@ -50,6 +50,7 @@ fun NavGraphBuilder.screenMain(
     onNavigateToEditTransaction: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
+    onDataLoaded: () -> Unit
 ) {
     composable("main") {
         val allPerson by viewModel.rememberAllPerson()
@@ -64,6 +65,15 @@ fun NavGraphBuilder.screenMain(
         }
         val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
         val snackbarHostState = SnackbarHostState()
+
+        val dataLoaded = filteredTransactionListItemDetails.isNotEmpty()
+
+        LaunchedEffect(key1 = dataLoaded) {
+            if (dataLoaded) {
+                onDataLoaded()
+            }
+        }
+
         BoxWithConstraints {
             val showVertical = maxWidth <= 700.dp
             MainFragment(
@@ -115,10 +125,6 @@ fun NavGraphBuilder.screenMain(
             )
         }
     }
-}
-
-fun NavController.navigateToMainScreen() {
-    navigate("main")
 }
 
 fun NavGraphBuilder.screenAddAccount(
@@ -938,12 +944,4 @@ fun NavGraphBuilder.screenEditOneBudget(
 
 fun NavController.navigateToEditOneBudget(budgetId: Int) {
     navigate("editOneBudget/$budgetId")
-}
-
-fun NavGraphBuilder.screenSplashScreen(
-    onNavigateToInitialScreen: () -> Unit
-) {
-    composable("splashScreen") {
-        SplashScreenFragment(onNavigateToInitialScreen = onNavigateToInitialScreen)
-    }
 }

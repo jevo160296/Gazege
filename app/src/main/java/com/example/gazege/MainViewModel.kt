@@ -30,6 +30,12 @@ fun CoroutineScope.safeLaunch(
 
 class MainViewModel(private val repository: AppRepository, private val settings: Settings) :
     ViewModel() {
+    fun appInitialized(): Boolean {
+        val currentValue = appInitialized
+        appInitialized = true
+        return currentValue
+    }
+
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
@@ -312,6 +318,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
+    private var appInitialized = false
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
