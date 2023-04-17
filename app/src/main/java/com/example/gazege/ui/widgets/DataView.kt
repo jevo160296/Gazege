@@ -69,7 +69,9 @@ fun PersonMonthSummaryView(
 ) {
     val enabledColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContainerColor = MaterialTheme.colorScheme.primary,
+        disabledContentColor = MaterialTheme.colorScheme.onPrimary
     )
     val disabledColors = CardDefaults.cardColors()
     Column(
