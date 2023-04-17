@@ -27,7 +27,9 @@ fun SaldoActualSettings(
     accountList: List<AccountAndOwnerWithTransactions>,
     saving: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
     onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
     onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
 ) {
     val accountState = rememberTreeState()
@@ -63,6 +65,16 @@ fun SaldoActualSettings(
                     onCheckedChange = onIncluirPresupuestoEnSaldoActualChanged
                 )
                 Text(text = stringResource(id = R.string.Incluir_presupuesto))
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = incluirDeudasEnSaldoActual,
+                    onCheckedChange = onIncluirDeudasEnSaldoActualChanged
+                )
+                Text(text = stringResource(R.string.Incluir_deudas))
             }
             AccountPage(
                 accountList = accountList,

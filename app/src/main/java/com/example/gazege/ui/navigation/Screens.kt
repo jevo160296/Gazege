@@ -422,6 +422,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val principalPerson by viewModel.rememberPrincipalPerson()
         val incluirPresupuestoEnSaldoActual by viewModel.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
+        val incluirDeudasEnSaldoActual by viewModel.rememberSettingsIncluirDeudasEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
 
         var saving: Int by remember {
@@ -431,7 +432,9 @@ fun NavGraphBuilder.screenSaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
             saving = saving,
             incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
-            onIncluirPresupuestoEnSaldoActualChanged = viewModel::settingsIncluirPresupuestoEnSaldoActualFlow
+            incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
+            onIncluirPresupuestoEnSaldoActualChanged = viewModel::settingsIncluirPresupuestoEnSaldoActualFlow,
+            onIncluirDeudasEnSaldoActualChanged = viewModel::settingsIncluirDeudasEnSaldoActualFlow
         ) { account, nuevoEstado ->
             saving += 1
             coroutineScope.launch {
@@ -546,7 +549,6 @@ fun NavGraphBuilder.screenAddTransaction(
     ) { navBackStackEntry ->
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val allPerson by viewModel.rememberAllPerson()
         val categories by viewModel.rememberCategories()
 
@@ -567,19 +569,14 @@ fun NavGraphBuilder.screenAddTransaction(
             outcomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_EXPENSE }
         val orderedAccounts =
             if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
-                accountAndOwnerWithTransactions
+                viewModel.rememberAccountAndOwner().value
             } else {
-                viewModel.rememberAccountAndOwnerWithTransactionsUserFirst().value
+                viewModel.rememberAccountAndOwnerUserFirst().value
             }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
-            accountList = orderedAccounts.map {
-                AccountAndOwner(
-                    it.account,
-                    it.owner
-                )
-            },
+            accountList = orderedAccounts,
             personList = allPerson,
             categoryList = categories,
             defaultDate = LocalDate.of(

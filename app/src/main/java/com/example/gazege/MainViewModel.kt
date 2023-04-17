@@ -50,6 +50,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         incluirPresupuestoEnSaldoActual.observeAsState(false)
 
     @Composable
+    fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
+        incluirDeudasEnSaldoActual.observeAsState(false)
+
+    @Composable
     fun rememberPersonSummaryState() = personSummaryState.observeAsState(null)
 
     @Composable
@@ -74,8 +78,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
 
     @Composable
-    fun rememberAccountAndOwnerWithTransactionsUserFirst() =
-        accountAndOwnerWithTransactionsUserFirst.observeAsState(emptyList())
+    fun rememberAccountAndOwnerUserFirst() =
+        accountAndOwnerUserFirst.observeAsState(emptyList())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactionsAndPockets() =
@@ -318,9 +322,52 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
+    private fun <T, A, B, C, D, E, F, G> MediatorLiveData<T>.mergeSevenNullableSources(
+        name: String,
+        sourceA: LiveData<A>,
+        sourceB: LiveData<B>,
+        sourceC: LiveData<C>,
+        sourceD: LiveData<D>,
+        sourceE: LiveData<E>,
+        sourceF: LiveData<F>,
+        sourceG: LiveData<G>,
+        merger: (A?, B?, C?, D?, E?, F?, G?) -> T
+    ) = apply {
+        val update = { source: String ->
+            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized && sourceF.isInitialized && sourceG.isInitialized) {
+                logPrintln(name, source)
+                viewModelScope.launch {
+                    withContext(Dispatchers.Default) {
+                        postValue(
+                            merger(
+                                sourceA.value,
+                                sourceB.value,
+                                sourceC.value,
+                                sourceD.value,
+                                sourceE.value,
+                                sourceF.value,
+                                sourceG.value
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        addSource(sourceA) { update("SourceA") }
+        addSource(sourceB) { update("SourceB") }
+        addSource(sourceC) { update("SourceC") }
+        addSource(sourceD) { update("SourceD") }
+        addSource(sourceE) { update("SourceE") }
+        addSource(sourceF) { update("SourceF") }
+        addSource(sourceG) { update("SourceG") }
+    }
+        .distinctUntilChanged()
+
     private var appInitialized = false
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
+    private val incluirDeudasEnSaldoActual =
+        settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
@@ -348,8 +395,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 AccountAndOwnerWithTransactions.from(a, b, c)
             }
 
-    private val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
-        accountAndOwnerWithTransactions.map { it.sortedByDescending { acc -> acc.owner.importance } }
+    private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
+        accountAndOwner.map { it.sortedByDescending { acc -> acc.owner.importance } }
     private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.map { lista ->
             lista.map { item ->
@@ -489,15 +536,16 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     private val personSummaryState: LiveData<PersonSummaryState?> =
         MediatorLiveData<PersonSummaryState?>()
-            .mergeSixNullableSources(
+            .mergeSevenNullableSources(
                 "personSummaryState",
                 principalPersonWithAccounts,
                 range,
                 personWithAccounts,
                 allTransactionAndAccountsAndCategory,
                 budgetAndCategoryWithCalculatedData,
-                incluirPresupuestoEnSaldoActual
-            ) { principalPersonWithAccounts, range, personWithAccounts, allTransactionAndAccountsAndCategory, budgetAndCategoryWithCalculatedData, incluirPresupuestoEnSaldoActual ->
+                incluirPresupuestoEnSaldoActual,
+                incluirDeudasEnSaldoActual
+            ) { principalPersonWithAccounts, range, personWithAccounts, allTransactionAndAccountsAndCategory, budgetAndCategoryWithCalculatedData, incluirPresupuestoEnSaldoActual, incluirDeudasEnSaldoActual ->
                 principalPersonWithAccounts?.let { pp ->
                     PersonSummaryState.from(
                         pp,
@@ -515,7 +563,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                             ?: emptyList(),
                         budgetAndCategoryWithCalculatedData = budgetAndCategoryWithCalculatedData
                             ?: emptyList(),
-                        includeBudget = incluirPresupuestoEnSaldoActual ?: false
+                        includeBudget = incluirPresupuestoEnSaldoActual ?: false,
+                        includeDebts = incluirDeudasEnSaldoActual ?: false
                     )
                 }
             }
@@ -661,9 +710,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 
     fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
-        withContext(Dispatchers.Default) {
-            settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
-        }
+        settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
+    }
+
+    fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setIncluirDeudasEnSaldoActualFlow(newValue)
     }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {
@@ -731,30 +782,40 @@ data class PersonSummaryState(
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
             budgetAndCategoryWithCalculatedData: List<BudgetAndCategoryWithCalculatedData>,
-            includeBudget: Boolean
-        ): PersonSummaryState = PersonSummaryState(
-            person = personWithAccounts.person,
-            saldoActual = personWithAccounts.let {
-                PersonDao.getTotal(
-                    it,
-                    null,
-                    null
-                )
-            } + if (includeBudget) {
-                budgetAndCategoryWithCalculatedData.sumOf { it.budgetLeftToPay }
-            } else {
-                0.0
-            },
-            ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
-            egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
-            deudasFlujo = allPersons.associate { otherPerson ->
+            includeBudget: Boolean,
+            includeDebts: Boolean
+        ): PersonSummaryState {
+            val deudasFlujo = allPersons.associate { otherPerson ->
                 otherPerson.person to PersonDao.getFlujo(
                     personWithAccounts,
                     otherPerson,
                     allTransactions
                 )
             }
-        )
+            return PersonSummaryState(
+                person = personWithAccounts.person,
+                saldoActual = personWithAccounts.let {
+                    PersonDao.getTotal(
+                        it,
+                        null,
+                        null
+                    )
+                } + if (includeBudget) {
+                    budgetAndCategoryWithCalculatedData.sumOf { it.budgetLeftToPay }
+                } else {
+                    0.0
+                } + if (includeDebts) {
+                    deudasFlujo
+                        .toList()
+                        .sumOf { it.second }
+                } else {
+                    0.0
+                },
+                ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
+                egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
+                deudasFlujo = deudasFlujo
+            )
+        }
     }
 }
 
