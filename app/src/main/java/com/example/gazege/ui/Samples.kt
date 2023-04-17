@@ -101,10 +101,12 @@ class DatabaseSampleScope {
             personWithAccountsSample,
             transactionAndAccountsSample,
             budgetAndCategoryWithCalculatedDataSample,
-            includeBudgetSample
+            includeBudgetSample,
+            includeDebtsSample
         )
     }
     val includeBudgetSample: Boolean = false
+    val includeDebtsSample: Boolean = false
     val transactionListItemDetailsSample by lazy {
         getTransactionListItemDetailsSample(
             transactionSample,
