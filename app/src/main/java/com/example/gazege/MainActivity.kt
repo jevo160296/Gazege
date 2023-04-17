@@ -51,6 +51,7 @@ import com.example.gazege.ui.navigation.navigateToOneBudgetDetail
 import com.example.gazege.ui.navigation.navigateToPersonDetail
 import com.example.gazege.ui.navigation.navigateToSaldoActualSettings
 import com.example.gazege.ui.navigation.navigateToSettings
+import com.example.gazege.ui.navigation.navigateUpOrClose
 import com.example.gazege.ui.navigation.screenAccountDetail
 import com.example.gazege.ui.navigation.screenAddAccount
 import com.example.gazege.ui.navigation.screenAddCategory
@@ -118,7 +119,6 @@ class MainActivity : ComponentActivity() {
                     modifier = modifier.navigationBarsPadding()
                 }
 
-                val navController = rememberNavController()
                 val appInitialized = mainViewModel.appInitialized()
                 var showInitialSplashScreen by rememberSaveable {
                     mutableStateOf(appInitialized.not())
@@ -157,9 +157,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        val navController = rememberNavController().apply {
+
+                        }
                         NavHost(
                             navController = navController,
-                            startDestination = "main",
+                            startDestination = "main"
                         ) {
                             screenMain(
                                 viewModel = mainViewModel,
@@ -197,7 +200,7 @@ class MainActivity : ComponentActivity() {
                             )
                             screenAddTransaction(
                                 viewModel = mainViewModel,
-                                onNavigateUp = navController::navigateUp,
+                                onNavigateUp = { navController.navigateUpOrClose { this@MainActivity.finish() } },
                                 onNavigateToAddAccount = navController::navigateToAddAccount
                             )
                             screenEditTransaction(

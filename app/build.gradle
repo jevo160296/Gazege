@@ -47,7 +47,6 @@ android {
             signingConfig signingConfigs.debug
         }
         debug {
-            applicationIdSuffix '.debug'
             versionNameSuffix '_debug'
             manifestPlaceholders = [
                     icon     : '@mipmap/ic_launcher',

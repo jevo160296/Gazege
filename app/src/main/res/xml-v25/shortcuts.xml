@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ingreso_icon"
+        android:shortcutId="addIngresoShortcut"
+        android:shortcutShortLabel="@string/Ingreso">
+        <intent
+            android:data="https://www.example.gazege?transactionaction=ADD_INCOME"
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.example.gazege.MainActivity"
+            android:targetPackage="com.example.gazege">
+            <extra
+                android:name="add"
+                android:value="ingreso" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/gasto_icon"
+        android:shortcutId="addGastoShortCut"
+        android:shortcutShortLabel="@string/Gasto">
+        <intent
+            android:data="https://www.example.gazege?transactionaction=ADD_EXPENSE"
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.example.gazege.MainActivity"
+            android:targetPackage="com.example.gazege">
+            <extra
+                android:name="add"
+                android:value="gasto" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/transfer_icon"
+        android:shortcutId="addTransferenciaShortcut"
+        android:shortcutShortLabel="@string/Transaccion">
+        <intent
+            android:data="https://www.example.gazege?transactionaction=ADD_TRANSFER"
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.example.gazege.MainActivity"
+            android:targetPackage="com.example.gazege">
+            <extra
+                android:name="add"
+                android:value="transferencia" />
+        </intent>
+    </shortcut>
+</shortcuts>

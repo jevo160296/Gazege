@@ -44,15 +44,17 @@ data class BudgetAndCategoryWithTransactions(
                     it.first.id
                 }
             return budget
-                .map {
+                .mapNotNull {
                     val selectedCategoryWithTransactions = categoryWithTransactions[it.categoryId]
-                    BudgetAndCategoryWithTransactions(
-                        it,
-                        selectedCategoryWithTransactions?.first!!,
-                        selectedCategoryWithTransactions.second,
-                        selectedCategoryWithTransactions.third,
-                        person
-                    )
+                    selectedCategoryWithTransactions?.first?.let { category ->
+                        BudgetAndCategoryWithTransactions(
+                            it,
+                            category,
+                            selectedCategoryWithTransactions.second,
+                            selectedCategoryWithTransactions.third,
+                            person
+                        )
+                    }
                 }
         }
     }
