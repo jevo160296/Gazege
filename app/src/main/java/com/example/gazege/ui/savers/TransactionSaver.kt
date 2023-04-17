@@ -1,11 +1,11 @@
 package com.example.gazege.ui.savers
 
 import android.os.Parcelable
-import androidx.compose.runtime.saveable.Saver
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.widgets.SignedBigDecimal
+import com.example.gazege.ui.widgets.toSignedBigDecimal
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 
@@ -57,6 +57,19 @@ data class PartialTransaction(
                 null
             )
         }
+
+        fun from(transaction: Transaction): PartialTransaction = transaction.run {
+            PartialTransaction(
+                id = id,
+                amount = amount.toSignedBigDecimal(),
+                description = description,
+                sourceId = sourceId,
+                destinationId = destinationId,
+                date = date,
+                aNombreDe = aNombreDe,
+                categoryId = categoryId
+            )
+        }
     }
 
 }
@@ -86,13 +99,16 @@ data class PartialTransactionAndAccounts(
     }
 
     companion object {
-        fun blankEntity(): PartialTransactionAndAccounts {
-            return PartialTransactionAndAccounts(
-                PartialTransaction.blankEntity(),
-                null,
-                null
-            )
-        }
+
+        fun from(
+            transaction: PartialTransaction,
+            sourceAccount: Account?,
+            destinationAccount: Account?
+        ): PartialTransactionAndAccounts = PartialTransactionAndAccounts(
+            transaction = transaction,
+            sourceAccount = sourceAccount,
+            destinationAccount = destinationAccount
+        )
     }
 
 }
@@ -107,20 +123,7 @@ data class ParcelableTransaction(
     var date: LocalDate?,
     var aNombreDe: Int?,
     var categoryId: Int?
-): Parcelable {
-    fun toPartial(): PartialTransaction {
-        return PartialTransaction(
-            id = id,
-            amount = amount,
-            description = description,
-            sourceId = sourceId,
-            destinationId = destinationId,
-            date = date,
-            aNombreDe = aNombreDe,
-            categoryId = categoryId
-        )
-    }
-}
+) : Parcelable
 
 @Parcelize
 data class ParcelableTransactionAndAccounts(
@@ -128,53 +131,3 @@ data class ParcelableTransactionAndAccounts(
     val sourceAccount: ParcelableAccount?,
     val destinationAccount: ParcelableAccount?
 ) : Parcelable
-
-val transactionSaver = Saver<PartialTransactionAndAccounts, ParcelableTransactionAndAccounts>(
-    save = { state ->
-        ParcelableTransactionAndAccounts(
-            transaction = ParcelableTransaction(
-                id = state.transaction.id,
-                amount = state.transaction.amount,
-                description = state.transaction.description,
-                sourceId = state.transaction.sourceId,
-                destinationId = state.transaction.destinationId,
-                date = state.transaction.date,
-                aNombreDe = state.transaction.aNombreDe,
-                categoryId = state.transaction.categoryId
-            ),
-            sourceAccount = if(state.sourceAccount != null){
-                ParcelableAccount(
-                    id = state.sourceAccount!!.id,
-                    name = state.sourceAccount!!.name,
-                    ownerId = state.sourceAccount!!.ownerId,
-                    includedInTotal = state.sourceAccount!!.includedInTotal,
-                    isIncome = state.sourceAccount!!.isIncome,
-                    isOutcome = state.sourceAccount!!.isOutcome,
-                    parentId = state.sourceAccount!!.parentId
-                )
-            }else{
-                null
-            },
-            destinationAccount = if(state.destinationAccount != null){
-                ParcelableAccount(
-                    id = state.destinationAccount!!.id,
-                    name = state.destinationAccount!!.name,
-                    ownerId = state.destinationAccount!!.ownerId,
-                    includedInTotal = state.destinationAccount!!.includedInTotal,
-                    isIncome = state.destinationAccount!!.isIncome,
-                    isOutcome = state.destinationAccount!!.isOutcome,
-                    parentId = state.destinationAccount!!.parentId
-                )
-            } else{
-                null
-            }
-        )
-    },
-    restore = {
-        PartialTransactionAndAccounts(
-            transaction = it.transaction.toPartial(),
-            sourceAccount = it.sourceAccount?.toPartial()?.toFull(),
-            destinationAccount = it.destinationAccount?.toPartial()?.toFull()
-        )
-    }
-)

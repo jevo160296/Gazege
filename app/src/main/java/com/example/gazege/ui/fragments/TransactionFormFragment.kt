@@ -19,7 +19,7 @@ import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.ui.savers.PartialTransaction
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
-import com.example.gazege.ui.savers.transactionSaver
+import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.toSignedBigDecimal
@@ -41,89 +41,130 @@ fun TransactionFormFragment(
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction) -> Unit
 ) {
-    var transactionAndAccountsState by rememberSaveable(
-        stateSaver = transactionSaver,
-        inputs = arrayOf(
-            transactionAndAccounts,
-            fixedSourceAccount,
-            fixedDestinationAccount,
-            defaultDate
+
+    val id by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.id) }
+    var amount by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.amount) }
+    var description by rememberSaveable(transactionAndAccounts) {
+        mutableStateOf(
+            transactionAndAccounts?.transaction?.description ?: ""
         )
+    }
+    var sourceId by rememberSaveable(transactionAndAccounts, fixedSourceAccount) {
+        mutableStateOf(
+            transactionAndAccounts?.transaction?.sourceId ?: fixedSourceAccount?.id
+        )
+    }
+    var destinationId by rememberSaveable(
+        transactionAndAccounts,
+        fixedDestinationAccount
     ) {
         mutableStateOf(
-            if (transactionAndAccounts != null) {
-                PartialTransactionAndAccounts(
-                    transaction = transactionAndAccounts.transaction.let {
-                        PartialTransaction(
-                            id = it.id,
-                            amount = it.amount.toSignedBigDecimal(),
-                            description = it.description,
-                            sourceId = it.sourceId,
-                            destinationId = it.destinationId,
-                            date = it.date,
-                            aNombreDe = it.aNombreDe,
-                            categoryId = it.categoryId
-                        )
-                    },
-                    sourceAccount = transactionAndAccounts.sourceAccount,
-                    destinationAccount = transactionAndAccounts.destinationAccount
-                )
-            } else {
-                PartialTransactionAndAccounts
-                    .blankEntity()
-                    .apply {
-                        sourceAccount = fixedSourceAccount
-                        destinationAccount = fixedDestinationAccount
-                        transaction.apply {
-                            sourceId = fixedSourceAccount?.id
-                            destinationId = fixedDestinationAccount?.id
-                        }
-                    }
-            }
+            transactionAndAccounts?.transaction?.destinationId ?: fixedDestinationAccount?.id
         )
     }
-    var realizarANombreDe by rememberSaveable {
-        mutableStateOf(transactionAndAccountsState.transaction.aNombreDe != null)
+    var categoryId by rememberSaveable(transactionAndAccounts) {
+        mutableStateOf(
+            transactionAndAccounts?.transaction?.categoryId
+        )
     }
-    val completeState = transactionAndAccountsState.isComplete()
-    val saveTransaction = {
-        val fullTransactionAndAccounts = transactionAndAccountsState.toFull()
-        onTransactionAndAccountsAdd(fullTransactionAndAccounts.transaction)
+    var date by rememberSaveable(transactionAndAccounts) {
+        mutableStateOf(
+            transactionAndAccounts?.transaction?.date ?: LocalDate.now()
+        )
     }
+    var aNombreDe by rememberSaveable(transactionAndAccounts) {
+        mutableStateOf(
+            transactionAndAccounts?.transaction?.aNombreDe
+        )
+    }
+
+    val currentTransaction =
+        amount?.let { _amount ->
+            sourceId?.let { _sourceId ->
+                destinationId?.let { _destinationId ->
+                    date?.let { _date ->
+                        Transaction(
+                            id = id,
+                            amount = _amount,
+                            description = description,
+                            sourceId = _sourceId,
+                            destinationId = _destinationId,
+                            categoryId = categoryId,
+                            date = _date,
+                            aNombreDe = aNombreDe
+                        )
+                    }
+                }
+            }
+        }
+
+    var realizarANombreDe by rememberSaveable(aNombreDe) {
+        mutableStateOf(aNombreDe != null)
+    }
+    val completeState = currentTransaction != null
+    val sourceAccount = accountList.firstOrNull { it.account.id == sourceId }
+    val destinationAccount = accountList.firstOrNull { it.account.id == destinationId }
+    val saveTransaction: () -> Unit = {
+        currentTransaction?.let { fullTransaction ->
+            onTransactionAndAccountsAdd(fullTransaction)
+        }
+    }
+    val addTransactionAction: AddTransactionAction =
+        if (sourceAccount?.account?.isIncome == true && destinationAccount?.account?.isOutcome != true) {
+            AddTransactionAction.ADD_INCOME
+        } else if (sourceAccount?.account?.isIncome != true && destinationAccount?.account?.isOutcome == true) {
+            AddTransactionAction.ADD_EXPENSE
+        } else {
+            AddTransactionAction.ADD_TRANSFER
+        }
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
-        title = stringResource(R.string.Transaccion),
+        title = stringResource(
+            when (addTransactionAction) {
+                AddTransactionAction.ADD_EXPENSE -> R.string.Gasto
+                AddTransactionAction.ADD_INCOME -> R.string.Ingreso
+                AddTransactionAction.ADD_TRANSFER -> R.string.Transaccion
+            }
+        ),
         onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
-            transactionAndAccounts = transactionAndAccountsState,
+            transactionAndAccounts = PartialTransactionAndAccounts.from(
+                currentTransaction?.let { PartialTransaction.from(currentTransaction) }
+                    ?: PartialTransaction(
+                        id = id,
+                        amount = amount?.toSignedBigDecimal(),
+                        description = description,
+                        sourceId = sourceId,
+                        destinationId = destinationId,
+                        date = date,
+                        aNombreDe = aNombreDe,
+                        categoryId = categoryId
+                    ),
+                sourceAccount = sourceAccount?.account,
+                destinationAccount = destinationAccount?.account
+            ),
             accountList = accountList,
             onAccountAddRequested = onAccountAddRequested,
-            onTransactionAndAccountsChanged = {
-                transactionAndAccountsState = it
-            },
             defaultDate = defaultDate,
-            onDateChanged = {
-                transactionAndAccountsState = transactionAndAccountsState.copy().apply {
-                    transaction = this.transaction.copy(date = it)
-                }
-            },
+            onDateChanged = { date = it },
             realizarANombreDe = realizarANombreDe,
             onRealizarANombreDeChanged = { realizarANombreDe = it },
             personList = personList,
-            onRealizarAnombreDeIdChanged = {
-                transactionAndAccountsState = transactionAndAccountsState.copy().apply {
-                    transaction = this.transaction.copy(aNombreDe = it)
-                }
-            },
+            onRealizarAnombreDeIdChanged = { aNombreDe = it },
             categoryList = categoryList,
             onDoneAction = saveTransaction,
             isComplete = completeState,
             showSourceAccountField = fixedSourceAccount == null,
-            showDestinationAccountField = fixedDestinationAccount == null
+            showDestinationAccountField = fixedDestinationAccount == null,
+            onAmountChanged = { amount = it },
+            onCategoryIdChanged = { categoryId = it },
+            onDescriptionChanged = { description = it },
+            onDestinationAccountIdChanged = { destinationId = it },
+            onSourceAccountIdChanged = { sourceId = it }
         )
     }
 }

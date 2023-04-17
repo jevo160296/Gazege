@@ -1,6 +1,10 @@
 package com.example.gazege.ui.views.transaction
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
@@ -26,7 +30,12 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.views.account.AccountDropDownMenu
 import com.example.gazege.ui.views.category.CategoryDropDown
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.ButtonField
+import com.example.gazege.ui.widgets.DatePicker
+import com.example.gazege.ui.widgets.DropDownMenu
+import com.example.gazege.ui.widgets.NumberField
+import com.example.gazege.ui.widgets.SignedBigDecimal
+import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 import java.time.LocalDate
@@ -86,7 +95,6 @@ fun TransactionAndAccountsForm(
     transactionAndAccounts: PartialTransactionAndAccounts,
     accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsChanged: (PartialTransactionAndAccounts) -> Unit,
     defaultDate: LocalDate = LocalDate.now(),
     realizarANombreDe: Boolean,
     onRealizarANombreDeChanged: (Boolean) -> Unit,
@@ -97,6 +105,11 @@ fun TransactionAndAccountsForm(
     isComplete: Boolean,
     showSourceAccountField: Boolean = true,
     showDestinationAccountField: Boolean = true,
+    onAmountChanged: (Double) -> Unit,
+    onDescriptionChanged: (String) -> Unit,
+    onSourceAccountIdChanged: (Int) -> Unit,
+    onDestinationAccountIdChanged: (Int) -> Unit,
+    onCategoryIdChanged: (Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
@@ -105,13 +118,6 @@ fun TransactionAndAccountsForm(
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
     val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
     val selectedCategoryId = transactionAndAccounts.transaction.categoryId
-    if (transactionAndAccounts.transaction.date == null) {
-        onTransactionAndAccountsChanged(
-            transactionAndAccounts.copy().apply {
-                transaction = transaction.copy(date = date)
-            }
-        )
-    }
     val nextAction: ImeAction = if (isComplete) {
         ImeAction.Done
     } else {
@@ -123,13 +129,7 @@ fun TransactionAndAccountsForm(
     ) {
         NumberField(
             value = amount,
-            onValueChange = {
-                onTransactionAndAccountsChanged(
-                    transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(amount = it)
-                    }
-                )
-            },
+            onValueChange = { onAmountChanged(it.toDouble()) },
             label = { Text(stringResource(id = R.string.Valor)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -142,13 +142,7 @@ fun TransactionAndAccountsForm(
         )
         TextField(
             value = description,
-            onValueChange = {
-                onTransactionAndAccountsChanged(
-                    transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(description = it)
-                    }
-                )
-            },
+            onValueChange = { onDescriptionChanged(it) },
             label = { Text(text = stringResource(id = R.string.descripcion)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -196,12 +190,7 @@ fun TransactionAndAccountsForm(
                     label = { Text(stringResource(R.string.Cuenta_origen)) },
                     onItemClick = {
                         if (it.content.account.id != null) {
-                            onTransactionAndAccountsChanged(
-                                transactionAndAccounts.copy().apply {
-                                    sourceAccount = it.content.account
-                                    transaction = transaction.copy(sourceId = it.content.account.id)
-                                }
-                            )
+                            onSourceAccountIdChanged(it.content.account.id)
                         }
                     },
                     deactivatedAccountList = deactivatedSourceAccountList,
@@ -225,13 +214,7 @@ fun TransactionAndAccountsForm(
                     selectedAccountNode = selectedDestinationNode,
                     onItemClick = {
                         if (it.content.account.id != null) {
-                            onTransactionAndAccountsChanged(
-                                transactionAndAccounts.copy().apply {
-                                    destinationAccount = it.content.account
-                                    transaction =
-                                        transaction.copy(destinationId = it.content.account.id)
-                                }
-                            )
+                            onDestinationAccountIdChanged(it.content.account.id)
                         }
                     },
                     label = { Text(stringResource(R.string.Cuenta_destino)) },
@@ -266,13 +249,7 @@ fun TransactionAndAccountsForm(
                 keyboardActions = KeyboardActions(
                     onDone = { onDoneAction() }
                 )
-            ) {
-                onTransactionAndAccountsChanged(
-                    transactionAndAccounts.copy().apply {
-                        transaction = transaction.copy(categoryId = it?.id)
-                    }
-                )
-            }
+            ) { onCategoryIdChanged(it?.id) }
         }
 
         Row(
