@@ -43,7 +43,12 @@ fun TransactionFormFragment(
 ) {
     var transactionAndAccountsState by rememberSaveable(
         stateSaver = transactionSaver,
-        inputs = arrayOf(transactionAndAccounts, fixedSourceAccount, fixedDestinationAccount)
+        inputs = arrayOf(
+            transactionAndAccounts,
+            fixedSourceAccount,
+            fixedDestinationAccount,
+            defaultDate
+        )
     ) {
         mutableStateOf(
             if (transactionAndAccounts != null) {

@@ -18,16 +18,20 @@ data class TransactionListItemDetails(
         ): List<TransactionListItemDetails> {
             val categoryMap = categories.associateBy { it.id }
             val accountMap = accounts.associateBy { it.id }
-            return transactions.map { transaction ->
+            return transactions.mapNotNull { transaction ->
                 val category = categoryMap[transaction.categoryId]
                 val sourceAccount = accountMap[transaction.sourceId]
                 val destinationAccount = accountMap[transaction.destinationId]
-                TransactionListItemDetails(
-                    transaction = transaction,
-                    category = category,
-                    sourceAccount = sourceAccount!!,
-                    destinationAccount = destinationAccount!!
-                )
+                if (sourceAccount != null && destinationAccount != null) {
+                    TransactionListItemDetails(
+                        transaction = transaction,
+                        category = category,
+                        sourceAccount = sourceAccount,
+                        destinationAccount = destinationAccount
+                    )
+                } else {
+                    null
+                }
             }
         }
     }

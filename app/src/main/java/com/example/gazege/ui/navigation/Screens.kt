@@ -1,6 +1,8 @@
 package com.example.gazege.ui.navigation
 
+import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.ExperimentalMaterialApi
@@ -16,6 +18,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
 import com.example.gazege.core.dao.AccountDao
@@ -36,6 +39,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+
+val URI = "https://www.example.gazege"
+
+fun NavController.navigateUpOrClose(
+    onCloseApp: () -> Unit
+) {
+    navigateUp()
+    if (this.backQueue.size <= 1) {
+        onCloseApp()
+    }
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 fun NavGraphBuilder.screenMain(
@@ -515,10 +529,15 @@ fun NavGraphBuilder.screenAddTransaction(
     onNavigateToAddAccount: () -> Unit
 ) {
     composable(
-        "addTransaction/{yearmonthday}/{transactionaction}",
+        "addTransaction?yearmonthday={yearmonthday}?transactionaction?{transactionaction}",
+        deepLinks = listOf(navDeepLink {
+            uriPattern = "$URI?transactionaction={transactionaction}"
+            action = Intent.ACTION_VIEW
+        }),
         arguments = listOf(
             navArgument("yearmonthday") {
                 type = NavType.IntType
+                defaultValue = LocalDate.now().toInt()
             },
             navArgument("transactionaction") {
                 type = NavType.StringType
@@ -537,6 +556,8 @@ fun NavGraphBuilder.screenAddTransaction(
             }
         val transactionActionName =
             navBackStackEntry.arguments?.getString("transactionaction")
+        Log.println(Log.INFO, "Intent", "date: $yearMonthDay")
+        Log.println(Log.INFO, "Intent", "action: $transactionActionName")
         val transactionAction =
             transactionActionName?.let { AddTransactionAction.valueOf(it) }
                 ?: AddTransactionAction.ADD_TRANSFER
@@ -580,10 +601,12 @@ fun NavController.navigateToAddTransaction(
     date: LocalDate,
     transactionAction: AddTransactionAction
 ) {
-    val yearmonthday = date.let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
+    val yearmonthday = date.toInt()
     val transactionaction = transactionAction.name
-    navigate("addTransaction/$yearmonthday/$transactionaction")
+    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction?$transactionaction")
 }
+
+fun LocalDate.toInt() = let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
 
 fun NavGraphBuilder.screenEditTransaction(
     viewModel: MainViewModel,
