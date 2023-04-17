@@ -74,8 +74,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
 
     @Composable
-    fun rememberAccountAndOwnerWithTransactionsUserFirst() =
-        accountAndOwnerWithTransactionsUserFirst.observeAsState(emptyList())
+    fun rememberAccountAndOwnerUserFirst() =
+        accountAndOwnerUserFirst.observeAsState(emptyList())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactionsAndPockets() =
@@ -348,8 +348,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 AccountAndOwnerWithTransactions.from(a, b, c)
             }
 
-    private val accountAndOwnerWithTransactionsUserFirst: LiveData<List<AccountAndOwnerWithTransactions>> =
-        accountAndOwnerWithTransactions.map { it.sortedByDescending { acc -> acc.owner.importance } }
+    private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
+        accountAndOwner.map { it.sortedByDescending { acc -> acc.owner.importance } }
     private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.map { lista ->
             lista.map { item ->

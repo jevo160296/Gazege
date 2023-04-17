@@ -546,7 +546,6 @@ fun NavGraphBuilder.screenAddTransaction(
     ) { navBackStackEntry ->
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val allPerson by viewModel.rememberAllPerson()
         val categories by viewModel.rememberCategories()
 
@@ -567,19 +566,14 @@ fun NavGraphBuilder.screenAddTransaction(
             outcomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_EXPENSE }
         val orderedAccounts =
             if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
-                accountAndOwnerWithTransactions
+                viewModel.rememberAccountAndOwner().value
             } else {
-                viewModel.rememberAccountAndOwnerWithTransactionsUserFirst().value
+                viewModel.rememberAccountAndOwnerUserFirst().value
             }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
-            accountList = orderedAccounts.map {
-                AccountAndOwner(
-                    it.account,
-                    it.owner
-                )
-            },
+            accountList = orderedAccounts,
             personList = allPerson,
             categoryList = categories,
             defaultDate = LocalDate.of(
