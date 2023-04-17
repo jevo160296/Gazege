@@ -44,13 +44,14 @@ android {
                     roundIcon: '@mipmap/ic_launcher_round',
                     appName  : '@string/app_name'
             ]
+            signingConfig signingConfigs.debug
         }
         debug {
             applicationIdSuffix '.debug'
             versionNameSuffix '_debug'
             manifestPlaceholders = [
-                    icon     : '@mipmap/ic_launcher_debug',
-                    roundIcon: '@mipmap/ic_launcher_debug_round',
+                    icon     : '@mipmap/ic_launcher',
+                    roundIcon: '@mipmap/ic_launcher_round',
                     appName  : '@string/app_name'
             ]
         }

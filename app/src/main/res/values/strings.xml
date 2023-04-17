@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Gazege</string>
+    <string name="app_name" translatable="false">Gazege Debug</string>
     <string name="transacciones">Transacciones</string>
     <string name="personas">Personas</string>
     <string name="cuentas">Cuentas</string>
