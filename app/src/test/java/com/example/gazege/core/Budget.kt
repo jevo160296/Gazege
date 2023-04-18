@@ -1,7 +1,12 @@
 package com.example.gazege.core
 
 import com.example.gazege.core.dao.BudgetDao
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.AbsoluteMonthDays
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.BudgetType
+import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.core.entities.toByteString
+import com.example.gazege.core.entities.toList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -131,7 +136,10 @@ class BudgetTests {
         ) {
             val calculatedCantRepetitions
                 get() = BudgetDao.calculateCantRepetitions(
-                    Budget.fromDaily(0, 0, 0.0, frequency, budgetStartDate), startDate, endDate
+                    Budget.fromDaily(
+                        0, 0, 0.0, frequency, budgetStartDate,
+                        budgetType = BudgetType.VARIABLE
+                    ), startDate, endDate
                 )
 
             fun assert() {
@@ -224,7 +232,8 @@ class BudgetTests {
                     value = 0.0,
                     frequency = frequency,
                     startDate = budgetStartDate,
-                    each = each
+                    each = each,
+                    budgetType = BudgetType.VARIABLE
                 )
 
             fun assert() {
@@ -372,7 +381,8 @@ class BudgetTests {
                 get() = Budget.fromMonthly(
                     id = id,
                     categoryId = 0,
-                    value = 0.0
+                    value = 0.0,
+                    budgetType = BudgetType.VARIABLE
                 )
 
             fun assert() {
