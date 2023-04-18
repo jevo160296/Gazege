@@ -30,15 +30,16 @@ data class BudgetAndCategoryWithCalculatedData(
         ): List<BudgetAndCategoryWithCalculatedData> =
             budget
                 .map {
+                    val coercedCurrentDate = currentDate.coerceIn(startDate..endDate)
                     val expectedRemainingFlow = BudgetDao.calculateOneBudgetExpectedFlow(
                         it.budget,
-                        currentDate,
+                        coercedCurrentDate,
                         endDate
                     )
                     val expectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
                         it.budget,
                         startDate,
-                        currentDate
+                        coercedCurrentDate
                     )
                     val realTotalFlow = BudgetDao.calculateOneBudgetRealFlow(
                         it,
@@ -57,7 +58,7 @@ data class BudgetAndCategoryWithCalculatedData(
                         budgetRealTotalFlow = realTotalFlow,
                         budgetCompleition = BudgetDao.calculateOneBudgetCompleition(
                             it,
-                            currentDate,
+                            coercedCurrentDate,
                             startDate,
                             endDate
                         ),

@@ -121,7 +121,7 @@ interface BudgetDao {
             startDate: LocalDate,
             endDate: LocalDate
         ) = budget.let {
-            val cantRepetitions = if (startDate < endDate) {
+            val cantRepetitions = if (startDate <= endDate) {
                 calculateCantRepetitions(it, startDate, endDate)
             } else {
                 0
