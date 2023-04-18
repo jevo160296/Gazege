@@ -32,12 +32,16 @@ fun <T> RecyclerView(
     content: LazyListScope.(elements: List<T>) -> Unit = {
         itemsGrouped(
             it,
-            onItemTapped,
-            onItemLongPressed,
-            colorSelector,
-            groupSelector,
-            viewHolder
-        )
+            groupSelector
+        ) { item ->
+            ClickableCardViewHolderGenerator(
+                item,
+                onItemTapped,
+                onItemLongPressed,
+                colorSelector,
+                viewHolder
+            )
+        }
     }
 ) {
     LazyColumn(
@@ -53,9 +57,6 @@ fun <T> RecyclerView(
 @OptIn(ExperimentalFoundationApi::class)
 fun <T> LazyListScope.itemsGrouped(
     elements: List<T>,
-    onItemTapped: (T) -> Unit,
-    onItemLongPressed: (T) -> Unit,
-    colorSelector: @Composable (T) -> CardColors,
     groupSelector: ((T) -> String)?,
     viewHolder: @Composable (T) -> Unit
 ) {
@@ -77,21 +78,28 @@ fun <T> LazyListScope.itemsGrouped(
                 }
             }
         }
-        itemsIndexed(indexItems) { index, item ->
-            Card(
-                modifier =
-                Modifier
-                    .fillMaxWidth(),
-                onClick = { onItemTapped(item) },
-                onLongClick = { onItemLongPressed(item) },
-                colors = colorSelector(item)
-            )
-            {
-                Box(modifier = Modifier.padding(4.dp)) {
-                    viewHolder(item)
-                }
-            }
+        itemsIndexed(indexItems) { _, item ->
+            viewHolder(item)
         }
+    }
+}
+
+@Composable
+fun <T> ClickableCardViewHolderGenerator(
+    item: T,
+    onItemTapped: (item: T) -> Unit,
+    onItemLongPressed: (T) -> Unit,
+    colorSelector: @Composable (T) -> CardColors,
+    viewHolder: @Composable (T) -> Unit
+) = Card(
+    modifier = Modifier.fillMaxWidth(),
+    onClick = { onItemTapped(item) },
+    onLongClick = { onItemLongPressed(item) },
+    colors = colorSelector(item)
+)
+{
+    Box(modifier = Modifier.padding(4.dp)) {
+        viewHolder(item)
     }
 }
 

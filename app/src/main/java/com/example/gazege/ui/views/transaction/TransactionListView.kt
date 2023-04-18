@@ -32,6 +32,7 @@ import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.ClickableCardViewHolderGenerator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.RecyclerView
@@ -153,12 +154,11 @@ fun LazyListScope.transactionLazyListItems(
     }
 ) = itemsGrouped(
     transactionList,
-    editTransaction,
-    delTransaction,
-    colorSelector,
     groupSelector,
 ) {
-    TransactionViewHolder(transaction = it)
+    val viewHolder =
+        @Composable { item: TransactionListItemDetails -> TransactionViewHolder(transaction = item) }
+    ClickableCardViewHolderGenerator(it, editTransaction, delTransaction, colorSelector, viewHolder)
 }
 
 @Preview(showBackground = true)
