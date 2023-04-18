@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -98,17 +99,17 @@ private fun TransactionRecyclerView(
         onItemTapped = editTransaction,
         onItemLongPressed = delTransaction,
         modifier = modifier,
-        itemHolderPaddingValues = itemHolderPaddingValues,
+        contentPadding = itemHolderPaddingValues,
         state = state,
         groupSelector = {
             localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
         },
         viewHolder = {
             TransactionViewHolder(transaction = it)
-        }
+        },
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
     ) {
         transactionLazyListItems(
-            itemHolderPaddingValues,
             transactionList,
             editTransaction,
             delTransaction
@@ -143,7 +144,6 @@ fun TransactionPage(
 }
 
 fun LazyListScope.transactionLazyListItems(
-    itemHolderPaddingValues: PaddingValues = PaddingValues(),
     transactionList: List<TransactionListItemDetails>,
     editTransaction: (TransactionListItemDetails) -> Unit,
     delTransaction: (TransactionListItemDetails) -> Unit,
@@ -152,7 +152,6 @@ fun LazyListScope.transactionLazyListItems(
         localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
     }
 ) = itemsGrouped(
-    itemHolderPaddingValues,
     transactionList,
     editTransaction,
     delTransaction,

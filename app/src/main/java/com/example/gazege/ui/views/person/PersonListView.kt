@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -88,7 +89,7 @@ private fun PersonRecyclerView(
         onItemLongPressed = {
             menuIdExpanded = it.id
         },
-        itemHolderPaddingValues = itemHolderPaddingValues,
+        contentPadding = itemHolderPaddingValues,
         state = state,
         viewHolder = {
             Box {
@@ -115,7 +116,8 @@ private fun PersonRecyclerView(
                     )
                 }
             }
-        }
+        },
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
     )
 
 }
@@ -180,7 +182,8 @@ private fun PreviewPersonList() {
                     PersonViewHolder(
                         person = person, principalPersonSummaryState = personSummaryStateSample
                     )
-                }, state = LazyListState()
+                }, state = LazyListState(),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
             )
         }
     }

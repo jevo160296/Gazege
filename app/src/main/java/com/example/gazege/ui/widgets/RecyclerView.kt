@@ -13,7 +13,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
@@ -21,7 +20,8 @@ import com.example.gazege.ui.theme.GazegeTheme
 @Composable
 fun <T> RecyclerView(
     modifier: Modifier = Modifier,
-    itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    contentPadding: PaddingValues = PaddingValues(),
+    verticalArrangement: Arrangement.Vertical,
     elements: List<T>,
     onItemTapped: (T) -> Unit = {},
     onItemLongPressed: (T) -> Unit = {},
@@ -31,7 +31,6 @@ fun <T> RecyclerView(
     viewHolder: @Composable (T) -> Unit,
     content: LazyListScope.(elements: List<T>) -> Unit = {
         itemsGrouped(
-            itemHolderPaddingValues,
             it,
             onItemTapped,
             onItemLongPressed,
@@ -43,7 +42,9 @@ fun <T> RecyclerView(
 ) {
     LazyColumn(
         modifier = modifier,
-        state = state
+        state = state,
+        contentPadding = contentPadding,
+        verticalArrangement = verticalArrangement
     ) {
         content(elements)
     }
@@ -51,7 +52,6 @@ fun <T> RecyclerView(
 
 @OptIn(ExperimentalFoundationApi::class)
 fun <T> LazyListScope.itemsGrouped(
-    itemHolderPaddingValues: PaddingValues,
     elements: List<T>,
     onItemTapped: (T) -> Unit,
     onItemLongPressed: (T) -> Unit,
@@ -59,25 +59,14 @@ fun <T> LazyListScope.itemsGrouped(
     groupSelector: ((T) -> String)?,
     viewHolder: @Composable (T) -> Unit
 ) {
-    var lastGroup: String? = null
-    var firstGroup: String? = null
-    val groupedItems = elements.groupBy {
-        val group = groupSelector?.invoke(it)
-        lastGroup = group
-        firstGroup = firstGroup ?: group
-        group
-    }
+    val groupedItems = elements.groupBy { groupSelector?.invoke(it) }
     groupedItems.forEach { (group, indexItems) ->
         if (group != null) {
             stickyHeader {
-                val layoutDirection = LocalLayoutDirection.current
-                val calculatedStart = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
-                val calculatedEnd = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(start = calculatedStart, end = calculatedEnd)
                 ) {
                     LargeEmphasis(
                         group,
@@ -89,38 +78,9 @@ fun <T> LazyListScope.itemsGrouped(
             }
         }
         itemsIndexed(indexItems) { index, item ->
-            val layoutDirection = LocalLayoutDirection.current
-            val calculatedTop = itemHolderPaddingValues.calculateTopPadding()
-            val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()
-            val calculatedStart = itemHolderPaddingValues.calculateStartPadding(layoutDirection)
-            val calculatedEnd = itemHolderPaddingValues.calculateEndPadding(layoutDirection)
-            val isFirstElement = index == 0 && group == firstGroup
-            val isLastElement = index == indexItems.lastIndex && group == lastGroup
-            val paddingValues: PaddingValues =
-                if (isFirstElement) {
-                    PaddingValues(
-                        top = calculatedTop,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
-                } else if (isLastElement) {
-                    PaddingValues(
-                        top = 4.dp,
-                        bottom = calculatedBottom,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
-                } else {
-                    PaddingValues(
-                        top = 4.dp,
-                        start = calculatedStart,
-                        end = calculatedEnd
-                    )
-                }
             Card(
                 modifier =
                 Modifier
-                    .padding(paddingValues)
                     .fillMaxWidth(),
                 onClick = { onItemTapped(item) },
                 onLongClick = { onItemLongPressed(item) },
@@ -148,11 +108,12 @@ private fun RecyclerViewPreview() {
                 onItemTapped = {
                     println("Item tapped $it")
                 },
-                itemHolderPaddingValues = PaddingValues(10.dp),
+                contentPadding = PaddingValues(10.dp),
                 state = LazyListState(),
                 viewHolder = {
                     Text(text = it, modifier = Modifier.height(42.dp))
-                }
+                },
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             )
         }
     }

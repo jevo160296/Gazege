@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
@@ -65,7 +66,7 @@ fun BudgetRecyclerView(
         modifier = modifier,
         onItemTapped = onBudgetDetailRequested,
         onItemLongPressed = { menuIdExpanded = it.budgetId },
-        itemHolderPaddingValues = itemHolderPaddingValues,
+        contentPadding = itemHolderPaddingValues,
         state = state,
         viewHolder = {
             Box {
@@ -90,7 +91,8 @@ fun BudgetRecyclerView(
                     )
                 }
             }
-        }
+        },
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
     )
 }
 

@@ -1,19 +1,42 @@
 package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
@@ -21,7 +44,12 @@ import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
-import com.example.gazege.ui.widgets.treeview.*
+import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
+import com.example.gazege.ui.widgets.treeview.Node
+import com.example.gazege.ui.widgets.treeview.NodeId
+import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
+import com.example.gazege.ui.widgets.treeview.TreeState
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import java.time.LocalDate
 
 @Composable
@@ -76,10 +104,11 @@ private fun AccountRecyclerView(
         onItemTapped = editAccount,
         onItemLongPressed = delAccount,
         modifier = modifier,
-        itemHolderPaddingValues = itemHolderPaddingValues,
+        contentPadding = itemHolderPaddingValues,
         state = state,
         colorSelector = colorSelector,
-        viewHolder = viewHolder
+        viewHolder = viewHolder,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
     )
 }
 
