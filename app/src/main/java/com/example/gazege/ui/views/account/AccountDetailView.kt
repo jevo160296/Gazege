@@ -15,12 +15,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dateBetween
 import com.example.gazege.core.entities.*
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.ui.*
+import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
@@ -218,6 +220,9 @@ fun AccountDetail(
     showGraphs: Boolean,
     onShowGraphsChanged: (Boolean) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
+    fabExpanded: Boolean,
+    onFabExpandedChanged: (Boolean) -> Unit,
+    onAddTransactionRequested: (AddTransactionAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     var innerShowGraphs by remember {
@@ -235,7 +240,11 @@ fun AccountDetail(
             onShowGraphsChanged = {
                 innerShowGraphs = it
                 onShowGraphsChanged(it)
-            }
+            },
+            dynamicFabEnabled = true,
+            fabExpanded = fabExpanded,
+            onFabExpandedChanged = onFabExpandedChanged,
+            onAddTransactionRequested = onAddTransactionRequested
         )
     }
 }
@@ -246,8 +255,12 @@ private fun NotNullAccountDetail(
     data: AccountDetailData,
     showGraphs: Boolean,
     switchEnabled: Boolean,
+    dynamicFabEnabled: Boolean,
     onShowGraphsChanged: (Boolean) -> Unit,
     onAction: (account: Account, action: AccountAction) -> Unit,
+    fabExpanded: Boolean,
+    onFabExpandedChanged: (Boolean) -> Unit,
+    onAddTransactionRequested: (AddTransactionAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total
@@ -288,7 +301,19 @@ private fun NotNullAccountDetail(
                 sheetState.show()
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
+        floatingActionButton = {
+            if (dynamicFabEnabled) {
+                DynamicAddEntityFAB(
+                    fabExpanded = fabExpanded,
+                    onFabExpandedChanged = onFabExpandedChanged,
+                    navPosition = NavPosition.TRANSACCIONES,
+                    onAddPersonRequested = { },
+                    onAddAccountRequested = { },
+                    onAddTransactionRequested = onAddTransactionRequested
+                )
+            }
+        }
     ) {
         LargeEmphasis(
             text =
@@ -416,7 +441,11 @@ private fun NullAccountDetail(
         onTransactionAction = { _, _ -> },
         showGraphs = false,
         onShowGraphsChanged = {},
-        switchEnabled = false
+        switchEnabled = false,
+        fabExpanded = false,
+        onAddTransactionRequested = {},
+        onFabExpandedChanged = {},
+        dynamicFabEnabled = false
     )
 }
 
@@ -466,7 +495,10 @@ private fun AccountDetailPreview() {
                             }
                         },
                         showGraphs = false,
-                        onShowGraphsChanged = {}
+                        onShowGraphsChanged = {},
+                        onAddTransactionRequested = {},
+                        onFabExpandedChanged = {},
+                        fabExpanded = false
                     )
                 }
             }

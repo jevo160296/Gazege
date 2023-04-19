@@ -36,6 +36,7 @@ internal fun EntityDetail(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     sheetState: ModalBottomSheetState,
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -51,7 +52,7 @@ internal fun EntityDetail(
                 bodyText = modalController?.getMsg?.invoke() ?: ""
             )
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     ) {
         Scaffold(
             topBar = {
@@ -76,7 +77,8 @@ internal fun EntityDetail(
                         }
                     }
                 )
-            }
+            },
+            floatingActionButton = floatingActionButton
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
