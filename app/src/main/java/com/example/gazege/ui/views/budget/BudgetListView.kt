@@ -13,9 +13,10 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.ClickableListItemViewHolder
+import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.GazegeProgressIndicator
-import com.example.gazege.ui.widgets.RecyclerView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,14 +61,16 @@ fun BudgetRecyclerView(
     var menuIdExpanded: Int? by remember {
         mutableStateOf(null)
     }
-    RecyclerView(
-        elements = budget,
+    SimpleLazyList(
         modifier = modifier,
-        onItemTapped = onBudgetDetailRequested,
-        onItemLongPressed = { menuIdExpanded = it.budgetId },
-        itemHolderPaddingValues = itemHolderPaddingValues,
         state = state,
-        viewHolder = {
+        contentPadding = itemHolderPaddingValues,
+        items = budget
+    ) {
+        ClickableListItemViewHolder(
+            onItemTapped = { onBudgetDetailRequested(it) },
+            onItemLongPressed = { menuIdExpanded = it.budgetId }
+        ) {
             Box {
                 BudgetViewHolder(
                     budget = it
@@ -91,7 +94,7 @@ fun BudgetRecyclerView(
                 }
             }
         }
-    )
+    }
 }
 
 @Preview

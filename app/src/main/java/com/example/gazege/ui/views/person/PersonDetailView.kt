@@ -1,10 +1,14 @@
 package com.example.gazege.ui.views.person
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
@@ -62,7 +66,13 @@ fun PersonDetail(
         },
         sheetState = sheetState
     ) {
-        MediumHeadline(text = stringResource(id = R.string.transacciones))
+        MediumHeadline(
+            text = stringResource(id = R.string.transacciones), modifier = Modifier.padding(
+                horizontal = dimensionResource(
+                    id = R.dimen.DefaultPadding
+                )
+            )
+        )
         TransactionPage(
             transactionList = transactionListItemDetails,
             delTransaction = {
@@ -78,6 +88,7 @@ fun PersonDetail(
             },
             editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
             state = rememberLazyListState(),
+            itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
             onTitleSetted = {}
         )
     }

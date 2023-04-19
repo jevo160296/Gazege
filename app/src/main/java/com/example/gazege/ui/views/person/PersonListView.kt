@@ -27,10 +27,11 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.ClickableListItemViewHolder
+import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import kotlin.math.absoluteValue
 
@@ -48,7 +49,6 @@ private fun PersonViewHolder(
         Column(
             horizontalAlignment = Alignment.Start
         ) {
-            SmallEmphasis(text = "${stringResource(id = R.string.nombre)}: ")
             LargeBody(text = person.name)
         }
         if (flujo != 0.0) {
@@ -81,16 +81,16 @@ private fun PersonRecyclerView(
     var menuIdExpanded: Int? by remember {
         mutableStateOf(null)
     }
-    RecyclerView(
-        elements = personList,
+    SimpleLazyList(
         modifier = modifier,
-        onItemTapped = detailPerson,
-        onItemLongPressed = {
-            menuIdExpanded = it.id
-        },
-        itemHolderPaddingValues = itemHolderPaddingValues,
         state = state,
-        viewHolder = {
+        contentPadding = itemHolderPaddingValues,
+        items = personList
+    ) {
+        ClickableListItemViewHolder(
+            onItemTapped = { detailPerson(it) },
+            onItemLongPressed = { menuIdExpanded = it.id }
+        ) {
             Box {
                 PersonViewHolder(
                     person = it,
@@ -116,8 +116,7 @@ private fun PersonRecyclerView(
                 }
             }
         }
-    )
-
+    }
 }
 
 @Composable
@@ -167,22 +166,6 @@ private fun PreviewPersonItem() {
             person = personSample.first(),
             principalPersonSummaryState = personSummaryStateSample
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewPersonList() {
-    DatabaseSample {
-        GazegeTheme {
-            RecyclerView(
-                elements = personSample, viewHolder = { person ->
-                    PersonViewHolder(
-                        person = person, principalPersonSummaryState = personSummaryStateSample
-                    )
-                }, state = LazyListState()
-            )
-        }
     }
 }
 

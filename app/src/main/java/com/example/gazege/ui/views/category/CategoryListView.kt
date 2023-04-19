@@ -2,7 +2,6 @@ package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,25 +11,15 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubCategories
-import com.example.gazege.ui.widgets.Card
-import com.example.gazege.ui.widgets.treeview.DefaultItemHolderWithExpandIcon
-import com.example.gazege.ui.widgets.treeview.RecyclerTreeView
+import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
+import com.example.gazege.ui.templates.SimpleTreeList
+import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
 @Composable
 private fun CategoryViewHolder(
-    category: Category,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    Card(
-        Modifier.fillMaxWidth(),
-        onClick = onClick,
-        onLongClick = onLongClick
-    ) {
-        Box(Modifier.padding(PaddingValues(8.dp))) {
-            Text(text = category.name)
-        }
-    }
+    category: Category
+) = Box(Modifier.padding(PaddingValues(8.dp))) {
+    Text(text = category.name)
 }
 
 @Composable
@@ -40,20 +29,23 @@ fun CategoryListView(
     onItemLongClick: (category: CategoryWithSubCategories) -> Unit
 ) {
     val nodes = categories.map { CategoryNode(it) }
-    RecyclerTreeView(
+    SimpleTreeList(
+        contentPadding = PaddingValues(
+            bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
+            start = dimensionResource(id = R.dimen.DefaultPadding),
+            end = dimensionResource(id = R.dimen.DefaultPadding)
+        ),
         nodes = nodes,
-        itemHolderPaddingValues = PaddingValues(bottom = dimensionResource(id = R.dimen.FABDefaultSpace))
+        state = rememberTreeState()
     ) { node, scope ->
-        scope.DefaultItemHolderWithExpandIcon(
-            startPadding = 8.dp,
-            endPadding = 8.dp,
-            node
-        ) {
-            CategoryViewHolder(
-                category = node.content.category,
-                onClick = { onItemClick(node.content) },
-                onLongClick = { onItemLongClick(node.content) }
-            )
+        ClickableTreeListItemViewHolder(
+            level = node.level,
+            showExpandIcon = node.children.isNotEmpty(),
+            isExpanded = scope.isExpanded(node),
+            onIsExpandedChanged = { scope.toggleExpanded(node) },
+            onItemTapped = { onItemClick(node.content) },
+            onItemLongPressed = { onItemLongClick(node.content) }) {
+            CategoryViewHolder(category = node.content.category)
         }
     }
 }

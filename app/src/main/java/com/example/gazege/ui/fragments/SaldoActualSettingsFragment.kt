@@ -3,7 +3,6 @@ package com.example.gazege.ui.fragments
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
@@ -16,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
-import com.example.gazege.ui.views.account.AccountPage
+import com.example.gazege.ui.views.account.AccountSelectionPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
@@ -53,7 +52,6 @@ fun SaldoActualSettings(
         }
         Column(
             Modifier
-                .navigationBarsPadding()
                 .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         ) {
             Row(
@@ -76,29 +74,17 @@ fun SaldoActualSettings(
                 )
                 Text(text = stringResource(R.string.Incluir_deudas))
             }
-            AccountPage(
-                accountList = accountList,
-                itemHolderPaddingValues = PaddingValues(4.dp),
-                treeState = accountState,
-                delAccount = null,
-                editAccount = null,
-                startDate = null,
-                endDate = null,
-                colorSelector = {
-                    if (it.account.includedInTotal) {
-                        CardDefaults.cardColors()
-                    } else {
-                        CardDefaults.elevatedCardColors()
-
-                    }
-                },
-                detailAccount = { account ->
-                    val id = account.id
-                    if (id != null) {
-                        onUpdateSeleccion(account, !account.includedInTotal)
-                    }
-                }
-            ) {}
         }
+        AccountSelectionPage(
+            modifier = Modifier.navigationBarsPadding(),
+            accountList = accountList,
+            itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+            treeState = accountState,
+            onAccountStateChanged = { account, nuevoEstado ->
+                onUpdateSeleccion(account, nuevoEstado)
+            },
+            startDate = null,
+            endDate = null,
+        )
     }
 }
