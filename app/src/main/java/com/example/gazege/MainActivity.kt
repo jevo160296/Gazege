@@ -234,7 +234,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = mainViewModel,
                                 onNavigateUp = navController::navigateUp,
                                 onNavigateToEditAccount = navController::navigateToEditAccount,
-                                onNavigateToEditTransaction = navController::navigateToEditTransaction
+                                onNavigateToEditTransaction = navController::navigateToEditTransaction,
+                                onNavigateToAddTransaction = navController::navigateToAddTransaction
                             )
                             screenPersonDetail(
                                 viewModel = mainViewModel,

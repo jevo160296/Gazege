@@ -2,7 +2,6 @@ package com.example.gazege.ui.navigation
 
 import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
-import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.ExperimentalMaterialApi
@@ -532,7 +531,7 @@ fun NavGraphBuilder.screenAddTransaction(
     onNavigateToAddAccount: () -> Unit
 ) {
     composable(
-        "addTransaction?yearmonthday={yearmonthday}?transactionaction?{transactionaction}",
+        "addTransaction?yearmonthday={yearmonthday}?transactionaction={transactionaction}?requestingAccountId={requestingAccountId}",
         deepLinks = listOf(navDeepLink {
             uriPattern = "$URI?transactionaction={transactionaction}"
             action = Intent.ACTION_VIEW
@@ -544,12 +543,17 @@ fun NavGraphBuilder.screenAddTransaction(
             },
             navArgument("transactionaction") {
                 type = NavType.StringType
+            },
+            navArgument("requestingAccountId") {
+                type = NavType.IntType
+                defaultValue = -1
             }
         )
     ) { navBackStackEntry ->
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
         val allPerson by viewModel.rememberAllPerson()
+        val allAccount by viewModel.rememberAllAccount()
         val categories by viewModel.rememberCategories()
 
         val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
@@ -558,15 +562,19 @@ fun NavGraphBuilder.screenAddTransaction(
             }
         val transactionActionName =
             navBackStackEntry.arguments?.getString("transactionaction")
-        Log.println(Log.INFO, "Intent", "date: $yearMonthDay")
-        Log.println(Log.INFO, "Intent", "action: $transactionActionName")
         val transactionAction =
             transactionActionName?.let { AddTransactionAction.valueOf(it) }
                 ?: AddTransactionAction.ADD_TRANSFER
-        val initialSourceAccount: Account? =
-            incomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_INCOME }
-        val initialDestinationAccount: Account? =
-            outcomeAccount.takeIf { transactionAction == AddTransactionAction.ADD_EXPENSE }
+        val requestingAccountId = navBackStackEntry.arguments?.getInt("requestingAccountId")
+        val requestingAccount: Account? = allAccount.firstOrNull { it.id == requestingAccountId }
+            ?.takeIf { acc -> acc.id != null && acc.id >= 0 }
+        val initialSourceDestinationAccount: Pair<Account?, Account?> = when (transactionAction) {
+            AddTransactionAction.ADD_EXPENSE -> Pair(requestingAccount, outcomeAccount)
+            AddTransactionAction.ADD_INCOME -> Pair(incomeAccount, requestingAccount)
+            AddTransactionAction.ADD_TRANSFER -> Pair(null, null)
+        }
+        val initialSourceAccount: Account? = initialSourceDestinationAccount.first
+        val initialDestinationAccount: Account? = initialSourceDestinationAccount.second
         val orderedAccounts =
             if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
                 viewModel.rememberAccountAndOwner().value
@@ -600,7 +608,18 @@ fun NavController.navigateToAddTransaction(
 ) {
     val yearmonthday = date.toInt()
     val transactionaction = transactionAction.name
-    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction?$transactionaction")
+    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
+}
+
+fun NavController.navigateToAddTransaction(
+    date: LocalDate,
+    transactionAction: AddTransactionAction,
+    requestingAccount: Account
+) {
+    val yearmonthday = date.toInt()
+    val transactionaction = transactionAction.name
+    val requestingAccountId = requestingAccount.id ?: -1
+    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=$requestingAccountId")
 }
 
 fun LocalDate.toInt() = let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
@@ -738,6 +757,7 @@ fun NavGraphBuilder.screenAccountDetail(
     viewModel: MainViewModel,
     onNavigateUp: () -> Unit,
     onNavigateToEditAccount: (Int?) -> Unit,
+    onNavigateToAddTransaction: (LocalDate, AddTransactionAction, Account) -> Unit,
     onNavigateToEditTransaction: (Int?) -> Unit
 ) {
     composable(
@@ -751,6 +771,7 @@ fun NavGraphBuilder.screenAccountDetail(
         val accountId = navStack.arguments?.getInt("accountId")
         viewModel.updateAccountDetailIdIfDifferent(accountId)
         val data by viewModel.rememberAccountDetailData()
+        var fabExpanded by remember { mutableStateOf(false) }
 
         val accountAndOwner by viewModel.rememberAccountAndOwner()
 
@@ -790,6 +811,15 @@ fun NavGraphBuilder.screenAccountDetail(
                             showGraphs = it
                         }
                     }
+                },
+                fabExpanded = fabExpanded,
+                onFabExpandedChanged = { fabExpanded = it },
+                onAddTransactionRequested = {
+                    onNavigateToAddTransaction(
+                        LocalDate.now(),
+                        it,
+                        account.account
+                    )
                 }
             )
         } else {

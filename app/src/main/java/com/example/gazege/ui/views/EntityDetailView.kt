@@ -3,13 +3,14 @@ package com.example.gazege.ui.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,6 +36,7 @@ internal fun EntityDetail(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     sheetState: ModalBottomSheetState,
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -50,35 +52,41 @@ internal fun EntityDetail(
                 bodyText = modalController?.getMsg?.invoke() ?: ""
             )
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-            modifier = Modifier.navigationBarsPadding()
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        MediumHeadline(
+                            text = title
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = onEditClick) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.edit),
+                                contentDescription = "Edit"
+                            )
+                        }
+                        IconButton(onClick = onDeleteClick) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.delete),
+                                contentDescription = "Delete"
+                            )
+                        }
+                    }
+                )
+            },
+            floatingActionButton = floatingActionButton
         ) {
-            TopAppBar(
-                title = {
-                    MediumHeadline(
-                        text = title
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.edit),
-                            contentDescription = "Edit"
-                        )
-                    }
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.delete),
-                            contentDescription = "Delete"
-                        )
-                    }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                modifier = Modifier.padding(it)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))) {
+                    content()
                 }
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))) {
-                content()
             }
         }
     }
