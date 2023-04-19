@@ -1,22 +1,16 @@
 package com.example.gazege.ui.views.category
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubCategories
-import com.example.gazege.ui.widgets.DefaultDropDownViewHolder
-import com.example.gazege.ui.widgets.DropDownTreeMenu
+import com.example.gazege.ui.widgets.TreeComboBox
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 
@@ -55,7 +49,7 @@ fun CategoryDropDown(
         mutableStateOf(false)
     }
     val itemToString = { it: CategoryNode? -> it?.content?.category?.name ?: "" }
-    DropDownTreeMenu(
+    TreeComboBox(
         dropDownExpanded = dropDownExpanded,
         onExpandedChange = {
             dropDownExpanded = !dropDownExpanded
@@ -64,32 +58,13 @@ fun CategoryDropDown(
         selectedItem = selectedNode,
         itemToString = itemToString,
         label = label,
-        viewHolder = { node ->
-            DefaultDropDownViewHolder(
-                itemToString = itemToString,
-                node = node,
-                onExpandedChange = { dropDownExpanded = !dropDownExpanded },
-                onItemClick = {
-                    dropDownExpanded = false
-                    onItemClick(it.content.category)
-                },
-                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding.let {
-                    val layoutDirection = LocalLayoutDirection.current
-                    PaddingValues(
-                        start = 8.dp,
-                        top = it.calculateTopPadding(),
-                        bottom = it.calculateBottomPadding(),
-                        end = it.calculateEndPadding(layoutDirection)
-                    )
-                },
-                enabled = true
-            )
-        },
+        onItemClick = { onItemClick(it.content.category) },
         canClearSelection = true,
         onClearSelectionClicked = {
             onItemClick(null)
         },
         keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions
+        keyboardActions = keyboardActions,
+        nodeEnabled = { true }
     )
 }

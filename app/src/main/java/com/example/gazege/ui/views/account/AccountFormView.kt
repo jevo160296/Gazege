@@ -26,6 +26,7 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialAccountAndOwner
 import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
+import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
@@ -105,48 +106,24 @@ fun AccountAndOwnerForm(
             var dropDownExpanded by rememberSaveable {
                 mutableStateOf(false)
             }
-            ExposedDropdownMenuBox(
-                expanded = dropDownExpanded,
-                onExpandedChange = {
-                    dropDownExpanded = !dropDownExpanded
-                }
-            ) {
-                TextField(
-                    modifier = Modifier.menuAnchor(),
-                    value = selectedOwner?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
-                    },
-                    label = { Text(stringResource(R.string.Propietario)) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
-                    keyboardOptions = KeyboardOptions(imeAction = nextAction)
-                )
-                ExposedDropdownMenu(
-                    expanded = dropDownExpanded,
-                    onDismissRequest = { dropDownExpanded = false }
-                ) {
-                    personList.map {
-                        DropdownMenuItem(
-                            text = { Text(it.name) },
-                            onClick = {
-                                dropDownExpanded = false
-                                if (it.id != null) {
-                                    onAccountAndOwnerChanged(
-                                        accountAndOwner.copy().apply {
-                                            owner = it
-                                            account = account.copy(ownerId = it.id)
-                                        }
-                                    )
-                                }
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            ComboBox(
+                dropDownExpanded = dropDownExpanded,
+                onExpandedChange = { dropDownExpanded = !dropDownExpanded },
+                options = personList,
+                selectedItem = selectedOwner,
+                itemToString = { it?.name ?: "" },
+                onItemClick = {
+                    if (it.id != null) {
+                        onAccountAndOwnerChanged(
+                            accountAndOwner.copy().apply {
+                                owner = it
+                                account = account.copy(ownerId = it.id)
+                            }
                         )
                     }
-                }
-            }
+                },
+                label = { Text(stringResource(R.string.Propietario)) }
+            )
         } else {
             ButtonField(onClick = onPersonAddRequested) {
                 Text(stringResource(R.string.Nueva_persona))

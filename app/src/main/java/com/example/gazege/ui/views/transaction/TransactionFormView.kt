@@ -31,8 +31,8 @@ import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.views.account.AccountDropDownMenu
 import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.ButtonField
+import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.DatePicker
-import com.example.gazege.ui.widgets.DropDownMenu
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
@@ -269,7 +269,7 @@ fun TransactionAndAccountsForm(
             }
             val selectedItem =
                 personList.firstOrNull { it.id == transactionAndAccounts.transaction.aNombreDe }
-            DropDownMenu(
+            ComboBox(
                 dropDownExpanded = dropDownExpanded,
                 onExpandedChange = { dropDownExpanded = it },
                 options = personList,

@@ -6,6 +6,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -22,8 +26,7 @@ import com.example.gazege.ui.widgets.treeview.NodeId
 private fun <T> OptionsGroupView(
     groupedOptions: Map<String?, List<T>>,
     onItemClick: (T) -> Unit,
-    itemToString: (T?) -> String,
-    onExpandedChange: (Boolean) -> Unit
+    itemToString: (T?) -> String
 ) {
     groupedOptions.map {
         val group = it.key
@@ -34,19 +37,27 @@ private fun <T> OptionsGroupView(
         values.map {
             DropdownMenuItem(
                 text = { Text(itemToString(it)) },
-                onClick = {
-                    onExpandedChange(false)
-                    onItemClick(it)
-                },
+                onClick = { onItemClick(it) },
                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
             )
         }
     }
 }
 
+private fun partialStringMatch(originalString: String, stringToMatch: String) =
+    originalString.matches(
+        Regex(
+            ".*$stringToMatch.*",
+            setOf(
+                RegexOption.DOT_MATCHES_ALL,
+                RegexOption.IGNORE_CASE
+            )
+        )
+    )
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> DropDownMenu(
+fun <T> ComboBox(
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<T>,
@@ -58,16 +69,23 @@ fun <T> DropDownMenu(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     groupByKeySelector: ((T) -> String)? = null
 ) {
-    val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
+    var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
+    var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
+    val groupedOptions = options
+        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
+        .groupBy { groupByKeySelector?.invoke(it) }
     ExposedDropdownMenuBox(
         expanded = dropDownExpanded,
         onExpandedChange = onExpandedChange
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
-            value = itemToString(selectedItem),
-            onValueChange = {},
-            readOnly = true,
+            value = currentText,
+            onValueChange = {
+                filteringNotStarted = false
+                currentText = it
+            },
+            readOnly = false,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
             },
@@ -83,9 +101,13 @@ fun <T> DropDownMenu(
         ) {
             OptionsGroupView(
                 groupedOptions = groupedOptions,
-                onItemClick = onItemClick,
-                itemToString = itemToString,
-                onExpandedChange = onExpandedChange
+                onItemClick = {
+                    onExpandedChange(false)
+                    onItemClick(it)
+                    currentText = itemToString(it)
+                    filteringNotStarted = true
+                },
+                itemToString = itemToString
             )
         }
     }
@@ -93,30 +115,38 @@ fun <T> DropDownMenu(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-fun <N, C : Node<N, C>> DropDownTreeMenu(
+fun <N, C : Node<N, C>> TreeComboBox(
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<C>,
     selectedItem: C?,
     itemToString: (C?) -> String,
     label: @Composable () -> Unit,
-    viewHolder: @Composable (C) -> Unit,
+    onItemClick: (C) -> Unit,
     canClearSelection: Boolean = false,
     onClearSelectionClicked: () -> Unit = {},
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    nodeEnabled: (C) -> Boolean,
     groupByKeySelector: ((C) -> String)? = null
 ) {
-    val groupedOptions = options.groupBy { groupByKeySelector?.invoke(it) }
+    var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
+    var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
+    val groupedOptions = options
+        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
+        .groupBy { groupByKeySelector?.invoke(it) }
     ExposedDropdownMenuBox(
         expanded = dropDownExpanded,
         onExpandedChange = onExpandedChange
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
-            value = itemToString(selectedItem),
-            onValueChange = {},
-            readOnly = true,
+            value = currentText,
+            onValueChange = {
+                filteringNotStarted = false
+                currentText = it
+            },
+            readOnly = false,
             trailingIcon = {
                 val showClearButton = canClearSelection && selectedItem != null
                 AnimatedContent(
@@ -150,7 +180,13 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
         ) {
             OptionsGroupTreeView(
                 groupedOptions = groupedOptions,
-                viewHolder = viewHolder
+                onNodeClick = {
+                    onExpandedChange(false)
+                    onItemClick(it)
+                    currentText = itemToString(it)
+                },
+                nodeToString = itemToString,
+                nodeEnabled = nodeEnabled
             )
         }
     }
@@ -160,7 +196,9 @@ fun <N, C : Node<N, C>> DropDownTreeMenu(
 @Composable
 private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     groupedOptions: Map<String?, List<C>>,
-    viewHolder: @Composable (C) -> Unit
+    onNodeClick: (C) -> Unit,
+    nodeToString: (C?) -> String,
+    nodeEnabled: (C) -> Boolean
 ) {
     val nodes: List<C> = groupedOptions.flatMap {
         it.value
@@ -190,16 +228,21 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             } else {
                 Spacer(Modifier.width(32.dp))
             }
-            viewHolder(node)
+            DefaultComboBoxViewHolder(
+                itemToString = nodeToString,
+                node = node,
+                onItemClick = onNodeClick,
+                contentPadding = contentPadding,
+                enabled = nodeEnabled(node)
+            )
         }
     }
 }
 
 @Composable
-fun <N, C : Node<N, C>> DefaultDropDownViewHolder(
+fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
     itemToString: (C?) -> String,
     node: C,
-    onExpandedChange: (Boolean) -> Unit,
     onItemClick: (C) -> Unit,
     contentPadding: PaddingValues,
     enabled: Boolean
@@ -207,10 +250,7 @@ fun <N, C : Node<N, C>> DefaultDropDownViewHolder(
     val layoutDirection = LocalLayoutDirection.current
     DropdownMenuItem(
         text = { Text(itemToString(node)) },
-        onClick = {
-            onExpandedChange(false)
-            onItemClick(node)
-        },
+        onClick = { onItemClick(node) },
         contentPadding = contentPadding.let {
             PaddingValues(
                 start = 8.dp,

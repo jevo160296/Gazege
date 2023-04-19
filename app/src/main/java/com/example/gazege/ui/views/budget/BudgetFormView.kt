@@ -151,7 +151,7 @@ fun BudgetFormView(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-            DropDownMenu(
+            ComboBox(
                 dropDownExpanded = frequencyDropDownExpanded,
                 onExpandedChange = { frequencyDropDownExpanded = it },
                 options = FrequencyType.values().toList(),

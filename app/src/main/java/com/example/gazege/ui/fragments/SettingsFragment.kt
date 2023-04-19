@@ -18,7 +18,7 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.views.account.AccountDropDownMenu
 import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
-import com.example.gazege.ui.widgets.DropDownMenu
+import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
 
 @Composable
@@ -75,7 +75,7 @@ fun SettingsFragment(
                 Text(text = stringResource(id = R.string.Nueva_persona))
             }
         } else {
-            DropDownMenu(
+            ComboBox(
                 dropDownExpanded = principalPersonExpanded,
                 onExpandedChange = { principalPersonExpanded = it },
                 options = personList,
