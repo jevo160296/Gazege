@@ -12,11 +12,13 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.SmallBody
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -26,6 +28,7 @@ fun PersonDetail(
     allTransactions: List<Transaction>,
     allAccounts: List<Account>,
     allCategories: List<Category>,
+    deuda: Double,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
@@ -66,6 +69,13 @@ fun PersonDetail(
         },
         sheetState = sheetState
     ) {
+        SmallBody(
+            text = "${personDeudaString(deuda)}: ${doubleToMoneyString(deuda)}", Modifier.padding(
+                horizontal = dimensionResource(
+                    id = R.dimen.DefaultPadding
+                )
+            )
+        )
         MediumHeadline(
             text = stringResource(id = R.string.transacciones), modifier = Modifier.padding(
                 horizontal = dimensionResource(

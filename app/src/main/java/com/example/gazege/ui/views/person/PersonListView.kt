@@ -55,16 +55,18 @@ private fun PersonViewHolder(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
-                if (flujo > 0) {
-                    SmallEmphasis(text = stringResource(id = R.string.me_debe))
-                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
-                } else {
-                    SmallEmphasis(text = stringResource(R.string.le_debo))
-                    LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
-                }
+                SmallEmphasis(personDeudaString(flujo))
+                LargeBody(text = doubleToMoneyString(flujo.absoluteValue))
             }
         }
     }
+}
+
+@Composable
+fun personDeudaString(flujo: Double) = if (flujo > 0) {
+    stringResource(id = R.string.me_debe)
+} else {
+    stringResource(R.string.le_debo)
 }
 
 @Composable
