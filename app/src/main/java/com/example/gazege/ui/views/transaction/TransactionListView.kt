@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,9 +28,9 @@ import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
+import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.GroupedLazyList
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.DefaultGroupViewHolder
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
@@ -90,10 +89,9 @@ private fun TransactionGroupItemViewHolder(
     transaction: TransactionListItemDetails,
     editTransaction: (TransactionListItemDetails) -> Unit,
     delTransaction: (TransactionListItemDetails) -> Unit
-) = ClickableCardViewHolder(
+) = ClickableListItemViewHolder(
     onItemTapped = { editTransaction(transaction) },
-    onItemLongPressed = { delTransaction(transaction) },
-    colors = CardDefaults.cardColors()
+    onItemLongPressed = { delTransaction(transaction) }
 ) {
     TransactionViewHolder(transaction = transaction)
 }

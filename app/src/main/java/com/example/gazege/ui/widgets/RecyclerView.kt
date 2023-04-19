@@ -7,12 +7,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -41,24 +39,6 @@ fun DefaultGroupViewHolder(group: String) = Box(
             .colorScheme
             .onBackground
     )
-}
-
-@Composable
-fun ClickableCardViewHolder(
-    onItemTapped: () -> Unit,
-    onItemLongPressed: () -> Unit,
-    colors: CardColors,
-    content: @Composable () -> Unit
-) = Card(
-    modifier = Modifier.fillMaxWidth(),
-    onClick = { onItemTapped() },
-    onLongClick = { onItemLongPressed() },
-    colors = colors
-)
-{
-    Box(modifier = Modifier.padding(4.dp)) {
-        content()
-    }
 }
 
 

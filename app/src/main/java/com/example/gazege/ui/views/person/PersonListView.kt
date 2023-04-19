@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -28,10 +27,10 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
-import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import kotlin.math.absoluteValue
@@ -89,10 +88,9 @@ private fun PersonRecyclerView(
         contentPadding = itemHolderPaddingValues,
         items = personList
     ) {
-        ClickableCardViewHolder(
+        ClickableListItemViewHolder(
             onItemTapped = { detailPerson(it) },
-            onItemLongPressed = { menuIdExpanded = it.id },
-            colors = CardDefaults.cardColors()
+            onItemLongPressed = { menuIdExpanded = it.id }
         ) {
             Box {
                 PersonViewHolder(

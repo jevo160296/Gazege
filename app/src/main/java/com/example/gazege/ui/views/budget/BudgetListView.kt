@@ -13,9 +13,9 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.GazegeProgressIndicator
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,10 +67,9 @@ fun BudgetRecyclerView(
         contentPadding = itemHolderPaddingValues,
         items = budget
     ) {
-        ClickableCardViewHolder(
+        ClickableListItemViewHolder(
             onItemTapped = { onBudgetDetailRequested(it) },
-            onItemLongPressed = { menuIdExpanded = it.budgetId },
-            colors = CardDefaults.cardColors()
+            onItemLongPressed = { menuIdExpanded = it.budgetId }
         ) {
             Box {
                 BudgetViewHolder(
