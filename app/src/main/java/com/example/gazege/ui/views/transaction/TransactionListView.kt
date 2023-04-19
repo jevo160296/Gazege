@@ -47,7 +47,7 @@ private fun TransactionViewHolder(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
+            .height(70.dp)
     ) {
         Column(
             modifier = Modifier
