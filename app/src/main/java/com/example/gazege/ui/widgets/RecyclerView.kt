@@ -44,21 +44,20 @@ fun DefaultGroupViewHolder(group: String) = Box(
 }
 
 @Composable
-fun <T> ClickableCardViewHolder(
-    item: T,
-    onItemTapped: (item: T) -> Unit,
-    onItemLongPressed: (T) -> Unit,
+fun ClickableCardViewHolder(
+    onItemTapped: () -> Unit,
+    onItemLongPressed: () -> Unit,
     colors: CardColors,
-    viewHolder: @Composable (T) -> Unit
+    content: @Composable () -> Unit
 ) = Card(
     modifier = Modifier.fillMaxWidth(),
-    onClick = { onItemTapped(item) },
-    onLongClick = { onItemLongPressed(item) },
+    onClick = { onItemTapped() },
+    onLongClick = { onItemLongPressed() },
     colors = colors
 )
 {
     Box(modifier = Modifier.padding(4.dp)) {
-        viewHolder(item)
+        content()
     }
 }
 

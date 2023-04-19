@@ -90,9 +90,8 @@ private fun PersonRecyclerView(
         items = personList
     ) {
         ClickableCardViewHolder(
-            item = it,
-            onItemTapped = detailPerson,
-            onItemLongPressed = { item -> menuIdExpanded = item.id },
+            onItemTapped = { detailPerson(it) },
+            onItemLongPressed = { menuIdExpanded = it.id },
             colors = CardDefaults.cardColors()
         ) {
             Box {

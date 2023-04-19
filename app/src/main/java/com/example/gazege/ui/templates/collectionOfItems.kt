@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.example.gazege.R
+import com.example.gazege.ui.widgets.itemsGrouped
 
 @Composable
 fun <T> SimpleLazyList(
@@ -26,4 +27,27 @@ fun <T> SimpleLazyList(
     items(items = items) {
         itemViewHolder(it)
     }
+}
+
+@Composable
+fun <T> GroupedLazyList(
+    modifier: Modifier,
+    state: LazyListState,
+    contentPadding: PaddingValues,
+    items: List<T>,
+    groupSelector: (T) -> String,
+    groupViewHolder: @Composable (String) -> Unit,
+    itemViewHolder: @Composable (T) -> Unit
+) = LazyColumn(
+    modifier = modifier,
+    state = state,
+    contentPadding = contentPadding,
+    verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+) {
+    itemsGrouped(
+        elements = items,
+        groupSelector = groupSelector,
+        groupViewHolder = groupViewHolder,
+        viewHolder = itemViewHolder
+    )
 }

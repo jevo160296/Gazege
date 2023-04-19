@@ -68,9 +68,8 @@ fun BudgetRecyclerView(
         items = budget
     ) {
         ClickableCardViewHolder(
-            item = it,
-            onItemTapped = onBudgetDetailRequested,
-            onItemLongPressed = { budget -> menuIdExpanded = budget.budgetId },
+            onItemTapped = { onBudgetDetailRequested(it) },
+            onItemLongPressed = { menuIdExpanded = it.budgetId },
             colors = CardDefaults.cardColors()
         ) {
             Box {

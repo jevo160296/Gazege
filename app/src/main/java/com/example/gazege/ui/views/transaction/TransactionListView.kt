@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -31,6 +29,7 @@ import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
+import com.example.gazege.ui.templates.GroupedLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.DefaultGroupViewHolder
@@ -87,6 +86,19 @@ private fun TransactionViewHolder(
 }
 
 @Composable
+private fun TransactionGroupItemViewHolder(
+    transaction: TransactionListItemDetails,
+    editTransaction: (TransactionListItemDetails) -> Unit,
+    delTransaction: (TransactionListItemDetails) -> Unit
+) = ClickableCardViewHolder(
+    onItemTapped = { editTransaction(transaction) },
+    onItemLongPressed = { delTransaction(transaction) },
+    colors = CardDefaults.cardColors()
+) {
+    TransactionViewHolder(transaction = transaction)
+}
+
+@Composable
 private fun TransactionRecyclerView(
     transactionList: List<TransactionListItemDetails>,
     editTransaction: (TransactionListItemDetails) -> Unit,
@@ -94,18 +106,15 @@ private fun TransactionRecyclerView(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     state: LazyListState
+) = GroupedLazyList(
+    modifier = modifier,
+    state = state,
+    contentPadding = contentPadding,
+    items = transactionList,
+    groupSelector = { transactionGroupSelector(it.transaction) },
+    groupViewHolder = { TransactionHeaderViewHolder(it) }
 ) {
-    LazyColumn(
-        modifier = modifier,
-        state = state,
-        contentPadding = contentPadding
-    ) {
-        transactionLazyListItems(
-            transactionList = transactionList,
-            editTransaction = editTransaction,
-            delTransaction = delTransaction
-        )
-    }
+    TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
 }
 
 @Composable
@@ -134,22 +143,23 @@ fun TransactionPage(
     }
 }
 
+fun transactionGroupSelector(transaction: Transaction): String =
+    localDateToString(transaction.date, DateFormat.DAYMONTHYEAR)
+
+@Composable
+fun TransactionHeaderViewHolder(group: String) = DefaultGroupViewHolder(group)
+
 fun LazyListScope.transactionLazyListItems(
     transactionList: List<TransactionListItemDetails>,
     editTransaction: (TransactionListItemDetails) -> Unit,
     delTransaction: (TransactionListItemDetails) -> Unit,
-    colorSelector: @Composable (TransactionListItemDetails) -> CardColors = { CardDefaults.cardColors() },
-    groupSelector: (TransactionListItemDetails) -> String = {
-        localDateToString(it.transaction.date, DateFormat.DAYMONTHYEAR)
-    }
+    groupSelector: (TransactionListItemDetails) -> String = { transactionGroupSelector(it.transaction) }
 ) = itemsGrouped(
     transactionList,
     groupSelector,
-    groupViewHolder = { DefaultGroupViewHolder(it) }
+    groupViewHolder = { TransactionHeaderViewHolder(it) }
 ) {
-    val viewHolder =
-        @Composable { item: TransactionListItemDetails -> TransactionViewHolder(transaction = item) }
-    ClickableCardViewHolder(it, editTransaction, delTransaction, colorSelector(it), viewHolder)
+    TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
 }
 
 @Preview(showBackground = true)
