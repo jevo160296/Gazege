@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -28,8 +28,13 @@ fun <T> SimpleLazyList(
     contentPadding = contentPadding,
     verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
 ) {
-    items(items = items) {
-        itemViewHolder(it)
+    val count = items.size * 2
+    items(count = count) {
+        if (it.mod(2) == 0) {
+            itemViewHolder(items[it / 2])
+        } else if (it < count - 1) {
+            Divider()
+        }
     }
 }
 

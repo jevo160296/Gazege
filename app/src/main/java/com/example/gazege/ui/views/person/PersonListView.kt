@@ -49,7 +49,6 @@ private fun PersonViewHolder(
         Column(
             horizontalAlignment = Alignment.Start
         ) {
-            SmallEmphasis(text = "${stringResource(id = R.string.nombre)}: ")
             LargeBody(text = person.name)
         }
         if (flujo != 0.0) {

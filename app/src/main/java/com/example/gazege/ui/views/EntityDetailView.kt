@@ -3,6 +3,7 @@ package com.example.gazege.ui.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
@@ -12,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,7 +53,8 @@ internal fun EntityDetail(
         sheetState = sheetState
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            modifier = Modifier.navigationBarsPadding()
         ) {
             TopAppBar(
                 title = {
