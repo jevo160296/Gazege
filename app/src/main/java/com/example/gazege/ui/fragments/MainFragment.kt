@@ -1,7 +1,6 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -15,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -29,6 +27,7 @@ import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
+import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
@@ -37,8 +36,6 @@ import com.example.gazege.ui.views.account.AccountPage
 import com.example.gazege.ui.views.person.PersonPage
 import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.widgets.*
-import com.example.gazege.ui.widgets.fab.ExpandableFAB
-import com.example.gazege.ui.widgets.menu.DropDownMenuItem
 import com.example.gazege.ui.widgets.treeview.TreeState
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.CoroutineScope
@@ -115,76 +112,15 @@ fun MainFragment(
         }) {
         Scaffold(
             floatingActionButton = {
-                val rotation by animateFloatAsState(
-                    targetValue = if (fabExpanded) {
-                        45f
-                    } else {
-                        0f
-                    }
+                DynamicAddEntityFAB(
+                    fabExpanded = fabExpanded,
+                    onFabExpandedChanged = { fabExpanded = it },
+                    navPosition = navPosition,
+                    onAddPersonRequested = onAddPersonRequested,
+                    onAddAccountRequested = onAddAccountRequested,
+                    onAddTransactionRequested = onAddTransactionRequested
                 )
-                ExpandableFAB(
-                    columnModifier = Modifier.width(IntrinsicSize.Max),
-                    icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                            contentDescription = "Add",
-                            modifier = Modifier.rotate(rotation),
-                        )
-                    },
-                    isExpanded = fabExpanded,
-                    onClick = {
-                        when (navPosition) {
-                            NavPosition.PERSONS -> onAddPersonRequested()
-                            NavPosition.CUENTAS -> onAddAccountRequested()
-                            NavPosition.TRANSACCIONES -> fabExpanded = true
-                        }
-                    },
-                    onDismissRequest = { fabExpanded = false }
-                ) {
-                    DropDownMenuItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            onAddTransactionRequested(AddTransactionAction.ADD_TRANSFER)
-                            fabExpanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.transfer_icon),
-                                contentDescription = "Add"
-                            )
-                        },
-                        label = { Text(text = stringResource(id = R.string.Transferencia)) }
-                    )
-                    DropDownMenuItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            onAddTransactionRequested(AddTransactionAction.ADD_EXPENSE)
-                            fabExpanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.gasto_icon),
-                                contentDescription = "Add"
-                            )
-                        },
-                        label = { Text(text = stringResource(id = R.string.Gasto)) }
-                    )
-                    DropDownMenuItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            onAddTransactionRequested(AddTransactionAction.ADD_INCOME)
-                            fabExpanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ingreso_icon),
-                                contentDescription = "Add"
-                            )
-                        },
-                        label = { Text(text = stringResource(id = R.string.Ingreso)) }
-                    )
-                }
-        },
+            },
             floatingActionButtonPosition = FabPosition.End,
             isFloatingActionButtonDocked = false,
             backgroundColor = MaterialTheme.colorScheme.background,
