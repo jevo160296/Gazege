@@ -1,31 +1,16 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.gazege.ui.templates.itemsGrouped
 import com.example.gazege.ui.theme.GazegeTheme
-
-@OptIn(ExperimentalFoundationApi::class)
-fun <T> LazyListScope.itemsGrouped(
-    elements: List<T>,
-    groupSelector: (T) -> String,
-    groupViewHolder: @Composable (String) -> Unit,
-    viewHolder: @Composable (T) -> Unit
-) {
-    val groupedItems = elements.groupBy { groupSelector(it) }
-    groupedItems.forEach { (group, indexItems) ->
-        stickyHeader { groupViewHolder(group) }
-        items(items = indexItems) { item -> viewHolder(item) }
-    }
-}
 
 @Composable
 fun DefaultGroupViewHolder(group: String) = Box(

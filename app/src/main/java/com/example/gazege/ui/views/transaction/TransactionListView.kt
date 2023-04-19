@@ -30,12 +30,12 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.GroupedLazyList
+import com.example.gazege.ui.templates.itemsGrouped
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.DefaultGroupViewHolder
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.SmallEmphasis
-import com.example.gazege.ui.widgets.itemsGrouped
 import java.time.LocalDate
 
 @Composable
