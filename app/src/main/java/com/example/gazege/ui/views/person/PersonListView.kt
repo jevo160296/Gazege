@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -18,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,10 +28,11 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
+import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import kotlin.math.absoluteValue
 
@@ -82,16 +83,18 @@ private fun PersonRecyclerView(
     var menuIdExpanded: Int? by remember {
         mutableStateOf(null)
     }
-    RecyclerView(
-        elements = personList,
+    SimpleLazyList(
         modifier = modifier,
-        onItemTapped = detailPerson,
-        onItemLongPressed = {
-            menuIdExpanded = it.id
-        },
-        contentPadding = itemHolderPaddingValues,
         state = state,
-        viewHolder = {
+        contentPadding = itemHolderPaddingValues,
+        items = personList
+    ) {
+        ClickableCardViewHolder(
+            item = it,
+            onItemTapped = detailPerson,
+            onItemLongPressed = { item -> menuIdExpanded = item.id },
+            colors = CardDefaults.cardColors()
+        ) {
             Box {
                 PersonViewHolder(
                     person = it,
@@ -116,10 +119,8 @@ private fun PersonRecyclerView(
                     )
                 }
             }
-        },
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-    )
-
+        }
+    }
 }
 
 @Composable
@@ -169,23 +170,6 @@ private fun PreviewPersonItem() {
             person = personSample.first(),
             principalPersonSummaryState = personSummaryStateSample
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewPersonList() {
-    DatabaseSample {
-        GazegeTheme {
-            RecyclerView(
-                elements = personSample, viewHolder = { person ->
-                    PersonViewHolder(
-                        person = person, principalPersonSummaryState = personSummaryStateSample
-                    )
-                }, state = LazyListState(),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-            )
-        }
     }
 }
 

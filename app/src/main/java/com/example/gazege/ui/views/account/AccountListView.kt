@@ -1,7 +1,6 @@
 package com.example.gazege.ui.views.account
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -26,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,7 +39,6 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.Card
 import com.example.gazege.ui.widgets.LargeBody
-import com.example.gazege.ui.widgets.RecyclerView
 import com.example.gazege.ui.widgets.SmallEmphasis
 import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
@@ -86,30 +82,6 @@ private fun DefaultAccountViewHolder(
             LargeBody(text = doubleToMoneyString(total))
         }
     }
-}
-
-@Composable
-private fun AccountRecyclerView(
-    accountList: List<AccountAndOwnerWithTransactions>,
-    delAccount: (AccountAndOwnerWithTransactions) -> Unit,
-    editAccount: (AccountAndOwnerWithTransactions) -> Unit,
-    modifier: Modifier = Modifier,
-    itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    state: LazyListState,
-    colorSelector: @Composable (AccountAndOwnerWithTransactions) -> CardColors = { CardDefaults.cardColors() },
-    viewHolder: @Composable (AccountAndOwnerWithTransactions) -> Unit
-) {
-    RecyclerView(
-        elements = accountList,
-        onItemTapped = editAccount,
-        onItemLongPressed = delAccount,
-        modifier = modifier,
-        contentPadding = itemHolderPaddingValues,
-        state = state,
-        colorSelector = colorSelector,
-        viewHolder = viewHolder,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-    )
 }
 
 data class AccountAndOwnerWithTransactionsNode(
@@ -311,32 +283,6 @@ private fun PreviewAccountItem() {
         accounts = listOf(),
         isExpanded = false
     )
-}
-
-@Preview(showBackground = true, widthDp = 240, heightDp = 320)
-@Composable
-private fun PreviewAccountList() {
-    DatabaseSample {
-        GazegeTheme {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colors.background)
-            ) {
-                AccountRecyclerView(
-                    accountList = accountAndOwnerWithTransactionsSample,
-                    delAccount = {},
-                    editAccount = {},
-                    state = LazyListState()
-                ) { acc ->
-                    DefaultAccountViewHolder(
-                        account = acc, startDate = null, endDate = null,
-                        accounts = listOf(), isExpanded = false
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Preview(showBackground = true, widthDp = 240, heightDp = 320)

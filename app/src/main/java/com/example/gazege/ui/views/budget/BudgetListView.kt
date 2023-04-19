@@ -7,16 +7,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.ClickableCardViewHolder
 import com.example.gazege.ui.widgets.GazegeProgressIndicator
-import com.example.gazege.ui.widgets.RecyclerView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,14 +61,18 @@ fun BudgetRecyclerView(
     var menuIdExpanded: Int? by remember {
         mutableStateOf(null)
     }
-    RecyclerView(
-        elements = budget,
+    SimpleLazyList(
         modifier = modifier,
-        onItemTapped = onBudgetDetailRequested,
-        onItemLongPressed = { menuIdExpanded = it.budgetId },
-        contentPadding = itemHolderPaddingValues,
         state = state,
-        viewHolder = {
+        contentPadding = itemHolderPaddingValues,
+        items = budget
+    ) {
+        ClickableCardViewHolder(
+            item = it,
+            onItemTapped = onBudgetDetailRequested,
+            onItemLongPressed = { budget -> menuIdExpanded = budget.budgetId },
+            colors = CardDefaults.cardColors()
+        ) {
             Box {
                 BudgetViewHolder(
                     budget = it
@@ -91,9 +95,8 @@ fun BudgetRecyclerView(
                     )
                 }
             }
-        },
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-    )
+        }
+    }
 }
 
 @Preview
