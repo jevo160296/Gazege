@@ -149,13 +149,30 @@ interface BudgetDao {
             return (budgetCompleition ?: 0.0).coerceIn(0.0..1.0)
         }
 
+        /**
+         * Calculates the amount left to pay for a budget, based on the expected remaining flow and the real total flow.
+         *
+         * @param budget The budget to calculate the amount left to pay for.
+         * @param expectedRemainingFlow The expected remaining flow for the budget.
+         * @param expectedFlowUntilNow The expected flow until now for the budget.
+         * @param realTotalFlow The real total flow for the budget.
+         *
+         * @return The amount left to pay for the budget.
+         */
         fun calculateLeftToPay(
             budget: Budget,
             expectedRemainingFlow: Double,
             expectedFlowUntilNow: Double,
             realTotalFlow: Double
         ): Double = when (budget.budgetType) {
-            BudgetType.FIXED -> expectedFlowUntilNow - realTotalFlow
+            BudgetType.FIXED -> (expectedFlowUntilNow - realTotalFlow).let { difference ->
+                if (expectedFlowUntilNow > 0) {
+                    difference.coerceAtLeast(0.0)
+                } else {
+                    difference.coerceAtMost(0.0)
+                }
+            }
+
             BudgetType.VARIABLE -> expectedRemainingFlow
         }
     }
