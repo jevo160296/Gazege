@@ -1,6 +1,7 @@
 package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.SnackbarHostState
@@ -11,22 +12,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
 import com.example.gazege.core.entities.Category
 import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
+import com.example.gazege.ui.views.budget.BudgetRecyclerView
 import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.TextField
 
 @Composable
 fun CategoryForm(
-    category: Category?,
+    categoryMap: Pair<Category, List<BudgetAndCategoryWithCalculatedData>>?,
     categories: List<Category>,
     onCategorySave: (Category, SnackbarHostState) -> Unit
 ) {
+    val category = categoryMap?.first
+    val budgetData = categoryMap?.second?.takeIf { it.isNotEmpty() }
     var partialCategory by rememberSaveable(
         stateSaver = categorySaver
     ) {
@@ -62,10 +69,21 @@ fun CategoryForm(
         CategoryDropDown(
             categoryList = filteredCategories,
             selectedCategory = selectedCategory,
-            label = { Text(stringResource(id = R.string.cuentaPadre)) },
+            label = { Text(stringResource(id = R.string.CategoriaPadre)) },
             onItemClick = {
                 partialCategory = partialCategory.copy(parentId = it?.id)
             }
         )
+        if (budgetData != null) {
+            MediumHeadline(text = stringResource(id = R.string.Presupuesto))
+            BudgetRecyclerView(
+                itemHolderPaddingValues = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
+                budget = budgetData,
+                onBudgetDetailRequested = {},
+                onBudgetDeleteRequested = {},
+                onBudgetEditRequested = {},
+                modifier = Modifier.heightIn(max = 1024.dp)
+            )
+        }
     }
 }
