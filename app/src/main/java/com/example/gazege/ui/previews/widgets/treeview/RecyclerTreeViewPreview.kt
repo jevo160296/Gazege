@@ -82,7 +82,8 @@ fun RecyclerViewPreview() {
                     it.content.owner
                 },
                 treeState = rememberTreeState(),
-                itemHolderPaddingValues = PaddingValues(8.dp)
+                itemHolderPaddingValues = PaddingValues(8.dp),
+                itemSpacing = 8.dp
             ) { node, scope ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically

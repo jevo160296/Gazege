@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
@@ -51,6 +52,7 @@ fun ClickableTreeListItemViewHolder(
     onIsExpandedChanged: () -> Unit,
     onItemTapped: () -> Unit,
     onItemLongPressed: () -> Unit,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     itemViewHolder: @Composable () -> Unit
 ) = Row(verticalAlignment = Alignment.CenterVertically) {
     Spacer(Modifier.width(level.dp * 8))
@@ -73,7 +75,7 @@ fun ClickableTreeListItemViewHolder(
         modifier = Modifier
             .fillMaxWidth()
             .clip(CardDefaults.shape)
-            .background(MaterialTheme.colorScheme.background)
+            .background(containerColor)
             .combinedClickable(
                 onClick = onItemTapped,
                 onLongClick = onItemLongPressed

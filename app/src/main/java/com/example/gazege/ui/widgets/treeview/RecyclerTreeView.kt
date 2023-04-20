@@ -1,6 +1,7 @@
 package com.example.gazege.ui.widgets.treeview
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -21,6 +22,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     treeState: TreeState = rememberTreeState(),
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    itemSpacing: Dp,
     viewHolder: @Composable (node: C, scope: TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = treeState.expandedItems
@@ -43,7 +45,8 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         groupViewHolder = groupViewHolder
     )
     LazyColumn(
-        state = treeState.listState
+        state = treeState.listState,
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         val calculatedTop = itemHolderPaddingValues.calculateTopPadding()
         val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()

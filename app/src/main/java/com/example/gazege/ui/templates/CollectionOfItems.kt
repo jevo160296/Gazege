@@ -65,11 +65,13 @@ fun <N, C : Node<N, C>> SimpleTreeList(
     state: TreeState,
     contentPadding: PaddingValues,
     nodes: List<C>,
+    itemSpacing: Dp = dimensionResource(id = R.dimen.DefaultPadding),
     nodeViewHolder: @Composable (node: C, scope: TreeScope<N, C>) -> Unit
 ) = RecyclerTreeView(
     nodes = nodes,
     treeState = state,
-    itemHolderPaddingValues = contentPadding
+    itemHolderPaddingValues = contentPadding,
+    itemSpacing = itemSpacing
 ) { node, scope ->
     nodeViewHolder(node, scope)
 }

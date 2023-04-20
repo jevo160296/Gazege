@@ -135,18 +135,28 @@ interface BudgetDao {
             startDate: LocalDate,
             endDate: LocalDate
         ): Double {
-            val expectedFLowEnd = calculateOneBudgetExpectedFlow(
+            val budgetExpectedTotalFlow = calculateOneBudgetExpectedFlow(
                 budget.budget,
                 startDate,
                 endDate
             )
-            val realFlowUntilNow = calculateOneBudgetRealFlow(
+            val realTotalFlow = calculateOneBudgetRealFlow(
                 budget,
                 startDate,
                 currentDate
             )
-            val budgetCompleition = realFlowUntilNow.div(expectedFLowEnd).takeIf { !it.isNaN() }
+            val budgetCompleition =
+                realTotalFlow.div(budgetExpectedTotalFlow).takeIf { !it.isNaN() }
             return (budgetCompleition ?: 0.0).coerceIn(0.0..1.0)
+        }
+
+        fun calculateBudgetCompletion(
+            budget: List<BudgetAndCategoryWithCalculatedData>
+        ): Double {
+            val realTotalFlow = budget.sumOf { it.budgetRealTotalFlow }
+            val budgetExpectedTotalFlow = budget.sumOf { it.budgetExpectedTotalFlow }
+            val budgetCompletion = realTotalFlow.div(budgetExpectedTotalFlow).takeIf { !it.isNaN() }
+            return (budgetCompletion ?: 0.0).coerceIn(0.0..1.0)
         }
 
         /**

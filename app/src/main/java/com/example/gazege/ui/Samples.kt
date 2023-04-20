@@ -11,6 +11,8 @@ import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
 import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
 import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithBudgetData
+import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
@@ -49,6 +51,7 @@ class DatabaseSampleScope {
             categorieSample
         )
     }
+    val categoryWithSubcategoriesSample by lazy { getCategoryWithSubcategoriesSample(categorieSample) }
     val budgetSample by lazy { getBudgetSample(categorieSample) }
     val accountAndOwnerWithTransactionsSample by lazy {
         getAccountAndOwnerWithTransactionsSample(
@@ -82,6 +85,12 @@ class DatabaseSampleScope {
             currentDateSample,
             startDateSample,
             endDateSample
+        )
+    }
+    val categoryWithCalculatedData by lazy {
+        getCategoryWithCalculatedDataSample(
+            categorieSample,
+            budgetAndCategoryWithCalculatedDataSample
         )
     }
     val personWithAccountsSample by lazy {
@@ -187,6 +196,10 @@ private fun getBudgetAndCategoryWithCalculatedData(
         endDate
     )
 
+private fun getCategoryWithCalculatedDataSample(
+    categories: List<Category>, budget: List<BudgetAndCategoryWithCalculatedData>
+) = CategoryWithBudgetData.from(categories, budget)
+
 private fun getAccountSample(personSample: List<Person>): List<Account> {
     var index = 0
     val random = Random(3)
@@ -288,6 +301,9 @@ private fun getCategoriesSample(): List<Category> {
         Category(it, "Parent category $parentId.$it", parentId)
     }
 }
+
+private fun getCategoryWithSubcategoriesSample(categories: List<Category>):
+        List<CategoryWithSubCategories> = CategoryWithSubCategories.from(categories)
 
 private fun getPersonSample(): List<Person> {
     return listOf(

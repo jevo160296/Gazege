@@ -10,11 +10,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithBudgetData
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.MediumHeadline
@@ -26,8 +33,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun EditarCategorias(
     categories: List<CategoryWithSubCategories>,
+    categoriesWithCalculatedData: Map<Category, CategoryWithBudgetData?>,
     onAddCategoryRequested: () -> Unit,
     onEditCategoryRequested: (CategoryWithSubCategories) -> Unit,
+    onSetBudgetRequested: (CategoryWithSubCategories) -> Unit,
     onDeleteCategoryRequested: (CategoryWithSubCategories) -> Unit
 ) {
     var categoryClicked: CategoryWithSubCategories? by remember {
@@ -78,7 +87,9 @@ fun EditarCategorias(
                             categoryClicked = it
                             sheetState.show()
                         }
-                    }
+                    },
+                    categoriesWithCalculatedData = categoriesWithCalculatedData,
+                    onSetBudgetRequested = onSetBudgetRequested
                 )
             }
         }

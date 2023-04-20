@@ -220,7 +220,14 @@ class MainActivity : ComponentActivity() {
                             screenEditarCategorias(
                                 viewModel = mainViewModel,
                                 onNavigateToAddCategory = navController::navigateToAddCategory,
-                                onNavigateToEditCategory = navController::navigateToEditCategory
+                                onNavigateToEditCategory = navController::navigateToEditCategory,
+                                onNavigateToAddBudget = {
+                                    if (it != null) {
+                                        navController.navigateToAddOneBudget(it)
+                                    } else {
+                                        navController.navigateToAddOneBudget()
+                                    }
+                                }
                             )
                             screenAddCategory(
                                 viewModel = mainViewModel,

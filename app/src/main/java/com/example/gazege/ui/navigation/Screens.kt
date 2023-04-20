@@ -23,6 +23,8 @@ import com.example.gazege.NavPosition
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.ui.fragments.*
 import com.example.gazege.ui.views.AccountAction
 import com.example.gazege.ui.views.AddTransactionAction
@@ -310,16 +312,20 @@ fun NavController.navigateToEditAccount(accountId: Int?) {
 fun NavGraphBuilder.screenEditarCategorias(
     viewModel: MainViewModel,
     onNavigateToAddCategory: () -> Unit,
-    onNavigateToEditCategory: (Int?) -> Unit
+    onNavigateToEditCategory: (Int?) -> Unit,
+    onNavigateToAddBudget: (Int?) -> Unit
 ) {
     composable("editCategories") {
         val categoriesWithSubCategories by viewModel.rememberCategoriesWithSubCategories()
+        val categoriesWithCalculatedData by viewModel.rememberCategoriesWithCalculatedData()
 
         EditarCategorias(
             categoriesWithSubCategories,
+            categoriesWithCalculatedData,
             onAddCategoryRequested = onNavigateToAddCategory,
             onEditCategoryRequested = { onNavigateToEditCategory(it.category.id) },
-            onDeleteCategoryRequested = { viewModel.deleteCategory(it.category) }
+            onDeleteCategoryRequested = { viewModel.deleteCategory(it.category) },
+            onSetBudgetRequested = { onNavigateToAddBudget(it.category.id) }
         )
     }
 }
@@ -947,23 +953,53 @@ fun NavGraphBuilder.screenAddOneBudget(
     viewModel: MainViewModel,
     onNavigateUp: () -> Unit
 ) {
-    composable("addOneBudget") {
-        val categories by viewModel.rememberCategories()
-        BudgetFormView(
-            budget = null,
-            categories = categories,
-            onSaveBudget = {
-                viewModel.insertBudget(
-                    it,
-                    onCompleitionAction = { onNavigateUp() },
-                    onErrorAction = {})
+    composable("addOneBudget?categoryId={categoryId}",
+        arguments = listOf(
+            navArgument("categoryId") {
+                type = NavType.IntType
+                defaultValue = -1
             }
         )
+    ) { navStack ->
+        val categoryId = navStack.arguments?.getInt("categoryId")
+        val categories by viewModel.rememberCategories()
+        val fixedCategory = categories.firstOrNull { it.id == categoryId }
+        if (fixedCategory == null) {
+            BudgetFormView(
+                budget = null,
+                categories = categories,
+                onSaveBudget = {
+                    viewModel.insertBudget(
+                        it,
+                        onCompleitionAction = { onNavigateUp() },
+                        onErrorAction = {})
+                }
+            )
+        } else {
+            BudgetFormView(
+                budget = Budget.fromMonthly(
+                    categoryId = fixedCategory.id!!,
+                    value = 0.0,
+                    budgetType = BudgetType.VARIABLE
+                ),
+                categories = categories,
+                onSaveBudget = {
+                    viewModel.insertBudget(
+                        it,
+                        onCompleitionAction = { onNavigateUp() },
+                        onErrorAction = {})
+                }
+            )
+        }
     }
 }
 
 fun NavController.navigateToAddOneBudget() {
     navigate("addOneBudget")
+}
+
+fun NavController.navigateToAddOneBudget(categoryId: Int) {
+    navigate("addOneBudget?categoryId=$categoryId")
 }
 
 fun NavGraphBuilder.screenEditOneBudget(

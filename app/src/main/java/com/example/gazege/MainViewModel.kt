@@ -90,6 +90,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         categoriesWithSubCategories.observeAsState(emptyList())
 
     @Composable
+    fun rememberCategoriesWithCalculatedData() =
+        categoriesWithCalculatedData.observeAsState(emptyMap())
+
+    @Composable
     fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
 
     @Composable
@@ -418,14 +422,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
         .map { CategoryWithSubCategories.from(it) }
 
-
-    private val initialRange = LocalDate.now().withDayOfMonth(1).let {
-        Pair(it, it.plusMonths(1L).minusDays(1L))
-    }
-    private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
-
-    private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
-
     private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
         MediatorLiveData<List<BudgetAndCategoryWithTransactions>>()
             .mergeFourNullableSources(
@@ -448,6 +444,12 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 }
             }
 
+    private val initialRange = LocalDate.now().withDayOfMonth(1).let {
+        Pair(it, it.plusMonths(1L).minusDays(1L))
+    }
+
+    private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
+
     private val budgetAndCategoryWithCalculatedData: LiveData<List<BudgetAndCategoryWithCalculatedData>> =
         MediatorLiveData<List<BudgetAndCategoryWithCalculatedData>>()
             .mergeTwoSources(
@@ -468,6 +470,18 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                     emptyList()
                 }
             }
+
+    private val categoriesWithCalculatedData: LiveData<Map<Category, CategoryWithBudgetData?>> =
+        MediatorLiveData<Map<Category, CategoryWithBudgetData?>>()
+            .mergeTwoSources(
+                "categoriesWithCalculatedData",
+                categories,
+                budgetAndCategoryWithCalculatedData
+            ) { a, b ->
+                CategoryWithBudgetData.from(a, b)
+            }
+
+    private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
