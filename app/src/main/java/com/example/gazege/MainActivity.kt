@@ -235,7 +235,8 @@ class MainActivity : ComponentActivity() {
                             )
                             screenEditCategory(
                                 viewModel = mainViewModel,
-                                onNavigateUp = navController::navigateUp
+                                onNavigateUp = navController::navigateUp,
+                                onNavigateToEditOneBudgetRequested = navController::navigateToEditOneBudget
                             )
                             screenAccountDetail(
                                 viewModel = mainViewModel,

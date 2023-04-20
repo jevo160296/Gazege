@@ -697,13 +697,17 @@ fun NavGraphBuilder.screenAddCategory(
                         } else {
                             "CONSTRAINT ERROR"
                         }
+
                         else -> error.toString()
                     }
                     coroutineScope.launch {
                         snackbar.showSnackbar("Error agregando ${category.name}: \n$msg")
                     }
                 }
-            }
+            },
+            onBudgetDeleteRequested = {},
+            onBudgetDetailRequested = {},
+            onBudgetEditRequested = {}
         )
     }
 }
@@ -714,7 +718,8 @@ fun NavController.navigateToAddCategory() {
 
 fun NavGraphBuilder.screenEditCategory(
     viewModel: MainViewModel,
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    onNavigateToEditOneBudgetRequested: (Int) -> Unit
 ) {
     composable(
         "editCategory/{categoryId}",
@@ -748,11 +753,21 @@ fun NavGraphBuilder.screenEditCategory(
                         } else {
                             "CONSTRAINT ERROR"
                         }
+
                         else -> error.toString()
                     }
                     coroutineScope.launch {
                         state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
                     }
+                }
+            },
+            onBudgetDeleteRequested = { viewModel.deleteBudget(it.budget) },
+            onBudgetDetailRequested = {},
+            onBudgetEditRequested = { budget ->
+                budget.budget.id?.let {
+                    onNavigateToEditOneBudgetRequested(
+                        it
+                    )
                 }
             }
         )

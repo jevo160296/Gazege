@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -25,12 +28,16 @@ import com.example.gazege.ui.views.budget.BudgetRecyclerView
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.TextField
+import kotlinx.coroutines.launch
 
 @Composable
 fun CategoryForm(
     categoryMap: Pair<Category, List<BudgetAndCategoryWithCalculatedData>>?,
     categories: List<Category>,
-    onCategorySave: (Category, SnackbarHostState) -> Unit
+    onCategorySave: (Category, SnackbarHostState) -> Unit,
+    onBudgetDetailRequested: (BudgetAndCategoryWithCalculatedData) -> Unit,
+    onBudgetEditRequested: (BudgetAndCategoryWithCalculatedData) -> Unit,
+    onBudgetDeleteRequested: (BudgetAndCategoryWithCalculatedData) -> Unit
 ) {
     val category = categoryMap?.first
     val budgetData = categoryMap?.second?.takeIf { it.isNotEmpty() }
@@ -45,10 +52,12 @@ fun CategoryForm(
             }
         )
     }
+    val scope = rememberCoroutineScope()
 
     val snackbarHostState = SnackbarHostState()
     val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
+
     Form(
         onSaveClicked = { onCategorySave(partialCategory.toFull(), snackbarHostState) },
         isSavedButtonEnabled = partialCategory.isComplete(),
@@ -76,12 +85,30 @@ fun CategoryForm(
         )
         if (budgetData != null) {
             MediumHeadline(text = stringResource(id = R.string.Presupuesto))
+            val mensaje = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+                stringResource(
+                    id = R.string.Presupuesto
+                )
+            )
+            val siText = stringResource(id = R.string.Si)
             BudgetRecyclerView(
                 itemHolderPaddingValues = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
                 budget = budgetData,
-                onBudgetDetailRequested = {},
-                onBudgetDeleteRequested = {},
-                onBudgetEditRequested = {},
+                onBudgetDetailRequested = onBudgetDetailRequested,
+                onBudgetDeleteRequested = {
+                    scope.launch {
+                        val response = snackbarHostState.showSnackbar(
+                            message = mensaje,
+                            actionLabel = siText,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Indefinite
+                        )
+                        if (response == SnackbarResult.ActionPerformed) {
+                            onBudgetDeleteRequested(it)
+                        }
+                    }
+                },
+                onBudgetEditRequested = onBudgetEditRequested,
                 modifier = Modifier.heightIn(max = 1024.dp)
             )
         }
