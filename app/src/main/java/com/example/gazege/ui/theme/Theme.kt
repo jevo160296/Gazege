@@ -6,8 +6,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
@@ -76,8 +84,25 @@ private val DarkColors = darkColorScheme(
     scrim = md_theme_dark_scrim,
 )
 
+enum class AppMode {
+    DEBUG,
+    RELEASE
+}
+
+internal val LocalAppMode = staticCompositionLocalOf { AppMode.DEBUG }
+
 @Composable
-fun GazegeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun GazegeTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    appMode: String = "DEBUG",
+    content: @Composable () -> Unit
+) {
+    val appModeParsed = when (appMode) {
+        "DEBUG" -> AppMode.DEBUG
+        "RELEASE" -> AppMode.RELEASE
+        else -> error("AppMode debe ser 'DEBUG' o 'RELEASE'. AppMode actual es: $appMode")
+    }
+
     val colors = if (darkTheme) {
         DarkColors
     } else {
@@ -88,8 +113,21 @@ fun GazegeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable
         colorScheme = colors,
         typography = Typography,
         shapes = Shapes,
-        content = content
+        content = {
+            CompositionLocalProvider(
+                LocalAppMode provides appModeParsed
+            ) {
+                content()
+            }
+        }
     )
+}
+
+object GazegeTheme {
+    val appMode: AppMode
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppMode.current
 }
 
 @Preview(showBackground = true, showSystemUi = true)
