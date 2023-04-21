@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
@@ -32,12 +32,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CategoryForm(
-    categoryMap: Pair<Category, List<BudgetAndCategoryWithCalculatedData>>?,
+    categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
     categories: List<Category>,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
-    onBudgetDetailRequested: (BudgetAndCategoryWithCalculatedData) -> Unit,
-    onBudgetEditRequested: (BudgetAndCategoryWithCalculatedData) -> Unit,
-    onBudgetDeleteRequested: (BudgetAndCategoryWithCalculatedData) -> Unit
+    onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetDeleteRequested: (BudgetWithCalculatedDataAndCategory) -> Unit
 ) {
     val category = categoryMap?.first
     val budgetData = categoryMap?.second?.takeIf { it.isNotEmpty() }

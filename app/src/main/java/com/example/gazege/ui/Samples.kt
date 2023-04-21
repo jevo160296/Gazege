@@ -7,12 +7,14 @@ import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.BudgetAndCategoryWithCalculatedData
 import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
 import com.example.gazege.core.entities.BudgetType
+import com.example.gazege.core.entities.BudgetWithCalculatedData
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithBudgetData
 import com.example.gazege.core.entities.CategoryWithSubCategories
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
@@ -79,19 +81,19 @@ class DatabaseSampleScope {
     val currentDateSample by lazy { getCurrentDateSample() }
     val startDateSample by lazy { getStartDateSample() }
     val endDateSample by lazy { getEndDateSample() }
-    val budgetAndCategoryWithCalculatedDataSample by lazy {
-        getBudgetAndCategoryWithCalculatedData(
+    val budgetWithCalculatedDataSample by lazy {
+        getBudgetWithCalculatedData(
             budgetAndCategoryWithTransactionSample,
             currentDateSample,
             startDateSample,
             endDateSample
         )
     }
-    val categoryWithCalculatedData by lazy {
-        getCategoryWithCalculatedDataSample(
-            categorieSample,
-            budgetAndCategoryWithCalculatedDataSample
-        )
+    val budgetAndCategoryWithCalculatedDataSample by lazy {
+        getBudgetAndCategoryWithCalculatedData(budgetWithCalculatedDataSample, categorieSample)
+    }
+    val categoryWithCalculatedDataSample by lazy {
+        getCategoryWithCalculatedDataSample(categorieSample, budgetWithCalculatedDataSample)
     }
     val personWithAccountsSample by lazy {
         getPersonWithAccountsSample(
@@ -123,6 +125,15 @@ class DatabaseSampleScope {
             accountSample
         )
     }
+    val budgetWithCalculatedDataAndCategorySample by lazy {
+        getBudgetAndCategoryWithCalculatedData(budgetWithCalculatedDataSample, categorieSample)
+    }
+    val categoryWithSubcategoriesAndBudgetWithCalculatedDataSample by lazy {
+        getCategoryWithSubcategoriesAndBudgetWithCalculatedDataSample(
+            budgetWithCalculatedDataAndCategorySample,
+            categoryWithSubcategoriesSample
+        )
+    }
 }
 
 private fun getBudgetAndCategoryWithTransactionsSample(
@@ -144,7 +155,7 @@ private fun getBudgetSample(
     val categorySize = categorySample.size
     val frequencyTypeSize = FrequencyType.values().size
     val startDate = LocalDate.of(2023, 1, 1)
-    return (0..20).map {
+    return (0..50).map {
         val categoryIndex = random.nextInt(categorySize)
         val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
         val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
@@ -183,21 +194,23 @@ private fun getBudgetSample(
 private fun getStartDateSample(): LocalDate = LocalDate.of(2023, 1, 1)
 private fun getEndDateSample(): LocalDate = LocalDate.of(2023, 1, 31)
 private fun getCurrentDateSample(): LocalDate = LocalDate.of(2023, 1, 14)
-private fun getBudgetAndCategoryWithCalculatedData(
+
+private fun getBudgetWithCalculatedData(
     budget: List<BudgetAndCategoryWithTransactions>,
     currentDate: LocalDate,
     startDate: LocalDate,
     endDate: LocalDate
-): List<BudgetAndCategoryWithCalculatedData> =
-    BudgetAndCategoryWithCalculatedData.from(
-        budget,
-        currentDate,
-        startDate,
-        endDate
-    )
+) = BudgetWithCalculatedData.from(budget, currentDate, startDate, endDate)
+
+private fun getBudgetAndCategoryWithCalculatedData(
+    budget: List<BudgetWithCalculatedData>,
+    categories: List<Category>
+): List<BudgetWithCalculatedDataAndCategory> =
+    BudgetWithCalculatedDataAndCategory.from(budget, categories)
 
 private fun getCategoryWithCalculatedDataSample(
-    categories: List<Category>, budget: List<BudgetAndCategoryWithCalculatedData>
+    categories: List<Category>,
+    budget: List<BudgetWithCalculatedData>
 ) = CategoryWithBudgetData.from(categories, budget)
 
 private fun getAccountSample(personSample: List<Person>): List<Account> {
@@ -384,3 +397,12 @@ private fun getTransactionListItemDetailsSample(
     categories,
     accounts
 )
+
+private fun getCategoryWithSubcategoriesAndBudgetWithCalculatedDataSample(
+    budgetWithCalculatedDataAndCategory: List<BudgetWithCalculatedDataAndCategory>,
+    categoriesWithSubcategories: List<CategoryWithSubCategories>
+) =
+    CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+        budgetWithCalculatedDataAndCategory,
+        categoriesWithSubcategories
+    )

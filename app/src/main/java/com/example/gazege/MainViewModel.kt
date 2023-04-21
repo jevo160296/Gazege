@@ -68,7 +68,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     @Composable
     fun rememberBudgetAndCategoryWithCalculatedData() =
-        budgetAndCategoryWithCalculatedData.observeAsState(emptyList())
+        budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+    @Composable
+    fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+        categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactions() =
@@ -84,14 +88,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     @Composable
     fun rememberAccountAndOwnerWithTransactionsAndPockets() =
         accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
-
-    @Composable
-    fun rememberCategoriesWithSubCategories() =
-        categoriesWithSubCategories.observeAsState(emptyList())
-
-    @Composable
-    fun rememberCategoriesWithCalculatedData() =
-        categoriesWithCalculatedData.observeAsState(emptyMap())
 
     @Composable
     fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
@@ -450,35 +446,38 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
-    private val budgetAndCategoryWithCalculatedData: LiveData<List<BudgetAndCategoryWithCalculatedData>> =
-        MediatorLiveData<List<BudgetAndCategoryWithCalculatedData>>()
+    private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
+        MediatorLiveData<List<BudgetWithCalculatedData>>()
             .mergeTwoSources(
-                "budgetAndCategoryWithCalculatedData",
+                "budgetWithCalculatedData",
                 budgetAndCategoryWithTransactions,
                 range
             ) { a, b ->
                 val startDate = b.first
                 val endDate = b.second
                 if (startDate != null && endDate != null) {
-                    BudgetAndCategoryWithCalculatedData.from(
-                        a,
-                        LocalDate.now(),
-                        startDate,
-                        endDate
-                    )
+                    BudgetWithCalculatedData.from(a, LocalDate.now(), startDate, endDate)
                 } else {
                     emptyList()
                 }
             }
 
-    private val categoriesWithCalculatedData: LiveData<Map<Category, CategoryWithBudgetData?>> =
-        MediatorLiveData<Map<Category, CategoryWithBudgetData?>>()
+    private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
+        MediatorLiveData<List<BudgetWithCalculatedDataAndCategory>>()
             .mergeTwoSources(
-                "categoriesWithCalculatedData",
-                categories,
-                budgetAndCategoryWithCalculatedData
+                "budgetAndCategoryWithCalculatedData",
+                budgetWithCalculatedData,
+                categories
+            ) { a, b -> BudgetWithCalculatedDataAndCategory.from(a, b) }
+
+    private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+        MediatorLiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>>()
+            .mergeTwoSources(
+                "categoryWithSubcategoriesAndBudgetWithCalculatedData",
+                budgetWithCalculatedDataAndCategory,
+                categoriesWithSubCategories
             ) { a, b ->
-                CategoryWithBudgetData.from(a, b)
+                CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(a, b)
             }
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
@@ -556,7 +555,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 range,
                 personWithAccounts,
                 allTransactionAndAccountsAndCategory,
-                budgetAndCategoryWithCalculatedData,
+                budgetWithCalculatedDataAndCategory,
                 incluirPresupuestoEnSaldoActual,
                 incluirDeudasEnSaldoActual
             ) { principalPersonWithAccounts, range, personWithAccounts, allTransactionAndAccountsAndCategory, budgetAndCategoryWithCalculatedData, incluirPresupuestoEnSaldoActual, incluirDeudasEnSaldoActual ->
@@ -575,7 +574,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                                 )
                             }
                             ?: emptyList(),
-                        budgetAndCategoryWithCalculatedData = budgetAndCategoryWithCalculatedData
+                        budgetWithCalculatedDatumAndCategories = budgetAndCategoryWithCalculatedData
                             ?: emptyList(),
                         includeBudget = incluirPresupuestoEnSaldoActual ?: false,
                         includeDebts = incluirDeudasEnSaldoActual ?: false
@@ -795,7 +794,7 @@ data class PersonSummaryState(
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
-            budgetAndCategoryWithCalculatedData: List<BudgetAndCategoryWithCalculatedData>,
+            budgetWithCalculatedDatumAndCategories: List<BudgetWithCalculatedDataAndCategory>,
             includeBudget: Boolean,
             includeDebts: Boolean
         ): PersonSummaryState {
@@ -815,7 +814,7 @@ data class PersonSummaryState(
                         null
                     )
                 } + if (includeBudget) {
-                    budgetAndCategoryWithCalculatedData.sumOf { it.budgetLeftToPay }
+                    budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPay }
                 } else {
                     0.0
                 } + if (includeDebts) {

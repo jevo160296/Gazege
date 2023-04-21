@@ -21,9 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.CategoryWithBudgetData
-import com.example.gazege.core.entities.CategoryWithSubCategories
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
@@ -36,9 +36,13 @@ import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
 @Composable
 private fun CategoryAndBudgetViewHolder(
-    category: CategoryWithBudgetData
+    categoryName: String,
+    expectedFlowUntilNow: Double,
+    expectedTotalFlow: Double,
+    realTotalFlow: Double,
+    completion: Double
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
-    LargeEmphasis(text = category.category.name)
+    LargeEmphasis(text = categoryName)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -53,13 +57,13 @@ private fun CategoryAndBudgetViewHolder(
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
         Column {
-            Text(doubleToMoneyString(category.budgetExpectedFlowUntilNow))
-            Text(doubleToMoneyString(category.budgetExpectedTotalFlow))
-            Text(doubleToMoneyString(category.budgetRealTotalFlow))
+            Text(doubleToMoneyString(expectedFlowUntilNow))
+            Text(doubleToMoneyString(expectedTotalFlow))
+            Text(doubleToMoneyString(realTotalFlow))
         }
     }
     GazegeProgressIndicator(
-        category.completion,
+        completion,
         stringResource(id = R.string.Progreso),
         color = MaterialTheme.colorScheme.tertiary
     )
@@ -89,13 +93,12 @@ private fun EmptyCategoryAndBudgetViewHolder(
 
 @Composable
 fun CategoryListView(
-    categories: List<CategoryWithSubCategories>,
-    categoriesWithCalculatedData: Map<Category, CategoryWithBudgetData?>,
-    onItemClick: (category: CategoryWithSubCategories) -> Unit,
-    onSetBudgetRequested: (category: CategoryWithSubCategories) -> Unit,
-    onItemLongClick: (category: CategoryWithSubCategories) -> Unit
+    categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    onItemClick: (category: Category) -> Unit,
+    onSetBudgetRequested: (category: Category) -> Unit,
+    onItemLongClick: (category: Category) -> Unit
 ) {
-    val nodes = categories.map { CategoryNode(it) }
+    val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
     SimpleTreeList(
         contentPadding = PaddingValues(
             bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
@@ -111,17 +114,35 @@ fun CategoryListView(
             showExpandIcon = node.children.isNotEmpty(),
             isExpanded = scope.isExpanded(node),
             onIsExpandedChanged = { scope.toggleExpanded(node) },
-            onItemTapped = { onItemClick(node.content) },
-            onItemLongPressed = { onItemLongClick(node.content) },
+            onItemTapped = { onItemClick(node.content.category) },
+            onItemLongPressed = { onItemLongClick(node.content.category) },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
-            val categoryWithCalculatedData = categoriesWithCalculatedData[node.content.category]
-            if (categoryWithCalculatedData != null) {
-                CategoryAndBudgetViewHolder(category = categoryWithCalculatedData)
+            val category = node.content.category
+            val aggregatedBudget = node.content.aggregatedBudget
+            val isExpanded = scope.isExpanded(node)
+            val childrenBudget = if (isExpanded) {
+                null
+            } else {
+                node.content.childrenAggregatedBudget
+            }
+
+            if (aggregatedBudget != null || childrenBudget != null) {
+                val budget = (aggregatedBudget
+                    ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData()) +
+                        (childrenBudget
+                            ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData())
+                CategoryAndBudgetViewHolder(
+                    categoryName = category.name,
+                    expectedFlowUntilNow = budget.expectedFlowUntilNow,
+                    expectedTotalFlow = budget.expectedTotalFlow,
+                    realTotalFlow = budget.realTotalFlow,
+                    completion = budget.compleition
+                )
             } else {
                 EmptyCategoryAndBudgetViewHolder(
                     node.content.category,
-                    onSetBudgetRequested = { onSetBudgetRequested(node.content) })
+                    onSetBudgetRequested = { onSetBudgetRequested(category) })
             }
         }
     }
@@ -134,8 +155,7 @@ private fun CategoryListPreview() {
         GazegeTheme {
             Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                 CategoryListView(
-                    categories = categoryWithSubcategoriesSample,
-                    categoriesWithCalculatedData = categoryWithCalculatedData,
+                    categoriesWithCalculatedData = categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
                     onItemClick = {},
                     onItemLongClick = {},
                     onSetBudgetRequested = {}
