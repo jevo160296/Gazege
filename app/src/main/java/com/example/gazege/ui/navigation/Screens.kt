@@ -316,16 +316,14 @@ fun NavGraphBuilder.screenEditarCategorias(
     onNavigateToAddBudget: (Int?) -> Unit
 ) {
     composable("editCategories") {
-        val categoriesWithSubCategories by viewModel.rememberCategoriesWithSubCategories()
-        val categoriesWithCalculatedData by viewModel.rememberCategoriesWithCalculatedData()
+        val categoryWithSubcategoriesAndBudgetWithCalculatedData by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         EditarCategorias(
-            categoriesWithSubCategories,
-            categoriesWithCalculatedData,
+            categoryWithSubcategoriesAndBudgetWithCalculatedData,
             onAddCategoryRequested = onNavigateToAddCategory,
-            onEditCategoryRequested = { onNavigateToEditCategory(it.category.id) },
-            onDeleteCategoryRequested = { viewModel.deleteCategory(it.category) },
-            onSetBudgetRequested = { onNavigateToAddBudget(it.category.id) }
+            onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
+            onDeleteCategoryRequested = { viewModel.deleteCategory(it) },
+            onSetBudgetRequested = { onNavigateToAddBudget(it.id) }
         )
     }
 }

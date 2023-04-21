@@ -21,7 +21,7 @@ import com.example.gazege.ui.widgets.GazegeProgressIndicator
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BudgetViewHolder(
-    budget: BudgetAndCategoryWithCalculatedData
+    budget: BudgetWithCalculatedDataAndCategory
 ) {
     val overlineText =
         " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}, type ${budget.budgetType}\n"
@@ -52,10 +52,10 @@ private fun BudgetViewHolder(
 fun BudgetRecyclerView(
     modifier: Modifier,
     itemHolderPaddingValues: PaddingValues,
-    budget: List<BudgetAndCategoryWithCalculatedData>,
-    onBudgetDetailRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit,
-    onBudgetDeleteRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit,
-    onBudgetEditRequested: (budget: BudgetAndCategoryWithCalculatedData) -> Unit
+    budget: List<BudgetWithCalculatedDataAndCategory>,
+    onBudgetDetailRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetDeleteRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetEditRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit
 ) {
     val state = rememberLazyListState()
     var menuIdExpanded: Int? by remember {

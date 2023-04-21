@@ -21,8 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.CategoryWithBudgetData
-import com.example.gazege.core.entities.CategoryWithSubCategories
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetContent
@@ -32,14 +31,13 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun EditarCategorias(
-    categories: List<CategoryWithSubCategories>,
-    categoriesWithCalculatedData: Map<Category, CategoryWithBudgetData?>,
+    categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onAddCategoryRequested: () -> Unit,
-    onEditCategoryRequested: (CategoryWithSubCategories) -> Unit,
-    onSetBudgetRequested: (CategoryWithSubCategories) -> Unit,
-    onDeleteCategoryRequested: (CategoryWithSubCategories) -> Unit
+    onEditCategoryRequested: (Category) -> Unit,
+    onSetBudgetRequested: (Category) -> Unit,
+    onDeleteCategoryRequested: (Category) -> Unit
 ) {
-    var categoryClicked: CategoryWithSubCategories? by remember {
+    var categoryClicked: Category? by remember {
         mutableStateOf(null)
     }
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -57,7 +55,7 @@ fun EditarCategorias(
                 onNoClicked = { scope.launch { sheetState.hide() } },
                 titleText = stringResource(id = R.string.confirmar_eliminacion),
                 bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
-                    categoryClicked?.category?.name
+                    categoryClicked?.name
                 )
             )
         },
@@ -80,7 +78,7 @@ fun EditarCategorias(
         ) {
             Box(modifier = Modifier.padding(it)) {
                 CategoryListView(
-                    categories = categories,
+                    categoriesWithCalculatedData = categoriesWithCalculatedData,
                     onItemClick = onEditCategoryRequested,
                     onItemLongClick = {
                         scope.launch {
@@ -88,7 +86,6 @@ fun EditarCategorias(
                             sheetState.show()
                         }
                     },
-                    categoriesWithCalculatedData = categoriesWithCalculatedData,
                     onSetBudgetRequested = onSetBudgetRequested
                 )
             }

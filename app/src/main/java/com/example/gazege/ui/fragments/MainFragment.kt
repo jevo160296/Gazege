@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +29,7 @@ import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.templates.DynamicAddEntityFAB
+import com.example.gazege.ui.theme.AppMode
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
@@ -160,6 +162,18 @@ fun MainFragment(
                 TopAppBar(
                     title = { MediumHeadline(text = title) },
                     actions = {
+                        val uriHandler = LocalUriHandler.current
+                        if (GazegeTheme.appMode == AppMode.DEBUG) {
+                            IconButton(onClick = {
+                                uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
+                            }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = R.drawable.bug_report
+                                    ), contentDescription = "Report bug"
+                                )
+                            }
+                        }
                         IconButton(onClick = onSettingsClicked) {
                             Icon(
                                 painter = painterResource(

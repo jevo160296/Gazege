@@ -145,19 +145,15 @@ interface BudgetDao {
                 startDate,
                 currentDate
             )
-            val budgetCompleition =
-                realTotalFlow.div(budgetExpectedTotalFlow).takeIf { !it.isNaN() }
-            return (budgetCompleition ?: 0.0).coerceIn(0.0..1.0)
+            return calculateBudgetCompleition(realTotalFlow, budgetExpectedTotalFlow)
         }
 
-        fun calculateBudgetCompletion(
-            budget: List<BudgetAndCategoryWithCalculatedData>
-        ): Double {
-            val realTotalFlow = budget.sumOf { it.budgetRealTotalFlow }
-            val budgetExpectedTotalFlow = budget.sumOf { it.budgetExpectedTotalFlow }
-            val budgetCompletion = realTotalFlow.div(budgetExpectedTotalFlow).takeIf { !it.isNaN() }
-            return (budgetCompletion ?: 0.0).coerceIn(0.0..1.0)
-        }
+        fun calculateBudgetCompleition(realTotalFlow: Double, expectedTotalFlow: Double) =
+            realTotalFlow
+                .div(expectedTotalFlow)
+                .takeIf { !it.isNaN() }
+                .let { it ?: 0.0 }
+                .coerceIn(0.0..1.0)
 
         /**
          * Calculates the amount left to pay for a budget, based on the expected remaining flow and the real total flow.
