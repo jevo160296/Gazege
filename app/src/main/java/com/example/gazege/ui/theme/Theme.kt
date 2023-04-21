@@ -3,11 +3,12 @@ package com.example.gazege.ui.theme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -130,6 +131,7 @@ object GazegeTheme {
         get() = LocalAppMode.current
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ThemePreviewLight() {
@@ -151,6 +153,7 @@ private fun ThemePreviewLight() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ThemePreviewDark() {
@@ -164,7 +167,7 @@ private fun ThemePreviewDark() {
                     )
                 }
             },
-            backgroundColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background
         ) {
             Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.padding(it)) {
                 Text(text = "Surface", color = MaterialTheme.colorScheme.onSurface)

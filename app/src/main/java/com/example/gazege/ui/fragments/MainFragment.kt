@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FabPosition
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -124,11 +122,11 @@ fun MainFragment(
                 )
             },
             floatingActionButtonPosition = FabPosition.End,
-            isFloatingActionButtonDocked = false,
-            backgroundColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 NavigationBar {
-                    NavigationBarItem(selected = navPosition == NavPosition.CUENTAS,
+                    NavigationBarItem(
+                        selected = navPosition == NavPosition.CUENTAS,
                         onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
                         icon = {
                             Icon(
