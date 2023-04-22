@@ -21,39 +21,6 @@ import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun <T> OptionsGroupView(
-    groupedOptions: Map<String?, List<T>>,
-    onItemClick: (T) -> Unit,
-    itemToString: (T?) -> String
-) {
-    groupedOptions.map {
-        val group = it.key
-        val values = it.value
-        if (group != null) {
-            Text(group, modifier = Modifier.padding(4.dp))
-        }
-        values.map {
-            DropdownMenuItem(
-                text = { Text(itemToString(it)) },
-                onClick = { onItemClick(it) },
-                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-            )
-        }
-    }
-}
-
-private fun partialStringMatch(originalString: String, stringToMatch: String) =
-    originalString.matches(
-        Regex(
-            ".*$stringToMatch.*",
-            setOf(
-                RegexOption.DOT_MATCHES_ALL,
-                RegexOption.IGNORE_CASE
-            )
-        )
-    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,6 +159,65 @@ fun <N, C : Node<N, C>> TreeComboBox(
     }
 }
 
+@Composable
+fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
+    itemToString: (C?) -> String,
+    node: C,
+    onItemClick: (C) -> Unit,
+    contentPadding: PaddingValues,
+    enabled: Boolean
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    DropdownMenuItem(
+        text = { Text(itemToString(node)) },
+        onClick = { onItemClick(node) },
+        contentPadding = contentPadding.let {
+            PaddingValues(
+                start = 8.dp,
+                top = it.calculateTopPadding(),
+                bottom = it.calculateBottomPadding(),
+                end = it.calculateEndPadding(layoutDirection)
+            )
+        },
+        enabled = enabled
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> OptionsGroupView(
+    groupedOptions: Map<String?, List<T>>,
+    onItemClick: (T) -> Unit,
+    itemToString: (T?) -> String
+) {
+    groupedOptions.map {
+        val group = it.key
+        val values = it.value
+        if (group != null) {
+            Text(group, modifier = Modifier.padding(4.dp))
+        }
+        values.map {
+            DropdownMenuItem(
+                text = { Text(itemToString(it)) },
+                onClick = { onItemClick(it) },
+                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            )
+        }
+    }
+}
+
+private fun partialStringMatch(originalString: String, stringToMatch: String) =
+    originalString.matches(
+        Regex(
+            ".*$stringToMatch.*",
+            setOf(
+                RegexOption.DOT_MATCHES_ALL,
+                RegexOption.IGNORE_CASE
+            )
+        )
+    )
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <N, C : Node<N, C>> OptionsGroupTreeView(
@@ -237,28 +263,4 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
             )
         }
     }
-}
-
-@Composable
-fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
-    itemToString: (C?) -> String,
-    node: C,
-    onItemClick: (C) -> Unit,
-    contentPadding: PaddingValues,
-    enabled: Boolean
-) {
-    val layoutDirection = LocalLayoutDirection.current
-    DropdownMenuItem(
-        text = { Text(itemToString(node)) },
-        onClick = { onItemClick(node) },
-        contentPadding = contentPadding.let {
-            PaddingValues(
-                start = 8.dp,
-                top = it.calculateTopPadding(),
-                bottom = it.calculateBottomPadding(),
-                end = it.calculateEndPadding(layoutDirection)
-            )
-        },
-        enabled = enabled
-    )
 }
