@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PersonDetail(
     person: Person,
+    principalPerson: Person?,
     allTransactions: List<Transaction>,
     allAccounts: List<Account>,
     allCategories: List<Category>,
@@ -50,7 +51,8 @@ fun PersonDetail(
     val transactionListItemDetails = TransactionListItemDetails.from(
         transactions = transactions,
         accounts = allAccounts,
-        categories = allCategories
+        categories = allCategories,
+        principalPersonId = principalPerson?.id
     )
     EntityDetail(
         modalController = modalController,

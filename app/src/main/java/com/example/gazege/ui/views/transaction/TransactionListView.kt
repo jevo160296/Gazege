@@ -11,19 +11,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.Account
-import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionListItemDetails
+import com.example.gazege.core.entities.TransactionType
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.doubleToMoneyString
@@ -36,84 +40,6 @@ import com.example.gazege.ui.widgets.DefaultGroupViewHolder
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.SmallEmphasis
-import java.time.LocalDate
-
-@Composable
-private fun TransactionViewHolder(
-    transaction: TransactionListItemDetails
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(70.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(0.7f),
-            verticalArrangement = Arrangement.Top
-        ) {
-            Row(modifier = Modifier) {
-                LargeEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
-                LargeBody(text = transaction.sourceAccount.name)
-                LargeEmphasis(text = " --> ")
-                LargeBody(text = transaction.destinationAccount.name)
-            }
-            Row(modifier = Modifier) {
-                LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
-                LargeBody(
-                    text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
-                )
-            }
-            Row(modifier = Modifier) {
-                LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
-                LargeBody(text = transaction.transaction.description)
-            }
-        }
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .weight(0.3f),
-            horizontalAlignment = Alignment.End
-        ) {
-            SmallEmphasis(text = stringResource(id = R.string.Valor))
-            LargeBody(text = doubleToMoneyString(transaction.transaction.amount))
-        }
-    }
-}
-
-@Composable
-private fun TransactionGroupItemViewHolder(
-    transaction: TransactionListItemDetails,
-    editTransaction: (TransactionListItemDetails) -> Unit,
-    delTransaction: (TransactionListItemDetails) -> Unit
-) = ClickableListItemViewHolder(
-    onItemTapped = { editTransaction(transaction) },
-    onItemLongPressed = { delTransaction(transaction) }
-) {
-    TransactionViewHolder(transaction = transaction)
-}
-
-@Composable
-private fun TransactionRecyclerView(
-    transactionList: List<TransactionListItemDetails>,
-    editTransaction: (TransactionListItemDetails) -> Unit,
-    delTransaction: (TransactionListItemDetails) -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
-    state: LazyListState
-) = GroupedLazyList(
-    modifier = modifier,
-    state = state,
-    contentPadding = contentPadding,
-    items = transactionList,
-    groupSelector = { transactionGroupSelector(it.transaction) },
-    groupViewHolder = { TransactionHeaderViewHolder(it) }
-) {
-    TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
-}
 
 @Composable
 fun TransactionPage(
@@ -160,33 +86,134 @@ fun LazyListScope.transactionLazyListItems(
     TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
 }
 
+@Composable
+private fun TransactionViewHolder(
+    transaction: TransactionListItemDetails
+) {
+    val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
+        { icon, text, color ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.DefaultPadding))
+            ) {
+                Icon(painter = icon, contentDescription = "Icon", tint = color)
+                SmallEmphasis(text = text, color = color)
+            }
+        }
+    val tipoRow: @Composable () -> Unit = @Composable {
+        when (transaction.transactionType) {
+            TransactionType.INCOME -> iconText(
+                painterResource(R.drawable.ingreso_icon),
+                stringResource(R.string.Ingreso),
+                colorResource(R.color.green)
+            )
+
+            TransactionType.OUTCOME -> iconText(
+                painterResource(R.drawable.gasto_icon),
+                stringResource(R.string.Gasto),
+                colorResource(R.color.red)
+            )
+
+            TransactionType.TRANSFER -> iconText(
+                painterResource(R.drawable.transfer_icon),
+                stringResource(R.string.Transferencia),
+                colorResource(R.color.blue)
+            )
+        }
+    }
+    val accountRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
+        if (transaction.sourceAccount.isIncome.not()) {
+            LargeBody(text = transaction.sourceAccount.name, maxLines = 1)
+        }
+        if (transaction.sourceAccount.isIncome.not() && transaction.destinationAccount.isOutcome.not()) {
+            LargeEmphasis(text = " --> ", maxLines = 1)
+        }
+        if (transaction.destinationAccount.isOutcome.not()) {
+            LargeBody(text = transaction.destinationAccount.name, maxLines = 1)
+        }
+    }
+    val categoryRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
+        LargeBody(
+            text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+        )
+    }
+    val descriptionRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
+        LargeBody(text = transaction.transaction.description)
+    }
+
+    Column {
+        tipoRow()
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.7f),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Row(modifier = Modifier) { accountRow() }
+                Row(modifier = Modifier) { categoryRow() }
+                Row(modifier = Modifier) { descriptionRow() }
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(0.3f),
+                horizontalAlignment = Alignment.End
+            ) {
+                LargeBody(text = doubleToMoneyString(transaction.transaction.amount))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransactionGroupItemViewHolder(
+    transaction: TransactionListItemDetails,
+    editTransaction: (TransactionListItemDetails) -> Unit,
+    delTransaction: (TransactionListItemDetails) -> Unit
+) = ClickableListItemViewHolder(
+    onItemTapped = { editTransaction(transaction) },
+    onItemLongPressed = { delTransaction(transaction) }
+) {
+    TransactionViewHolder(transaction = transaction)
+}
+
+@Composable
+private fun TransactionRecyclerView(
+    transactionList: List<TransactionListItemDetails>,
+    editTransaction: (TransactionListItemDetails) -> Unit,
+    delTransaction: (TransactionListItemDetails) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    state: LazyListState
+) = GroupedLazyList(
+    modifier = modifier,
+    state = state,
+    contentPadding = contentPadding,
+    items = transactionList,
+    groupSelector = { transactionGroupSelector(it.transaction) },
+    groupViewHolder = { TransactionHeaderViewHolder(it) }
+) {
+    TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun PreviewTransactionItem() {
-    val person = Person(name = "Person", id = 0)
-    val sourceAccount = Account(
-        name = "Account1", ownerId = person.id ?: -1
-    )
-    val destinationAccount = Account(
-        name = "Account2", ownerId = person.id ?: -1
-    )
-    val categoria = Category(
-        id = 0, name = "Categoría", parentId = null
-    )
-    val transaction = Transaction(
-        amount = 0.0, description = "Trans", date = LocalDate.now(),
-        destinationId = destinationAccount.id ?: -1, sourceId = sourceAccount.id ?: -1,
-        aNombreDe = null, categoryId = 0
-    )
-    val transactionListItemDetails = TransactionListItemDetails(
-        transaction = transaction,
-        category = categoria,
-        sourceAccount,
-        destinationAccount
-    )
-    GazegeTheme {
-        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            TransactionViewHolder(transaction = transactionListItemDetails)
+    DatabaseSample {
+        GazegeTheme {
+            Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                TransactionViewHolder(transaction = transactionListItemDetailsSample.first())
+            }
         }
     }
 }

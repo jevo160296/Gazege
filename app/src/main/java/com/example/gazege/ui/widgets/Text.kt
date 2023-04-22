@@ -7,7 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.ui.theme.Typography
 
@@ -16,79 +18,91 @@ fun SmallEmphasis(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
-    color: Color = Color.Unspecified
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        modifier = modifier,
-        textAlign = textAlign,
-        color = color
-    )
-}
+    color: Color = Color.Unspecified,
+    maxLines: Int = Int.MAX_VALUE
+) = textFunctionWrapper(MaterialTheme.typography.labelSmall)(
+    text,
+    modifier,
+    textAlign,
+    color,
+    maxLines
+)
 
 @Composable
 fun SmallBody(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
-    color: Color = Color.Unspecified
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        modifier = modifier,
-        textAlign = textAlign,
-        color = color
-    )
-}
+    color: Color = Color.Unspecified,
+    maxLines: Int = Int.MAX_VALUE
+) = textFunctionWrapper(MaterialTheme.typography.bodySmall)(
+    text,
+    modifier,
+    textAlign,
+    color,
+    maxLines
+)
 
 @Composable
 fun LargeEmphasis(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
-    color: Color = Color.Unspecified
-) {
-    Text(
-        text = text,
-        modifier = modifier,
-        style = MaterialTheme.typography.labelLarge,
-        color = color,
-        textAlign = textAlign
-    )
-}
+    color: Color = Color.Unspecified,
+    maxLines: Int = Int.MAX_VALUE
+) = textFunctionWrapper(MaterialTheme.typography.labelLarge)(
+    text,
+    modifier,
+    textAlign,
+    color,
+    maxLines
+)
 
 @Composable
 fun LargeBody(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
-    color: Color = Color.Unspecified
-) {
-    Text(
-        text = text,
-        modifier = modifier,
-        style = MaterialTheme.typography.bodyLarge,
-        textAlign = textAlign,
-        color = color
-    )
-}
+    color: Color = Color.Unspecified,
+    maxLines: Int = Int.MAX_VALUE
+) = textFunctionWrapper(MaterialTheme.typography.bodyLarge)(
+    text,
+    modifier,
+    textAlign,
+    color,
+    maxLines
+)
 
 @Composable
 fun MediumHeadline(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
-    color: Color = Color.Unspecified
-) {
-    Text(
-        text,
-        modifier = modifier,
-        style = Typography.headlineMedium,
-        textAlign = textAlign,
-        color = color
-    )
+    color: Color = Color.Unspecified,
+    maxLines: Int = Int.MAX_VALUE
+) = textFunctionWrapper(Typography.headlineMedium)(text, modifier, textAlign, color, maxLines)
+
+private fun textFunctionWrapper(
+    style: TextStyle
+): @Composable (String, Modifier, TextAlign?, Color, Int) -> Unit {
+    val function: @Composable (
+        text: String,
+        modifier: Modifier,
+        textAlign: TextAlign?,
+        color: Color,
+        maxLines: Int
+    ) -> Unit = @Composable { text, modifier, textAlign, color, maxLines ->
+        Text(
+            text = text,
+            modifier = modifier,
+            style = style,
+            textAlign = textAlign,
+            color = color,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+    return function
 }
 
 @Preview(showBackground = true)

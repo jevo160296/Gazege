@@ -874,6 +874,7 @@ fun NavGraphBuilder.screenPersonDetail(
         val allAccount by viewModel.rememberAllAccount()
         val categories by viewModel.rememberCategories()
         val personSummaryState by viewModel.rememberPersonSummaryState()
+        val principalPerson by viewModel.rememberPrincipalPerson()
 
         val personId = navStack.arguments?.getInt("personId")
         val person = allPerson.firstOrNull { it.id == personId }
@@ -900,7 +901,8 @@ fun NavGraphBuilder.screenPersonDetail(
                         TransactionAction.DELETE -> viewModel.deleteTransaction(transaction)
                     }
                 },
-                deuda = deuda
+                deuda = deuda,
+                principalPerson = principalPerson
             )
         } else {
             Text(text = "Empty person")

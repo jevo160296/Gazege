@@ -3,8 +3,6 @@ package com.example.gazege.ui.widgets
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarHost
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,13 +30,10 @@ fun Form(
             .systemBarsPadding()
             .imePadding(),
         snackbarHost = {
-            if (snackbarHostState == null) {
-                SnackbarHost(hostState = it)
-            } else {
+            if (snackbarHostState != null) {
                 SnackbarHost(hostState = snackbarHostState)
             }
         },
-        backgroundColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (isSavedButtonEnabled) {
                 FloatingActionButton(

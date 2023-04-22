@@ -5,16 +5,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FabPosition
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.Scaffold
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -124,11 +121,10 @@ fun MainFragment(
                 )
             },
             floatingActionButtonPosition = FabPosition.End,
-            isFloatingActionButtonDocked = false,
-            backgroundColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 NavigationBar {
-                    NavigationBarItem(selected = navPosition == NavPosition.CUENTAS,
+                    NavigationBarItem(
+                        selected = navPosition == NavPosition.CUENTAS,
                         onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
                         icon = {
                             Icon(
@@ -183,7 +179,8 @@ fun MainFragment(
                         }
                     }
                 )
-            }
+            },
+            contentWindowInsets = WindowInsets.statusBars
         ) {
             MainFragmentResponsiveContent(
                 it,
@@ -253,14 +250,12 @@ private fun MainFragmentResponsiveContent(
     onSettingsClicked: () -> Unit,
     showVertical: Boolean
 ) {
-    val paddingValues = layoutPaddingValues.let {
-        PaddingValues(
-            top = it.calculateTopPadding() + 8.dp,
-            bottom = it.calculateBottomPadding() + dimensionResource(id = R.dimen.FABDefaultSpace),
-            start = it.calculateStartPadding(LocalLayoutDirection.current) + 8.dp,
-            end = it.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
-        )
-    }
+    val paddingValues = PaddingValues(
+        top = 8.dp,
+        bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
+        start = 8.dp,
+        end = 8.dp
+    )
     val startDate = range.first
     val endDate = range.second
 
@@ -373,13 +368,13 @@ private fun MainFragmentResponsiveContent(
     }
 
     if (showVertical) {
-        Column {
+        Column(Modifier.padding(layoutPaddingValues)) {
             filter()
             personMonthSummaryView()
             navigationView()
         }
     } else {
-        Row {
+        Row(Modifier.padding(layoutPaddingValues)) {
             Column(modifier = Modifier.widthIn(max = 350.dp)) {
                 filter()
                 personMonthSummaryView()

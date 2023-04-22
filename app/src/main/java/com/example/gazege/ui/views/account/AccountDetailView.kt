@@ -47,7 +47,8 @@ data class AccountDetailData constructor(
     val allCategories: List<Category>,
     val budget: List<Budget>,
     val startDate: LocalDate?,
-    val endDate: LocalDate?
+    val endDate: LocalDate?,
+    val principalPerson: Person?
 ) {
     val total = AccountDao.getTotal(account.accountAndOwnerWithTransactions, startDate, endDate)
     val chilrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
@@ -67,7 +68,8 @@ data class AccountDetailData constructor(
         TransactionListItemDetails.from(
             transactions = allTransactions,
             accounts = allAccounts,
-            categories = allCategories
+            categories = allCategories,
+            principalPersonId = principalPerson?.id
         )
 
     val expensesPlotData: PlotData = PlotData(outTransactions)
@@ -90,6 +92,7 @@ data class AccountDetailData constructor(
             budget: List<Budget>,
             startDate: LocalDate?,
             endDate: LocalDate?,
+            principalPerson: Person?
         ): AccountDetailData {
             return AccountDetailData(
                 account = account,
@@ -97,7 +100,8 @@ data class AccountDetailData constructor(
                 allCategories = allCategories,
                 budget = budget,
                 startDate = startDate,
-                endDate = endDate
+                endDate = endDate,
+                principalPerson = principalPerson
             )
         }
     }
@@ -435,6 +439,7 @@ private fun NullAccountDetail(
             listOf(),
             listOf(),
             null,
+            null,
             null
         ),
         onAction = { _, _ -> },
@@ -472,7 +477,8 @@ private fun AccountDetailPreview() {
                             allCategories = categorieSample,
                             budget = budgetSample,
                             startDate = null,
-                            endDate = null
+                            endDate = null,
+                            principalPerson = null
                         ),
                         onAction = { account, action ->
                             scope.launch {
