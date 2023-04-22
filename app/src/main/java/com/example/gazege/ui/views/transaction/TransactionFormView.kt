@@ -123,6 +123,7 @@ fun TransactionAndAccountsForm(
     } else {
         ImeAction.Next
     }
+
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
@@ -183,7 +184,7 @@ fun TransactionAndAccountsForm(
             )
         }
         if (showSourceAccountField) {
-            if (accountList.isNotEmpty()) {
+            if (accountList.isNotEmpty() && accountList.size > deactivatedSourceAccountList.size) {
                 AccountDropDownMenu(
                     accountsList = accountList,
                     selectedAccountNode = selectedSourceNode,
@@ -208,7 +209,7 @@ fun TransactionAndAccountsForm(
             }
         }
         if (showDestinationAccountField) {
-            if (accountList.isNotEmpty()) {
+            if (accountList.isNotEmpty() && accountList.size > deactivatedDestinationAccountList.size) {
                 AccountDropDownMenu(
                     accountsList = accountList,
                     selectedAccountNode = selectedDestinationNode,
