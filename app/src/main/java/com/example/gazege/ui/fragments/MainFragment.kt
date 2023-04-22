@@ -121,7 +121,6 @@ fun MainFragment(
                 )
             },
             floatingActionButtonPosition = FabPosition.End,
-            contentColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 NavigationBar {
                     NavigationBarItem(

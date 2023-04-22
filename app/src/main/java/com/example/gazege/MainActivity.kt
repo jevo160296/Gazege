@@ -127,9 +127,7 @@ class MainActivity : ComponentActivity() {
                     MutableTransitionState(appInitialized.not())
                 }
 
-                Box(
-                    modifier = modifier.background(MaterialTheme.colorScheme.background)
-                ) {
+                Box(modifier = modifier) {
                     if (showInitialSplashScreen) {
                         SplashScreenFragment(
                             transitionDuration = 800,

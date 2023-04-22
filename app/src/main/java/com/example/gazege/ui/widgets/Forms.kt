@@ -34,7 +34,6 @@ fun Form(
                 SnackbarHost(hostState = snackbarHostState)
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (isSavedButtonEnabled) {
                 FloatingActionButton(
