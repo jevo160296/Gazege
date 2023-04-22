@@ -5,8 +5,10 @@ package com.example.gazege.ui.widgets
 import android.icu.text.DecimalFormat
 import android.os.Parcelable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
 import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
@@ -50,7 +53,7 @@ fun TextField(
     shape: Shape = TextFieldDefaults.filledShape,
     colors: TextFieldColors = TextFieldDefaults.textFieldColors()
 ) {
-    androidx.compose.material3.TextField(
+    OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
@@ -317,7 +320,7 @@ private fun TextFieldPreview() {
         var valor by remember {
             mutableStateOf("Valor1")
         }
-        Column {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             TextField(value = valor, onValueChange = {
                 valor = it
             })

@@ -26,17 +26,22 @@ private fun BudgetViewHolder(
     val overlineText =
         " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}, type ${budget.budgetType}\n"
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
+    val leftToPayString = stringResource(id = R.string.Falta_pagar_recibir)
+    val expectedFlowUntilNowString = stringResource(id = R.string.Flujo_estimado_hasta_hoy)
+    val realTotalFlowString = stringResource(id = R.string.Flujo_total)
+    val expectedTotalFlowString = stringResource(id = R.string.Flujo_real)
+    val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_hoy)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
             GazegeProgressIndicator(
                 budget.budgetCompleition,
                 stringResource(id = R.string.Progreso)
             )
-            Text(text = "leftToPay ${doubleToMoneyString(budget.budgetLeftToPay)}")
-            Text(text = "expectedTotalFlow ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
-            Text(text = "expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
-            Text(text = "realTotalFlow ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
-            Text(text = "expectedFlowUntilNow ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
+            Text(text = "$leftToPayString ${doubleToMoneyString(budget.budgetLeftToPay)}")
+            Text(text = "$expectedFlowUntilNowString ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
+            Text(text = "$realTotalFlowString ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
+            Text(text = "$expectedTotalFlowString ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
+            Text(text = "$expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
         }
     }
 
