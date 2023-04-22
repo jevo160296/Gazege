@@ -179,7 +179,8 @@ fun MainFragment(
                         }
                     }
                 )
-            }
+            },
+            contentWindowInsets = WindowInsets.statusBars
         ) {
             MainFragmentResponsiveContent(
                 it,
