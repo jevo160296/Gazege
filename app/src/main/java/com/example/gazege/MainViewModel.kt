@@ -505,14 +505,15 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     private val accountDetailData: LiveData<AccountDetailData?> =
         MediatorLiveData<AccountDetailData?>()
-            .mergeFiveNullableSources(
+            .mergeSixNullableSources(
                 "accountDetailData",
                 accountDetail,
                 allAccount,
                 categories,
                 budget,
-                range
-            ) { a, b, c, d, e ->
+                range,
+                principalPerson
+            ) { a, b, c, d, e, f ->
                 a?.let {
                     AccountDetailData.build(
                         account = a,
@@ -520,7 +521,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                         allCategories = c ?: emptyList(),
                         budget = d ?: emptyList(),
                         startDate = e?.first,
-                        endDate = e?.second
+                        endDate = e?.second,
+                        principalPerson = f
                     )
                 }
             }
@@ -528,13 +530,18 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
     private val filteredTransactionListitemDetails: LiveData<List<TransactionListItemDetails>> =
         MediatorLiveData<List<TransactionListItemDetails>>()
-            .mergeThreeSources(
+            .mergeFourNullableSources(
                 "filteredTransactionListitemDetails",
                 rangeTransactions,
                 categories,
-                allAccount
-            ) { a, b, c ->
-                TransactionListItemDetails.from(a, b, c)
+                allAccount,
+                principalPerson
+            ) { a, b, c, d ->
+                if (a != null && b != null && c != null) {
+                    TransactionListItemDetails.from(a, b, c, d?.id)
+                } else {
+                    emptyList()
+                }
             }
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>()

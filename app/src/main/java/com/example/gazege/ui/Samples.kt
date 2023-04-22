@@ -122,7 +122,8 @@ class DatabaseSampleScope {
         getTransactionListItemDetailsSample(
             transactionSample,
             categorieSample,
-            accountSample
+            accountSample,
+            principalPerson = personSample[0]
         )
     }
     val budgetWithCalculatedDataAndCategorySample by lazy {
@@ -391,11 +392,13 @@ private fun getTransactionAndAccountsAndCategorySample(
 private fun getTransactionListItemDetailsSample(
     transactions: List<Transaction>,
     categories: List<Category>,
-    accounts: List<Account>
+    accounts: List<Account>,
+    principalPerson: Person?
 ): List<TransactionListItemDetails> = TransactionListItemDetails.from(
     transactions,
     categories,
-    accounts
+    accounts,
+    principalPerson?.id
 )
 
 private fun getCategoryWithSubcategoriesAndBudgetWithCalculatedDataSample(
