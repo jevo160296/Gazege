@@ -85,7 +85,7 @@ fun SettingsFragment(
                 label = { Text(stringResource(id = R.string.Persona_principal)) }
             )
         }
-        if (accountList.isEmpty()) {
+        if (accountList.isEmpty() || accountList.size <= deactivatedAccountListNoOutcome.size) {
             ButtonField(onClick = onAddAccountRequested) {
                 Text(text = stringResource(id = R.string.Nueva_cuenta))
             }
@@ -102,7 +102,7 @@ fun SettingsFragment(
                 onClearSelectionClicked = { incomeIdSelected = null }
             )
         }
-        if (accountList.isEmpty()) {
+        if (accountList.isEmpty() || accountList.size <= deactivatedAccountListNoIncome.size) {
             ButtonField(onClick = onAddAccountRequested) {
                 Text(text = stringResource(id = R.string.Nueva_cuenta))
             }
