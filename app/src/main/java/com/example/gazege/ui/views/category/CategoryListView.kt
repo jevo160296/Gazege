@@ -37,6 +37,7 @@ import com.example.gazege.ui.widgets.treeview.rememberTreeState
 @Composable
 private fun CategoryAndBudgetViewHolder(
     categoryName: String,
+    leftToPay: Double,
     expectedFlowUntilNow: Double,
     expectedTotalFlow: Double,
     realTotalFlow: Double,
@@ -51,12 +52,14 @@ private fun CategoryAndBudgetViewHolder(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(stringResource(id = R.string.flujo_hasta_hoy))
+            Text(stringResource(id = R.string.Falta_pagar_recibir))
+            Text(stringResource(id = R.string.Flujo_estimado_hasta_hoy))
             Text(stringResource(id = R.string.Flujo_total))
             Text(stringResource(id = R.string.Flujo_real))
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
         Column {
+            Text(doubleToMoneyString(leftToPay))
             Text(doubleToMoneyString(expectedFlowUntilNow))
             Text(doubleToMoneyString(expectedTotalFlow))
             Text(doubleToMoneyString(realTotalFlow))
@@ -134,6 +137,7 @@ fun CategoryListView(
                             ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData())
                 CategoryAndBudgetViewHolder(
                     categoryName = category.name,
+                    leftToPay = budget.leftToPay,
                     expectedFlowUntilNow = budget.expectedFlowUntilNow,
                     expectedTotalFlow = budget.expectedTotalFlow,
                     realTotalFlow = budget.realTotalFlow,

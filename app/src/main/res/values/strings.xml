@@ -76,7 +76,9 @@
     <string name="Incluir_presupuesto">Incluir presupuesto</string>
     <string name="Proyeccion_presupuesto">Proyección presupuesto</string>
     <string name="Incluir_deudas">Incluir deudas</string>
-    <string name="flujo_hasta_hoy">Flujo hasta hoy</string>
+    <string name="Flujo_estimado_hasta_hoy">Flujo estimado hasta hoy</string>
     <string name="Flujo_total">Flujo total</string>
     <string name="Flujo_real">Flujo real</string>
+    <string name="Falta_pagar_recibir">Falta pagar-recibir</string>
+    <string name="Flujo_estimado_desde_hoy">Flujo estimado desde hoy</string>
 </resources>

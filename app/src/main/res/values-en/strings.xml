@@ -75,7 +75,9 @@
     <string name="Incluir_presupuesto">Include budget</string>
     <string name="Proyeccion_presupuesto">Budget forecast</string>
     <string name="Incluir_deudas">Include debts</string>
-    <string name="flujo_hasta_hoy">Flow until now</string>
+    <string name="Flujo_estimado_hasta_hoy">Estimated flow until now</string>
     <string name="Flujo_total">Total flow</string>
     <string name="Flujo_real">Real flow</string>
+    <string name="Falta_pagar_recibir">Left to pay-receive</string>
+    <string name="Flujo_estimado_desde_hoy">Estimated flow since now</string>
 </resources>
