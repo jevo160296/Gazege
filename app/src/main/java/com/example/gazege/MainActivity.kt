@@ -111,8 +111,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 var modifier = Modifier
-                    .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize()
                     .statusBarsPadding()
 
                 if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -129,11 +129,13 @@ class MainActivity : ComponentActivity() {
 
                 Box(modifier = modifier) {
                     if (showInitialSplashScreen) {
-                        SplashScreenFragment(
-                            transitionDuration = 800,
-                            iconVisibility = IconVisibility.FADE_IN,
-                            textVisibility = TextVisibility.FADE_IN
-                        )
+                        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                            SplashScreenFragment(
+                                transitionDuration = 800,
+                                iconVisibility = IconVisibility.FADE_IN,
+                                textVisibility = TextVisibility.FADE_IN
+                            )
+                        }
                     } else {
                         val timeMillis = 1500L
                         val transitionDuration = timeMillis
