@@ -12,11 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,6 +91,7 @@ enum class AppMode {
 }
 
 internal val LocalAppMode = staticCompositionLocalOf { AppMode.DEBUG }
+internal val LocalGazegeColorScheme = staticCompositionLocalOf { lightColorScheme().second }
 
 @Composable
 fun GazegeTheme(
@@ -111,14 +111,21 @@ fun GazegeTheme(
         LightColors
     }
 
+    val rememberedColorScheme = remember {
+        colors.second.copy()
+    }.apply {
+        updateColorSchemeFrom(colors.second)
+    }
+
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = colors.first,
         typography = Typography,
         shapes = Shapes,
         content = {
             CompositionLocalProvider(
                 LocalAppMode provides appModeParsed,
-                LocalContentColor provides colors.onBackground
+                LocalContentColor provides colors.first.onBackground,
+                LocalGazegeColorScheme provides rememberedColorScheme
             ) {
                 content()
             }
@@ -131,6 +138,11 @@ object GazegeTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalAppMode.current
+
+    val gazegeColorScheme: GazegeColorScheme
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalGazegeColorScheme.current
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
