@@ -2,6 +2,7 @@ package com.example.gazege
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
@@ -105,7 +106,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
 
     @Composable
-    fun rememberAccountDetailData() = accountDetailData.observeAsState()
+    fun rememberAccountDetailData(accountId: Int?): State<AccountDetailData?> {
+        updateAccountDetailIdIfDifferent(accountId)
+        return accountDetailData.observeAsState()
+    }
 
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
@@ -666,7 +670,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     }
 
-    fun updateAccountDetailIdIfDifferent(newId: Int?) {
+    private fun updateAccountDetailIdIfDifferent(newId: Int?) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId
         }

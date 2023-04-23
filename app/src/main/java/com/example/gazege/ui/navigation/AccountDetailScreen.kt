@@ -38,8 +38,7 @@ fun NavGraphBuilder.screenAccountDetail(
         )
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
-        viewModel.updateAccountDetailIdIfDifferent(accountId)
-        val data by viewModel.rememberAccountDetailData()
+        val data by viewModel.rememberAccountDetailData(accountId)
         var fabExpanded by remember { mutableStateOf(false) }
 
         val accountAndOwner by viewModel.rememberAccountAndOwner()
