@@ -110,15 +110,6 @@ class MainActivity : ComponentActivity() {
                     // setStatusBarColor() and setNavigationBarColor() also exist
                 }
 
-                var modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
-                    .statusBarsPadding()
-
-                if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    modifier = modifier.navigationBarsPadding()
-                }
-
                 val appInitialized = mainViewModel.appInitialized()
                 var showInitialSplashScreen by rememberSaveable {
                     mutableStateOf(appInitialized.not())
@@ -127,7 +118,18 @@ class MainActivity : ComponentActivity() {
                     MutableTransitionState(appInitialized.not())
                 }
 
-                Box(modifier = modifier) {
+                Box(modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .run {
+                        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                            this.navigationBarsPadding()
+                        } else {
+                            this
+                        }
+                    })
+                {
                     if (showInitialSplashScreen) {
                         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                             SplashScreenFragment(
