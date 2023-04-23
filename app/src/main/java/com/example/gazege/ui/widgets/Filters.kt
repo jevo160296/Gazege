@@ -61,8 +61,7 @@ fun Filter(
                 painter = painterResource(
                     id = R.drawable.round_filter_list_off_24
                 ),
-                contentDescription = "Clear filters",
-                tint = MaterialTheme.colorScheme.onBackground
+                contentDescription = "Clear filters"
             )
         }
     }
@@ -91,8 +90,7 @@ fun DateFilterItems(
             painter = painterResource(
                 id = R.drawable.round_arrow_left_24
             ),
-            contentDescription = "Left",
-            tint = MaterialTheme.colorScheme.onBackground
+            contentDescription = "Left"
         )
     }
     Text(
@@ -124,8 +122,7 @@ fun DateFilterItems(
             painter = painterResource(
                 id = R.drawable.round_arrow_right_24
             ),
-            contentDescription = "Right",
-            tint = MaterialTheme.colorScheme.onBackground
+            contentDescription = "Right"
         )
     }
 }
