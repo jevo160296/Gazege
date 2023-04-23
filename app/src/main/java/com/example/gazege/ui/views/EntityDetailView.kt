@@ -3,6 +3,7 @@ package com.example.gazege.ui.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
@@ -78,7 +79,8 @@ internal fun EntityDetail(
                     }
                 )
             },
-            floatingActionButton = floatingActionButton
+            floatingActionButton = floatingActionButton,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
