@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -116,7 +117,8 @@ fun GazegeTheme(
         shapes = Shapes,
         content = {
             CompositionLocalProvider(
-                LocalAppMode provides appModeParsed
+                LocalAppMode provides appModeParsed,
+                LocalContentColor provides colors.onBackground
             ) {
                 content()
             }
