@@ -1,6 +1,10 @@
 package com.example.gazege.ui.navigation
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -158,19 +162,20 @@ fun MainNavHost(
                 onNavigateUp = navController::navigateUp
             )
         }
-        Spacer(
+        AnimatedVisibility(
+            visible = currentRoute != "main" && currentRoute?.isNotEmpty() == true,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .run {
-                    if (currentRoute != "main" && currentRoute?.isNotEmpty() == true) {
-                        this.navigationBarsPadding()
-                    } else {
-                        this
-                    }
-                }
-        )
+                .align(Alignment.BottomCenter),
+            enter = fadeIn(initialAlpha = 1f),
+            exit = fadeOut(tween(delayMillis = 50))
+        ) {
+            Spacer(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .navigationBarsPadding()
+            )
+        }
     }
 }
 
