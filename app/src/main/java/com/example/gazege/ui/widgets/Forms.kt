@@ -29,6 +29,7 @@ fun Form(
             .fillMaxSize()
             .systemBarsPadding()
             .imePadding(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = {
             if (snackbarHostState != null) {
                 SnackbarHost(hostState = snackbarHostState)
