@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -97,71 +97,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
-                val systemUiController = rememberSystemUiController()
-                val useDarkIcons = !isSystemInDarkTheme()
+                SetStatusBarColors()
 
-                LaunchedEffect(systemUiController, useDarkIcons) {
-                    // Update all of the system bar colors to be transparent, and use
-                    // dark icons if we're in light theme
-                    systemUiController.setStatusBarColor(
-                        color = Color.Transparent, darkIcons = useDarkIcons
-                    )
+                val showSplashScreen = mainViewModel.appInitialized()
+                val splashScreenState by rememberSplashScreenState(showSplashScreen = showSplashScreen)
 
-                    // setStatusBarColor() and setNavigationBarColor() also exist
-                }
-
-                val appInitialized = mainViewModel.appInitialized()
-                var showInitialSplashScreen by rememberSaveable {
-                    mutableStateOf(appInitialized.not())
-                }
-                val showLoadingSplashScreen = remember {
-                    MutableTransitionState(appInitialized.not())
-                }
-
-                Box(modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .run {
-                        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            this.navigationBarsPadding()
-                        } else {
-                            this
-                        }
-                    })
-                {
-                    if (showInitialSplashScreen) {
-                        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-                            SplashScreenFragment(
-                                transitionDuration = 800,
-                                iconVisibility = IconVisibility.FADE_IN,
-                                textVisibility = TextVisibility.FADE_IN
-                            )
-                        }
-                    } else {
-                        val timeMillis = 1500L
-                        val transitionDuration = timeMillis
-                            .times(70L)
-                            .div(100L)
-                            .coerceAtMost(min(timeMillis, 1000L))
-                            .toInt()
-                        AnimatedVisibility(
-                            modifier = Modifier
-                                .zIndex(1f),
-                            visibleState = showLoadingSplashScreen,
-                            exit = fadeOut(tween(500, 100))
-                        ) {
-                            Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-                                SplashScreenFragment(
-                                    transitionDuration = transitionDuration,
-                                    iconVisibility = IconVisibility.VISIBLE,
-                                    textVisibility = TextVisibility.VISIBLE
-                                )
+                SplashScreenLayout(splashScreenState) {
+                    Box(modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .run {
+                            if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                                this.navigationBarsPadding()
+                            } else {
+                                this
                             }
-                        }
-                        val navController = rememberNavController().apply {
-
-                        }
+                        })
+                    {
+                        val navController = rememberNavController()
                         NavHost(
                             navController = navController,
                             startDestination = "main"
@@ -178,7 +132,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
                                 onNavigateToPersonDetail = navController::navigateToPersonDetail,
                                 onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
-                                onDataLoaded = { showLoadingSplashScreen.targetState = false }
+                                onDataLoaded = { splashScreenState.hideAndShowContent() }
                             )
                             screenAddAccount(
                                 viewModel = mainViewModel,
@@ -203,7 +157,8 @@ class MainActivity : ComponentActivity() {
                             screenAddTransaction(
                                 viewModel = mainViewModel,
                                 onNavigateUp = { navController.navigateUpOrClose { this@MainActivity.finish() } },
-                                onNavigateToAddAccount = navController::navigateToAddAccount
+                                onNavigateToAddAccount = navController::navigateToAddAccount,
+                                onDataLoaded = { splashScreenState.hideAndShowContent() }
                             )
                             screenEditTransaction(
                                 viewModel = mainViewModel,
@@ -271,16 +226,94 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-
-                LaunchedEffect(key1 = Unit) {
-                    delay(500L)
-                    showInitialSplashScreen = false
-                }
-                LaunchedEffect(key1 = Unit) {
-                    delay(3000L)
-                    showLoadingSplashScreen.targetState = false
-                }
             }
         }
+    }
+}
+
+/**
+Updates all of the system bar colors to be transparent, and use dark icons
+if we're in light theme.
+ */
+@Composable
+private fun SetStatusBarColors() {
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isSystemInDarkTheme()
+
+    LaunchedEffect(systemUiController, useDarkIcons) {
+        // Update all of the system bar colors to be transparent, and use
+        // dark icons if we're in light theme
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent, darkIcons = useDarkIcons
+        )
+
+        // setStatusBarColor() and setNavigationBarColor() also exist
+    }
+}
+
+class SplashScreenState(showSplashScreen: Boolean) {
+    var showInitialSplashScreen = mutableStateOf(showSplashScreen.not())
+    val showLoadingSplashScreen = MutableTransitionState(showSplashScreen.not())
+
+    fun loadContentWhileShowing() {
+        showInitialSplashScreen.value = false
+    }
+
+    fun hideAndShowContent() {
+        loadContentWhileShowing()
+        showLoadingSplashScreen.targetState = false
+    }
+}
+
+@Composable
+fun rememberSplashScreenState(showSplashScreen: Boolean) =
+    remember { mutableStateOf(SplashScreenState(showSplashScreen)) }
+
+@Composable
+private fun SplashScreenLayout(
+    splashScreenState: SplashScreenState,
+    content: @Composable () -> Unit
+) {
+    val showInitialSplashScreen by rememberSaveable { splashScreenState.showInitialSplashScreen }
+    val showLoadingSplashScreen = remember { splashScreenState.showLoadingSplashScreen }
+
+    if (showInitialSplashScreen) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+            SplashScreenFragment(
+                transitionDuration = 800,
+                iconVisibility = IconVisibility.FADE_IN,
+                textVisibility = TextVisibility.FADE_IN
+            )
+        }
+    } else {
+        val timeMillis = 1500L
+        val transitionDuration = timeMillis
+            .times(70L)
+            .div(100L)
+            .coerceAtMost(min(timeMillis, 1000L))
+            .toInt()
+        AnimatedVisibility(
+            modifier = Modifier.zIndex(1f),
+            visibleState = showLoadingSplashScreen,
+            exit = fadeOut(tween(500, 100))
+        ) {
+            Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                SplashScreenFragment(
+                    transitionDuration = transitionDuration,
+                    iconVisibility = IconVisibility.VISIBLE,
+                    textVisibility = TextVisibility.VISIBLE
+                )
+            }
+        }
+        content()
+    }
+
+    LaunchedEffect(key1 = Unit) {
+        delay(500L)
+        splashScreenState.loadContentWhileShowing()
+    }
+    LaunchedEffect(key1 = Unit) {
+        delay(3000)
+        splashScreenState.hideAndShowContent()
     }
 }
