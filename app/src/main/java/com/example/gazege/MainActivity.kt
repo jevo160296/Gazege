@@ -1,6 +1,5 @@
 package com.example.gazege
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,9 +11,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import androidx.navigation.compose.rememberNavController
@@ -66,26 +61,15 @@ class MainActivity : ComponentActivity() {
                 val showSplashScreen = mainViewModel.appInitialized()
                 val splashScreenState by rememberSplashScreenState(showSplashScreen = showSplashScreen)
 
+                val navController = rememberNavController()
+
                 SplashScreenLayout(splashScreenState) {
-                    Box(modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize()
-                        .statusBarsPadding()
-                        .run {
-                            if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                                this.navigationBarsPadding()
-                            } else {
-                                this
-                            }
-                        })
-                    {
-                        MainNavHost(
-                            navController = rememberNavController(),
-                            mainViewModel = mainViewModel,
-                            onCloseApp = { this@MainActivity.finish() },
-                            onDataLoaded = { splashScreenState.hideAndShowContent() }
-                        )
-                    }
+                    MainNavHost(
+                        navController = navController,
+                        mainViewModel = mainViewModel,
+                        onCloseApp = { this@MainActivity.finish() },
+                        onDataLoaded = { splashScreenState.hideAndShowContent() }
+                    )
                 }
             }
         }
