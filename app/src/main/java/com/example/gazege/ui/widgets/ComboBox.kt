@@ -159,6 +159,51 @@ fun <N, C : Node<N, C>> TreeComboBox(
 }
 
 @Composable
+fun <N, C : Node<N, C>> MutableTreeComboBox(
+    modifier: Modifier = Modifier,
+    dropDownExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    options: List<C>,
+    selectedItem: C?,
+    itemToString: (C?) -> String,
+    label: @Composable () -> Unit,
+    onItemClick: (C) -> Unit,
+    canClearSelection: Boolean = false,
+    onClearSelectionClicked: () -> Unit = {},
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    nodeEnabled: (C) -> Boolean,
+    enabled: Boolean,
+    contentWhenDisabled: (@Composable () -> Unit)?,
+    groupByKeySelector: ((C) -> String)? = null
+) {
+    if (enabled) {
+        TreeComboBox(
+            dropDownExpanded = dropDownExpanded,
+            onExpandedChange = onExpandedChange,
+            options = options,
+            selectedItem = selectedItem,
+            itemToString = itemToString,
+            label = { label() },
+            onItemClick = onItemClick,
+            nodeEnabled = nodeEnabled,
+            canClearSelection = canClearSelection,
+            onClearSelectionClicked = onClearSelectionClicked,
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions,
+            modifier = modifier,
+            groupByKeySelector = groupByKeySelector
+        )
+    } else {
+        if (contentWhenDisabled != null) {
+            Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
+                contentWhenDisabled()
+            }
+        }
+    }
+}
+
+@Composable
 fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
     itemToString: (C?) -> String,
     node: C,
