@@ -8,7 +8,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -31,11 +35,13 @@ fun PersonForm(
     onPersonChanged: (PartialPerson) -> Unit
 ) {
     val name = person.name ?: ""
+    val focusRequester = remember { FocusRequester() }
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         TextField(
+            modifier = Modifier.focusRequester(focusRequester),
             value = name,
             onValueChange = {
                 onPersonChanged(
@@ -56,5 +62,8 @@ fun PersonForm(
                 }
             )
         )
+    }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }

@@ -9,12 +9,16 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -58,6 +62,7 @@ fun CategoryForm(
     val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
 
+    val focusRequester = remember { FocusRequester() }
     Form(
         onSaveClicked = { onCategorySave(partialCategory.toFull(), snackbarHostState) },
         isSavedButtonEnabled = partialCategory.isComplete(),
@@ -67,6 +72,7 @@ fun CategoryForm(
         itemSpacing = 8.dp
     ) {
         TextField(
+            modifier = Modifier.focusRequester(focusRequester),
             value = partialCategory.name ?: "",
             onValueChange = {
                 partialCategory = partialCategory.copy(name = it)
@@ -112,5 +118,8 @@ fun CategoryForm(
                 modifier = Modifier.heightIn(max = 1024.dp)
             )
         }
+    }
+    LaunchedEffect(key1 = Unit) {
+        focusRequester.requestFocus()
     }
 }

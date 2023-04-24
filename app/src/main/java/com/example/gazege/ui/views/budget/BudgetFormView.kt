@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -108,6 +110,8 @@ fun BudgetFormView(
             }
         }
     }
+
+    val focusRequester = remember { FocusRequester() }
     Form(
         onSaveClicked = {
             if (newBudget != null) {
@@ -139,7 +143,9 @@ fun BudgetFormView(
         ) {
             Text(stringResource(R.string.Cada))
             TextField(
-                modifier = Modifier.width(70.dp),
+                modifier = Modifier
+                    .width(70.dp)
+                    .focusRequester(focusRequester),
                 value = frequency.toString(),
                 onValueChange = { newText ->
                     if (newText.isBlank()) {
@@ -176,6 +182,9 @@ fun BudgetFormView(
         if (frequencyType != FrequencyType.MONTHLY) {
             DatePicker(value = startDate, onValueChange = { startDate = it })
         }
+    }
+    LaunchedEffect(key1 = Unit) {
+        focusRequester.requestFocus()
     }
 }
 

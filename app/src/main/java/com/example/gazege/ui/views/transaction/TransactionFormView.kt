@@ -10,12 +10,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -39,53 +43,6 @@ import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
 import java.time.LocalDate
-
-data class AccountAndOwnerNode(
-    override val content: AccountAndOwner,
-    val accountList: List<AccountAndOwner>,
-    override val level: Int,
-    override val relativeIndex: Int,
-    val deactivatedAccountList: List<AccountAndOwner>,
-    override val parentId: NodeId?,
-) : Node<AccountAndOwner, AccountAndOwnerNode> {
-    val isActive: Boolean get() = this.content !in deactivatedAccountList
-    override val children: List<AccountAndOwnerNode>
-        get() {
-            val pockets = AccountAndOwnerWithPockets.from(
-                content, accountList
-            ).pockets
-            return pockets.mapIndexed { index, it ->
-                AccountAndOwnerNode(
-                    it.accountAndOwner,
-                    accountList = accountList,
-                    level + 1,
-                    index,
-                    deactivatedAccountList = deactivatedAccountList,
-                    this.id()
-                )
-            }
-        }
-
-    companion object {
-        fun from(
-            accountList: List<AccountAndOwner>,
-            deactivatedAccountList: List<AccountAndOwner>
-        ): List<AccountAndOwnerNode> {
-            return accountList.filter {
-                it.account.parentId == null
-            }.mapIndexed { index, it ->
-                AccountAndOwnerNode(
-                    it,
-                    accountList,
-                    0,
-                    index,
-                    deactivatedAccountList = deactivatedAccountList,
-                    null
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun TransactionAndAccountsForm(
@@ -123,12 +80,14 @@ fun TransactionAndAccountsForm(
     } else {
         ImeAction.Next
     }
+    val focusRequester = remember { FocusRequester() }
 
     Column(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
         NumberField(
+            modifier = Modifier.focusRequester(focusRequester),
             value = amount,
             onValueChange = { onAmountChanged(it.toDouble()) },
             label = { Text(stringResource(id = R.string.Valor)) },
@@ -283,6 +242,57 @@ fun TransactionAndAccountsForm(
                     onDone = { onDoneAction() }
                 )
             )
+        }
+    }
+
+    LaunchedEffect(key1 = Unit) {
+        focusRequester.requestFocus()
+    }
+}
+
+data class AccountAndOwnerNode(
+    override val content: AccountAndOwner,
+    val accountList: List<AccountAndOwner>,
+    override val level: Int,
+    override val relativeIndex: Int,
+    val deactivatedAccountList: List<AccountAndOwner>,
+    override val parentId: NodeId?,
+) : Node<AccountAndOwner, AccountAndOwnerNode> {
+    val isActive: Boolean get() = this.content !in deactivatedAccountList
+    override val children: List<AccountAndOwnerNode>
+        get() {
+            val pockets = AccountAndOwnerWithPockets.from(
+                content, accountList
+            ).pockets
+            return pockets.mapIndexed { index, it ->
+                AccountAndOwnerNode(
+                    it.accountAndOwner,
+                    accountList = accountList,
+                    level + 1,
+                    index,
+                    deactivatedAccountList = deactivatedAccountList,
+                    this.id()
+                )
+            }
+        }
+
+    companion object {
+        fun from(
+            accountList: List<AccountAndOwner>,
+            deactivatedAccountList: List<AccountAndOwner>
+        ): List<AccountAndOwnerNode> {
+            return accountList.filter {
+                it.account.parentId == null
+            }.mapIndexed { index, it ->
+                AccountAndOwnerNode(
+                    it,
+                    accountList,
+                    0,
+                    index,
+                    deactivatedAccountList = deactivatedAccountList,
+                    null
+                )
+            }
         }
     }
 }
