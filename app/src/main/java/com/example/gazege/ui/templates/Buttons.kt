@@ -8,6 +8,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
@@ -16,6 +18,7 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.widgets.fab.ExpandableFAB
+import com.example.gazege.ui.widgets.fab.ExtendedFAB
 import com.example.gazege.ui.widgets.menu.DropDownMenuItem
 
 @Composable
@@ -34,15 +37,22 @@ fun DynamicAddEntityFAB(
             0f
         }
     )
+    val nuevaTransaccionString = stringResource(id = R.string.Nueva_transaccion)
+    val nuevaCuentaStrirng = stringResource(id = R.string.Nueva_cuenta)
+    val nuevaPersonaString = stringResource(id = R.string.Nueva_persona)
+    val text by rememberSaveable(navPosition) {
+        mutableStateOf(
+            when (navPosition) {
+                NavPosition.PERSONS -> nuevaPersonaString
+                NavPosition.CUENTAS -> nuevaCuentaStrirng
+                NavPosition.TRANSACCIONES -> nuevaTransaccionString
+            }
+        )
+    }
+
     ExpandableFAB(
+        modifier = Modifier,
         columnModifier = Modifier.width(IntrinsicSize.Max),
-        icon = {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                contentDescription = "Add",
-                modifier = Modifier.rotate(rotation),
-            )
-        },
         isExpanded = fabExpanded,
         onClick = {
             when (navPosition) {
@@ -51,7 +61,16 @@ fun DynamicAddEntityFAB(
                 NavPosition.TRANSACCIONES -> onFabExpandedChanged(true)
             }
         },
-        onDismissRequest = { onFabExpandedChanged(false) }
+        onDismissRequest = { onFabExpandedChanged(false) },
+        fab = {
+            ExtendedFAB(onClick = it, text = text) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                    contentDescription = "Add",
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
+        }
     ) {
         DropDownMenuItem(
             modifier = Modifier.fillMaxWidth(),

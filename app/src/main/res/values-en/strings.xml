@@ -80,4 +80,5 @@
     <string name="Flujo_real">Real flow</string>
     <string name="Falta_pagar_recibir">Left to pay-receive</string>
     <string name="Flujo_estimado_desde_hoy">Estimated flow since now</string>
+    <string name="Nueva_transaccion">Add transaction</string>
 </resources>

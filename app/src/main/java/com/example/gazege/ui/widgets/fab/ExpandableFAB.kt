@@ -11,16 +11,16 @@ import com.example.gazege.ui.widgets.menu.DropdownMenu
 
 @Composable
 fun ExpandableFAB(
-    icon: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     columnModifier: Modifier = Modifier,
     isExpanded: Boolean,
     onClick: () -> Unit,
     onDismissRequest: () -> Unit,
+    fab: @Composable (onClick: () -> Unit) -> Unit,
     options: @Composable ColumnScope.() -> Unit
 ) {
     Box(modifier = modifier) {
-        FAB(onClick = onClick, icon = icon)
+        fab { onClick() }
         DropdownMenu(
             expanded = isExpanded,
             onDismissRequest = onDismissRequest

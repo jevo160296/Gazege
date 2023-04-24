@@ -96,23 +96,23 @@ internal data class DropdownMenuPositionProvider(
         val toDisplayLeft = 0
         val x = if (layoutDirection == LayoutDirection.Ltr) {
             sequenceOf(
-                toRight,
-                toLeft,
-                // If the anchor gets outside of the window on the left, we want to position
-                // toDisplayLeft for proximity to the anchor. Otherwise, toDisplayRight.
-                if (anchorBounds.left >= 0) toDisplayRight else toDisplayLeft
-            )
-        } else {
-            sequenceOf(
                 toLeft,
                 toRight,
                 // If the anchor gets outside of the window on the right, we want to position
                 // toDisplayRight for proximity to the anchor. Otherwise, toDisplayLeft.
                 if (anchorBounds.right <= windowSize.width) toDisplayLeft else toDisplayRight
             )
+        } else {
+            sequenceOf(
+                toRight,
+                toLeft,
+                // If the anchor gets outside of the window on the left, we want to position
+                // toDisplayLeft for proximity to the anchor. Otherwise, toDisplayRight.
+                if (anchorBounds.left >= 0) toDisplayRight else toDisplayLeft
+            )
         }.firstOrNull {
             it >= 0 && it + popupContentSize.width <= windowSize.width
-        } ?: toLeft
+        } ?: toRight
 
         // Compute vertical position.
         val toBottom = maxOf(anchorBounds.bottom + contentOffsetY, verticalMargin)
