@@ -41,6 +41,7 @@ import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 @Composable
@@ -235,6 +236,8 @@ fun TransactionAndAccountsForm(
     }
 
     LaunchedEffect(key1 = Unit) {
+        // Waits 100 milliseconds until request focus to avoid calling the ime when expandable fab expands
+        delay(100)
         focusRequester.requestFocus()
     }
 }
