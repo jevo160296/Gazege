@@ -3,12 +3,14 @@ package com.example.gazege.ui.widgets
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
@@ -46,21 +49,23 @@ fun ButtonField(
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable RowScope.() -> Unit
-){
-    OutlinedButton(
-        onClick,
-        Modifier
-            .fillMaxWidth()
-            .then(modifier),
-        enabled,
-        shape,
-        colors,
-        elevation,
-        border,
-        contentPadding,
-        interactionSource,
-        content
-    )
+) {
+    Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
+        OutlinedButton(
+            onClick,
+            Modifier
+                .fillMaxWidth()
+                .then(modifier),
+            enabled,
+            shape,
+            colors,
+            elevation,
+            border,
+            contentPadding,
+            interactionSource,
+            content
+        )
+    }
 }
 
 @Composable
