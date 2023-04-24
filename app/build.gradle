@@ -14,8 +14,8 @@ android {
         applicationId "com.example.gazege"
         minSdk 29
         targetSdk 33
-        versionCode 44
-        versionName '1.4.9'
+        versionCode 45
+        versionName '1.4.10'
 
         javaCompileOptions {
             annotationProcessorOptions {
