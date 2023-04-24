@@ -85,47 +85,37 @@ fun SettingsFragment(
                 label = { Text(stringResource(id = R.string.Persona_principal)) }
             )
         }
-        if (accountList.isEmpty() || accountList.size <= deactivatedAccountListNoOutcome.size) {
-            ButtonField(onClick = onAddAccountRequested) {
-                Text(text = stringResource(id = R.string.Nueva_cuenta))
-            }
-        } else {
-            AccountDropDownMenu(
-                accountsList = accountList,
-                selectedAccountNode = incomeSelected?.let {
-                    AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
-                },
-                label = { Text(stringResource(id = R.string.Ingreso)) },
-                onItemClick = { incomeIdSelected = it.content.account.id },
-                deactivatedAccountList = deactivatedAccountListNoOutcome,
-                canClearSelection = true,
-                onClearSelectionClicked = { incomeIdSelected = null }
-            )
-        }
-        if (accountList.isEmpty() || accountList.size <= deactivatedAccountListNoIncome.size) {
-            ButtonField(onClick = onAddAccountRequested) {
-                Text(text = stringResource(id = R.string.Nueva_cuenta))
-            }
-        } else {
-            AccountDropDownMenu(
-                accountsList = accountList,
-                selectedAccountNode = outcomeSelected?.let {
-                    AccountAndOwnerNode(
-                        it,
-                        accountList,
-                        0,
-                        0,
-                        listOf(),
-                        null
-                    )
-                },
-                label = { Text(stringResource(id = R.string.Gasto)) },
-                onItemClick = { outcomeIdSelected = it.content.account.id },
-                deactivatedAccountList = deactivatedAccountListNoIncome,
-                canClearSelection = true,
-                onClearSelectionClicked = { outcomeIdSelected = null }
-            )
-        }
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = incomeSelected?.let {
+                AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
+            },
+            label = { Text(stringResource(id = R.string.Ingreso)) },
+            onItemClick = { incomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoOutcome,
+            canClearSelection = true,
+            onClearSelectionClicked = { incomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = outcomeSelected?.let {
+                AccountAndOwnerNode(
+                    it,
+                    accountList,
+                    0,
+                    0,
+                    listOf(),
+                    null
+                )
+            },
+            label = { Text(stringResource(id = R.string.Gasto)) },
+            onItemClick = { outcomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoIncome,
+            canClearSelection = true,
+            onClearSelectionClicked = { outcomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
         ButtonField(onClick = onEditCategoriesRequested) {
             Text(text = stringResource(id = R.string.ConfigurarCategorias))
         }

@@ -166,7 +166,8 @@ fun AccountAndOwnerForm(
                 )
             },
             keyboardActions = KeyboardActions(onDone = { onDoneAction() }),
-            keyboardOptions = KeyboardOptions(imeAction = nextAction)
+            keyboardOptions = KeyboardOptions(imeAction = nextAction),
+            onAccountAddRequested = null
         )
         if (incomeAccountId != null && outcomeAccountId != null && incomeAccountId != accountAndOwner.account.id && outcomeAccountId != accountAndOwner.account.id) {
             NumberField(

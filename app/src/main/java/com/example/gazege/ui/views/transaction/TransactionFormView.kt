@@ -34,7 +34,6 @@ import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.views.account.AccountDropDownMenu
 import com.example.gazege.ui.views.category.CategoryDropDown
-import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.NumberField
@@ -143,54 +142,44 @@ fun TransactionAndAccountsForm(
             )
         }
         if (showSourceAccountField) {
-            if (accountList.isNotEmpty() && accountList.size > deactivatedSourceAccountList.size) {
-                AccountDropDownMenu(
-                    accountsList = accountList,
-                    selectedAccountNode = selectedSourceNode,
-                    label = { Text(stringResource(R.string.Cuenta_origen)) },
-                    onItemClick = {
-                        if (it.content.account.id != null) {
-                            onSourceAccountIdChanged(it.content.account.id)
-                        }
-                    },
-                    deactivatedAccountList = deactivatedSourceAccountList,
-                    canClearSelection = false,
-                    onClearSelectionClicked = {},
-                    keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                    keyboardActions = KeyboardActions(
-                        onDone = { onDoneAction() }
-                    )
-                )
-            } else {
-                ButtonField(onClick = onAccountAddRequested) {
-                    Text(stringResource(R.string.Nueva_cuenta))
-                }
-            }
+            AccountDropDownMenu(
+                accountsList = accountList,
+                selectedAccountNode = selectedSourceNode,
+                label = { Text(stringResource(R.string.Cuenta_origen)) },
+                onItemClick = {
+                    if (it.content.account.id != null) {
+                        onSourceAccountIdChanged(it.content.account.id)
+                    }
+                },
+                deactivatedAccountList = deactivatedSourceAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {},
+                keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                ),
+                onAccountAddRequested = onAccountAddRequested
+            )
         }
         if (showDestinationAccountField) {
-            if (accountList.isNotEmpty() && accountList.size > deactivatedDestinationAccountList.size) {
-                AccountDropDownMenu(
-                    accountsList = accountList,
-                    selectedAccountNode = selectedDestinationNode,
-                    onItemClick = {
-                        if (it.content.account.id != null) {
-                            onDestinationAccountIdChanged(it.content.account.id)
-                        }
-                    },
-                    label = { Text(stringResource(R.string.Cuenta_destino)) },
-                    deactivatedAccountList = deactivatedDestinationAccountList,
-                    canClearSelection = false,
-                    onClearSelectionClicked = {},
-                    keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                    keyboardActions = KeyboardActions(
-                        onDone = { onDoneAction() }
-                    )
-                )
-            } else {
-                ButtonField(onClick = onAccountAddRequested) {
-                    Text(stringResource(R.string.Nueva_cuenta))
-                }
-            }
+            AccountDropDownMenu(
+                accountsList = accountList,
+                selectedAccountNode = selectedDestinationNode,
+                onItemClick = {
+                    if (it.content.account.id != null) {
+                        onDestinationAccountIdChanged(it.content.account.id)
+                    }
+                },
+                label = { Text(stringResource(R.string.Cuenta_destino)) },
+                deactivatedAccountList = deactivatedDestinationAccountList,
+                canClearSelection = false,
+                onClearSelectionClicked = {},
+                keyboardOptions = KeyboardOptions(imeAction = nextAction),
+                keyboardActions = KeyboardActions(
+                    onDone = { onDoneAction() }
+                ),
+                onAccountAddRequested = onAccountAddRequested
+            )
         }
 
         DatePicker(
