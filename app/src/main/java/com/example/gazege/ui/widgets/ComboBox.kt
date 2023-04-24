@@ -1,17 +1,20 @@
 package com.example.gazege.ui.widgets
 
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -25,6 +28,7 @@ import com.example.gazege.ui.widgets.treeview.NodeId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> ComboBox(
+    modifier: Modifier = Modifier,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<T>,
@@ -41,9 +45,14 @@ fun <T> ComboBox(
     val groupedOptions = options
         .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
         .groupBy { groupByKeySelector?.invoke(it) }
+    var isFocused by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(
         expanded = dropDownExpanded,
-        onExpandedChange = onExpandedChange
+        onExpandedChange = onExpandedChange,
+        modifier = modifier.onFocusChanged {
+            Log.println(Log.INFO, "Focus", "$it")
+            isFocused = it.hasFocus
+        }
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
@@ -78,11 +87,18 @@ fun <T> ComboBox(
             )
         }
     }
+    LaunchedEffect(key1 = isFocused) {
+        Log.println(Log.INFO, "Focus", "$isFocused")
+        if (isFocused != dropDownExpanded) {
+            onExpandedChange(isFocused)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun <N, C : Node<N, C>> TreeComboBox(
+    modifier: Modifier = Modifier,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<C>,
@@ -102,9 +118,18 @@ fun <N, C : Node<N, C>> TreeComboBox(
     val groupedOptions = options
         .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
         .groupBy { groupByKeySelector?.invoke(it) }
+    var isFocused by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(
         expanded = dropDownExpanded,
-        onExpandedChange = onExpandedChange
+        onExpandedChange = {
+            if (isFocused) {
+                onExpandedChange(it)
+            }
+        },
+        modifier = modifier.onFocusChanged {
+            Log.println(Log.INFO, "Focus", "$it")
+            isFocused = it.hasFocus
+        }
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
@@ -155,6 +180,13 @@ fun <N, C : Node<N, C>> TreeComboBox(
                 nodeToString = itemToString,
                 nodeEnabled = nodeEnabled
             )
+        }
+    }
+
+    LaunchedEffect(key1 = isFocused) {
+        Log.println(Log.INFO, "Focus", "$isFocused")
+        if (isFocused != dropDownExpanded) {
+            onExpandedChange(isFocused)
         }
     }
 }
