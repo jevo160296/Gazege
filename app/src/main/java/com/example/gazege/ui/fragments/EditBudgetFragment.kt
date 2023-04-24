@@ -1,6 +1,7 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -72,7 +73,8 @@ fun EditBudgetFragment(
                 TopAppBar(
                     title = { MediumHeadline(text = stringResource(id = R.string.Presupuesto)) }
                 )
-            }
+            },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) { padding ->
             val layoutDirection = LocalLayoutDirection.current
             val itemHolderPaddingValues = PaddingValues(

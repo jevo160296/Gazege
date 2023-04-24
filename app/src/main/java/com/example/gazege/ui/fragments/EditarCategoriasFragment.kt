@@ -1,6 +1,7 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
@@ -74,7 +75,8 @@ fun EditarCategorias(
                 TopAppBar(
                     title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
                 )
-            }
+            },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) {
             Box(modifier = Modifier.padding(it)) {
                 CategoryListView(
