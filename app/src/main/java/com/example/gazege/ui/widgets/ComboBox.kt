@@ -6,12 +6,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,7 @@ import com.example.gazege.ui.widgets.treeview.NodeId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> ComboBox(
+    modifier: Modifier = Modifier,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<T>,
@@ -38,51 +41,50 @@ fun <T> ComboBox(
 ) {
     var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
     var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
-    val groupedOptions = options
-        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
-        .groupBy { groupByKeySelector?.invoke(it) }
-    ExposedDropdownMenuBox(
-        expanded = dropDownExpanded,
-        onExpandedChange = onExpandedChange
-    ) {
-        TextField(
-            modifier = Modifier.menuAnchor(),
-            value = currentText,
-            onValueChange = {
-                filteringNotStarted = false
-                currentText = it
+
+    val trailingIcon: @Composable () -> Unit =
+        { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded) }
+    val optionsViewHolder: @Composable (groupedOptions: Map<String?, List<T>>) -> Unit = {
+        OptionsGroupView(
+            groupedOptions = it,
+            onItemClick = { item ->
+                onExpandedChange(false)
+                onItemClick(item)
+                currentText = itemToString(item)
+                filteringNotStarted = true
             },
-            readOnly = false,
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
-            },
-            label = label,
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            maxLines = 1,
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions
+            itemToString = itemToString
         )
-        ExposedDropdownMenu(
-            expanded = dropDownExpanded,
-            onDismissRequest = { onExpandedChange(false) }
-        ) {
-            OptionsGroupView(
-                groupedOptions = groupedOptions,
-                onItemClick = {
-                    onExpandedChange(false)
-                    onItemClick(it)
-                    currentText = itemToString(it)
-                    filteringNotStarted = true
-                },
-                itemToString = itemToString
-            )
-        }
     }
+    CoreComboBox(
+        modifier = modifier,
+        dropDownExpanded = dropDownExpanded,
+        onExpandedChange = onExpandedChange,
+        currentText = currentText,
+        onCurrentTextChanged = {
+            filteringNotStarted = false
+            currentText = it
+        },
+        label = {
+            if (label != null) {
+                label()
+            }
+        },
+        keyboardActions = keyboardActions,
+        keyboardOptions = keyboardOptions,
+        trailingIcon = { trailingIcon() },
+        options = options,
+        filteringNotStarted = filteringNotStarted,
+        groupByKeySelector = groupByKeySelector,
+        itemToString = itemToString,
+        optionsViewHolder = { optionsViewHolder(it) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun <N, C : Node<N, C>> TreeComboBox(
+    modifier: Modifier = Modifier,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     options: List<C>,
@@ -99,62 +101,104 @@ fun <N, C : Node<N, C>> TreeComboBox(
 ) {
     var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
     var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
-    val groupedOptions = options
-        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
-        .groupBy { groupByKeySelector?.invoke(it) }
-    ExposedDropdownMenuBox(
-        expanded = dropDownExpanded,
-        onExpandedChange = onExpandedChange
-    ) {
-        TextField(
-            modifier = Modifier.menuAnchor(),
-            value = currentText,
-            onValueChange = {
-                filteringNotStarted = false
-                currentText = it
+
+    val trailingIcon: @Composable () -> Unit = {
+        val showClearButton = canClearSelection && selectedItem != null
+        AnimatedContent(
+            targetState = showClearButton,
+            transitionSpec = {
+                scaleIn() with scaleOut()
             },
-            readOnly = false,
-            trailingIcon = {
-                val showClearButton = canClearSelection && selectedItem != null
-                AnimatedContent(
-                    targetState = showClearButton,
-                    transitionSpec = {
-                        scaleIn() with scaleOut()
-                    },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (it) {
-                        IconButton(onClick = onClearSelectionClicked) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.clear_selection),
-                                contentDescription = "Clear"
-                            )
-                        }
-                    } else {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
-                    }
-                }
-            },
-            label = label,
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            maxLines = 1,
-            keyboardActions = keyboardActions,
-            keyboardOptions = keyboardOptions
-        )
-        ExposedDropdownMenu(
-            expanded = dropDownExpanded,
-            onDismissRequest = { onExpandedChange(false) }
+            contentAlignment = Alignment.Center
         ) {
-            OptionsGroupTreeView(
-                groupedOptions = groupedOptions,
-                onNodeClick = {
-                    onExpandedChange(false)
-                    onItemClick(it)
-                    currentText = itemToString(it)
-                },
-                nodeToString = itemToString,
-                nodeEnabled = nodeEnabled
-            )
+            if (it) {
+                IconButton(onClick = onClearSelectionClicked) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.clear_selection),
+                        contentDescription = "Clear"
+                    )
+                }
+            } else {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
+            }
+        }
+    }
+    val optionsViewHolder: @Composable (Map<String?, List<C>>) -> Unit = {
+        OptionsGroupTreeView(
+            groupedOptions = it,
+            onNodeClick = { item ->
+                onExpandedChange(false)
+                onItemClick(item)
+                currentText = itemToString(item)
+                filteringNotStarted = true
+            },
+            nodeToString = itemToString,
+            nodeEnabled = nodeEnabled
+        )
+    }
+
+    CoreComboBox(
+        dropDownExpanded = dropDownExpanded,
+        onExpandedChange = onExpandedChange,
+        currentText = currentText,
+        onCurrentTextChanged = {
+            filteringNotStarted = false
+            currentText = it
+        },
+        label = { label() },
+        trailingIcon = { trailingIcon() },
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        modifier = modifier,
+        options = options,
+        optionsViewHolder = { optionsViewHolder(it) },
+        itemToString = itemToString,
+        groupByKeySelector = groupByKeySelector,
+        filteringNotStarted = filteringNotStarted
+    )
+}
+
+@Composable
+fun <N, C : Node<N, C>> MutableTreeComboBox(
+    modifier: Modifier = Modifier,
+    dropDownExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    options: List<C>,
+    selectedItem: C?,
+    itemToString: (C?) -> String,
+    label: @Composable () -> Unit,
+    onItemClick: (C) -> Unit,
+    canClearSelection: Boolean = false,
+    onClearSelectionClicked: () -> Unit = {},
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    nodeEnabled: (C) -> Boolean,
+    enabled: Boolean,
+    contentWhenDisabled: (@Composable () -> Unit)?,
+    groupByKeySelector: ((C) -> String)? = null
+) {
+    if (enabled) {
+        TreeComboBox(
+            dropDownExpanded = dropDownExpanded,
+            onExpandedChange = onExpandedChange,
+            options = options,
+            selectedItem = selectedItem,
+            itemToString = itemToString,
+            label = { label() },
+            onItemClick = onItemClick,
+            nodeEnabled = nodeEnabled,
+            canClearSelection = canClearSelection,
+            onClearSelectionClicked = onClearSelectionClicked,
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions,
+            modifier = modifier,
+            groupByKeySelector = groupByKeySelector
+        )
+    } else {
+        if (contentWhenDisabled != null) {
+            Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
+                contentWhenDisabled()
+            }
         }
     }
 }
@@ -217,6 +261,68 @@ private fun partialStringMatch(originalString: String, stringToMatch: String) =
             )
         )
     )
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> CoreComboBox(
+    modifier: Modifier = Modifier,
+    currentText: String,
+    onCurrentTextChanged: (String) -> Unit,
+    dropDownExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    label: @Composable () -> Unit,
+    keyboardActions: KeyboardActions,
+    keyboardOptions: KeyboardOptions,
+    trailingIcon: @Composable () -> Unit,
+    options: List<T>,
+    optionsViewHolder: @Composable (Map<String?, List<T>>) -> Unit,
+    itemToString: (T?) -> String,
+    filteringNotStarted: Boolean,
+    groupByKeySelector: ((T) -> String)? = null
+) {
+    val groupedOptions = options
+        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
+        .groupBy { groupByKeySelector?.invoke(it) }
+    var isFocused by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = dropDownExpanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier.onFocusChanged {
+            isFocused = it.hasFocus
+        }
+    ) {
+        TextField(
+            modifier = Modifier.menuAnchor(),
+            value = currentText,
+            onValueChange = {
+                if (dropDownExpanded.not()) {
+                    onExpandedChange(true)
+                }
+                onCurrentTextChanged(it)
+            },
+            readOnly = false,
+            trailingIcon = { trailingIcon() },
+            label = label,
+            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            maxLines = 1,
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions
+        )
+        ExposedDropdownMenu(
+            expanded = dropDownExpanded,
+            onDismissRequest = { onExpandedChange(false) }
+        ) {
+            optionsViewHolder(groupedOptions)
+        }
+    }
+
+    LaunchedEffect(key1 = isFocused) {
+        if (isFocused != dropDownExpanded) {
+            onExpandedChange(isFocused)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
