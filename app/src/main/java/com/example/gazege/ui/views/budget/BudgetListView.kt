@@ -28,8 +28,8 @@ private fun BudgetViewHolder(
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
     val leftToPayString = stringResource(id = R.string.Falta_pagar_recibir)
     val expectedFlowUntilNowString = stringResource(id = R.string.Flujo_estimado_hasta_hoy)
-    val realTotalFlowString = stringResource(id = R.string.Flujo_total)
-    val expectedTotalFlowString = stringResource(id = R.string.Flujo_real)
+    val realTotalFlowString = stringResource(id = R.string.Flujo_real)
+    val expectedTotalFlowString = stringResource(id = R.string.Flujo_total)
     val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_hoy)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
