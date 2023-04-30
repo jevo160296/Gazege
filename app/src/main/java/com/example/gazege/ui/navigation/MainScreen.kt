@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +22,7 @@ import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.screenMain(
     viewModel: MainViewModel,
     onNavigateToAddPerson: () -> Unit,
@@ -32,6 +35,8 @@ fun NavGraphBuilder.screenMain(
     onNavigateToEditTransaction: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
+    onNavigateToCategories: () -> Unit,
+    onNavigateToBudget: () -> Unit,
     onDataLoaded: () -> Unit
 ) {
     composable("main") {
@@ -46,6 +51,7 @@ fun NavGraphBuilder.screenMain(
             mutableStateOf(NavPosition.TRANSACCIONES)
         }
         val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackbarHostState = SnackbarHostState()
 
         val dataLoaded = filteredTransactionListItemDetails.isNotEmpty()
@@ -103,7 +109,10 @@ fun NavGraphBuilder.screenMain(
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
                 onPersonFilterValueChanged = viewModel::updatePersonFilterValue,
                 showVertical = showVertical,
-                principalPersonSummaryState = principalPersonSummaryState
+                principalPersonSummaryState = principalPersonSummaryState,
+                drawerState = drawerState,
+                onOpenCategoriesRequested = onNavigateToCategories,
+                onOpenBudgetRequested = onNavigateToBudget
             )
         }
     }

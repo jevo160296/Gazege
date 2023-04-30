@@ -70,6 +70,8 @@ fun MainNavHost(
                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
                 onNavigateToPersonDetail = navController::navigateToPersonDetail,
                 onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
+                onNavigateToCategories = navController::navigateToEditarCategorias,
+                onNavigateToBudget = navController::navigateToEditBudget,
                 onDataLoaded = onDataLoaded
             )
             screenAddAccount(
@@ -107,9 +109,7 @@ fun MainNavHost(
                 viewModel = mainViewModel,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount,
-                onNavigateToAddPerson = navController::navigateToAddPerson,
-                onNavigateToEditCategories = navController::navigateToEditarCategorias,
-                onNavigateToEditBudget = navController::navigateToEditBudget
+                onNavigateToAddPerson = navController::navigateToAddPerson
             )
             screenSaldoActualSettings(viewModel = mainViewModel)
             screenEditarCategorias(
