@@ -78,6 +78,7 @@ fun MainFragment(
     onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
+    onInitDatabaseSample: () -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -211,6 +212,14 @@ fun MainFragment(
                         actions = {
                             val uriHandler = LocalUriHandler.current
                             if (GazegeTheme.appMode == AppMode.DEBUG) {
+                                IconButton(
+                                    onClick = onInitDatabaseSample
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_baseline_add_24),
+                                        contentDescription = "Add sample data"
+                                    )
+                                }
                                 IconButton(onClick = {
                                     uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
                                 }) {
@@ -557,7 +566,8 @@ private fun DefaultPreview() {
                 onIncomeFilterValueChanged = {},
                 transferFilterValue = true,
                 outcomeFilterValue = true,
-                incomeFilterValue = true
+                incomeFilterValue = true,
+                onInitDatabaseSample = {}
             )
         }
     }

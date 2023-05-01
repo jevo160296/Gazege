@@ -18,7 +18,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
+import com.example.gazege.ui.databaseSample
 import com.example.gazege.ui.fragments.MainFragment
+import com.example.gazege.ui.theme.AppMode
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
@@ -121,7 +124,30 @@ fun NavGraphBuilder.screenMain(
                 transferFilterValue = transferFilterValue,
                 onIncomeFilterValueChanged = viewModel::updateIncomeFilterValue,
                 onOutcomeFilterValueChanged = viewModel::updateOutcomeFilterValue,
-                onTransferFilterValueChanged = viewModel::updateTransferFilterValue
+                onTransferFilterValueChanged = viewModel::updateTransferFilterValue,
+                onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
+                    {
+                        databaseSample {
+                            viewModel.insertPerson(*personSample.toTypedArray()) {}
+                            viewModel.insertAccount(
+                                *accountSample.toTypedArray(),
+                                onErrorAction = {}) {}
+                            viewModel.insertCategory(*categorieSample.map { it.copy(parentId = null) }
+                                .toTypedArray(), onErrorAction = {}, onCompleitionAction = {})
+                            viewModel.updateCategory(
+                                *categorieSample.toTypedArray(),
+                                onErrorAction = {},
+                                onCompleitionAction = {})
+                            viewModel.insertTransaction(*transactionSample.toTypedArray()) {}
+                            viewModel.insertBudget(
+                                *budgetSample.toTypedArray(),
+                                onCompleitionAction = {},
+                                onErrorAction = {})
+                        }
+                    }
+                } else {
+                    {}
+                }
             )
         }
     }

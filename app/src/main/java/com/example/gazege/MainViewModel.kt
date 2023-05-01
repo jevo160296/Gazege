@@ -589,9 +589,9 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         range.value = Pair(startDate, endDate)
     }
 
-    fun insertPerson(person: Person, onErrorAction: (Throwable) -> Unit) =
+    fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {
-            repository.insertPerson(person)
+            repository.insertPerson(*person)
         }
 
     fun updatePerson(person: Person, onErrorAction: (Throwable) -> Unit) =
@@ -604,12 +604,12 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 
     fun insertAccount(
-        account: Account,
+        vararg account: Account,
         onErrorAction: (Throwable) -> Unit,
         onCompleitionAction: (Long) -> Unit
     ): Job =
         viewModelScope.safeLaunch(onErrorAction) {
-            val addedIds = repository.insertAccount(account)
+            val addedIds = repository.insertAccount(*account)
             onCompleitionAction(addedIds.first())
         }
 
@@ -682,8 +682,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     }
 
-    fun insertTransaction(transaction: Transaction) = viewModelScope.launch {
-        repository.insertTransaction(transaction)
+    fun insertTransaction(
+        vararg transaction: Transaction,
+        onErrorAction: (Throwable) -> Unit = {}
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertTransaction(*transaction)
     }
 
     fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
@@ -695,12 +698,12 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 
     fun insertCategory(
-        category: Category,
+        vararg category: Category,
         onCompleitionAction: (Long?) -> Unit,
         onErrorAction: (Throwable) -> Unit
     ) =
         viewModelScope.safeLaunch(onErrorAction) {
-            val ids = repository.insertCategory(category)
+            val ids = repository.insertCategory(*category)
             onCompleitionAction(ids.firstOrNull())
         }
 
@@ -709,20 +712,20 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 
     fun updateCategory(
-        newCategory: Category,
+        vararg newCategory: Category,
         onCompleitionAction: () -> Unit,
         onErrorAction: (Throwable) -> Unit,
     ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.updateCategory(newCategory)
+        repository.updateCategory(*newCategory)
         onCompleitionAction()
     }
 
     fun insertBudget(
-        budget: Budget,
+        vararg budget: Budget,
         onCompleitionAction: () -> Unit,
         onErrorAction: (Throwable) -> Unit
     ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.insertBudget(budget)
+        repository.insertBudget(*budget)
         onCompleitionAction()
     }
 
