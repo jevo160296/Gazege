@@ -25,6 +25,7 @@ data class BudgetWithCalculatedDataAndCategory(
     val budgetFrequencyType get() = budget.frequencyType
     val budgetType get() = budget.budgetType
     val budgetValue get() = budget.value
+    val budgetDescription get() = budget.description
     val categoryName get() = category.name
 
     companion object {

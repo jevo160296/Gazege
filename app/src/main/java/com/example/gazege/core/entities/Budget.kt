@@ -1,5 +1,6 @@
 package com.example.gazege.core.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Ignore
@@ -25,7 +26,8 @@ data class Budget(
     val frequency: Int,
     val frequencyType: FrequencyType,
     val budgetType: BudgetType,
-    val startDate: LocalDate
+    val startDate: LocalDate,
+    @ColumnInfo(defaultValue = "") val description: String
 ) {
     @Ignore
     val eachClass = when (frequencyType) {
@@ -41,7 +43,8 @@ data class Budget(
             value: Double,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType
+            budgetType: BudgetType,
+            description: String = ""
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -50,7 +53,8 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.DAILY,
             startDate = startDate,
-            budgetType = budgetType
+            budgetType = budgetType,
+            description = description
         )
 
         fun fromWeekly(
@@ -60,7 +64,8 @@ data class Budget(
             each: WeekDays,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType
+            budgetType: BudgetType,
+            description: String = ""
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -69,7 +74,8 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.WEEKLY,
             startDate = startDate,
-            budgetType = budgetType
+            budgetType = budgetType,
+            description = description
         )
 
         @Deprecated(
@@ -84,7 +90,8 @@ data class Budget(
             each: AbsoluteMonthDays,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType
+            budgetType: BudgetType,
+            description: String = ""
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -93,14 +100,16 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.MONTHLY,
             startDate = startDate,
-            budgetType = budgetType
+            budgetType = budgetType,
+            description = description
         )
 
         fun fromMonthly(
             id: Int? = null,
             categoryId: Int,
             value: Double,
-            budgetType: BudgetType
+            budgetType: BudgetType,
+            description: String = ""
         ): Budget = Budget(
             id = id,
             categoryId = categoryId,
@@ -109,7 +118,8 @@ data class Budget(
             each = AbsoluteMonthDays(setOf(1)).toInt(),
             frequency = 1,
             frequencyType = FrequencyType.MONTHLY,
-            budgetType = budgetType
+            budgetType = budgetType,
+            description = description
         )
     }
 }

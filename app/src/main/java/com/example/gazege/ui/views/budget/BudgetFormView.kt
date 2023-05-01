@@ -32,7 +32,7 @@ fun BudgetFormView(
     onSaveBudget: (Budget) -> Unit
 ) {
     var isGasto by rememberSaveable(budget) {
-        mutableStateOf(budget?.value?.let { it < 0 } ?: true)
+        mutableStateOf(budget?.value?.let { it <= 0 } ?: true)
     }
     var selectedCategoryId by rememberSaveable(budget) { mutableStateOf(budget?.categoryId) }
     var frequencyType: FrequencyType by rememberSaveable(budget) {
@@ -53,6 +53,7 @@ fun BudgetFormView(
         )
     }
     var value by rememberSaveable(budget) { mutableStateOf(abs(budget?.value ?: 0.0)) }
+    var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val budgetId = budget?.id
@@ -73,7 +74,8 @@ fun BudgetFormView(
                 value = value.withSign(sign),
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType
+                budgetType = budgetType,
+                description = descripcion
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
                 id = budgetId,
@@ -82,13 +84,15 @@ fun BudgetFormView(
                 each = weekDays,
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType
+                budgetType = budgetType,
+                description = descripcion
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
                 value = value.withSign(sign),
-                budgetType = budgetType
+                budgetType = budgetType,
+                description = descripcion
             )
         }
     } else {
@@ -179,6 +183,11 @@ fun BudgetFormView(
             label = { Text(stringResource(id = R.string.Valor)) }
         )
         BudgetTypeSelector(budgetType) { budgetType = it }
+        TextField(value = descripcion, onValueChange = { descripcion = it }, label = {
+            Text(
+                stringResource(id = R.string.descripcion)
+            )
+        })
         if (frequencyType != FrequencyType.MONTHLY) {
             DatePicker(value = startDate, onValueChange = { startDate = it })
         }

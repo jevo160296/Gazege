@@ -1,8 +1,16 @@
 package com.example.gazege.core
 
 import androidx.annotation.WorkerThread
-import com.example.gazege.core.dao.*
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.dao.AccountDao
+import com.example.gazege.core.dao.BudgetDao
+import com.example.gazege.core.dao.CategoryDao
+import com.example.gazege.core.dao.PersonDao
+import com.example.gazege.core.dao.TransactionDao
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -40,8 +48,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertPerson(person: Person) {
-        personDao.insertAll(person)
+    suspend fun insertPerson(vararg person: Person) {
+        personDao.insertAll(*person)
     }
 
     @WorkerThread
@@ -60,8 +68,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertAccount(account: Account): List<Long> {
-        return accountDao.insertAll(account)
+    suspend fun insertAccount(vararg account: Account): List<Long> {
+        return accountDao.insertAll(*account)
     }
 
     @WorkerThread
@@ -70,8 +78,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertTransaction(transaction: Transaction) {
-        transactionDao.insertAll(transaction)
+    suspend fun insertTransaction(vararg transaction: Transaction) {
+        transactionDao.insertAll(*transaction)
     }
 
     @WorkerThread
@@ -85,19 +93,19 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertCategory(category: Category): List<Long> {
-        return categoryDao.insertAll(category)
+    suspend fun insertCategory(vararg category: Category): List<Long> {
+        return categoryDao.insertAll(*category)
     }
 
     @WorkerThread
     suspend fun deleteCategory(category: Category) = categoryDao.deleteAll(category)
 
     @WorkerThread
-    suspend fun updateCategory(category: Category) = categoryDao.update(category)
+    suspend fun updateCategory(vararg category: Category) = categoryDao.updateAll(*category)
 
     @WorkerThread
-    suspend fun insertBudget(budget: Budget) {
-        budgetDao.insertAll(budget)
+    suspend fun insertBudget(vararg budget: Budget) {
+        budgetDao.insertAll(*budget)
     }
 
     @WorkerThread

@@ -56,7 +56,9 @@ fun Form(
     ) {
         Box(modifier = Modifier.padding(it)) {
             Column(
-                itemsColumnsModifier.verticalScroll(rememberScrollState()),
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .then(itemsColumnsModifier),
                 verticalArrangement = Arrangement.spacedBy(itemSpacing)
             ) {
                 content()

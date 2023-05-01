@@ -51,7 +51,11 @@ fun MainFragment(
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
+    incomeFilterValue: Boolean,
+    outcomeFilterValue: Boolean,
+    transferFilterValue: Boolean,
     sheetState: ModalBottomSheetState,
+    drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
@@ -69,6 +73,12 @@ fun MainFragment(
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
     onPersonFilterValueChanged: (Boolean) -> Unit,
+    onOpenCategoriesRequested: () -> Unit,
+    onOpenBudgetRequested: () -> Unit,
+    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
+    onInitDatabaseSample: () -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -89,130 +99,187 @@ fun MainFragment(
         mutableStateOf(false)
     }
 
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetShape = Shapes.medium,
-        sheetContent = {
-            ModalSheetContent(
-                titleText = stringResource(id = R.string.confirmar_eliminacion),
-                bodyText = modalSheetMsg,
-                onSiClicked = {
-                    action()
-                    action = {}
-                    modalSheetMsg = ""
-                    scope.launch { sheetState.hide() }
-                },
-                onNoClicked = {
-                    action = {}
-                    modalSheetMsg = ""
-                    scope.launch { sheetState.hide() }
-                }
-            )
-        }) {
-        Scaffold(
-            floatingActionButton = {
-                DynamicAddEntityFAB(
-                    fabExpanded = fabExpanded,
-                    onFabExpandedChanged = { fabExpanded = it },
-                    navPosition = navPosition,
-                    onAddPersonRequested = onAddPersonRequested,
-                    onAddAccountRequested = onAddAccountRequested,
-                    onAddTransactionRequested = onAddTransactionRequested
+    ModalNavigationDrawer(
+        drawerContent = {
+            ModalDrawerSheet(
+                windowInsets = dimensionResource(id = R.dimen.DefaultPadding)
+                    .let {
+                        WindowInsets(it, it, it, it)
+                    }
+            ) {
+                NavigationDrawerItem(
+                    label = { Text(stringResource(id = R.string.Categorias)) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.categorias),
+                            contentDescription = "Categorías"
+                        )
+                    },
+                    selected = false,
+                    onClick = onOpenCategoriesRequested
                 )
-            },
-            floatingActionButtonPosition = FabPosition.End,
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = navPosition == NavPosition.CUENTAS,
-                        onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.ic_baseline_account_balance_wallet_24
-                                ), contentDescription = "Accounts"
-                            )
-                        })
-                    NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
-                        onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_home_24),
-                                contentDescription = "Transactions"
-                            )
-                        })
-                    NavigationBarItem(selected = navPosition == NavPosition.PERSONS,
-                        onClick = { onNavStatusChanged(NavPosition.PERSONS) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_person_24),
-                                contentDescription = "Persons"
-                            )
-                        })
-                }
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
-            },
-            topBar = {
-                TopAppBar(
-                    title = { MediumHeadline(text = title) },
-                    actions = {
-                        val uriHandler = LocalUriHandler.current
-                        if (GazegeTheme.appMode == AppMode.DEBUG) {
-                            IconButton(onClick = {
-                                uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
-                            }) {
+                NavigationDrawerItem(
+                    label = { Text(stringResource(id = R.string.Presupuesto)) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.presupuesto),
+                            contentDescription = "Presupuesto"
+                        )
+                    },
+                    selected = false,
+                    onClick = onOpenBudgetRequested
+                )
+            }
+        },
+        drawerState = drawerState
+    ) {
+        ModalBottomSheetLayout(
+            sheetState = sheetState,
+            sheetShape = Shapes.medium,
+            sheetContent = {
+                ModalSheetContent(
+                    titleText = stringResource(id = R.string.confirmar_eliminacion),
+                    bodyText = modalSheetMsg,
+                    onSiClicked = {
+                        action()
+                        action = {}
+                        modalSheetMsg = ""
+                        scope.launch { sheetState.hide() }
+                    },
+                    onNoClicked = {
+                        action = {}
+                        modalSheetMsg = ""
+                        scope.launch { sheetState.hide() }
+                    }
+                )
+            }) {
+            Scaffold(
+                floatingActionButton = {
+                    DynamicAddEntityFAB(
+                        fabExpanded = fabExpanded,
+                        onFabExpandedChanged = { fabExpanded = it },
+                        navPosition = navPosition,
+                        onAddPersonRequested = onAddPersonRequested,
+                        onAddAccountRequested = onAddAccountRequested,
+                        onAddTransactionRequested = onAddTransactionRequested
+                    )
+                },
+                floatingActionButtonPosition = FabPosition.End,
+                bottomBar = {
+                    NavigationBar {
+                        NavigationBarItem(
+                            selected = navPosition == NavPosition.CUENTAS,
+                            onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
+                            icon = {
                                 Icon(
                                     painter = painterResource(
-                                        id = R.drawable.bug_report
-                                    ), contentDescription = "Report bug"
+                                        id = R.drawable.ic_baseline_account_balance_wallet_24
+                                    ), contentDescription = "Accounts"
+                                )
+                            })
+                        NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
+                            onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_baseline_home_24),
+                                    contentDescription = "Transactions"
+                                )
+                            })
+                        NavigationBarItem(selected = navPosition == NavPosition.PERSONS,
+                            onClick = { onNavStatusChanged(NavPosition.PERSONS) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_baseline_person_24),
+                                    contentDescription = "Persons"
+                                )
+                            })
+                    }
+                },
+                snackbarHost = {
+                    SnackbarHost(hostState = snackbarHostState)
+                },
+                topBar = {
+                    TopAppBar(
+                        title = { MediumHeadline(text = title) },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.menu),
+                                    contentDescription = "Open menu"
+                                )
+                            }
+                        },
+                        actions = {
+                            val uriHandler = LocalUriHandler.current
+                            if (GazegeTheme.appMode == AppMode.DEBUG) {
+                                IconButton(
+                                    onClick = onInitDatabaseSample
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_baseline_add_24),
+                                        contentDescription = "Add sample data"
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
+                                }) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = R.drawable.bug_report
+                                        ), contentDescription = "Report bug"
+                                    )
+                                }
+                            }
+                            IconButton(onClick = onSettingsClicked) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = R.drawable.baseline_settings_24
+                                    ), contentDescription = "Settings"
                                 )
                             }
                         }
-                        IconButton(onClick = onSettingsClicked) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.baseline_settings_24
-                                ), contentDescription = "Settings"
-                            )
-                        }
-                    }
+                    )
+                },
+                contentWindowInsets = WindowInsets.statusBars
+            ) {
+                MainFragmentResponsiveContent(
+                    it,
+                    allPerson = allPerson,
+                    accountList = accountList,
+                    filteredTransactionList = filteredTransactionList,
+                    personFilterValue = personFilterValue,
+                    delPerson = delPerson,
+                    delAccount = delAccount,
+                    delTransaction = delTransaction,
+                    onEditPersonRequested = onEditPersonRequested,
+                    onPersonDetailRequested = onPersonDetailRequested,
+                    onEditAccountRequested = onEditAccountRequested,
+                    onAccountDetailRequested = onAccountDetailRequested,
+                    onEditTransactionRequested = onEditTransactionRequested,
+                    onRangeChanged = onRangeChanged,
+                    onSaldoActualClick = onSaldoActualClick,
+                    onPersonFilterValueChanged = onPersonFilterValueChanged,
+                    transactionState = transactionState,
+                    accountState = accountState,
+                    personState = personState,
+                    navPosition = navPosition,
+                    range = range,
+                    onActionChanged = { newAction -> action = newAction },
+                    onModalSheetMsgChanged = { newMsg -> modalSheetMsg = newMsg },
+                    scope = scope,
+                    sheetState = sheetState,
+                    onTitleChanged = { newTitle -> title = newTitle },
+                    onSettingsClicked = onSettingsClicked,
+                    showVertical = showVertical,
+                    principalPersonSummaryState = principalPersonSummaryState,
+                    incomeFilterValue = incomeFilterValue,
+                    outcomeFilterValue = outcomeFilterValue,
+                    transferFilterValue = transferFilterValue,
+                    onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+                    onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
+                    onTransferFilterValueChanged = onTransferFilterValueChanged
                 )
-            },
-            contentWindowInsets = WindowInsets.statusBars
-        ) {
-            MainFragmentResponsiveContent(
-                it,
-                allPerson = allPerson,
-                accountList = accountList,
-                filteredTransactionList = filteredTransactionList,
-                personFilterValue = personFilterValue,
-                delPerson = delPerson,
-                delAccount = delAccount,
-                delTransaction = delTransaction,
-                onEditPersonRequested = onEditPersonRequested,
-                onPersonDetailRequested = onPersonDetailRequested,
-                onEditAccountRequested = onEditAccountRequested,
-                onAccountDetailRequested = onAccountDetailRequested,
-                onEditTransactionRequested = onEditTransactionRequested,
-                onRangeChanged = onRangeChanged,
-                onSaldoActualClick = onSaldoActualClick,
-                onPersonFilterValueChanged = onPersonFilterValueChanged,
-                transactionState = transactionState,
-                accountState = accountState,
-                personState = personState,
-                navPosition = navPosition,
-                range = range,
-                onActionChanged = { newAction -> action = newAction },
-                onModalSheetMsgChanged = { newMsg -> modalSheetMsg = newMsg },
-                scope = scope,
-                sheetState = sheetState,
-                onTitleChanged = { newTitle -> title = newTitle },
-                onSettingsClicked = onSettingsClicked,
-                showVertical = showVertical,
-                principalPersonSummaryState = principalPersonSummaryState
-            )
+            }
         }
     }
 }
@@ -248,6 +315,12 @@ private fun MainFragmentResponsiveContent(
     sheetState: ModalBottomSheetState,
     onTitleChanged: (String) -> Unit,
     onSettingsClicked: () -> Unit,
+    incomeFilterValue: Boolean,
+    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    outcomeFilterValue: Boolean,
+    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    transferFilterValue: Boolean,
+    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -262,12 +335,19 @@ private fun MainFragmentResponsiveContent(
     val filter = @Composable {
         Filter(
             Modifier.fillMaxWidth(),
-            startDate,
-            endDate,
+            startDate = startDate,
+            endDate = endDate,
             onRangeChanged = onRangeChanged,
             personFilterVisible = navPosition == NavPosition.PERSONS,
             personFilterValue = personFilterValue,
-            onPersonFilterValueChanged = onPersonFilterValueChanged
+            onPersonFilterValueChanged = onPersonFilterValueChanged,
+            transactionsFilterVisible = navPosition == NavPosition.TRANSACCIONES,
+            incomeFilterValue = incomeFilterValue,
+            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+            outcomeFilterValue = outcomeFilterValue,
+            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
+            transferFilterValue = transferFilterValue,
+            onTransferFilterValueChanged = onTransferFilterValueChanged
         )
     }
 
@@ -397,7 +477,7 @@ private fun ModalSheetContentPreview() {
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
@@ -477,7 +557,17 @@ private fun DefaultPreview() {
                 onSaldoActualClick = {},
                 onPersonFilterValueChanged = {},
                 showVertical = true,
-                principalPersonSummaryState = personSummaryStateSample
+                principalPersonSummaryState = personSummaryStateSample,
+                drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+                onOpenBudgetRequested = {},
+                onOpenCategoriesRequested = {},
+                onTransferFilterValueChanged = {},
+                onOutcomeFilterValueChanged = {},
+                onIncomeFilterValueChanged = {},
+                transferFilterValue = true,
+                outcomeFilterValue = true,
+                incomeFilterValue = true,
+                onInitDatabaseSample = {}
             )
         }
     }
