@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
@@ -31,6 +32,7 @@ private fun BudgetViewHolder(
     val realTotalFlowString = stringResource(id = R.string.Flujo_real)
     val expectedTotalFlowString = stringResource(id = R.string.Flujo_total)
     val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_hoy)
+    val descripcionText = stringResource(id = R.string.descripcion)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
             GazegeProgressIndicator(
@@ -42,6 +44,11 @@ private fun BudgetViewHolder(
             Text(text = "$realTotalFlowString ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
             Text(text = "$expectedTotalFlowString ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
             Text(text = "$expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
+            Text(
+                text = "$descripcionText ${budget.budgetDescription}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 
