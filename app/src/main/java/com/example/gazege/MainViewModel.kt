@@ -1,6 +1,5 @@
 package com.example.gazege
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
@@ -97,6 +96,15 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
 
     @Composable
+    fun rememberIncomeFilterValue() = incomeFilterValue.observeAsState(true)
+
+    @Composable
+    fun rememberOutcomeFilterValue() = outcomeFilterValue.observeAsState(true)
+
+    @Composable
+    fun rememberTransferFilterValue() = transferFilterValue.observeAsState(true)
+
+    @Composable
     fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
     @Composable
@@ -106,8 +114,18 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
 
     @Composable
-    fun rememberAccountDetailData(accountId: Int?): State<AccountDetailData?> {
-        updateAccountDetailIdIfDifferent(accountId)
+    fun rememberAccountDetailData(
+        accountId: Int?,
+        incomeFilterValue: Boolean,
+        outcomeFilterValue: Boolean,
+        transferFilterValue: Boolean
+    ): State<AccountDetailData?> {
+        updateAccountDetailIdIfDifferent(
+            accountId,
+            incomeFilterValue,
+            outcomeFilterValue,
+            transferFilterValue
+        )
         return accountDetailData.observeAsState()
     }
 
@@ -115,20 +133,36 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberFilteredTransactionListItemDetails() =
         filteredTransactionListitemDetails.observeAsState(emptyList())
 
-    private fun logPrintln(name: String, source: String? = null) = Log.println(
-        Log.INFO,
-        "Mediator",
-        "$name: runningUpdate ${source?.let { "from $it" } ?: ""}")
+    private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
+        otherSource: LiveData<B>,
+        crossinline merger: suspend (A, B) -> X
+    ) = MediatorLiveData<X>()
+        .apply {
+            val update = {
+                if (this@combine.isInitialized && otherSource.isInitialized) {
+                    if (this@combine.value is A && otherSource.value is B) {
+                        val a = this@combine.value as A
+                        val b = otherSource.value as B
+                        viewModelScope.launch {
+                            withContext(Dispatchers.Default) {
+                                postValue(merger(a, b))
+                            }
+                        }
+                    }
+                }
+            }
+            addSource(this@combine) { update() }
+            addSource(otherSource) { update() }
+        }
+        .distinctUntilChanged()
 
     private fun <T, A : Any, B : Any> MediatorLiveData<T>.mergeTwoSources(
-        name: String,
         sourceA: LiveData<A>,
         sourceB: LiveData<B>,
         merger: (A, B) -> T
     ) = apply {
         val update = { source: String ->
             if (sourceA.isInitialized && sourceB.isInitialized) {
-                logPrintln(name, source)
                 val a = sourceA.value!!
                 val b = sourceB.value!!
                 viewModelScope.launch {
@@ -143,31 +177,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
-    private fun <T, A : Any?, B : Any?> MediatorLiveData<T>.mergeTwoNullableSources(
-        name: String,
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        merger: (A?, B?) -> T
-    ) = apply {
-        val update = {
-            if (sourceA.isInitialized && sourceB.isInitialized) {
-                logPrintln(name)
-                val a = sourceA.value
-                val b = sourceB.value
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(merger(a, b))
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update() }
-        addSource(sourceB) { update() }
-    }
-        .distinctUntilChanged()
-
     private fun <T, A : Any, B : Any, C : Any> MediatorLiveData<T>.mergeThreeSources(
-        name: String,
         sourceA: LiveData<A>,
         sourceB: LiveData<B>,
         sourceC: LiveData<C>,
@@ -175,7 +185,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     ) = apply {
         val update = {
             if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized) {
-                logPrintln(name)
                 viewModelScope.launch {
                     withContext(Dispatchers.Default) {
                         postValue(merger(sourceA.value!!, sourceB.value!!, sourceC.value!!))
@@ -189,40 +198,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
-    private fun <T, A : Any, B : Any, C : Any, D : Any> MediatorLiveData<T>.mergeFourSources(
-        name: String,
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        sourceD: LiveData<D>,
-        merger: (A, B, C, D) -> T
-    ) = apply {
-        val update = {
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized) {
-                logPrintln(name)
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(
-                            merger(
-                                sourceA.value!!,
-                                sourceB.value!!,
-                                sourceC.value!!,
-                                sourceD.value!!
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update() }
-        addSource(sourceB) { update() }
-        addSource(sourceC) { update() }
-        addSource(sourceD) { update() }
-    }
-        .distinctUntilChanged()
-
     private fun <T, A : Any?, B : Any?, C : Any?, D : Any?> MediatorLiveData<T>.mergeFourNullableSources(
-        name: String,
         sourceA: LiveData<A>,
         sourceB: LiveData<B>,
         sourceC: LiveData<C>,
@@ -231,7 +207,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     ) = apply {
         val update = {
             if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized) {
-                logPrintln(name)
                 viewModelScope.launch {
                     withContext(Dispatchers.Default) {
                         postValue(
@@ -253,81 +228,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
         .distinctUntilChanged()
 
-    private fun <T, A : Any?, B : Any?, C : Any?, D : Any?, E : Any?> MediatorLiveData<T>.mergeFiveNullableSources(
-        name: String,
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        sourceD: LiveData<D>,
-        sourceE: LiveData<E>,
-        merger: (A?, B?, C?, D?, E?) -> T
-    ) = apply {
-        val update = {
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized) {
-                logPrintln(name)
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(
-                            merger(
-                                sourceA.value,
-                                sourceB.value,
-                                sourceC.value,
-                                sourceD.value,
-                                sourceE.value
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update() }
-        addSource(sourceB) { update() }
-        addSource(sourceC) { update() }
-        addSource(sourceD) { update() }
-        addSource(sourceE) { update() }
-    }
-        .distinctUntilChanged()
-
-    private fun <T, A, B, C, D, E, F> MediatorLiveData<T>.mergeSixNullableSources(
-        name: String,
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        sourceD: LiveData<D>,
-        sourceE: LiveData<E>,
-        sourceF: LiveData<F>,
-        merger: (A?, B?, C?, D?, E?, F?) -> T
-    ) = apply {
-        val update = { source: String ->
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized && sourceF.isInitialized) {
-                logPrintln(name, source)
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(
-                            merger(
-                                sourceA.value,
-                                sourceB.value,
-                                sourceC.value,
-                                sourceD.value,
-                                sourceE.value,
-                                sourceF.value
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update("SourceA") }
-        addSource(sourceB) { update("SourceB") }
-        addSource(sourceC) { update("SourceC") }
-        addSource(sourceD) { update("SourceD") }
-        addSource(sourceE) { update("SourceE") }
-        addSource(sourceF) { update("SourceF") }
-    }
-        .distinctUntilChanged()
-
     private fun <T, A, B, C, D, E, F, G> MediatorLiveData<T>.mergeSevenNullableSources(
-        name: String,
         sourceA: LiveData<A>,
         sourceB: LiveData<B>,
         sourceC: LiveData<C>,
@@ -339,7 +240,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     ) = apply {
         val update = { source: String ->
             if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized && sourceF.isInitialized && sourceG.isInitialized) {
-                logPrintln(name, source)
                 viewModelScope.launch {
                     withContext(Dispatchers.Default) {
                         postValue(
@@ -381,7 +281,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     private val accountAndOwner: LiveData<List<AccountAndOwner>> =
         MediatorLiveData<List<AccountAndOwner>>()
-            .mergeTwoSources("accountAndOwner", allAccount, allPerson) { allAccount, allPerson ->
+            .mergeTwoSources(allAccount, allPerson) { allAccount, allPerson ->
                 AccountAndOwner.from(
                     allAccount,
                     allPerson
@@ -391,7 +291,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
         MediatorLiveData<List<AccountAndOwnerWithTransactions>>()
             .mergeThreeSources(
-                "accountAndOwnerWithTransactions",
                 allAccount,
                 allPerson,
                 allTransactions
@@ -413,7 +312,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
         MediatorLiveData<List<PersonWithAccounts>>()
             .mergeTwoSources(
-                "personWithAccounts",
                 allPerson,
                 accountAndOwnerWithTransactionsAndPockets
             ) { a, b ->
@@ -425,7 +323,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
         MediatorLiveData<List<BudgetAndCategoryWithTransactions>>()
             .mergeFourNullableSources(
-                "budgetAndCategoryWithTransactions",
                 budget,
                 categories,
                 accountAndOwnerWithTransactions,
@@ -453,7 +350,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
         MediatorLiveData<List<BudgetWithCalculatedData>>()
             .mergeTwoSources(
-                "budgetWithCalculatedData",
                 budgetAndCategoryWithTransactions,
                 range
             ) { a, b ->
@@ -469,7 +365,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
         MediatorLiveData<List<BudgetWithCalculatedDataAndCategory>>()
             .mergeTwoSources(
-                "budgetAndCategoryWithCalculatedData",
                 budgetWithCalculatedData,
                 categories
             ) { a, b -> BudgetWithCalculatedDataAndCategory.from(a, b) }
@@ -477,7 +372,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
         MediatorLiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>>()
             .mergeTwoSources(
-                "categoryWithSubcategoriesAndBudgetWithCalculatedData",
                 budgetWithCalculatedDataAndCategory,
                 categoriesWithSubCategories
             ) { a, b ->
@@ -486,8 +380,26 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
+    private val incomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    private val outcomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    private val transferFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
+    }
+
+    fun updateIncomeFilterValue(newValue: Boolean) {
+        incomeFilterValue.value = newValue
+    }
+
+    fun updateOutcomeFilterValue(newValue: Boolean) {
+        outcomeFilterValue.value = newValue
+    }
+
+    fun updateTransferFilterValue(newValue: Boolean) {
+        transferFilterValue.value = newValue
     }
 
     private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
@@ -497,60 +409,141 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
     private val accountDetailId = MutableLiveData<Int?>(null)
-    private val accountDetail = MediatorLiveData<AccountAndOwnerWithTransactionsAndPockets?>()
-        .mergeTwoNullableSources(
-            "accountDetail",
-            accountAndOwnerWithTransactionsAndPockets,
-            accountDetailId
-        ) { a, b ->
-            a?.firstOrNull {
-                it.accountAndOwnerWithTransactions.account.id == b
+    private val accountDetail = accountAndOwnerWithTransactionsAndPockets
+        .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
+            accountAndOwnerWithTransactionsAndPockets.firstOrNull {
+                it.accountAndOwnerWithTransactions.account.id == accountDetailId
             }
         }
-    private val accountDetailData: LiveData<AccountDetailData?> =
-        MediatorLiveData<AccountDetailData?>()
-            .mergeSixNullableSources(
-                "accountDetailData",
-                accountDetail,
-                allAccount,
-                categories,
-                budget,
-                range,
-                principalPerson
-            ) { a, b, c, d, e, f ->
-                a?.let {
+    private val accountIncomeFilterValue = MutableLiveData(true)
+    private val accountOutcomeFilterValue = MutableLiveData(true)
+    private val accountTransferFilterValue = MutableLiveData(true)
+    private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
+        .combine(allAccount) { accountDetail, allAccount ->
+            object {
+                val accountDetail = accountDetail
+                val allAccount = allAccount
+            }
+        }
+        .combine(categories) { combined, categories ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = categories
+            }
+        }
+        .combine(budget) { combined, budget ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = budget
+            }
+        }
+        .combine(range) { combined, range ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = combined.budget
+                val range = range
+            }
+        }
+        .combine(principalPerson) { combined, principalPerson ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = combined.budget
+                val range = combined.range
+                val principalPerson = principalPerson
+            }
+        }
+        .combine(accountIncomeFilterValue) { combined, incomeFilterValue ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = combined.budget
+                val range = combined.range
+                val principalPerson = combined.principalPerson
+                val incomeFilterValue = incomeFilterValue
+            }
+        }
+        .combine(accountOutcomeFilterValue) { combined, outcomeFilterValue ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = combined.budget
+                val range = combined.range
+                val principalPerson = combined.principalPerson
+                val incomeFilterValue = combined.incomeFilterValue
+                val outcomeFilterValue = outcomeFilterValue
+            }
+        }
+        .combine(accountTransferFilterValue) { combined, transferFilterValue ->
+            combined.run {
+                accountDetail?.let {
                     AccountDetailData.build(
-                        account = a,
-                        allAccounts = b ?: emptyList(),
-                        allCategories = c ?: emptyList(),
-                        budget = d ?: emptyList(),
-                        startDate = e?.first,
-                        endDate = e?.second,
-                        principalPerson = f
+                        account = accountDetail,
+                        allAccounts = allAccount,
+                        allCategories = categories,
+                        budget = budget,
+                        startDate = range?.first,
+                        endDate = range?.second,
+                        principalPerson = principalPerson,
+                        incomeFilter = incomeFilterValue,
+                        outcomeFilter = outcomeFilterValue,
+                        transferFilter = transferFilterValue
                     )
                 }
             }
+        }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
     private val filteredTransactionListitemDetails: LiveData<List<TransactionListItemDetails>> =
-        MediatorLiveData<List<TransactionListItemDetails>>()
-            .mergeFourNullableSources(
-                "filteredTransactionListitemDetails",
-                rangeTransactions,
-                categories,
-                allAccount,
-                principalPerson
-            ) { a, b, c, d ->
-                if (a != null && b != null && c != null) {
-                    TransactionListItemDetails.from(a, b, c, d?.id)
-                } else {
-                    emptyList()
+        rangeTransactions
+            .combine(categories) { rangeTransactions, categories ->
+                object {
+                    val rangeTransactions = rangeTransactions
+                    val categories = categories
                 }
             }
+            .combine(allAccount) { combined, allAccount ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = allAccount
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = combined.allAccount
+                }.run {
+                    TransactionListItemDetails.from(
+                        rangeTransactions,
+                        categories,
+                        allAccount,
+                        principalPerson?.id
+                    )
+                }
+            }
+            .combine(incomeFilterValue) { filteredTransactions, incomeFilterValue ->
+                filteredTransactions.applyIncomeFilter(incomeFilterValue)
+            }
+            .combine(outcomeFilterValue) { filteredTransactions, outcomeFilterValue ->
+                filteredTransactions.applyOutcomeFilter(outcomeFilterValue)
+            }
+            .combine(transferFilterValue) { filteredTransactions, transferFilterValue ->
+                filteredTransactions.applyTransferFilter(transferFilterValue)
+            }
+
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
         MediatorLiveData<List<TransactionAndAccountsAndCategory>>()
             .mergeThreeSources(
-                "allTransactionAndAccountsAndCategory",
                 allTransactions,
                 allAccount,
                 categories
@@ -561,7 +554,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val personSummaryState: LiveData<PersonSummaryState?> =
         MediatorLiveData<PersonSummaryState?>()
             .mergeSevenNullableSources(
-                "personSummaryState",
                 principalPersonWithAccounts,
                 range,
                 personWithAccounts,
@@ -670,9 +662,23 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     }
 
-    private fun updateAccountDetailIdIfDifferent(newId: Int?) {
+    private fun updateAccountDetailIdIfDifferent(
+        newId: Int?,
+        incomeFilterValue: Boolean,
+        outcomeFilterValue: Boolean,
+        transferFilterValue: Boolean
+    ) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId
+        }
+        if (incomeFilterValue != accountIncomeFilterValue.value) {
+            accountIncomeFilterValue.value = incomeFilterValue
+        }
+        if (outcomeFilterValue != accountOutcomeFilterValue.value) {
+            accountOutcomeFilterValue.value = outcomeFilterValue
+        }
+        if (transferFilterValue != accountTransferFilterValue.value) {
+            accountTransferFilterValue.value = transferFilterValue
         }
     }
 
@@ -785,6 +791,32 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 .filter { it.isOutcome }
                 .sortedBy { it.id }
                 .firstOrNull()
+        }
+    }
+
+    companion object {
+        suspend fun List<TransactionListItemDetails>.applyIncomeFilter(
+            incomeFilterValue: Boolean
+        ) = withContext(Dispatchers.Default) {
+            filter {
+                it.transactionType != TransactionType.INCOME || incomeFilterValue
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyOutcomeFilter(
+            outcomeFilterValue: Boolean
+        ) = withContext(Dispatchers.Default) {
+            filter {
+                it.transactionType != TransactionType.OUTCOME || outcomeFilterValue
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyTransferFilter(
+            transferFilterValue: Boolean
+        ) = withContext(Dispatchers.Default) {
+            filter {
+                it.transactionType != TransactionType.TRANSFER || transferFilterValue
+            }
         }
     }
 }

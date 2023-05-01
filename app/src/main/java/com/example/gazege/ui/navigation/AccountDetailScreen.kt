@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -38,7 +39,15 @@ fun NavGraphBuilder.screenAccountDetail(
         )
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
-        val data by viewModel.rememberAccountDetailData(accountId)
+        var incomeFilter by rememberSaveable { mutableStateOf(true) }
+        var outcomeFilter by rememberSaveable { mutableStateOf(true) }
+        var transferFilter by rememberSaveable { mutableStateOf(true) }
+        val data by viewModel.rememberAccountDetailData(
+            accountId,
+            incomeFilter,
+            outcomeFilter,
+            transferFilter
+        )
         var fabExpanded by remember { mutableStateOf(false) }
 
         val accountAndOwner by viewModel.rememberAccountAndOwner()
@@ -88,7 +97,13 @@ fun NavGraphBuilder.screenAccountDetail(
                         it,
                         account.account
                     )
-                }
+                },
+                incomeFilterValue = incomeFilter,
+                outcomeFilterValue = outcomeFilter,
+                transferFilterValue = transferFilter,
+                onIncomeFilterValueChanged = { incomeFilter = it },
+                onTransferFilterValueChanged = { transferFilter = it },
+                onOutcomeFilterValueChanged = { outcomeFilter = it }
             )
         } else {
             Text("Cuenta vacía")

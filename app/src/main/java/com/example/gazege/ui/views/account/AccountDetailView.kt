@@ -15,6 +15,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.MainViewModel.Companion.applyIncomeFilter
+import com.example.gazege.MainViewModel.Companion.applyOutcomeFilter
+import com.example.gazege.MainViewModel.Companion.applyTransferFilter
 import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
@@ -27,6 +30,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
+import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
@@ -42,7 +46,12 @@ import java.time.LocalDate
 import java.time.Period
 
 data class AccountDetailData constructor(
-    val account: AccountAndOwnerWithTransactionsAndPockets,
+    val account: AccountAndOwner,
+    val total: Double,
+    val childrenTotal: Double,
+    val allTransactions: List<TransactionListItemDetails>,
+    val inTransactions: List<TransactionListItemDetails>,
+    val outTransactions: List<TransactionListItemDetails>,
     val allAccounts: List<Account>,
     val allCategories: List<Category>,
     val budget: List<Budget>,
@@ -50,27 +59,7 @@ data class AccountDetailData constructor(
     val endDate: LocalDate?,
     val principalPerson: Person?
 ) {
-    val total = AccountDao.getTotal(account.accountAndOwnerWithTransactions, startDate, endDate)
-    val chilrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate)
-    private val allTransactions = account
-        .allTransactionsWithPocketTransactions
-        .sortedByDescending { it.date }
-        .filter { dateBetween(it.date, startDate, endDate) }
-    private val outTransactions = account
-        .allOutTransactionsWithOutPocketTransactions
-        .sortedByDescending { it.date }
-        .filter { dateBetween(it.date, startDate, endDate) }
-    private val inTransactions = account
-        .allInTransactionsWithInPocketTransactions
-        .sortedByDescending { it.date }
-        .filter { dateBetween(it.date, startDate, endDate) }
-    val allTransactionsListItemDetails: List<TransactionListItemDetails> =
-        TransactionListItemDetails.from(
-            transactions = allTransactions,
-            accounts = allAccounts,
-            categories = allCategories,
-            principalPersonId = principalPerson?.id
-        )
+    val allTransactionsListItemDetails: List<TransactionListItemDetails> = allTransactions
 
     val expensesPlotData: PlotData = PlotData(outTransactions)
     val incomePlotData: PlotData = PlotData(inTransactions)
@@ -79,37 +68,89 @@ data class AccountDetailData constructor(
             *inTransactions.toTypedArray(),
             *outTransactions
                 .map {
-                    it.copy(amount = -it.amount)
+                    it.copy(transaction = it.transaction.copy(amount = -it.transaction.amount))
                 }
                 .toTypedArray()
         ))
 
     companion object {
-        fun build(
+        suspend fun build(
             account: AccountAndOwnerWithTransactionsAndPockets,
             allAccounts: List<Account>,
             allCategories: List<Category>,
             budget: List<Budget>,
             startDate: LocalDate?,
             endDate: LocalDate?,
-            principalPerson: Person?
+            principalPerson: Person?,
+            incomeFilter: Boolean,
+            outcomeFilter: Boolean,
+            transferFilter: Boolean
         ): AccountDetailData {
             return AccountDetailData(
-                account = account,
+                account = AccountAndOwner(
+                    account.accountAndOwnerWithTransactions.account,
+                    account.accountAndOwnerWithTransactions.owner
+                ),
+                total = AccountDao.getTotal(
+                    account.accountAndOwnerWithTransactions,
+                    startDate,
+                    endDate
+                ),
+                childrenTotal = AccountDao.getChildrenTotal(account, startDate, endDate),
                 allAccounts = allAccounts,
                 allCategories = allCategories,
                 budget = budget,
                 startDate = startDate,
                 endDate = endDate,
-                principalPerson = principalPerson
+                principalPerson = principalPerson,
+                allTransactions = account
+                    .allTransactionsWithPocketTransactions
+                    .sortedByDescending { it.date }
+                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .let {
+                        TransactionListItemDetails.from(
+                            it,
+                            allCategories,
+                            allAccounts,
+                            principalPerson?.id
+                        )
+                    }
+                    .applyIncomeFilter(incomeFilter)
+                    .applyOutcomeFilter(outcomeFilter)
+                    .applyTransferFilter(transferFilter),
+                inTransactions = account
+                    .allInTransactionsWithInPocketTransactions
+                    .sortedByDescending { it.date }
+                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .let {
+                        TransactionListItemDetails.from(
+                            it,
+                            allCategories,
+                            allAccounts,
+                            principalPerson?.id
+                        )
+                    },
+                outTransactions = account
+                    .allOutTransactionsWithOutPocketTransactions
+                    .sortedByDescending { it.date }
+                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .let {
+                        TransactionListItemDetails.from(
+                            it,
+                            allCategories,
+                            allAccounts,
+                            principalPerson?.id
+                        )
+                    }
             )
         }
     }
 }
 
 data class PlotData(
-    val transactions: List<Transaction>
+    val transactionsListItemDetails: List<TransactionListItemDetails>
 ) {
+    private val transactions = transactionsListItemDetails.map { it.transaction }
     private val maxDate = transactions.maxOfOrNull { it.date }
     private val minDate = transactions.minOfOrNull { it.date }
     private val monthSpan = if (maxDate != null && minDate != null) {
@@ -227,7 +268,13 @@ fun AccountDetail(
     fabExpanded: Boolean,
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
-    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    incomeFilterValue: Boolean,
+    outcomeFilterValue: Boolean,
+    transferFilterValue: Boolean,
+    onIncomeFilterValueChanged: (Boolean) -> Unit,
+    onTransferFilterValueChanged: (Boolean) -> Unit,
+    onOutcomeFilterValueChanged: (Boolean) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -248,7 +295,13 @@ fun AccountDetail(
             dynamicFabEnabled = true,
             fabExpanded = fabExpanded,
             onFabExpandedChanged = onFabExpandedChanged,
-            onAddTransactionRequested = onAddTransactionRequested
+            onAddTransactionRequested = onAddTransactionRequested,
+            incomeFilterValue = incomeFilterValue,
+            outcomeFilterValue = outcomeFilterValue,
+            transferFilterValue = transferFilterValue,
+            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+            onTransferFilterValueChanged = onTransferFilterValueChanged,
+            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
         )
     }
 }
@@ -265,13 +318,19 @@ private fun NotNullAccountDetail(
     fabExpanded: Boolean,
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
+    incomeFilterValue: Boolean,
+    outcomeFilterValue: Boolean,
+    transferFilterValue: Boolean,
+    onIncomeFilterValueChanged: (Boolean) -> Unit,
+    onTransferFilterValueChanged: (Boolean) -> Unit,
+    onOutcomeFilterValueChanged: (Boolean) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total
-    val childrenTotal = data.chilrenTotal
+    val childrenTotal = data.childrenTotal
     val allTransactionsAndAccountsAndCategory = data.allTransactionsListItemDetails
     val accountWithPockets = data.account
-    val account = accountWithPockets.accountAndOwnerWithTransactions
+    val account = accountWithPockets
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -325,6 +384,20 @@ private fun NotNullAccountDetail(
                     " ${account.owner.name}",
             modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
         )
+        Filter(
+            modifier = Modifier.fillMaxWidth(),
+            dateFilterVisible = false,
+            startDate = null,
+            endDate = null,
+            onRangeChanged = { _, _ -> },
+            transactionsFilterVisible = true,
+            incomeFilterValue = incomeFilterValue,
+            outcomeFilterValue = outcomeFilterValue,
+            transferFilterValue = transferFilterValue,
+            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+            onTransferFilterValueChanged = onTransferFilterValueChanged,
+            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
+        )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
@@ -368,7 +441,14 @@ private fun NotNullAccountDetail(
         }
         LazyColumn(
             contentPadding =
-            PaddingValues(dimensionResource(id = R.dimen.DefaultPadding))
+            dimensionResource(id = R.dimen.DefaultPadding).let {
+                PaddingValues(
+                    top = it,
+                    start = it,
+                    end = it,
+                    bottom = dimensionResource(id = R.dimen.FABDefaultSpace)
+                )
+            }
         ) {
             if (showGraphs) {
                 item(contentType = "plotTitle") {
@@ -426,15 +506,15 @@ private fun NullAccountDetail(
 ) {
     NotNullAccountDetail(
         AccountDetailData(
-            AccountAndOwnerWithTransactionsAndPockets.from(
-                AccountAndOwnerWithTransactions(
-                    account.account,
-                    account.owner,
-                    listOf(),
-                    listOf()
-                ),
-                listOf()
+            AccountAndOwner(
+                account.account,
+                account.owner
             ),
+            0.0,
+            0.0,
+            listOf(),
+            listOf(),
+            listOf(),
             listOf(),
             listOf(),
             listOf(),
@@ -450,7 +530,13 @@ private fun NullAccountDetail(
         fabExpanded = false,
         onAddTransactionRequested = {},
         onFabExpandedChanged = {},
-        dynamicFabEnabled = false
+        dynamicFabEnabled = false,
+        onOutcomeFilterValueChanged = {},
+        onTransferFilterValueChanged = {},
+        onIncomeFilterValueChanged = {},
+        transferFilterValue = true,
+        outcomeFilterValue = true,
+        incomeFilterValue = true
     )
 }
 
@@ -461,6 +547,7 @@ private fun NullAccountDetail(
 private fun AccountDetailPreview() {
     val snackBackState = SnackbarHostState()
     val scope = rememberCoroutineScope()
+    var accountDetailData by remember { mutableStateOf<AccountDetailData?>(null) }
     DatabaseSample {
         GazegeTheme {
             Scaffold(
@@ -469,17 +556,25 @@ private fun AccountDetailPreview() {
                 }
             ) {
                 Box(Modifier.padding(it)) {
+                    LaunchedEffect(key1 = Unit) {
+                        scope.launch {
+                            accountDetailData = AccountDetailData.build(
+                                accountAndOwnerWithTransactionsAndPocketsSample.first(),
+                                accountSample,
+                                categorieSample,
+                                budgetSample,
+                                startDateSample,
+                                endDateSample,
+                                personSample.first(),
+                                true,
+                                true,
+                                true
+                            )
+                        }
+                    }
                     AccountDetail(
                         accountAndOwner = accountAndOwnerSample.first(),
-                        data = AccountDetailData(
-                            account = accountAndOwnerWithTransactionsAndPocketsSample.first(),
-                            allAccounts = accountSample,
-                            allCategories = categorieSample,
-                            budget = budgetSample,
-                            startDate = null,
-                            endDate = null,
-                            principalPerson = null
-                        ),
+                        data = accountDetailData,
                         onAction = { account, action ->
                             scope.launch {
                                 snackBackState.showSnackbar(
@@ -504,7 +599,13 @@ private fun AccountDetailPreview() {
                         onShowGraphsChanged = {},
                         onAddTransactionRequested = {},
                         onFabExpandedChanged = {},
-                        fabExpanded = false
+                        fabExpanded = false,
+                        onOutcomeFilterValueChanged = {},
+                        onTransferFilterValueChanged = {},
+                        onIncomeFilterValueChanged = {},
+                        transferFilterValue = true,
+                        outcomeFilterValue = true,
+                        incomeFilterValue = true
                     )
                 }
             }

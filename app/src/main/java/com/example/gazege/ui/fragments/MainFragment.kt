@@ -51,6 +51,9 @@ fun MainFragment(
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
+    incomeFilterValue: Boolean,
+    outcomeFilterValue: Boolean,
+    transferFilterValue: Boolean,
     sheetState: ModalBottomSheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
@@ -72,6 +75,9 @@ fun MainFragment(
     onPersonFilterValueChanged: (Boolean) -> Unit,
     onOpenCategoriesRequested: () -> Unit,
     onOpenBudgetRequested: () -> Unit,
+    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -256,7 +262,13 @@ fun MainFragment(
                     onTitleChanged = { newTitle -> title = newTitle },
                     onSettingsClicked = onSettingsClicked,
                     showVertical = showVertical,
-                    principalPersonSummaryState = principalPersonSummaryState
+                    principalPersonSummaryState = principalPersonSummaryState,
+                    incomeFilterValue = incomeFilterValue,
+                    outcomeFilterValue = outcomeFilterValue,
+                    transferFilterValue = transferFilterValue,
+                    onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+                    onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
+                    onTransferFilterValueChanged = onTransferFilterValueChanged
                 )
             }
         }
@@ -294,6 +306,12 @@ private fun MainFragmentResponsiveContent(
     sheetState: ModalBottomSheetState,
     onTitleChanged: (String) -> Unit,
     onSettingsClicked: () -> Unit,
+    incomeFilterValue: Boolean,
+    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    outcomeFilterValue: Boolean,
+    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
+    transferFilterValue: Boolean,
+    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -308,12 +326,19 @@ private fun MainFragmentResponsiveContent(
     val filter = @Composable {
         Filter(
             Modifier.fillMaxWidth(),
-            startDate,
-            endDate,
+            startDate = startDate,
+            endDate = endDate,
             onRangeChanged = onRangeChanged,
             personFilterVisible = navPosition == NavPosition.PERSONS,
             personFilterValue = personFilterValue,
-            onPersonFilterValueChanged = onPersonFilterValueChanged
+            onPersonFilterValueChanged = onPersonFilterValueChanged,
+            transactionsFilterVisible = navPosition == NavPosition.TRANSACCIONES,
+            incomeFilterValue = incomeFilterValue,
+            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+            outcomeFilterValue = outcomeFilterValue,
+            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
+            transferFilterValue = transferFilterValue,
+            onTransferFilterValueChanged = onTransferFilterValueChanged
         )
     }
 
@@ -526,7 +551,13 @@ private fun DefaultPreview() {
                 principalPersonSummaryState = personSummaryStateSample,
                 drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
                 onOpenBudgetRequested = {},
-                onOpenCategoriesRequested = {}
+                onOpenCategoriesRequested = {},
+                onTransferFilterValueChanged = {},
+                onOutcomeFilterValueChanged = {},
+                onIncomeFilterValueChanged = {},
+                transferFilterValue = true,
+                outcomeFilterValue = true,
+                incomeFilterValue = true
             )
         }
     }

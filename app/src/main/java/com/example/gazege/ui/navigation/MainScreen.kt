@@ -46,6 +46,9 @@ fun NavGraphBuilder.screenMain(
         val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
         val range by viewModel.rememberRange()
         val personFilterValue by viewModel.rememberPersonFilterValue()
+        val incomeFilterValue by viewModel.rememberIncomeFilterValue()
+        val outcomeFilterValue by viewModel.rememberOutcomeFilterValue()
+        val transferFilterValue by viewModel.rememberTransferFilterValue()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
@@ -112,7 +115,13 @@ fun NavGraphBuilder.screenMain(
                 principalPersonSummaryState = principalPersonSummaryState,
                 drawerState = drawerState,
                 onOpenCategoriesRequested = onNavigateToCategories,
-                onOpenBudgetRequested = onNavigateToBudget
+                onOpenBudgetRequested = onNavigateToBudget,
+                incomeFilterValue = incomeFilterValue,
+                outcomeFilterValue = outcomeFilterValue,
+                transferFilterValue = transferFilterValue,
+                onIncomeFilterValueChanged = viewModel::updateIncomeFilterValue,
+                onOutcomeFilterValueChanged = viewModel::updateOutcomeFilterValue,
+                onTransferFilterValueChanged = viewModel::updateTransferFilterValue
             )
         }
     }
