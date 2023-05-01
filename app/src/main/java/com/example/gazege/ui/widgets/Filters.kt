@@ -66,7 +66,7 @@ fun Filter(
                 !transferFilterValue
     Row(
         modifier = modifier
-            .horizontalScroll(rememberScrollState(), reverseScrolling = true)
+            .horizontalScroll(rememberScrollState())
             .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically

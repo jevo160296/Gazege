@@ -1,5 +1,6 @@
 package com.example.gazege.ui.views.account
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -279,30 +280,33 @@ fun AccountDetail(
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
     }
-    if (data == null) {
-        NullAccountDetail(accountAndOwner)
-    } else {
-        NotNullAccountDetail(
-            data = data,
-            onAction = onAction,
-            onTransactionAction = onTransactionAction,
-            showGraphs = showGraphs,
-            switchEnabled = innerShowGraphs,
-            onShowGraphsChanged = {
-                innerShowGraphs = it
-                onShowGraphsChanged(it)
-            },
-            dynamicFabEnabled = true,
-            fabExpanded = fabExpanded,
-            onFabExpandedChanged = onFabExpandedChanged,
-            onAddTransactionRequested = onAddTransactionRequested,
-            incomeFilterValue = incomeFilterValue,
-            outcomeFilterValue = outcomeFilterValue,
-            transferFilterValue = transferFilterValue,
-            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
-            onTransferFilterValueChanged = onTransferFilterValueChanged,
-            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
-        )
+    val showLoadingScreen = data == null || data.account.account.id != accountAndOwner.account.id
+    Crossfade(targetState = showLoadingScreen) {
+        if (it) {
+            NullAccountDetail(accountAndOwner)
+        } else {
+            NotNullAccountDetail(
+                data = data!!,
+                onAction = onAction,
+                onTransactionAction = onTransactionAction,
+                showGraphs = showGraphs,
+                switchEnabled = innerShowGraphs,
+                onShowGraphsChanged = {
+                    innerShowGraphs = it
+                    onShowGraphsChanged(it)
+                },
+                dynamicFabEnabled = true,
+                fabExpanded = fabExpanded,
+                onFabExpandedChanged = onFabExpandedChanged,
+                onAddTransactionRequested = onAddTransactionRequested,
+                incomeFilterValue = incomeFilterValue,
+                outcomeFilterValue = outcomeFilterValue,
+                transferFilterValue = transferFilterValue,
+                onIncomeFilterValueChanged = onIncomeFilterValueChanged,
+                onTransferFilterValueChanged = onTransferFilterValueChanged,
+                onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
+            )
+        }
     }
 }
 

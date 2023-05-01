@@ -156,117 +156,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
         .distinctUntilChanged()
 
-    private fun <T, A : Any, B : Any> MediatorLiveData<T>.mergeTwoSources(
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        merger: (A, B) -> T
-    ) = apply {
-        val update = { source: String ->
-            if (sourceA.isInitialized && sourceB.isInitialized) {
-                val a = sourceA.value!!
-                val b = sourceB.value!!
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(merger(a, b))
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update("Source A") }
-        addSource(sourceB) { update("Source B") }
-    }
-        .distinctUntilChanged()
-
-    private fun <T, A : Any, B : Any, C : Any> MediatorLiveData<T>.mergeThreeSources(
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        merger: (A, B, C) -> T
-    ) = apply {
-        val update = {
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized) {
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(merger(sourceA.value!!, sourceB.value!!, sourceC.value!!))
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update() }
-        addSource(sourceB) { update() }
-        addSource(sourceC) { update() }
-    }
-        .distinctUntilChanged()
-
-    private fun <T, A : Any?, B : Any?, C : Any?, D : Any?> MediatorLiveData<T>.mergeFourNullableSources(
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        sourceD: LiveData<D>,
-        merger: (A?, B?, C?, D?) -> T
-    ) = apply {
-        val update = {
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized) {
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(
-                            merger(
-                                sourceA.value,
-                                sourceB.value,
-                                sourceC.value,
-                                sourceD.value
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update() }
-        addSource(sourceB) { update() }
-        addSource(sourceC) { update() }
-        addSource(sourceD) { update() }
-    }
-        .distinctUntilChanged()
-
-    private fun <T, A, B, C, D, E, F, G> MediatorLiveData<T>.mergeSevenNullableSources(
-        sourceA: LiveData<A>,
-        sourceB: LiveData<B>,
-        sourceC: LiveData<C>,
-        sourceD: LiveData<D>,
-        sourceE: LiveData<E>,
-        sourceF: LiveData<F>,
-        sourceG: LiveData<G>,
-        merger: (A?, B?, C?, D?, E?, F?, G?) -> T
-    ) = apply {
-        val update = { source: String ->
-            if (sourceA.isInitialized && sourceB.isInitialized && sourceC.isInitialized && sourceD.isInitialized && sourceE.isInitialized && sourceF.isInitialized && sourceG.isInitialized) {
-                viewModelScope.launch {
-                    withContext(Dispatchers.Default) {
-                        postValue(
-                            merger(
-                                sourceA.value,
-                                sourceB.value,
-                                sourceC.value,
-                                sourceD.value,
-                                sourceE.value,
-                                sourceF.value,
-                                sourceG.value
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        addSource(sourceA) { update("SourceA") }
-        addSource(sourceB) { update("SourceB") }
-        addSource(sourceC) { update("SourceC") }
-        addSource(sourceD) { update("SourceD") }
-        addSource(sourceE) { update("SourceE") }
-        addSource(sourceF) { update("SourceF") }
-        addSource(sourceG) { update("SourceG") }
-    }
-        .distinctUntilChanged()
-
     private var appInitialized = false
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
@@ -280,22 +169,29 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
 
     private val accountAndOwner: LiveData<List<AccountAndOwner>> =
-        MediatorLiveData<List<AccountAndOwner>>()
-            .mergeTwoSources(allAccount, allPerson) { allAccount, allPerson ->
-                AccountAndOwner.from(
-                    allAccount,
-                    allPerson
-                )
-            }
+        allAccount.combine(allPerson) { allAccount, allPerson ->
+            AccountAndOwner.from(
+                allAccount,
+                allPerson
+            )
+        }
 
     private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
-        MediatorLiveData<List<AccountAndOwnerWithTransactions>>()
-            .mergeThreeSources(
-                allAccount,
-                allPerson,
-                allTransactions
-            ) { a, b, c ->
-                AccountAndOwnerWithTransactions.from(a, b, c)
+        allAccount
+            .combine(allPerson) { allAccount, allPerson ->
+                object {
+                    val allAccount = allAccount
+                    val allPerson = allPerson
+                }
+            }
+            .combine(allTransactions) { combined, allTransactions ->
+                combined.run {
+                    AccountAndOwnerWithTransactions.from(
+                        allAccount,
+                        allPerson,
+                        allTransactions
+                    )
+                }
             }
 
     private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
@@ -310,34 +206,39 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             }
         }
     private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
-        MediatorLiveData<List<PersonWithAccounts>>()
-            .mergeTwoSources(
-                allPerson,
-                accountAndOwnerWithTransactionsAndPockets
-            ) { a, b ->
-                PersonWithAccounts.from(a, b)
-            }
+        allPerson.combine(accountAndOwnerWithTransactionsAndPockets) { allPerson, accountAndOwnerWithTransactionsAndPockets ->
+            PersonWithAccounts.from(allPerson, accountAndOwnerWithTransactionsAndPockets)
+        }
     private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
         .map { CategoryWithSubCategories.from(it) }
 
     private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
-        MediatorLiveData<List<BudgetAndCategoryWithTransactions>>()
-            .mergeFourNullableSources(
-                budget,
-                categories,
-                accountAndOwnerWithTransactions,
-                principalPerson
-            ) { budget, categories, accountAndOwnerWithTransactions, person ->
-                if (person == null) {
-                    emptyList()
-                } else {
-                    BudgetAndCategoryWithTransactions.from(
-                        budget = budget ?: emptyList(),
-                        category = categories ?: emptyList(),
-                        person = person,
-                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                            ?: emptyList()
-                    )
+        budget
+            .combine(categories) { budget, categories ->
+                object {
+                    val budget = budget
+                    val categories = categories
+                }
+            }
+            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+                object {
+                    val budget = combined.budget
+                    val categories = combined.categories
+                    val accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                combined.run {
+                    if (principalPerson == null) {
+                        emptyList()
+                    } else {
+                        BudgetAndCategoryWithTransactions.from(
+                            budget = budget,
+                            category = categories,
+                            person = principalPerson,
+                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                        )
+                    }
                 }
             }
 
@@ -348,35 +249,33 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
 
     private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
-        MediatorLiveData<List<BudgetWithCalculatedData>>()
-            .mergeTwoSources(
-                budgetAndCategoryWithTransactions,
-                range
-            ) { a, b ->
-                val startDate = b.first
-                val endDate = b.second
-                if (startDate != null && endDate != null) {
-                    BudgetWithCalculatedData.from(a, LocalDate.now(), startDate, endDate)
-                } else {
-                    emptyList()
-                }
+        budgetAndCategoryWithTransactions.combine(range) { budgetAndCategoryWithTransactions, range ->
+            val startDate = range.first
+            val endDate = range.second
+            if (startDate != null && endDate != null) {
+                BudgetWithCalculatedData.from(
+                    budgetAndCategoryWithTransactions,
+                    LocalDate.now(),
+                    startDate,
+                    endDate
+                )
+            } else {
+                emptyList()
             }
+        }
 
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
-        MediatorLiveData<List<BudgetWithCalculatedDataAndCategory>>()
-            .mergeTwoSources(
-                budgetWithCalculatedData,
-                categories
-            ) { a, b -> BudgetWithCalculatedDataAndCategory.from(a, b) }
+        budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
+            BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
+        }
 
     private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
-        MediatorLiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>>()
-            .mergeTwoSources(
+        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
+            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
                 budgetWithCalculatedDataAndCategory,
                 categoriesWithSubCategories
-            ) { a, b ->
-                CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(a, b)
-            }
+            )
+        }
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
@@ -542,46 +441,89 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             }
 
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
-        MediatorLiveData<List<TransactionAndAccountsAndCategory>>()
-            .mergeThreeSources(
-                allTransactions,
-                allAccount,
-                categories
-            ) { a, b, c ->
-                TransactionAndAccountsAndCategory.from(a, b, c)
+        allTransactions
+            .combine(allAccount) { allTransactions, allAccount ->
+                object {
+                    val allTransactions = allTransactions
+                    val allAccount = allAccount
+                }
+            }
+            .combine(categories) { combined, categories ->
+                combined.run {
+                    TransactionAndAccountsAndCategory.from(
+                        allTransactions,
+                        allAccount,
+                        categories
+                    )
+                }
             }
 
     private val personSummaryState: LiveData<PersonSummaryState?> =
-        MediatorLiveData<PersonSummaryState?>()
-            .mergeSevenNullableSources(
-                principalPersonWithAccounts,
-                range,
-                personWithAccounts,
-                allTransactionAndAccountsAndCategory,
-                budgetWithCalculatedDataAndCategory,
-                incluirPresupuestoEnSaldoActual,
-                incluirDeudasEnSaldoActual
-            ) { principalPersonWithAccounts, range, personWithAccounts, allTransactionAndAccountsAndCategory, budgetAndCategoryWithCalculatedData, incluirPresupuestoEnSaldoActual, incluirDeudasEnSaldoActual ->
-                principalPersonWithAccounts?.let { pp ->
-                    PersonSummaryState.from(
-                        pp,
-                        range?.first,
-                        range?.second,
-                        allPersons = personWithAccounts ?: emptyList(),
-                        allTransactions = allTransactionAndAccountsAndCategory
-                            ?.map {
-                                TransactionAndAccounts(
-                                    it.transaction,
-                                    it.sourceAccount,
-                                    it.destinationAccount
-                                )
-                            }
-                            ?: emptyList(),
-                        budgetWithCalculatedDatumAndCategories = budgetAndCategoryWithCalculatedData
-                            ?: emptyList(),
-                        includeBudget = incluirPresupuestoEnSaldoActual ?: false,
-                        includeDebts = incluirDeudasEnSaldoActual ?: false
-                    )
+        principalPersonWithAccounts
+            .combine(range) { principalPersonWithAccounts, range ->
+                object {
+                    val principalPersonWithAccounts = principalPersonWithAccounts
+                    val range = range
+                }
+            }
+            .combine(personWithAccounts) { combined, personWithAccounts ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = personWithAccounts
+                }
+            }
+            .combine(allTransactionAndAccountsAndCategory) { combined, allTransactionAndAccountsAndCategory ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory = allTransactionAndAccountsAndCategory
+                }
+            }
+            .combine(budgetWithCalculatedDataAndCategory) { combined, budgetWithCalculatedDataAndCategory ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                }
+            }
+            .combine(incluirPresupuestoEnSaldoActual) { combined, incluirPresupuestoEnSaldoActual ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory =
+                        combined.budgetWithCalculatedDataAndCategory
+                    val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
+                }
+            }
+            .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+                combined.run {
+                    principalPersonWithAccounts?.let { pp ->
+                        PersonSummaryState.from(
+                            pp,
+                            range?.first,
+                            range?.second,
+                            allPersons = personWithAccounts,
+                            allTransactions = allTransactionAndAccountsAndCategory
+                                .map {
+                                    TransactionAndAccounts(
+                                        it.transaction,
+                                        it.sourceAccount,
+                                        it.destinationAccount
+                                    )
+                                },
+                            budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
+                            includeBudget = incluirPresupuestoEnSaldoActual,
+                            includeDebts = incluirDeudasEnSaldoActual
+                        )
+                    }
                 }
             }
 
