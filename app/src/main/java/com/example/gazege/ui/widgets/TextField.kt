@@ -2,8 +2,6 @@
 
 package com.example.gazege.ui.widgets
 
-import android.icu.text.DecimalFormat
-import android.os.Parcelable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -25,9 +24,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.ui.theme.GazegeTheme
-import kotlinx.parcelize.Parcelize
-import java.math.BigDecimal
-import java.math.RoundingMode
+import kotlin.math.absoluteValue
+import kotlin.math.floor
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,8 +68,8 @@ fun TextField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberField(
-    value: SignedBigDecimal,
-    onValueChange: (SignedBigDecimal) -> Unit,
+    value: Double,
+    onValueChange: (Double) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
@@ -90,49 +89,38 @@ fun NumberField(
     shape: Shape = TextFieldDefaults.filledShape,
     colors: TextFieldColors = TextFieldDefaults.textFieldColors()
 ) {
-    var formatType by rememberSaveable {
+    val formatType by rememberSaveable {
         mutableStateOf(NumberTransformation.FormatType.Int)
     }
     val numberTransformation = NumberTransformation()
-    val stringRepresentation = numberTransformation.signedBigDecimalToString(value, formatType)
+    var stringRepresentation by remember(value) {
+        mutableStateOf(numberTransformation.doubleToString(value, formatType))
+    }
+    var isEditing by remember { mutableStateOf(false) }
     TextField(
         value = stringRepresentation,
         onValueChange = {
-            formatType = if (it.contains(numberTransformation.decimalSeparator)) {
-                NumberTransformation.FormatType.Double
-            } else {
-                NumberTransformation.FormatType.Int
-            }
-            var coercedRepresentation =
-                if (stringRepresentation == "0" && it.contains('-')) {
-                    "-0"
-                } else if (stringRepresentation == "0" && it.endsWith("0")) {
-                    it.take(1)
-                } else if (stringRepresentation == "0.00" && it.endsWith("0.00")) {
-                    "${it.take(1)}.00"
-                } else {
-                    it
-                }
-            coercedRepresentation = when (formatType) {
-                NumberTransformation.FormatType.Int -> coercedRepresentation
-                NumberTransformation.FormatType.Double -> coercedRepresentation.split(
-                    numberTransformation.decimalSeparator
-                ).mapIndexed { index, s ->
-                    if (index == 1) {
-                        s.take(2)
-                    } else {
-                        s
-                    }
-                }.joinToString(numberTransformation.decimalSeparator.toString())
-
-            }
-            val doubleRepresentation =
-                numberTransformation.stringToBigDecimal(coercedRepresentation)
-            if (doubleRepresentation != null) {
-                onValueChange(doubleRepresentation)
+            val isValidNumberString = numberTransformation.isValidNumberString(it)
+            if (isValidNumberString) {
+                stringRepresentation = it
+                    .replace(Regex("(\\.\\d{0,2})\\d*"), "$1")
             }
         },
-        modifier = modifier,
+        modifier = modifier.onFocusChanged {
+            if (!it.hasFocus) {
+                val newValue = numberTransformation.stringToDoubleOrNull(stringRepresentation)
+                newValue?.let {
+                    onValueChange(newValue)
+                    stringRepresentation = numberTransformation.doubleToString(value, formatType)
+                }
+                isEditing = false
+            } else {
+                if (stringRepresentation in setOf("0", "0.0", "-0", "-0.0")) {
+                    stringRepresentation = ""
+                }
+                isEditing = true
+            }
+        },
         label = label,
         singleLine = singleLine,
         keyboardOptions = keyboardOptions.copy(
@@ -145,177 +133,124 @@ fun NumberField(
 }
 
 class NumberTransformation(
-    val thousandsSeparator: Char = DecimalFormat().decimalFormatSymbols.groupingSeparator,
-    val decimalSeparator: Char = DecimalFormat().decimalFormatSymbols.decimalSeparator
+    val thousandsSeparator: Char = ',',
+    private val decimalSeparator: Char = '.'
 ) : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        val transformation = reformat(text.text)
+
+        return TransformedText(
+            AnnotatedString(transformation.formatted ?: ""),
+            Offset(transformation),
+        )
+    }
+
+    class Offset(
+        private val transformation: Transformation
+    ) : OffsetMapping {
+        override fun originalToTransformed(offset: Int) =
+            transformation.originalToTransformed[offset]
+
+        override fun transformedToOriginal(offset: Int) =
+            transformation.transformedToOriginal[offset]
+    }
+
     enum class FormatType {
         Double, Int
     }
 
-    class Offset(
-        originalNumberLength: Int, val decimalPointPosition: Int? = null, startsWithMinus: Boolean
-    ) : OffsetMapping {
-        private val wholePartOriginalIntegerLength: Int =
-            originalNumberLength - if (decimalPointPosition != null) {
-                3
-            } else {
-                0
-            } -
-                    if (startsWithMinus) {
-                        1
-                    } else {
-                        0
-                    }
+    fun reformat(original: String): Transformation {
+        val parts = original.split(decimalSeparator)
+        check(parts.size < 3) { "original text must have only one dot (use filteredDecimalText)" }
 
-        private val transformedIntegerLength =
-            wholePartOriginalIntegerLength + calculateTotalThousandSeparatorCount() +
-                    if (startsWithMinus) {
-                        1
-                    } else {
-                        0
-                    }
-
-        override fun originalToTransformed(offset: Int): Int =
-            offset + calculateLeftTotalThousandSeparatorCount(offset)
-
-        override fun transformedToOriginal(offset: Int): Int =
-            offset - calculateLeftTotalThousandSeparatorCountTransformed(offset)
-
-        fun calculateTotalThousandSeparatorCount(): Int = (wholePartOriginalIntegerLength - 1) / 3
-
-        fun calculateRightTotalThousandSeparatorCount(offset: Int) = if (offset == 0) {
-            calculateTotalThousandSeparatorCount()
-        } else if (decimalPointPosition != null && offset >= decimalPointPosition) {
-            0
-        } else {
-            (wholePartOriginalIntegerLength - offset) / 3
-        }
-
-        fun calculateLeftTotalThousandSeparatorCount(offset: Int) =
-            calculateTotalThousandSeparatorCount() - calculateRightTotalThousandSeparatorCount(
-                offset
-            )
-
-        fun calculateRightTotalThousandSeparatorCountTransformed(offset: Int): Int =
-            (transformedIntegerLength - offset) / 4
-
-        fun calculateLeftTotalThousandSeparatorCountTransformed(offset: Int): Int =
-            calculateTotalThousandSeparatorCount() - calculateRightTotalThousandSeparatorCountTransformed(
-                offset
-            )
-    }
-
-    override fun filter(text: AnnotatedString): TransformedText {
         val thousandsReplacementPattern = Regex("\\B(?=(?:\\d{3})+(?!\\d))")
-        val textFormatted = "".plus(
-            text.replace(Regex("\\."), decimalSeparator.toString())
+        val formatted = "".plus(
+            original.replace(Regex("\\."), decimalSeparator.toString())
                 .replace(thousandsReplacementPattern, thousandsSeparator.toString())
         )
-        val formatType = if (text.contains(decimalSeparator)) {
-            FormatType.Double
-        } else {
-            FormatType.Int
+
+        val originalToTransformed = mutableListOf<Int>()
+        val transformedToOriginal = mutableListOf<Int>()
+        var specialCharsCount = 0
+
+        formatted.forEachIndexed { index, char ->
+            transformedToOriginal.add(index - specialCharsCount)
+            if (thousandsSeparator == char) {
+                specialCharsCount++
+            } else {
+                originalToTransformed.add(index + 1)
+            }
         }
-        val decimalPointPosition = when (formatType) {
-            FormatType.Double -> text.indexOf(".") + 1
-            FormatType.Int -> null
-        }
-        val offsetMapping = Offset(text.length, decimalPointPosition, text.startsWith('-'))
-        return TransformedText(
-            text = AnnotatedString(text = textFormatted), offsetMapping = offsetMapping
-        )
+        originalToTransformed.add(0, 0)
+        transformedToOriginal.add(transformedToOriginal.maxOrNull()?.plus(1) ?: 0)
+
+        return Transformation(formatted, originalToTransformed, transformedToOriginal)
     }
 
-    fun stringToBigDecimal(text: String, max: Long = 100000000000): SignedBigDecimal? {
-        return if (text == "") {
-            SignedBigDecimal.ZERO
-        } else if (text in listOf("-0", "-", "0-")) {
-            SignedBigDecimal.NEGATIVE_ZERO
+    fun stringToDoubleOrNull(text: String, max: Long = 100000000000): Double? {
+        return if (text in setOf("", "-0", "-", "0-", ".0", "-.", "-0.", ".")) {
+            0.0
+        } else if (!text.all { it.isDigit() || it in setOf('.', '-') }) {
+            null
         } else {
-            val transformedNumber = text.toBigDecimalOrNull()
-            val transformedBigDecimal = transformedNumber?.toSignedBigDecimal()
+            val transformedNumber = text.toDoubleOrNull()
             if (
-                transformedBigDecimal != null &&
-                (transformedBigDecimal > BigDecimal(max) || transformedBigDecimal < BigDecimal(-max))
+                transformedNumber != null &&
+                (transformedNumber > max.toDouble() || transformedNumber < -max.toDouble())
             ) {
                 null
             } else {
-                transformedBigDecimal
+                transformedNumber
             }
         }
     }
 
-    private fun bigDecimalToString(
-        number: BigDecimal?,
+    fun isValidNumberString(text: String, max: Long = 100000000000): Boolean =
+        stringToDoubleOrNull(text, max) != null
+
+    fun doubleToString(
+        number: Double?,
         formatType: FormatType = FormatType.Int
     ): String {
         return if (number == null) {
             ""
         } else {
-            val coercedNumber: BigDecimal = number.setScale(2, RoundingMode.HALF_EVEN)
-            val isNegative = coercedNumber < BigDecimal.ZERO
+            val coercedNumber: Double = number.times(100.0).roundToLong().div(100.0)
+            val isNegative = coercedNumber < 0.0
             val negativeChar = if (isNegative) {
                 "-"
             } else {
                 ""
             }
-            val wholePart = coercedNumber
-                .setScale(0, RoundingMode.DOWN)
-                .abs()
+            val wholePart = floor(coercedNumber.absoluteValue).toLong()
             val decimalPart =
-                (coercedNumber.abs() - wholePart)
-                    .times(BigDecimal(100))
-                    .setScale(0, RoundingMode.FLOOR)
-                    .abs()
-            if (decimalPart == BigDecimal(0) && formatType == FormatType.Int) {
+                (coercedNumber.absoluteValue - wholePart)
+                    .times(100.0)
+                    .roundToLong()
+                    .toDouble()
+            if (decimalPart == 0.0 && formatType == FormatType.Int) {
                 "$negativeChar$wholePart"
             } else {
                 "$negativeChar$wholePart$decimalSeparator${"%02.0f".format(decimalPart)}"
             }
         }
     }
-
-    fun signedBigDecimalToString(
-        number: SignedBigDecimal,
-        formatType: FormatType = FormatType.Int
-    ): String = if (number is NegativeZeroBigDecimal) {
-        "-0"
-    } else {
-        bigDecimalToString(number.value, formatType)
-    }
 }
 
-fun Double.toSignedBigDecimal() = SignedBigDecimal.from(this)
-fun BigDecimal.toSignedBigDecimal() = SignedBigDecimal.from(this)
 
-@Parcelize
-open class SignedBigDecimal protected constructor(val value: BigDecimal) : Parcelable {
-    fun toDouble() = value.toDouble()
-    operator fun compareTo(other: BigDecimal): Int {
-        return this.value.compareTo(other)
-    }
-
-    operator fun compareTo(other: SignedBigDecimal): Int {
-        return this.value.compareTo(other.value)
-    }
-
-    companion object {
-        fun from(value: Double) = SignedBigDecimal(value.toBigDecimal())
-        fun from(value: BigDecimal) = SignedBigDecimal(value)
-
-        val NEGATIVE_ZERO: NegativeZeroBigDecimal get() = NegativeZeroBigDecimal()
-        val ZERO: SignedBigDecimal get() = SignedBigDecimal(BigDecimal.ZERO)
-    }
-}
-
-class NegativeZeroBigDecimal : SignedBigDecimal(BigDecimal.ZERO)
+data class Transformation(
+    val formatted: String?,
+    val originalToTransformed: List<Int>,
+    val transformedToOriginal: List<Int>,
+)
 
 @Preview(showBackground = true, heightDp = 620, widthDp = 420)
 @Composable
 private fun TextFieldPreview() {
     GazegeTheme {
         var number by remember {
-            mutableStateOf(BigDecimal.ZERO.toSignedBigDecimal())
+            mutableStateOf(0.0)
         }
         var valor by remember {
             mutableStateOf("Valor1")

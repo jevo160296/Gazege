@@ -37,7 +37,6 @@ import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.NumberField
-import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
@@ -69,7 +68,7 @@ fun TransactionAndAccountsForm(
     onCategoryIdChanged: (Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit
 ) {
-    val amount = transactionAndAccounts.transaction.amount ?: SignedBigDecimal.ZERO
+    val amount = transactionAndAccounts.transaction.amount ?: 0.0
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
@@ -89,7 +88,7 @@ fun TransactionAndAccountsForm(
         NumberField(
             modifier = Modifier.focusRequester(focusRequester),
             value = amount,
-            onValueChange = { onAmountChanged(it.toDouble()) },
+            onValueChange = { onAmountChanged(it) },
             label = { Text(stringResource(id = R.string.Valor)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(

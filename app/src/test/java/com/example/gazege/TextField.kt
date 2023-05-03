@@ -2,29 +2,22 @@ package com.example.gazege
 
 import androidx.compose.ui.text.AnnotatedString
 import com.example.gazege.ui.widgets.NumberTransformation
-import com.example.gazege.ui.widgets.SignedBigDecimal
-import com.example.gazege.ui.widgets.toSignedBigDecimal
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.math.BigDecimal
 
-data class Example(
+data class ExampleFromDouble(
     val numberTransformation: NumberTransformation,
-    val numberOriginal: SignedBigDecimal,
-    val rightTotalCountExpected: List<Int>,
-    val leftTotalCountExpected: List<Int>,
+    val numberOriginal: Double,
     val transformedOffsetExpected: List<Int>,
-    val originalOffsetExpected: List<Int>,
-    val leftTotalCountExpectedTransformed: List<Int>,
-    val rightTotalCountExpectedTransformed: List<Int>
+    val originalOffsetExpected: List<Int>
 ) {
     val textOriginal: String = numberOriginal.let {
         val numberTransformation = NumberTransformation(
             thousandsSeparator = ',',
             decimalSeparator = '.'
         )
-        numberTransformation.signedBigDecimalToString(it)
+        numberTransformation.doubleToString(it)
     }
     val textTransformed: String = textOriginal.let {
         numberTransformation.filter(AnnotatedString(text = it)).text.text
@@ -34,391 +27,133 @@ data class Example(
             thousandsSeparator = ',',
             decimalSeparator = '.'
         )
-        val stringRepresentation = numberTransformation.signedBigDecimalToString(it)
-        val decimalPointPosition = stringRepresentation.indexOf('.') + 1
-        NumberTransformation.Offset(
-            stringRepresentation.length,
-            decimalPointPosition, stringRepresentation.startsWith('-')
-        )
+        val transformation = numberTransformation.reformat(textOriginal)
+        NumberTransformation.Offset(transformation)
     }
 }
 
-class TextFieldUnitTestWhole {
-    private val numberTransformation = NumberTransformation(
-        thousandsSeparator = '.', decimalSeparator = ','
+data class PartialExampleFromText(
+    val originalText: String,
+    val numberTransformation: NumberTransformation,
+    val expectedFilteredText: String,
+    val transformedToOriginalOffsetExpected: List<Int>,
+    val originalToTransformedOffsetExpected: List<Int>
+) {
+    fun toFull(): ExampleFromText = ExampleFromText(
+        originalText,
+        numberTransformation,
+        expectedFilteredText,
+        transformedToOriginalOffsetExpected,
+        originalToTransformedOffsetExpected
     )
-    private val numberOriginals = arrayOf(1234567890, 123, 12345, 1234567, 12345678)
-    private val textOriginals = numberOriginals.map { numberOriginal ->
-        numberOriginal.toString()
-    }.toTypedArray()
-    private val textTransforms = textOriginals.map { stringOriginal ->
-        numberTransformation.filter(AnnotatedString(text = stringOriginal)).text.text
-    }.toTypedArray()
-    private val offsetTransformers = numberOriginals.map { numberOriginal ->
-        NumberTransformation.Offset(
-            numberOriginal.toString().length,
-            startsWithMinus = numberOriginal.toString().startsWith('-')
-        )
+}
+
+data class ExampleFromText(
+    val originalText: String,
+    val numberTransformation: NumberTransformation,
+    val expectedFilteredText: String,
+    val transformedToOriginalOffsetExpected: List<Int>,
+    val originalToTransformedOffsetExpected: List<Int>
+) {
+    private val transformedText = numberTransformation.filter(AnnotatedString(originalText))
+    private val calculatedFilteredText = transformedText.text.text
+    private val calculatedOffsetMapping = transformedText.offsetMapping
+    fun assertFilterText() {
+        assertEquals(expectedFilteredText, calculatedFilteredText)
     }
 
-    @Test
-    fun calculateTotalThousandSeparatorCount() {
-        val calculatedThousandSeparatorCounts = offsetTransformers.map { offsetTransformer ->
-            offsetTransformer.calculateTotalThousandSeparatorCount()
-        }.toTypedArray()
-        val expectedCalculatedThousandSeparatorCount = arrayOf(3, 0, 1, 2, 2)
-        assertArrayEquals(
-            expectedCalculatedThousandSeparatorCount, calculatedThousandSeparatorCounts
-        )
-    }
-
-    @Test
-    fun calculateRightTotalThousandSeparatorCount() {
-        textOriginals.indices.map {
-            object {
-                val textOriginal = textOriginals[it]
-                val rightTotalCountExpected = arrayOf(
-                    arrayOf(3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0),
-                    arrayOf(0, 0, 0, 0),
-                    arrayOf(1, 1, 1, 0, 0, 0),
-                    arrayOf(2, 2, 1, 1, 1, 0, 0, 0),
-                    arrayOf(2,2,2,1,1,1,0,0,0)
-                )[it]
-                val offsetTransformed = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneRightTotalThousandSeparatorCount(
-                it.textOriginal, it.rightTotalCountExpected, it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneRightTotalThousandSeparatorCount(
-        textOriginal: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCount() {
-        textOriginals.indices.map {
-            object {
-                val textOriginal = textOriginals[it]
-                val rightTotalCountExpected = arrayOf(
-                    arrayOf(0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3),
-                    arrayOf(0, 0, 0, 0),
-                    arrayOf(0, 0, 0, 1, 1, 1),
-                    arrayOf(0, 0, 1, 1, 1, 2, 2, 2),
-                    arrayOf(0,0,0,1,1,1,2,2,2)
-                )[it]
-                val offsetTransformed = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneLeftTotalThousandSeparatorCount(
-                it.textOriginal, it.rightTotalCountExpected, it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCount(
-        textOriginal: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
-    fun originalToTransformed() {
-        (textOriginals.indices).map {
-            object {
-                val textOriginal: String = textOriginals[it]
-                val textTransformed: String = textTransforms[it]
-                val transformedOffsetExpected = arrayOf(
-                    arrayOf(0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13),
-                    arrayOf(0, 1, 2, 3),
-                    arrayOf(0, 1, 2, 4, 5, 6),
-                    arrayOf(0, 1, 3, 4, 5, 7, 8, 9),
-                    arrayOf(0, 1, 2, 4, 5, 6, 8, 9, 10)
-                )[it]
-                val offsetTransformed: NumberTransformation.Offset = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneOriginalToTransformed(
-                it.textOriginal,
-                it.textTransformed,
-                it.transformedOffsetExpected,
-                it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneOriginalToTransformed(
-        textOriginal: String,
-        textTransformed: String,
-        transformedOffsetExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val offsetList = (0..textOriginal.length).map { it }
-        val calculatedTransformedOffset =
-            offsetList.map { offsetTransformed.originalToTransformed(it) }.toTypedArray()
-        val reconstructedText = reconstructText(textTransformed, calculatedTransformedOffset)
-        assertArrayEquals(transformedOffsetExpected, calculatedTransformedOffset)
-        assertEquals(textOriginal, reconstructedText)
-    }
-
-    @Test
-    fun calculateRightTotalThousandSeparatorCountTransformed() {
-        (textOriginals.indices).map {
-            object {
-                val textTransformed: String = textTransforms[it]
-                val rightTotalCountExpected = arrayOf(
-                    arrayOf(3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0), //1.234.567.890
-                    arrayOf(0, 0, 0, 0), //123
-                    arrayOf(1, 1, 1, 0, 0, 0, 0), //12.345
-                    arrayOf(2, 2, 1, 1, 1, 1, 0, 0, 0, 0), // 1.234.567
-                    arrayOf(2,2,2,1,1,1,1,0,0,0,0)
-                )[it]
-                val offsetTransformed: NumberTransformation.Offset = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-                it.textTransformed, it.rightTotalCountExpected, it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCountTransformed() {
-        textOriginals.indices.map {
-            object {
-                val textTransformed = textTransforms[it]
-                val leftTotalCountExpected = arrayOf(
-                    arrayOf(0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3),
-                    arrayOf(0, 0, 0, 0),
-                    arrayOf(0, 0, 0, 1, 1, 1, 1),
-                    arrayOf(0, 0, 1, 1, 1, 1, 2, 2, 2, 2),
-                    arrayOf(0,0,0,1,1,1,1,2,2,2,2)
-                )[it]
-                val offsetTransformed = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneLeftTotalThousandSeparatorCountTransformed(
-                it.textTransformed, it.leftTotalCountExpected, it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
-    fun transformedToOriginal() {
-        (textOriginals.indices).map {
-            object {
-                val textOriginal: String = textOriginals[it]
-                val textTransformed: String = textTransforms[it]
-                val originalOffsetExpected = arrayOf(
-                    arrayOf(0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10), //1.234.567.890
-                    arrayOf(0, 1, 2, 3), //123
-                    arrayOf(0, 1, 2, 2, 3, 4, 5), //12.345
-                    arrayOf(0, 1, 1, 2, 3, 4, 4, 5, 6, 7), // 1.234.567
-                    arrayOf(0,1,2,2,3,4,5,5,6,7,8)
-                )[it]
-                val offsetTransformed: NumberTransformation.Offset = offsetTransformers[it]
-            }
-        }.forEach {
-            checkOneTransformedToOriginal(
-                it.textOriginal, it.textTransformed, it.originalOffsetExpected, it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneTransformedToOriginal(
-        textOriginal: String,
-        textTransformed: String,
-        originalOffsetExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val offsetList = (0..textTransformed.length).map { it }
+    fun assertTransformedToOriginalOffset() {
         val calculatedOriginalOffset =
-            offsetList.map { offsetTransformed.transformedToOriginal(it) }.toTypedArray()
-        val offsetToReconstructOriginal =
-            textTransformed.toList().zip(calculatedOriginalOffset.drop(1)).filter { (text, _) ->
-                    text != '.'
-                }.map { (_, offset) ->
-                    offset
-                }.toTypedArray()
-        val reconstructedText = reconstructText(
-            textOriginal, arrayOf(0, *offsetToReconstructOriginal)
+            "_$expectedFilteredText" // Se debe añadir un carácter adicional al inicio pues representa la posición al inicio del texto
+                .mapIndexed { index, _ ->
+                    calculatedOffsetMapping.transformedToOriginal(index)
+                }
+
+        assertArrayEquals(
+            transformedToOriginalOffsetExpected.toTypedArray(),
+            calculatedOriginalOffset.toTypedArray()
         )
-        assertArrayEquals(originalOffsetExpected, calculatedOriginalOffset)
-        assertEquals(textOriginal, reconstructedText)
     }
 
-    private fun reconstructText(text: String, indices: Array<Int>): String =
-        indices.drop(1).map { text[it - 1] }.joinToString("")
+    fun assertOriginalToTransformedOffset() {
+        val calculatedTransformedOffset =
+            "_$originalText" // Se debe añadir un carácter adicional al inicio pues representa la posición al inicio del texto
+                .mapIndexed { index, _ ->
+                    calculatedOffsetMapping.originalToTransformed(index)
+                }
+        assertArrayEquals(
+            originalToTransformedOffsetExpected.toTypedArray(),
+            calculatedTransformedOffset.toTypedArray()
+        )
+    }
 }
 
 class TextFieldUnitTestDecimal {
     private val numberTransformation = NumberTransformation(
         thousandsSeparator = '.', decimalSeparator = ','
     )
-    private val examples: List<Example> = listOf(
-        Example(
+    private val exampleFromDoubles: List<ExampleFromDouble> = listOf(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567890.12).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(
-                3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0
-            ),//   1  2  3  4  5  6  7  8  9  0  ,  1  2
-            //     1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
-            leftTotalCountExpected = listOf(
-                0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3
-            ),//   1  2  3  4  5  6  7  8  9  0  ,  1  2
-            //     1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
+            numberOriginal = 1234567890.12,
             transformedOffsetExpected = listOf(
                 0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16
             ),//   1  2  3  4  5  6  7  8   9   0   ,   1   2
-            //  0  1  2  3  4  5  6  7  8   9  10  11  12  13
             //     1  .  2  3  4  .  5  6   7   .   8   9   0
-            originalOffsetExpected = listOf(
+            //  0  1  2  3  4  5  6  7  8   9  10  11  12  13
+            originalOffsetExpected = listOf
+                (
                 0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 13
             ),//   1  .  2  3  4  .  5  6  7  .  8  9  0   ,   1   2
             //  0  1  2  3  4  5  6  7  8  9  10 11 12 13
             //     1  2  3  4  5  6  7  8  9  0  ,  1  2
-            leftTotalCountExpectedTransformed = listOf(
-                0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3
-            ),//   1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
-            rightTotalCountExpectedTransformed = listOf(
-                3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-            ),//   1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(123.45).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
+            numberOriginal = 123.45,
             transformedOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6),
             originalOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6), //123
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 0, 0, 0, 0),
-            rightTotalCountExpectedTransformed = listOf(0, 0, 0, 0, 0, 0, 0), //123
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345.67).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1),
+            numberOriginal = 12345.67,
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 7, 8, 9),
             originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 6, 7, 8), //12.345
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1, 1),
-            rightTotalCountExpectedTransformed = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0, 0), //12.345
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567.89).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+            numberOriginal = 1234567.89,
             transformedOffsetExpected = listOf(0, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12),
             originalOffsetExpected = listOf(0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10), // 1.234.567
-            leftTotalCountExpectedTransformed = listOf(0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
-            rightTotalCountExpectedTransformed = listOf(
-                2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-            ), // 1.234.567
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345678.90).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+            numberOriginal = 12345678.90,
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13),
-            originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11),
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
-            rightTotalCountExpectedTransformed = listOf(2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0)
+            originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11)
+        ),
+        ExampleFromDouble(
+            numberTransformation = numberTransformation,
+            numberOriginal = 1234.5,
+            transformedOffsetExpected = listOf(
+                0, 1, 3, 4, 5, 6, 7, 8
+            ),
+            // _  1  2  3  4  .  5  6
+            // _  1  ,  2  3  4  .  5  0
+            // 0  1  2  3  4  5  6  7  0
+
+            originalOffsetExpected = listOf(
+                0, 1, 1, 2, 3, 4, 5, 6, 7
+            ),
+            // _  1  ,  2  3  4  .  5  0
+            // _  1  2  3  4  .  5  0
+            // 0  1  2  3  4  5  6  7  0
         )
     )
 
     @Test
-    fun calculateTotalThousandSeparatorCount() {
-        val calculatedThousandSeparatorCounts =
-            examples.map { it.offsetTransformed }.map { offsetTransformer ->
-                offsetTransformer.calculateTotalThousandSeparatorCount()
-            }.toTypedArray()
-        val expectedCalculatedThousandSeparatorCount = arrayOf(3, 0, 1, 2, 2)
-        assertArrayEquals(
-            expectedCalculatedThousandSeparatorCount, calculatedThousandSeparatorCounts
-        )
-    }
-
-    @Test
-    fun calculateRightTotalThousandSeparatorCount() {
-        examples.forEach {
-            checkOneRightTotalThousandSeparatorCount(
-                it.textOriginal, it.rightTotalCountExpected.toTypedArray(), it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneRightTotalThousandSeparatorCount(
-        textOriginal: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCount() {
-        examples.forEach {
-            checkOneLeftTotalThousandSeparatorCount(
-                it.textOriginal, it.leftTotalCountExpected.toTypedArray(), it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCount(
-        textOriginal: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
     fun originalToTransformed() {
-        examples.forEach {
+        exampleFromDoubles.forEach {
             checkOneOriginalToTransformed(
                 it.textOriginal,
                 it.textTransformed,
@@ -443,52 +178,8 @@ class TextFieldUnitTestDecimal {
     }
 
     @Test
-    fun calculateRightTotalThousandSeparatorCountTransformed() {
-        examples.forEach {
-            checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-                it.textTransformed,
-                it.rightTotalCountExpectedTransformed.toTypedArray(),
-                it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCountTransformed() {
-        examples.forEach {
-            checkOneLeftTotalThousandSeparatorCountTransformed(
-                it.textTransformed,
-                it.leftTotalCountExpectedTransformed.toTypedArray(),
-                it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
     fun transformedToOriginal() {
-        examples.forEach {
+        exampleFromDoubles.forEach {
             checkOneTransformedToOriginal(
                 it.textOriginal,
                 it.textTransformed,
@@ -528,20 +219,10 @@ class TextFieldUnitTestDecimalNegative {
     private val numberTransformation = NumberTransformation(
         thousandsSeparator = '.', decimalSeparator = ','
     )
-    private val examples: List<Example> = listOf(
-        Example(
+    private val exampleFromDoubles: List<ExampleFromDouble> = listOf(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(-1234567890.12).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(
-                3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-            ),
-            //     -  1  2  3  4  5  6  7  8  9  0  ,  1  2
-            //     -  1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
-            leftTotalCountExpected = listOf(
-                0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3
-            ),
-            //     -  1  2  3  4  5  6  7  8  9  0  ,  1  2
-            //     -  1. 2  3  4. 5  6  7. 8  9  0  ,  1  2
+            numberOriginal = -1234567890.12,
             transformedOffsetExpected = listOf(
                 0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17
             ),
@@ -554,118 +235,39 @@ class TextFieldUnitTestDecimalNegative {
             //     -  1  .  2  3  4  .  5  6  7  .  8  9  0   ,   1   2
             //  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14
             //     -  1  2  3  4  5  6  7  8  9  0  ,  1  2
-            leftTotalCountExpectedTransformed = listOf(
-                0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3
-            ),
-            //     -  1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
-            rightTotalCountExpectedTransformed = listOf(
-                3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-            ),
-            //     -  1  .  2  3  4  .  5  6  7  .  8  9  0  ,  1  2
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(123.45).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 0, 0, 0, 0),
+            numberOriginal = 123.45,
             transformedOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6),
             originalOffsetExpected = listOf(0, 1, 2, 3, 4, 5, 6), //123
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 0, 0, 0, 0),
-            rightTotalCountExpectedTransformed = listOf(0, 0, 0, 0, 0, 0, 0), //123
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345.67).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1),
+            numberOriginal = 12345.67,
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 7, 8, 9),
             originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 6, 7, 8), //12.345
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 1, 1, 1, 1, 1, 1, 1),
-            rightTotalCountExpectedTransformed = listOf(1, 1, 1, 0, 0, 0, 0, 0, 0, 0), //12.345
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(1234567.89).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+            numberOriginal = 1234567.89,
             transformedOffsetExpected = listOf(0, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12),
             originalOffsetExpected = listOf(0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10), // 1.234.567
-            leftTotalCountExpectedTransformed = listOf(0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
-            rightTotalCountExpectedTransformed = listOf(
-                2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-            ), // 1.234.567
         ),
-        Example(
+        ExampleFromDouble(
             numberTransformation = numberTransformation,
-            numberOriginal = BigDecimal(12345678.90).toSignedBigDecimal(),
-            rightTotalCountExpected = listOf(2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0),
-            leftTotalCountExpected = listOf(0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+            numberOriginal = 12345678.90,
             transformedOffsetExpected = listOf(0, 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13),
             originalOffsetExpected = listOf(0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11),
-            leftTotalCountExpectedTransformed = listOf(0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2),
-            rightTotalCountExpectedTransformed = listOf(2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0)
         )
     )
 
     @Test
-    fun calculateTotalThousandSeparatorCount() {
-        val calculatedThousandSeparatorCounts =
-            examples.map { it.offsetTransformed }.map { offsetTransformer ->
-                offsetTransformer.calculateTotalThousandSeparatorCount()
-            }.toTypedArray()
-        val expectedCalculatedThousandSeparatorCount = arrayOf(3, 0, 1, 2, 2)
-        assertArrayEquals(
-            expectedCalculatedThousandSeparatorCount, calculatedThousandSeparatorCounts
-        )
-    }
-
-    @Test
-    fun calculateRightTotalThousandSeparatorCount() {
-        examples.forEach {
-            checkOneRightTotalThousandSeparatorCount(
-                it.textOriginal, it.rightTotalCountExpected.toTypedArray(), it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneRightTotalThousandSeparatorCount(
-        textOriginal: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCount() {
-        examples.forEach {
-            checkOneLeftTotalThousandSeparatorCount(
-                it.textOriginal, it.leftTotalCountExpected.toTypedArray(), it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCount(
-        textOriginal: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textOriginal.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCount(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
     fun originalToTransformed() {
-        examples.forEach {
+        exampleFromDoubles.forEach {
             checkOneOriginalToTransformed(
                 it.textOriginal,
                 it.textTransformed,
-                it.transformedOffsetExpected.toTypedArray(),
                 it.offsetTransformed
             )
         }
@@ -674,64 +276,18 @@ class TextFieldUnitTestDecimalNegative {
     private fun checkOneOriginalToTransformed(
         textOriginal: String,
         textTransformed: String,
-        transformedOffsetExpected: Array<Int>,
         offsetTransformed: NumberTransformation.Offset
     ) {
         val offsetList = (0..textOriginal.length).map { it }
         val calculatedTransformedOffset =
             offsetList.map { offsetTransformed.originalToTransformed(it) }.toTypedArray()
         val reconstructedText = reconstructText(textTransformed, calculatedTransformedOffset)
-        assertArrayEquals(transformedOffsetExpected, calculatedTransformedOffset)
         assertEquals(textOriginal, reconstructedText)
     }
 
     @Test
-    fun calculateRightTotalThousandSeparatorCountTransformed() {
-        examples.forEach {
-            checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-                it.textTransformed,
-                it.rightTotalCountExpectedTransformed.toTypedArray(),
-                it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneCalculateRightTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        rightTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val rightTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateRightTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(rightTotalCountExpected, rightTotalCalculated)
-    }
-
-    @Test
-    fun calculateLeftTotalThousandSeparatorCountTransformed() {
-        examples.forEach {
-            checkOneLeftTotalThousandSeparatorCountTransformed(
-                it.textTransformed,
-                it.leftTotalCountExpectedTransformed.toTypedArray(),
-                it.offsetTransformed
-            )
-        }
-    }
-
-    private fun checkOneLeftTotalThousandSeparatorCountTransformed(
-        textTransformed: String,
-        leftTotalCountExpected: Array<Int>,
-        offsetTransformed: NumberTransformation.Offset
-    ) {
-        val leftTotalCalculated = (0..textTransformed.length).map {
-            offsetTransformed.calculateLeftTotalThousandSeparatorCountTransformed(it)
-        }.toTypedArray()
-        assertArrayEquals(leftTotalCountExpected, leftTotalCalculated)
-    }
-
-    @Test
     fun transformedToOriginal() {
-        examples.forEach {
+        exampleFromDoubles.forEach {
             checkOneTransformedToOriginal(
                 it.textOriginal,
                 it.textTransformed,
@@ -773,4 +329,102 @@ class TextFieldUnitTestDecimalNegative {
             .map { if (text[it - 1] != '.') text[it - 1] else text[it - 2] }
             .joinToString("")
             .replace(',', '.')
+}
+
+class NumberFieldUnitTestText {
+    private val numberTransformation = NumberTransformation(
+        thousandsSeparator = '.', decimalSeparator = ','
+    )
+    private val examplesFromText: List<ExampleFromText> = listOf(
+        PartialExampleFromText(
+            numberTransformation = numberTransformation,
+            originalText = "-1234.56",
+            expectedFilteredText = "-1.234,56",
+            transformedToOriginalOffsetExpected = listOf(
+                0, 1, 2, 2, 3, 4, 5, 6, 7, 8
+            ),//_  -  1  ,  2  3  4  .  5  6
+            //  _  -  1  2  3  4  .  5  6
+            //  0  1  2  3  4  5  6  7  8  9
+            originalToTransformedOffsetExpected = listOf(
+                0, 1, 2, 4, 5, 6, 7, 8, 9
+            ),//_  -  1  2  3  4  .  5  6
+            //  _  -  1  ,  2  3  4  .  5  6
+            //  0  1  2  3  4  5  6  7  8  9
+        ),
+        PartialExampleFromText(
+            numberTransformation = numberTransformation,
+            originalText = "-12345678.90",
+            expectedFilteredText = "-12.345.678,90",
+            transformedToOriginalOffsetExpected = listOf(
+                0, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12
+            ),//_  -  1  2  ,  3  4  5  ,  6  7  8  .  9  0
+            //  _  -  1  2  3  4  5  6  7  8  .  9  0
+            //  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4
+            originalToTransformedOffsetExpected = listOf(
+                0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14
+            ),//_  -  1  2  3  4  5  6  7  8  .  9  0
+            //  _  -  1  2  ,  3  4  5  ,  6  7  8  .  9  0
+            //  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4
+        ),
+        PartialExampleFromText(
+            numberTransformation = numberTransformation,
+            originalText = "1234.56",
+            expectedFilteredText = "1.234,56",
+            transformedToOriginalOffsetExpected = listOf(
+                0, 1, 1, 2, 3, 4, 5, 6, 7
+            ),//_  1  ,  2  3  4  .  5  6
+            //  _  1  2  3  4  .  5  6
+            //  0  1  2  3  4  5  6  7  8
+            originalToTransformedOffsetExpected = listOf(
+                0, 1, 3, 4, 5, 6, 7, 8
+            ),//_  1  2  3  4  .  5  6
+            //  _  1  ,  2  3  4  .  5  6
+            //  0  1  2  3  4  5  6  7  8
+        ),
+        PartialExampleFromText(
+            numberTransformation = numberTransformation,
+            originalText = "1234",
+            expectedFilteredText = "1.234",
+            transformedToOriginalOffsetExpected = listOf(
+                0, 1, 1, 2, 3, 4
+            ),//_  1  ,  2  3  4
+            //  _  1  2  3  4
+            //  0  1  2  3  4  5
+            originalToTransformedOffsetExpected = listOf(
+                0, 1, 3, 4, 5
+            ),//_  1  2  3  4
+            //  _  1  ,  2  3  4
+            //  0  1  2  3  4  5  6  7  8
+        ),
+        PartialExampleFromText(
+            numberTransformation = numberTransformation,
+            originalText = "1234.5",
+            expectedFilteredText = "1.234,5",
+            transformedToOriginalOffsetExpected = listOf(
+                0, 1, 1, 2, 3, 4, 5, 6
+            ),//_  1  ,  2  3  4  .  5
+            //  _  1  2  3  4  .  5
+            //  0  1  2  3  4  5  6  7
+            originalToTransformedOffsetExpected = listOf(
+                0, 1, 3, 4, 5, 6, 7
+            ),//_  1  2  3  4  .  5
+            //  _  1  ,  2  3  4  .  5
+            //  0  1  2  3  4  5  6  7
+        )
+    ).map(PartialExampleFromText::toFull)
+
+    @Test
+    fun testFilterText() {
+        examplesFromText.forEach(ExampleFromText::assertFilterText)
+    }
+
+    @Test
+    fun testTransformedToOriginalOffset() {
+        examplesFromText.forEach(ExampleFromText::assertTransformedToOriginalOffset)
+    }
+
+    @Test
+    fun testOriginalToTransformedOffset() {
+        examplesFromText.forEach(ExampleFromText::assertOriginalToTransformedOffset)
+    }
 }
