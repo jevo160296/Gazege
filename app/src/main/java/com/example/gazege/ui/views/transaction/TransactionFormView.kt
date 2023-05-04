@@ -80,6 +80,37 @@ fun TransactionAndAccountsForm(
         ImeAction.Next
     }
     val focusRequester = remember { FocusRequester() }
+    val keyboardActions = remember { KeyboardActions(onDone = { onDoneAction() }) }
+
+    val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
+    val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
+    val deactivatedSourceAccountList = accountList.filter {
+        it.account.id == selectedDestination?.account?.id
+    }
+    val deactivatedDestinationAccountList = accountList.filter {
+        it.account.id == selectedSource?.account?.id
+    }
+    val selectedSourceNode = selectedSource?.let {
+        AccountAndOwnerNode(
+            selectedSource,
+            accountList,
+            0,
+            0,
+            deactivatedAccountList = deactivatedSourceAccountList,
+            null
+        )
+    }
+    val selectedDestinationNode = selectedDestination?.let {
+        AccountAndOwnerNode(
+            selectedDestination,
+            accountList,
+            0,
+            0,
+            deactivatedAccountList = deactivatedDestinationAccountList,
+            null
+        )
+    }
+    val selectedCategory = categoryList.firstOrNull { it.id == selectedCategoryId }
 
     Column(
         modifier = modifier.padding(contentPadding),
@@ -95,9 +126,7 @@ fun TransactionAndAccountsForm(
                 keyboardType = KeyboardType.Number,
                 imeAction = nextAction
             ),
-            keyboardActions = KeyboardActions(
-                onDone = { onDoneAction() }
-            )
+            keyboardActions = keyboardActions
         )
         TextField(
             value = description,
@@ -109,38 +138,8 @@ fun TransactionAndAccountsForm(
                 imeAction = nextAction,
                 capitalization = KeyboardCapitalization.Sentences
             ),
-            keyboardActions = KeyboardActions(
-                onDone = { onDoneAction() }
-            )
+            keyboardActions = keyboardActions
         )
-        val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
-        val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
-        val deactivatedSourceAccountList = accountList.filter {
-            it.account.id == selectedDestination?.account?.id
-        }
-        val deactivatedDestinationAccountList = accountList.filter {
-            it.account.id == selectedSource?.account?.id
-        }
-        val selectedSourceNode = selectedSource?.let {
-            AccountAndOwnerNode(
-                selectedSource,
-                accountList,
-                0,
-                0,
-                deactivatedAccountList = deactivatedSourceAccountList,
-                null
-            )
-        }
-        val selectedDestinationNode = selectedDestination?.let {
-            AccountAndOwnerNode(
-                selectedDestination,
-                accountList,
-                0,
-                0,
-                deactivatedAccountList = deactivatedDestinationAccountList,
-                null
-            )
-        }
         if (showSourceAccountField) {
             AccountDropDownMenu(
                 accountsList = accountList,
@@ -155,9 +154,7 @@ fun TransactionAndAccountsForm(
                 canClearSelection = false,
                 onClearSelectionClicked = {},
                 keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
-                ),
+                keyboardActions = keyboardActions,
                 onAccountAddRequested = onAccountAddRequested
             )
         }
@@ -175,9 +172,7 @@ fun TransactionAndAccountsForm(
                 canClearSelection = false,
                 onClearSelectionClicked = {},
                 keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
-                ),
+                keyboardActions = keyboardActions,
                 onAccountAddRequested = onAccountAddRequested
             )
         }
@@ -188,16 +183,13 @@ fun TransactionAndAccountsForm(
                 onDateChanged(it)
             }
         )
-        val selectedCategory = categoryList.firstOrNull { it.id == selectedCategoryId }
         if (categoryList.isNotEmpty()) {
             CategoryDropDown(
                 categoryList = categoryList,
                 selectedCategory = selectedCategory,
                 label = { Text(stringResource(id = R.string.Categoria)) },
                 keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
-                )
+                keyboardActions = keyboardActions
             ) { onCategoryIdChanged(it?.id) }
         }
 
@@ -227,9 +219,7 @@ fun TransactionAndAccountsForm(
                 onItemClick = { onRealizarAnombreDeIdChanged(it.id) },
                 label = { Text(stringResource(R.string.persona)) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { onDoneAction() }
-                )
+                keyboardActions = keyboardActions
             )
         }
     }
