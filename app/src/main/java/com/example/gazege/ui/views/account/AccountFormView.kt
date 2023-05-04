@@ -32,7 +32,6 @@ import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.NumberField
-import com.example.gazege.ui.widgets.SignedBigDecimal
 import com.example.gazege.ui.widgets.TextField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +43,8 @@ fun AccountAndOwnerForm(
     accountAndOwner: PartialAccountAndOwner,
     accountAndOwnerList: List<AccountAndOwner>,
     personList: List<Person>,
-    currentBalance: SignedBigDecimal,
-    onCurrentBalanceChanged: (SignedBigDecimal) -> Unit,
+    currentBalance: Double,
+    onCurrentBalanceChanged: (Double) -> Unit,
     onPersonAddRequested: () -> Unit,
     incomeAccount: Account?,
     outcomeAccount: Account?,

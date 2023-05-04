@@ -4,14 +4,12 @@ import android.os.Parcelable
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
-import com.example.gazege.ui.widgets.SignedBigDecimal
-import com.example.gazege.ui.widgets.toSignedBigDecimal
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 
 data class PartialTransaction(
     var id: Int?,
-    var amount: SignedBigDecimal?,
+    var amount: Double?,
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,
@@ -61,7 +59,7 @@ data class PartialTransaction(
         fun from(transaction: Transaction): PartialTransaction = transaction.run {
             PartialTransaction(
                 id = id,
-                amount = amount.toSignedBigDecimal(),
+                amount = amount,
                 description = description,
                 sourceId = sourceId,
                 destinationId = destinationId,
@@ -116,7 +114,7 @@ data class PartialTransactionAndAccounts(
 @Parcelize
 data class ParcelableTransaction(
     var id: Int?,
-    var amount: SignedBigDecimal?,
+    var amount: Double?,
     var description: String?,
     var sourceId: Int?,
     var destinationId: Int?,

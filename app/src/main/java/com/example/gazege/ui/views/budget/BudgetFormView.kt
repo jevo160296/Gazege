@@ -178,8 +178,8 @@ fun BudgetFormView(
             onItemClick = { selectedCategoryId = it?.id }
         )
         NumberField(
-            value = value.toSignedBigDecimal(),
-            onValueChange = { value = it.toDouble() },
+            value = value,
+            onValueChange = { value = it },
             label = { Text(stringResource(id = R.string.Valor)) }
         )
         BudgetTypeSelector(budgetType) { budgetType = it }

@@ -22,7 +22,6 @@ import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.example.gazege.ui.widgets.Form
-import com.example.gazege.ui.widgets.toSignedBigDecimal
 import java.time.LocalDate
 
 
@@ -136,7 +135,7 @@ fun TransactionFormFragment(
                 currentTransaction?.let { PartialTransaction.from(currentTransaction) }
                     ?: PartialTransaction(
                         id = id,
-                        amount = amount?.toSignedBigDecimal(),
+                        amount = amount,
                         description = description,
                         sourceId = sourceId,
                         destinationId = destinationId,
