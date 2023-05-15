@@ -98,7 +98,12 @@ fun NumberField(
     val stringState = remember(value, stringRepresentation) {
         val valueRepresentation = numberTransformation.stringToDoubleOrNull(stringRepresentation)
         if (valueRepresentation != value) {
-            numberTransformation.doubleToString(value, formatType)
+            numberTransformation
+                .doubleToString(value, formatType)
+                .run {
+                    stringRepresentation = this
+                    this
+                }
         } else {
             stringRepresentation
         }
