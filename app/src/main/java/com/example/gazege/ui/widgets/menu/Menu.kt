@@ -46,7 +46,6 @@ fun DropdownMenu(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropDownMenuItem(
     modifier: Modifier = Modifier,

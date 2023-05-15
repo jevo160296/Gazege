@@ -2,7 +2,6 @@ package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +38,6 @@ data class CategoryNode(
         get() = content.subCategories.map { CategoryNode(it, level + 1, this.id()) }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryDropDown(
     categoryList: List<Category>,

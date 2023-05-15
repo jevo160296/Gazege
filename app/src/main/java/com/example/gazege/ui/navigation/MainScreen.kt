@@ -1,7 +1,6 @@
 package com.example.gazege.ui.navigation
 
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
@@ -24,7 +23,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.screenMain(
     viewModel: MainViewModel,
     onNavigateToAddPerson: () -> Unit,

@@ -2,10 +2,33 @@ package com.example.gazege.ui.views.account
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -20,12 +43,26 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.dao.AccountDao
 import com.example.gazege.core.dateBetween
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionListItemDetails
 import com.example.gazege.core.firstDayOfMonth
-import com.example.gazege.ui.*
+import com.example.gazege.ui.DatabaseSample
+import com.example.gazege.ui.accountDeleitionConfirmationBuilder
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.views.*
+import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
+import com.example.gazege.ui.views.AccountAction
+import com.example.gazege.ui.views.AddTransactionAction
+import com.example.gazege.ui.views.BottomSheetController
+import com.example.gazege.ui.views.EntityDetail
+import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.Filter
@@ -545,7 +582,6 @@ private fun NullAccountDetail(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, widthDp = 300, heightDp = 600)
 @Composable
 private fun AccountDetailPreview() {
