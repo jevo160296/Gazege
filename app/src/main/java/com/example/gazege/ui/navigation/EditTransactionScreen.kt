@@ -25,19 +25,17 @@ fun NavGraphBuilder.screenEditTransaction(
             type = NavType.IntType
         })
     ) { navBackStackEntry ->
-        val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
+        val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
+
+        val selectedTransactionAndAccounts by viewModel.rememberTransactionAndAccounts(transactionId)
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val allPerson by viewModel.rememberAllPerson()
         val categories by viewModel.rememberCategories()
 
-        val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
-        val selectedTransactionListItemDetails =
-            filteredTransactionListItemDetails
-                .firstOrNull { it.transaction.id == transactionId }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
             itemSpacing = 8.dp,
-            transactionAndAccounts = selectedTransactionListItemDetails?.toTransactionAndAccounts(),
+            transactionAndAccounts = selectedTransactionAndAccounts,
             accountList = accountAndOwnerWithTransactions.map {
                 AccountAndOwner(
                     it.account,

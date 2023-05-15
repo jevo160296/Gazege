@@ -3,6 +3,7 @@ package com.example.gazege
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.PersonDao
@@ -132,6 +133,18 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
         filteredTransactionListitemDetails.observeAsState(emptyList())
+
+    @Composable
+    fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
+        allTransactionAndAccountsAndCategory
+            .map { transactionAndAccountAndCategory ->
+                transactionAndAccountAndCategory
+                    .firstOrNull { it.transaction.id == transactionId }
+                    ?.toTransactionAndAccounts()
+            }
+    }
+        .observeAsState()
+
 
     private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
         otherSource: LiveData<B>,
