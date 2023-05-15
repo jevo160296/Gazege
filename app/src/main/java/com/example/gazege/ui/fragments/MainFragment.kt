@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -28,7 +25,6 @@ import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.AppMode
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.theme.Shapes
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
 import com.example.gazege.ui.views.account.AccountPage
@@ -41,7 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainFragment(
     allPerson: List<Person>,
@@ -54,7 +50,7 @@ fun MainFragment(
     incomeFilterValue: Boolean,
     outcomeFilterValue: Boolean,
     transferFilterValue: Boolean,
-    sheetState: ModalBottomSheetState,
+    sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
     delPerson: (Person) -> Unit,
@@ -133,26 +129,13 @@ fun MainFragment(
         },
         drawerState = drawerState
     ) {
-        ModalBottomSheetLayout(
-            sheetState = sheetState,
-            sheetShape = Shapes.medium,
-            sheetContent = {
-                ModalSheetContent(
-                    titleText = stringResource(id = R.string.confirmar_eliminacion),
-                    bodyText = modalSheetMsg,
-                    onSiClicked = {
-                        action()
-                        action = {}
-                        modalSheetMsg = ""
-                        scope.launch { sheetState.hide() }
-                    },
-                    onNoClicked = {
-                        action = {}
-                        modalSheetMsg = ""
-                        scope.launch { sheetState.hide() }
-                    }
-                )
-            }) {
+        ModalSheetLayout(
+            modalSheetMsg = modalSheetMsg,
+            onModalSheetMsgChanged = { modalSheetMsg = it },
+            action = action,
+            onActionChanged = { action = it },
+            sheetState = sheetState
+        ) {
             Scaffold(
                 floatingActionButton = {
                     DynamicAddEntityFAB(
@@ -284,7 +267,7 @@ fun MainFragment(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
@@ -312,7 +295,7 @@ private fun MainFragmentResponsiveContent(
     onActionChanged: (() -> Unit) -> Unit,
     onModalSheetMsgChanged: (String) -> Unit,
     scope: CoroutineScope,
-    sheetState: ModalBottomSheetState,
+    sheetState: SheetState,
     onTitleChanged: (String) -> Unit,
     onSettingsClicked: () -> Unit,
     incomeFilterValue: Boolean,
@@ -481,7 +464,7 @@ private fun ModalSheetContentPreview() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
-    val sheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     var navPosition by remember {
         mutableStateOf(NavPosition.TRANSACCIONES)

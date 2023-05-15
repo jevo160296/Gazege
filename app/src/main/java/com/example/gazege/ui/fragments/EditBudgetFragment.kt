@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +27,7 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.ui.views.budget.BudgetRecyclerView
 import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetContent
+import com.example.gazege.ui.widgets.ModalSheetLayout
 import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
 
@@ -43,20 +41,16 @@ fun EditBudgetFragment(
     onDeleteBudgetRequested: (budgetId: Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val sheetState = rememberModalBottomSheetState()
     val defaultAction: () -> Unit = { scope.launch { sheetState.hide() } }
     var action: (() -> Unit)? by remember { mutableStateOf(null) }
-    ModalBottomSheetLayout(
-        sheetContent = {
-            ModalSheetContent(
-                onSiClicked = action ?: defaultAction,
-                onNoClicked = { scope.launch { sheetState.hide() } },
-                titleText = stringResource(id = R.string.confirmar_eliminacion),
-                bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
-                    stringResource(id = R.string.Presupuesto)
-                )
-            )
-        },
+    ModalSheetLayout(
+        modalSheetMsg = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+            stringResource(id = R.string.Presupuesto)
+        ),
+        onModalSheetMsgChanged = {},
+        action = action ?: defaultAction,
+        onActionChanged = { action = it },
         sheetState = sheetState
     ) {
         Scaffold(

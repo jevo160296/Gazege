@@ -3,9 +3,8 @@ package com.example.gazege.ui.views.person
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -21,7 +20,7 @@ import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.SmallBody
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonDetail(
     person: Person,
@@ -37,7 +36,7 @@ fun PersonDetail(
         mutableStateOf(null)
     }
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val sheetState = rememberModalBottomSheetState()
     val personAccountsIds = allAccounts
         .filter { it.ownerId == person.id }
         .map { it.id }

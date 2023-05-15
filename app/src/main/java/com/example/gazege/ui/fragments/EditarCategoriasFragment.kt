@@ -3,14 +3,11 @@ package com.example.gazege.ui.fragments
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,11 +22,11 @@ import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetContent
+import com.example.gazege.ui.widgets.ModalSheetLayout
 import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarCategorias(
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
@@ -41,25 +38,20 @@ fun EditarCategorias(
     var categoryClicked: Category? by remember {
         mutableStateOf(null)
     }
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    ModalBottomSheetLayout(
-        sheetContent = {
-            ModalSheetContent(
-                onSiClicked = {
-                    val item = categoryClicked
-                    if (item != null) {
-                        onDeleteCategoryRequested(item)
-                        scope.launch { sheetState.hide() }
-                    }
-                },
-                onNoClicked = { scope.launch { sheetState.hide() } },
-                titleText = stringResource(id = R.string.confirmar_eliminacion),
-                bodyText = stringResource(id = R.string.confirma_la_eliminacion_de).format(
-                    categoryClicked?.name
-                )
-            )
+    ModalSheetLayout(
+        modalSheetMsg = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+            categoryClicked?.name
+        ),
+        onModalSheetMsgChanged = {},
+        action = {
+            val item = categoryClicked
+            if (item != null) {
+                onDeleteCategoryRequested(item)
+            }
         },
+        onActionChanged = {},
         sheetState = sheetState
     ) {
         Scaffold(
