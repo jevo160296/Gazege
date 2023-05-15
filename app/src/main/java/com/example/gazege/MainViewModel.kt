@@ -44,9 +44,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     fun rememberAllAccount() = allAccount.observeAsState(emptyList())
 
     @Composable
-    fun rememberAllTransactions() = allTransactions.observeAsState(emptyList())
-
-    @Composable
     fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
         incluirPresupuestoEnSaldoActual.observeAsState(false)
 
@@ -141,6 +138,50 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 transactionAndAccountAndCategory
                     .firstOrNull { it.transaction.id == transactionId }
                     ?.toTransactionAndAccounts()
+            }
+    }
+        .observeAsState()
+
+    @Composable
+    fun rememberPeopleTransactionListItemDetails(otherPersonId: Int?) = remember(otherPersonId) {
+        allTransactions
+            .combine(allAccount) { allTransactions, allAccount ->
+                val personAccountsIds = allAccount
+                    .filter { it.ownerId == otherPersonId }
+                    .map { it.id }
+                    .toSet()
+                object {
+                    val transactions = allTransactions
+                        .filter {
+                            it.aNombreDe == otherPersonId ||
+                                    it.sourceId in personAccountsIds ||
+                                    it.destinationId in personAccountsIds
+                        }
+                        .sortedByDescending { it.date }
+                    val accounts = allAccount
+                }
+            }
+            .combine(categories) { combined, categories ->
+                object {
+                    val transactions = combined.transactions
+                    val accounts = combined.accounts
+                    val categories = categories
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                object {
+                    val transactions = combined.transactions
+                    val categories = combined.categories
+                    val accounts = combined.accounts
+                    val principalPersonId = principalPerson?.id
+                }.run {
+                    TransactionListItemDetails.from(
+                        transactions,
+                        categories,
+                        accounts,
+                        principalPersonId
+                    )
+                }
             }
     }
         .observeAsState()
