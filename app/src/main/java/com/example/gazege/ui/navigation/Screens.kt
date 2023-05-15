@@ -109,7 +109,9 @@ fun MainNavHost(
                 viewModel = mainViewModel,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount,
-                onNavigateToAddPerson = navController::navigateToAddPerson
+                onNavigateToAddPerson = navController::navigateToAddPerson,
+                onNavigateToAddBudget = navController::navigateToAddOneBudget,
+                onNavigateToAddCategory = navController::navigateToAddCategory
             )
             screenSaldoActualSettings(viewModel = mainViewModel)
             screenEditarCategorias(

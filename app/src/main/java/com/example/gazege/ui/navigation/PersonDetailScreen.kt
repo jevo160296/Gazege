@@ -27,11 +27,7 @@ fun NavGraphBuilder.screenPersonDetail(
         )
     ) { navStack ->
         val allPerson by viewModel.rememberAllPerson()
-        val allTransactions by viewModel.rememberAllTransactions()
-        val allAccount by viewModel.rememberAllAccount()
-        val categories by viewModel.rememberCategories()
         val personSummaryState by viewModel.rememberPersonSummaryState()
-        val principalPerson by viewModel.rememberPrincipalPerson()
 
         val personId = navStack.arguments?.getInt("personId")
         val person = allPerson.firstOrNull { it.id == personId }
@@ -48,9 +44,7 @@ fun NavGraphBuilder.screenPersonDetail(
                         }
                     }
                 },
-                allTransactions = allTransactions,
-                allAccounts = allAccount,
-                allCategories = categories,
+                viewModel = viewModel,
                 onTransactionAction = { transaction, action ->
                     val transactionId = transaction.id
                     when (action) {
@@ -58,8 +52,7 @@ fun NavGraphBuilder.screenPersonDetail(
                         TransactionAction.DELETE -> viewModel.deleteTransaction(transaction)
                     }
                 },
-                deuda = deuda,
-                principalPerson = principalPerson
+                deuda = deuda
             )
         } else {
             Text(text = "Empty person")

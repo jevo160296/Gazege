@@ -1,15 +1,29 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
@@ -21,6 +35,7 @@ import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsFragment(
     personList: List<Person>,
@@ -32,6 +47,8 @@ fun SettingsFragment(
     onIncomeOutcomeAccountChanged: (Account?, Account?) -> Unit,
     onAddAccountRequested: () -> Unit,
     onAddPersonRequested: () -> Unit,
+    onAddCategoryRequested: () -> Unit,
+    onAddBudgetRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
@@ -114,5 +131,53 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf(
+                Triple(
+                    stringResource(id = R.string.Nueva_persona),
+                    painterResource(id = R.drawable.ic_baseline_person_24),
+                    onAddPersonRequested
+                ),
+                Triple(
+                    stringResource(R.string.Nueva_cuenta),
+                    painterResource(id = R.drawable.ic_baseline_account_balance_wallet_24),
+                    onAddAccountRequested
+                ),
+                Triple(
+                    "Nueva categoría",
+                    painterResource(id = R.drawable.categorias),
+                    onAddCategoryRequested
+                ),
+                Triple(
+                    "Nuevo presupuesto",
+                    painterResource(id = R.drawable.presupuesto),
+                    onAddBudgetRequested
+                )
+            )
+                .map {
+                    OutlinedCard(
+                        onClick = it.third,
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(120.dp)
+                    ) {
+                        Column(
+                            Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(
+                                8.dp,
+                                Alignment.CenterVertically
+                            )
+                        ) {
+                            Icon(painter = it.second, contentDescription = it.first)
+                            Text(text = it.first, textAlign = TextAlign.Center)
+                        }
+                    }
+                }
+        }
     }
 }

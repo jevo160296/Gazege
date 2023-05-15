@@ -1,17 +1,34 @@
 package com.example.gazege.ui.views.budget
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.ClickableListItemViewHolder
@@ -19,7 +36,6 @@ import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.GazegeProgressIndicator
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BudgetViewHolder(
     budget: BudgetWithCalculatedDataAndCategory
@@ -53,9 +69,9 @@ private fun BudgetViewHolder(
     }
 
     ListItem(
-        overlineText = { Text(text = overlineText) },
-        headlineText = { Text(text = headlineText) },
-        supportingText = { supportingView() },
+        overlineContent = { Text(text = overlineText) },
+        headlineContent = { Text(text = headlineText) },
+        supportingContent = { supportingView() },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }

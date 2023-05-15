@@ -3,6 +3,7 @@ package com.example.gazege
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.PersonDao
@@ -41,9 +42,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     @Composable
     fun rememberAllAccount() = allAccount.observeAsState(emptyList())
-
-    @Composable
-    fun rememberAllTransactions() = allTransactions.observeAsState(emptyList())
 
     @Composable
     fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
@@ -132,6 +130,62 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
         filteredTransactionListitemDetails.observeAsState(emptyList())
+
+    @Composable
+    fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
+        allTransactionAndAccountsAndCategory
+            .map { transactionAndAccountAndCategory ->
+                transactionAndAccountAndCategory
+                    .firstOrNull { it.transaction.id == transactionId }
+                    ?.toTransactionAndAccounts()
+            }
+    }
+        .observeAsState()
+
+    @Composable
+    fun rememberPeopleTransactionListItemDetails(otherPersonId: Int?) = remember(otherPersonId) {
+        allTransactions
+            .combine(allAccount) { allTransactions, allAccount ->
+                val personAccountsIds = allAccount
+                    .filter { it.ownerId == otherPersonId }
+                    .map { it.id }
+                    .toSet()
+                object {
+                    val transactions = allTransactions
+                        .filter {
+                            it.aNombreDe == otherPersonId ||
+                                    it.sourceId in personAccountsIds ||
+                                    it.destinationId in personAccountsIds
+                        }
+                        .sortedByDescending { it.date }
+                    val accounts = allAccount
+                }
+            }
+            .combine(categories) { combined, categories ->
+                object {
+                    val transactions = combined.transactions
+                    val accounts = combined.accounts
+                    val categories = categories
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                object {
+                    val transactions = combined.transactions
+                    val categories = combined.categories
+                    val accounts = combined.accounts
+                    val principalPersonId = principalPerson?.id
+                }.run {
+                    TransactionListItemDetails.from(
+                        transactions,
+                        categories,
+                        accounts,
+                        principalPersonId
+                    )
+                }
+            }
+    }
+        .observeAsState()
+
 
     private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
         otherSource: LiveData<B>,

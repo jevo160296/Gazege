@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +34,6 @@ import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.NumberField
 import com.example.gazege.ui.widgets.TextField
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountAndOwnerForm(
     modifier: Modifier = Modifier,
