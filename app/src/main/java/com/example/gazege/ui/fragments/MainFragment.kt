@@ -99,7 +99,7 @@ fun MainFragment(
             ModalDrawerSheet(
                 windowInsets = dimensionResource(id = R.dimen.DefaultPadding)
                     .let {
-                        WindowInsets(it, it, it, it)
+                        WindowInsets(it, it + 24.dp, it, it)
                     }
             ) {
                 NavigationDrawerItem(
@@ -263,6 +263,9 @@ fun MainFragment(
                 )
             }
         }
+    }
+    LaunchedEffect(key1 = Unit) {
+        drawerState.close()
     }
 }
 
