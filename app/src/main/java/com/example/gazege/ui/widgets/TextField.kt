@@ -28,7 +28,6 @@ import kotlin.math.absoluteValue
 import kotlin.math.floor
 import kotlin.math.roundToLong
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextField(
     value: String,
@@ -49,8 +48,8 @@ fun TextField(
     singleLine: Boolean = false,
     maxLines: Int = Int.MAX_VALUE,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    shape: Shape = TextFieldDefaults.filledShape,
-    colors: TextFieldColors = TextFieldDefaults.textFieldColors()
+    shape: Shape = TextFieldDefaults.shape,
+    colors: TextFieldColors = TextFieldDefaults.colors()
 ) {
     OutlinedTextField(
         value = value,
@@ -65,7 +64,6 @@ fun TextField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberField(
     value: Double,
@@ -86,22 +84,31 @@ fun NumberField(
     singleLine: Boolean = false,
     maxLines: Int = Int.MAX_VALUE,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    shape: Shape = TextFieldDefaults.filledShape,
-    colors: TextFieldColors = TextFieldDefaults.textFieldColors()
+    shape: Shape = TextFieldDefaults.shape,
+    colors: TextFieldColors = TextFieldDefaults.colors()
 ) {
     val formatType by rememberSaveable {
         mutableStateOf(NumberTransformation.FormatType.Int)
     }
-    val numberTransformation = NumberTransformation()
-    var stringRepresentation by remember(value) {
+    val numberTransformation = remember { NumberTransformation() }
+    var isEditing by remember { mutableStateOf(false) }
+    var stringRepresentation by remember {
         mutableStateOf(numberTransformation.doubleToString(value, formatType))
     }
-    var isEditing by remember { mutableStateOf(false) }
+    val stringState = remember(value, stringRepresentation) {
+        val valueRepresentation = numberTransformation.stringToDoubleOrNull(stringRepresentation)
+        if (valueRepresentation != value) {
+            numberTransformation.doubleToString(value, formatType)
+        } else {
+            stringRepresentation
+        }
+    }
     TextField(
-        value = stringRepresentation,
+        value = stringState,
         onValueChange = {
-            val isValidNumberString = numberTransformation.isValidNumberString(it)
-            if (isValidNumberString) {
+            val newValue = numberTransformation.stringToDoubleOrNull(it)
+            if (newValue != null) {
+                onValueChange(newValue)
                 stringRepresentation = it
                     .replace(Regex("(\\.\\d{0,2})\\d*"), "$1")
             }
@@ -115,7 +122,7 @@ fun NumberField(
                 }
                 isEditing = false
             } else {
-                if (stringRepresentation in setOf("0", "0.0", "-0", "-0.0")) {
+                if (stringState in setOf("0", "0.0", "-0", "-0.0")) {
                     stringRepresentation = ""
                 }
                 isEditing = true
@@ -205,9 +212,6 @@ class NumberTransformation(
             }
         }
     }
-
-    fun isValidNumberString(text: String, max: Long = 100000000000): Boolean =
-        stringToDoubleOrNull(text, max) != null
 
     fun doubleToString(
         number: Double?,
