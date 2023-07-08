@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.ui.doubleToMoneyString
@@ -50,12 +51,65 @@ fun DataView(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
-            ){
+            ) {
                 MediumHeadline(text = title)
                 MediumHeadline(text = value)
             }
         }
     }
+}
+
+@Composable
+fun DataViewWithTrailingComposable(
+    modifier: Modifier = Modifier,
+    title: String,
+    bigTitle: Boolean = false,
+    value: String,
+    enabled: Boolean = true,
+    colors: CardColors = CardDefaults.cardColors(),
+    trailingComposable: @Composable () -> Unit = @Composable {},
+    onClick: () -> Unit = {}
+) {
+    Card(
+        modifier = modifier,
+        colors = colors,
+        enabled = enabled,
+        onClick = onClick
+    ) {
+        if (!bigTitle) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
+                Text(value)
+                SmallEmphasis(text = title)
+                trailingComposable()
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MediumHeadline(text = title)
+                    MediumHeadline(text = value)
+                }
+                trailingComposable()
+            }
+        }
+    }
+}
+
+@Composable
+fun DataViewProgressBar(
+    progress: Double
+) {
+    GazegeProgressIndicator(
+        compleition = progress,
+        color = MaterialTheme.colorScheme.tertiary,
+        compact = true
+    )
 }
 
 @Composable
@@ -121,4 +175,16 @@ fun PersonMonthSummaryView(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun DataViewWithProgressBarPreview() {
+    DataViewWithTrailingComposable(
+        title = "Titulo",
+        value = "Valor",
+        trailingComposable = {
+            DataViewProgressBar(progress = 0.45)
+        }
+    )
 }
