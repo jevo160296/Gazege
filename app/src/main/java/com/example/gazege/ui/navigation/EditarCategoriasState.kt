@@ -33,11 +33,24 @@ data class LoadedEditarCategoriasState(
         fun from(
             categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
         ): EditarCategoriasState {
+            val incomeOutcome = categoriesWithCalculatedData
+                .map { actual ->
+                    (actual.aggregatedBudget?.expectedTotalFlow ?: 0.0) +
+                            (actual.childrenAggregatedBudget?.expectedTotalFlow ?: 0.0)
+                }
+                .fold(Pair(0.0, 0.0)) { accum, current ->
+                    when (current > 0) {
+                        true -> accum.copy(first = accum.first + current)
+                        false -> accum.copy(second = accum.second + current)
+                    }
+                }
+            val income = incomeOutcome.first
+            val outcome = incomeOutcome.second
             return LoadedEditarCategoriasState(
                 categoriesWithCalculatedData,
-                0.0,
-                0.0,
-                0.0
+                income,
+                outcome,
+                income + outcome
             )
         }
     }
