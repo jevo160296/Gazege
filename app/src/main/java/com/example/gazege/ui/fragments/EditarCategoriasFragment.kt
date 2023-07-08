@@ -87,17 +87,17 @@ fun EditarCategorias(
                 ) {
                     DataView(
                         title = stringResource(id = R.string.Ingreso),
-                        value = doubleToMoneyString(editarCategoriasState.totalIncome),
+                        value = doubleToMoneyString(editarCategoriasState.expectedTotalIncome),
                         modifier = Modifier.weight(1f)
                     )
                     DataView(
                         title = stringResource(id = R.string.Gasto),
-                        value = doubleToMoneyString(editarCategoriasState.totalOutcome),
+                        value = doubleToMoneyString(editarCategoriasState.expectedTotalOutcome),
                         modifier = Modifier.weight(1f)
                     )
                     DataView(
                         title = stringResource(id = R.string.Neto),
-                        value = doubleToMoneyString(editarCategoriasState.netValue),
+                        value = doubleToMoneyString(editarCategoriasState.expectedNetValue),
                         modifier = Modifier.weight(1f)
                     )
                 }
