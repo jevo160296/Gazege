@@ -27,8 +27,9 @@ private fun smallSample(
 ) {
     databaseSample(
         categoriesAmount = 0,
-        transactionAmount = 5,
-        budgetAmount = 0
+        transactionAmount = 0,
+        budgetAmount = 0,
+        principalPersonAccountAmount = 5
     ) { buildSample(viewModel) }
 }
 

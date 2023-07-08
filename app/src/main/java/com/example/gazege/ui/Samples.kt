@@ -38,19 +38,26 @@ fun databaseSample(
     categoriesAmount: Int = 20,
     transactionAmount: Int = 100000,
     budgetAmount: Int = 50,
+    principalPersonAccountAmount: Int = 100,
     content: DatabaseSampleScope.() -> Unit
 ) {
-    val scope = DatabaseSampleScope(categoriesAmount, transactionAmount, budgetAmount)
+    val scope = DatabaseSampleScope(
+        categoriesAmount,
+        transactionAmount,
+        budgetAmount,
+        principalPersonAccountAmount
+    )
     scope.content()
 }
 
 class DatabaseSampleScope(
     val categoriesAmount: Int = 20,
     val transactionAmount: Int = 100000,
-    val budgetAmount: Int = 50
+    val budgetAmount: Int = 50,
+    val principalPersonAccountAmount: Int = 100
 ) {
     val personSample by lazy { getPersonSample() }
-    val accountSample by lazy { getAccountSample(personSample) }
+    val accountSample by lazy { getAccountSample(principalPersonAccountAmount, personSample) }
     val categorieSample by lazy { getCategoriesSample(categoriesAmount) }
     val transactionSample by lazy {
         getTransactionSample(
@@ -228,14 +235,17 @@ private fun getCategoryWithCalculatedDataSample(
     budget: List<BudgetWithCalculatedData>
 ) = CategoryWithBudgetData.from(categories, budget)
 
-private fun getAccountSample(personSample: List<Person>): List<Account> {
+private fun getAccountSample(
+    principalPersonAccountAmount: Int,
+    personSample: List<Person>
+): List<Account> {
     var index = 0
     val random = Random(3)
     return personSample
         .flatMap {
             when (it.name) {
                 "Pablo" -> Pair(
-                    0, (0..100).map {
+                    0, (0..principalPersonAccountAmount).map {
                         val pIndex = index++
                         val hasParent = random.nextBoolean()
                         val parentId = if (hasParent && pIndex > 0) {

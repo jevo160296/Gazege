@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
@@ -92,6 +93,9 @@ fun MainFragment(
         mutableStateOf("Gazege")
     }
     var fabExpanded: Boolean by remember {
+        mutableStateOf(false)
+    }
+    var debugMenuExpanded: Boolean by remember {
         mutableStateOf(false)
     }
 
@@ -195,13 +199,26 @@ fun MainFragment(
                         actions = {
                             val uriHandler = LocalUriHandler.current
                             if (GazegeTheme.appMode == AppMode.DEBUG) {
-                                IconButton(
-                                    onClick = { onInitDatabaseSample(SampleId.SmallSample) }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_baseline_add_24),
-                                        contentDescription = "Add sample data"
-                                    )
+                                Box(Modifier.wrapContentSize(Alignment.TopStart)) {
+                                    IconButton(
+                                        onClick = { debugMenuExpanded = true }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_baseline_add_24),
+                                            contentDescription = "Add sample data"
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = debugMenuExpanded,
+                                        onDismissRequest = { debugMenuExpanded = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Small") },
+                                            onClick = { onInitDatabaseSample(SampleId.SmallSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Big") },
+                                            onClick = { onInitDatabaseSample(SampleId.BigSample) })
+                                    }
                                 }
                                 IconButton(onClick = {
                                     uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
