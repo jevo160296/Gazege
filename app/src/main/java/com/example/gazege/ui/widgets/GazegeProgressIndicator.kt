@@ -16,9 +16,12 @@ import com.example.gazege.ui.doubleToPercentageString
 fun GazegeProgressIndicator(
     compleition: Double,
     labelString: String = "Progress",
+    compact: Boolean = false,
     color: Color = ProgressIndicatorDefaults.linearColor
 ) {
-    Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
+    if (!compact) {
+        Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
+    }
     LinearProgressIndicator(
         progress = compleition.toFloat(),
         modifier = Modifier

@@ -7,6 +7,23 @@ interface EditarCategoriasState {
     val expectedTotalIncome: Double
     val expectedTotalOutcome: Double
     val expectedNetValue: Double
+
+    val realTotalIncome: Double
+    val realTotalOutcome: Double
+    val realNetValue: Double
+
+    val totalIncomeProgress: Double
+        get() = if (expectedTotalIncome != 0.0) {
+            realTotalIncome / expectedTotalIncome
+        } else {
+            1.0
+        }
+    val totalOutcomeProgress: Double
+        get() = if (expectedTotalOutcome != 0.0) {
+            realTotalOutcome / expectedTotalOutcome
+        } else {
+            1.0
+        }
 }
 
 fun nullCategoriasState(): EditarCategoriasState = EmptyEditarCategoriasState
@@ -20,6 +37,12 @@ object EmptyEditarCategoriasState : EditarCategoriasState {
         get() = 0.0
     override val expectedNetValue: Double
         get() = 0.0
+    override val realTotalIncome: Double
+        get() = 0.0
+    override val realTotalOutcome: Double
+        get() = 0.0
+    override val realNetValue: Double
+        get() = 0.0
 
 }
 
@@ -27,7 +50,10 @@ data class LoadedEditarCategoriasState(
     override val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     override val expectedTotalIncome: Double,
     override val expectedTotalOutcome: Double,
-    override val expectedNetValue: Double
+    override val expectedNetValue: Double,
+    override val realTotalIncome: Double,
+    override val realTotalOutcome: Double,
+    override val realNetValue: Double
 ) : EditarCategoriasState {
     companion object {
         fun from(
@@ -46,11 +72,28 @@ data class LoadedEditarCategoriasState(
                 }
             val expectedIncome = expectedIncomeOutcome.first
             val expectedOutcome = expectedIncomeOutcome.second
+
+            val realIncomeOutcome = categoriesWithCalculatedData
+                .map { actual ->
+                    (actual.aggregatedBudget?.realTotalFlow ?: 0.0) +
+                            (actual.childrenAggregatedBudget?.realTotalFlow ?: 0.0)
+                }
+                .fold(Pair(0.0, 0.0)) { accum, current ->
+                    when (current > 0) {
+                        true -> accum.copy(first = accum.first + current)
+                        false -> accum.copy(second = accum.second + current)
+                    }
+                }
+            val realIncome = realIncomeOutcome.first
+            val realOutcome = realIncomeOutcome.second
             return LoadedEditarCategoriasState(
                 categoriesWithCalculatedData,
                 expectedIncome,
                 expectedOutcome,
-                expectedIncome + expectedOutcome
+                expectedIncome + expectedOutcome,
+                realIncome,
+                realOutcome,
+                realIncome + realOutcome
             )
         }
     }

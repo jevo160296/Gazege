@@ -2,8 +2,11 @@ package com.example.gazege.ui.fragments
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,7 +29,8 @@ import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCa
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
-import com.example.gazege.ui.widgets.DataView
+import com.example.gazege.ui.widgets.DataViewProgressBar
+import com.example.gazege.ui.widgets.DataViewWithTrailingComposable
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetLayout
 import com.example.gazege.ui.widgets.fab.FAB
@@ -84,21 +88,27 @@ fun EditarCategorias(
                     modifier = Modifier
                         .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
                         .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                        .height(IntrinsicSize.Min)
                 ) {
-                    DataView(
+                    DataViewWithTrailingComposable(
                         title = stringResource(id = R.string.Ingreso),
                         value = doubleToMoneyString(editarCategoriasState.expectedTotalIncome),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalIncomeProgress) }
                     )
-                    DataView(
+                    DataViewWithTrailingComposable(
                         title = stringResource(id = R.string.Gasto),
                         value = doubleToMoneyString(editarCategoriasState.expectedTotalOutcome),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalOutcomeProgress) }
                     )
-                    DataView(
+                    DataViewWithTrailingComposable(
                         title = stringResource(id = R.string.Neto),
                         value = doubleToMoneyString(editarCategoriasState.expectedNetValue),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f),
+                        trailingComposable = {}
                     )
                 }
                 CategoryListView(
