@@ -82,4 +82,5 @@
     <string name="Flujo_estimado_desde_hoy">Flujo estimado desde hoy</string>
     <string name="Nueva_transaccion">Nueva transacción</string>
     <string name="Neto">Neto</string>
+    <string name="Cargando">Cargando…</string>
 </resources>

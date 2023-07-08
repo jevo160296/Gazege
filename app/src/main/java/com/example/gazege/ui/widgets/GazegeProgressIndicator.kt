@@ -2,6 +2,7 @@ package com.example.gazege.ui.widgets
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
@@ -30,4 +31,9 @@ fun GazegeProgressIndicator(
         color = color,
         trackColor = color.copy(alpha = 0.2f)
     )
+}
+
+@Composable
+fun GazegeIndefiniteCircularProgressIndicator(modifier: Modifier = Modifier) {
+    CircularProgressIndicator(modifier = modifier)
 }
