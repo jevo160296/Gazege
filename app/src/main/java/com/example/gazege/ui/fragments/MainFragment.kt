@@ -18,6 +18,7 @@ import com.example.gazege.NavPosition
 import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.sample.data.SampleId
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
@@ -73,7 +74,7 @@ fun MainFragment(
     onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
-    onInitDatabaseSample: () -> Unit,
+    onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -195,7 +196,7 @@ fun MainFragment(
                             val uriHandler = LocalUriHandler.current
                             if (GazegeTheme.appMode == AppMode.DEBUG) {
                                 IconButton(
-                                    onClick = onInitDatabaseSample
+                                    onClick = { onInitDatabaseSample(SampleId.SmallSample) }
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_baseline_add_24),

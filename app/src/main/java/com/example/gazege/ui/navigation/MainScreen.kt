@@ -16,7 +16,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
-import com.example.gazege.ui.databaseSample
+import com.example.gazege.sample.data.sample
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.theme.AppMode
 import com.example.gazege.ui.theme.GazegeTheme
@@ -125,23 +125,7 @@ fun NavGraphBuilder.screenMain(
                 onTransferFilterValueChanged = viewModel::updateTransferFilterValue,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
-                        databaseSample {
-                            viewModel.insertPerson(*personSample.toTypedArray()) {}
-                            viewModel.insertAccount(
-                                *accountSample.toTypedArray(),
-                                onErrorAction = {}) {}
-                            viewModel.insertCategory(*categorieSample.map { it.copy(parentId = null) }
-                                .toTypedArray(), onErrorAction = {}, onCompleitionAction = {})
-                            viewModel.updateCategory(
-                                *categorieSample.toTypedArray(),
-                                onErrorAction = {},
-                                onCompleitionAction = {})
-                            viewModel.insertTransaction(*transactionSample.toTypedArray()) {}
-                            viewModel.insertBudget(
-                                *budgetSample.toTypedArray(),
-                                onCompleitionAction = {},
-                                onErrorAction = {})
-                        }
+                        sample(it, viewModel)
                     }
                 } else {
                     {}

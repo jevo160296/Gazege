@@ -35,17 +35,30 @@ fun DatabaseSample(
 }
 
 fun databaseSample(
+    categoriesAmount: Int = 20,
+    transactionAmount: Int = 100000,
+    budgetAmount: Int = 50,
     content: DatabaseSampleScope.() -> Unit
 ) {
-    val scope = DatabaseSampleScope()
+    val scope = DatabaseSampleScope(categoriesAmount, transactionAmount, budgetAmount)
     scope.content()
 }
 
-class DatabaseSampleScope {
+class DatabaseSampleScope(
+    val categoriesAmount: Int = 20,
+    val transactionAmount: Int = 100000,
+    val budgetAmount: Int = 50
+) {
     val personSample by lazy { getPersonSample() }
     val accountSample by lazy { getAccountSample(personSample) }
-    val categorieSample by lazy { getCategoriesSample() }
-    val transactionSample by lazy { getTransactionSample(accountSample, categorieSample) }
+    val categorieSample by lazy { getCategoriesSample(categoriesAmount) }
+    val transactionSample by lazy {
+        getTransactionSample(
+            accountSample,
+            categorieSample,
+            transactionAmount
+        )
+    }
     val transactionsAndAccountAndCategorySample by lazy {
         getTransactionAndAccountsAndCategorySample(
             transactionSample,
@@ -54,7 +67,7 @@ class DatabaseSampleScope {
         )
     }
     val categoryWithSubcategoriesSample by lazy { getCategoryWithSubcategoriesSample(categorieSample) }
-    val budgetSample by lazy { getBudgetSample(categorieSample) }
+    val budgetSample by lazy { getBudgetSample(categorieSample, budgetAmount) }
     val accountAndOwnerWithTransactionsSample by lazy {
         getAccountAndOwnerWithTransactionsSample(
             accountSample,
@@ -150,13 +163,14 @@ private fun getBudgetAndCategoryWithTransactionsSample(
 )
 
 private fun getBudgetSample(
-    categorySample: List<Category>
+    categorySample: List<Category>,
+    budgetAmount: Int
 ): List<Budget> {
     val random = Random(3)
     val categorySize = categorySample.size
     val frequencyTypeSize = FrequencyType.values().size
     val startDate = LocalDate.of(2023, 1, 1)
-    return (0..50).map {
+    return (0..budgetAmount).map {
         val categoryIndex = random.nextInt(categorySize)
         val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
         val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
@@ -299,9 +313,9 @@ private fun getAccountAndOwnerWithTransactionsAndPocketsSample(
     )
 }
 
-private fun getCategoriesSample(): List<Category> {
+private fun getCategoriesSample(amount: Int): List<Category> {
     val random = Random(3)
-    return (0..20).map {
+    return (0..amount).map {
         val hasParent = random.nextBoolean()
         val parentId = random.nextInt(19)
             .let { parentId ->
@@ -349,10 +363,11 @@ private fun getPersonWithAccountsSample(
 
 private fun getTransactionSample(
     accountsSample: List<Account>,
-    categoriesSample: List<Category>
+    categoriesSample: List<Category>,
+    transactionAmount: Int
 ): List<Transaction> {
     val random = java.util.Random(3)
-    return (0..100000).map {
+    return (0..transactionAmount).map {
         val selectedAccounts = accountsSample.shuffled(random).take(2)
         val sourceAccount = selectedAccounts[0]
         val destinationAccount = selectedAccounts[1]
