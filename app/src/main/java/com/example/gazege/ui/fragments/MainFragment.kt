@@ -218,6 +218,9 @@ fun MainFragment(
                                         DropdownMenuItem(
                                             text = { Text(text = "Big") },
                                             onClick = { onInitDatabaseSample(SampleId.BigSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Category sample") },
+                                            onClick = { onInitDatabaseSample(SampleId.CategoriesSample) })
                                     }
                                 }
                                 IconButton(onClick = {

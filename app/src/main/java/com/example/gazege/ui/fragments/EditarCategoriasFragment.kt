@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetLayout
@@ -29,12 +30,14 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarCategorias(
-    categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    editarCategoriasState: EditarCategoriasState,
     onAddCategoryRequested: () -> Unit,
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit
 ) {
+    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
+        editarCategoriasState.categoriesWithCalculatedData
     var categoryClicked: Category? by remember {
         mutableStateOf(null)
     }
