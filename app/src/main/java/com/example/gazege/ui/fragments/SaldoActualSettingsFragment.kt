@@ -12,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.views.account.AccountSelectionPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
@@ -24,6 +26,7 @@ import com.example.gazege.ui.widgets.treeview.rememberTreeState
 @Composable
 fun SaldoActualSettings(
     accountList: List<AccountAndOwnerWithTransactions>,
+    summaryState: PersonSummaryState?,
     saving: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
     incluirDeudasEnSaldoActual: Boolean,
@@ -62,7 +65,13 @@ fun SaldoActualSettings(
                     checked = incluirPresupuestoEnSaldoActual,
                     onCheckedChange = onIncluirPresupuestoEnSaldoActualChanged
                 )
-                Text(text = stringResource(id = R.string.Incluir_presupuesto))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(id = R.string.Incluir_presupuesto))
+                    Text(text = doubleToMoneyString(summaryState?.presupuestoTotal ?: 0.0))
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -72,7 +81,13 @@ fun SaldoActualSettings(
                     checked = incluirDeudasEnSaldoActual,
                     onCheckedChange = onIncluirDeudasEnSaldoActualChanged
                 )
-                Text(text = stringResource(R.string.Incluir_deudas))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(R.string.Incluir_deudas))
+                    Text(text = doubleToMoneyString(summaryState?.deudasTotal ?: 0.0))
+                }
             }
         }
         AccountSelectionPage(

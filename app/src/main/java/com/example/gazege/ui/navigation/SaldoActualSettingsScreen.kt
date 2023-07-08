@@ -17,6 +17,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
 ) {
     composable("saldoActualSettings") {
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val personSummaryState by viewModel.rememberPersonSummaryState()
         val principalPerson by viewModel.rememberPrincipalPerson()
         val incluirPresupuestoEnSaldoActual by viewModel.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
         val incluirDeudasEnSaldoActual by viewModel.rememberSettingsIncluirDeudasEnSaldoActualFlow()
@@ -25,6 +26,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         var saving: Int by remember { mutableStateOf(0) }
         SaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
+            summaryState = personSummaryState,
             saving = saving,
             incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
             incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,

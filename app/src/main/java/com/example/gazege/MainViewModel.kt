@@ -830,7 +830,9 @@ data class PersonSummaryState(
     val saldoActual: Double,
     val ingresos: Double,
     val egresos: Double,
-    val deudasFlujo: Map<Person, Double>
+    val deudasFlujo: Map<Person, Double>,
+    val deudasTotal: Double,
+    val presupuestoTotal: Double
 ) {
     val flujo: Double get() = ingresos - egresos
 
@@ -852,6 +854,9 @@ data class PersonSummaryState(
                     allTransactions
                 )
             }
+            val deudasTotal = deudasFlujo.toList().sumOf { it.second }
+            val presupuestoTotal =
+                budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPay }
             return PersonSummaryState(
                 person = personWithAccounts.person,
                 saldoActual = personWithAccounts.let {
@@ -860,20 +865,22 @@ data class PersonSummaryState(
                         null,
                         null
                     )
-                } + if (includeBudget) {
-                    budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPay }
+                }
+                        + if (includeBudget) {
+                    presupuestoTotal
                 } else {
                     0.0
-                } + if (includeDebts) {
-                    deudasFlujo
-                        .toList()
-                        .sumOf { it.second }
+                }
+                        + if (includeDebts) {
+                    deudasTotal
                 } else {
                     0.0
                 },
                 ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
                 egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
-                deudasFlujo = deudasFlujo
+                deudasFlujo = deudasFlujo,
+                deudasTotal = deudasTotal,
+                presupuestoTotal = presupuestoTotal
             )
         }
     }
