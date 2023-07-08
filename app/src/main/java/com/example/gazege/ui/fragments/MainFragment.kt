@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
@@ -18,6 +19,7 @@ import com.example.gazege.NavPosition
 import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.sample.data.SampleId
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
@@ -73,7 +75,7 @@ fun MainFragment(
     onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
     onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
-    onInitDatabaseSample: () -> Unit,
+    onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -91,6 +93,9 @@ fun MainFragment(
         mutableStateOf("Gazege")
     }
     var fabExpanded: Boolean by remember {
+        mutableStateOf(false)
+    }
+    var debugMenuExpanded: Boolean by remember {
         mutableStateOf(false)
     }
 
@@ -194,13 +199,29 @@ fun MainFragment(
                         actions = {
                             val uriHandler = LocalUriHandler.current
                             if (GazegeTheme.appMode == AppMode.DEBUG) {
-                                IconButton(
-                                    onClick = onInitDatabaseSample
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_baseline_add_24),
-                                        contentDescription = "Add sample data"
-                                    )
+                                Box(Modifier.wrapContentSize(Alignment.TopStart)) {
+                                    IconButton(
+                                        onClick = { debugMenuExpanded = true }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_baseline_add_24),
+                                            contentDescription = "Add sample data"
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = debugMenuExpanded,
+                                        onDismissRequest = { debugMenuExpanded = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Small") },
+                                            onClick = { onInitDatabaseSample(SampleId.SmallSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Big") },
+                                            onClick = { onInitDatabaseSample(SampleId.BigSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Category sample") },
+                                            onClick = { onInitDatabaseSample(SampleId.CategoriesSample) })
+                                    }
                                 }
                                 IconButton(onClick = {
                                     uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")

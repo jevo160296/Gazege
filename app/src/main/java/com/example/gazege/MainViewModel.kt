@@ -9,6 +9,9 @@ import com.example.gazege.core.AppRepository
 import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.Settings
+import com.example.gazege.ui.navigation.EditarCategoriasState
+import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
 import java.time.LocalDate
@@ -69,8 +72,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
 
     @Composable
-    fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-        categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+    fun rememberEditarCategoriasState() =
+        editarCategoriasState.observeAsState(nullCategoriasState())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactions() =
@@ -323,11 +326,13 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
         }
 
-    private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+    private val editarCategoriasState: LiveData<EditarCategoriasState> =
         budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
-            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                budgetWithCalculatedDataAndCategory,
-                categoriesWithSubCategories
+            LoadedEditarCategoriasState.from(
+                CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                    budgetWithCalculatedDataAndCategory,
+                    categoriesWithSubCategories
+                )
             )
         }
 

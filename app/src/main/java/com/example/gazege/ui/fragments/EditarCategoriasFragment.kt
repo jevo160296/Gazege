@@ -1,6 +1,8 @@
 package com.example.gazege.ui.fragments
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,12 +17,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
+import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetLayout
 import com.example.gazege.ui.widgets.fab.FAB
@@ -29,12 +35,14 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarCategorias(
-    categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    editarCategoriasState: EditarCategoriasState,
     onAddCategoryRequested: () -> Unit,
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit
 ) {
+    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
+        editarCategoriasState.categoriesWithCalculatedData
     var categoryClicked: Category? by remember {
         mutableStateOf(null)
     }
@@ -70,7 +78,29 @@ fun EditarCategorias(
             },
             contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) {
-            Box(modifier = Modifier.padding(it)) {
+            Column(modifier = Modifier.padding(it)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                    modifier = Modifier
+                        .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
+                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    DataView(
+                        title = stringResource(id = R.string.Ingreso),
+                        value = doubleToMoneyString(editarCategoriasState.totalIncome),
+                        modifier = Modifier.weight(1f)
+                    )
+                    DataView(
+                        title = stringResource(id = R.string.Gasto),
+                        value = doubleToMoneyString(editarCategoriasState.totalOutcome),
+                        modifier = Modifier.weight(1f)
+                    )
+                    DataView(
+                        title = stringResource(id = R.string.Neto),
+                        value = doubleToMoneyString(editarCategoriasState.netValue),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 CategoryListView(
                     categoriesWithCalculatedData = categoriesWithCalculatedData,
                     onItemClick = onEditCategoryRequested,
