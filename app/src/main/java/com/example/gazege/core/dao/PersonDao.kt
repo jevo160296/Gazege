@@ -39,37 +39,47 @@ interface PersonDao {
             endDate: LocalDate?
         ) {
             val newRange = Pair(startDate, endDate)
-            if (newRange != person.range) {
+            if (
+                !person.totalCache.containsKey(newRange) ||
+                !person.ingresosCache.containsKey(newRange) ||
+                !person.egresosCache.containsKey(newRange)
+
+            ) {
                 val selfAccounts =
                     person.accounts.map { it.accountAndOwnerWithTransactions.account }
-                person.total = person.accounts
-                    .filter { it.accountAndOwnerWithTransactions.account.includedInTotal }
-                    .sumOf {
-                        AccountDao.getTotal(
-                            it.accountAndOwnerWithTransactions,
-                            startDate,
-                            endDate
-                        )
-                    }
-                person.ingresos = person.accounts
-                    .sumOf {
-                        AccountDao.calculateIngresos(
-                            it.accountAndOwnerWithTransactions,
-                            startDate,
-                            endDate,
-                            selfAccounts
-                        )
-                    }
-                person.egresos = person.accounts
-                    .sumOf {
-                        AccountDao.calculateEgresos(
-                            it.accountAndOwnerWithTransactions,
-                            startDate,
-                            endDate,
-                            selfAccounts
-                        )
-                    }
-                person.range = newRange
+                if (!person.totalCache.containsKey(newRange)) {
+                    person.totalCache[newRange] = person.accounts
+                        .filter { it.accountAndOwnerWithTransactions.account.includedInTotal }
+                        .sumOf {
+                            AccountDao.getTotal(
+                                it.accountAndOwnerWithTransactions,
+                                startDate,
+                                endDate
+                            )
+                        }
+                }
+                if (!person.ingresosCache.containsKey(newRange)) {
+                    person.ingresosCache[newRange] = person.accounts
+                        .sumOf {
+                            AccountDao.calculateIngresos(
+                                it.accountAndOwnerWithTransactions,
+                                startDate,
+                                endDate,
+                                selfAccounts
+                            )
+                        }
+                }
+                if (!person.egresosCache.containsKey(newRange)) {
+                    person.egresosCache[newRange] = person.accounts
+                        .sumOf {
+                            AccountDao.calculateEgresos(
+                                it.accountAndOwnerWithTransactions,
+                                startDate,
+                                endDate,
+                                selfAccounts
+                            )
+                        }
+                }
             }
         }
 
@@ -79,7 +89,7 @@ interface PersonDao {
             endDate: LocalDate?
         ): Double {
             calculateValues(person, startDate, endDate)
-            return person.total
+            return person.totalCache[Pair(startDate, endDate)] ?: 0.0
         }
 
         fun getIngresos(
@@ -88,7 +98,7 @@ interface PersonDao {
             endDate: LocalDate?
         ): Double {
             calculateValues(person, startDate, endDate)
-            return person.ingresos
+            return person.ingresosCache[Pair(startDate, endDate)] ?: 0.0
         }
 
         fun getEgresos(
@@ -97,7 +107,7 @@ interface PersonDao {
             endDate: LocalDate?
         ): Double {
             calculateValues(person, startDate, endDate)
-            return person.egresos
+            return person.egresosCache[Pair(startDate, endDate)] ?: 0.0
         }
 
         private fun calculateFlujo(

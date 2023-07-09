@@ -15,16 +15,13 @@ data class PersonWithAccounts(
     val accounts: List<AccountAndOwnerWithTransactionsAndPockets>
 ) {
     @Ignore
-    var range: Pair<LocalDate?, LocalDate?>? = null
+    var totalCache: MutableMap<Pair<LocalDate?, LocalDate?>, Double> = mutableMapOf()
 
     @Ignore
-    var total: Double = Double.NaN
+    var ingresosCache: MutableMap<Pair<LocalDate?, LocalDate?>, Double> = mutableMapOf()
 
     @Ignore
-    var ingresos: Double = Double.NaN
-
-    @Ignore
-    var egresos: Double = Double.NaN
+    var egresosCache: MutableMap<Pair<LocalDate?, LocalDate?>, Double> = mutableMapOf()
 
     @Ignore
     var flujos: MutableMap<Person, Double> = mutableMapOf()
