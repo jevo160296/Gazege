@@ -1,11 +1,17 @@
 package com.example.gazege.ui.views.person
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -33,9 +39,14 @@ fun PersonDetail(
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
     }
+    var justPendingTransactions: Boolean by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
-    val transactionListItemDetails by viewModel.rememberPeopleTransactionListItemDetails(person.id)
+    val transactionListItemDetails by viewModel.rememberPeopleTransactionListItemDetails(
+        person.id,
+        justPendingTransactions,
+        deuda
+    )
     EntityDetail(
         modalController = modalController,
         title = person.name,
@@ -67,6 +78,19 @@ fun PersonDetail(
                 )
             )
         )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
+            Switch(
+                checked = justPendingTransactions,
+                onCheckedChange = { justPendingTransactions = it },
+            )
+            Text(text = stringResource(id = R.string.justPendingTransactions))
+        }
         TransactionPage(
             transactionList = transactionListItemDetails ?: emptyList(),
             delTransaction = {

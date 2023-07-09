@@ -146,7 +146,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         .observeAsState()
 
     @Composable
-    fun rememberPeopleTransactionListItemDetails(otherPersonId: Int?) = remember(otherPersonId) {
+    fun rememberPeopleTransactionListItemDetails(
+        otherPersonId: Int?,
+        justPendingTransactions: Boolean,
+        debt: Double
+    ) = remember(otherPersonId, justPendingTransactions, debt) {
         allTransactions
             .combine(allAccount) { allTransactions, allAccount ->
                 val personAccountsIds = allAccount
@@ -178,12 +182,33 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                     val accounts = combined.accounts
                     val principalPersonId = principalPerson?.id
                 }.run {
-                    TransactionListItemDetails.from(
+                    val allTransactions = TransactionListItemDetails.from(
                         transactions,
                         categories,
                         accounts,
                         principalPersonId
                     )
+                    if (justPendingTransactions) {
+                        var cumSum = 0.0
+                        val sortedTransactions = allTransactions
+                            .sortedByDescending { it.transaction.id }
+                            .sortedByDescending { it.transaction.date }
+                        val filteredTransactions = sortedTransactions
+                            .takeWhile {
+                                val sign = when (it.transactionType) {
+                                    TransactionType.INCOME -> -1.0
+                                    TransactionType.OUTCOME -> 1.0
+                                    else -> 0.0
+                                }
+                                val condition = cumSum != debt
+                                cumSum += it.transaction.amount * sign
+                                condition
+                            }
+                            .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
+                        filteredTransactions
+                    } else {
+                        allTransactions
+                    }
                 }
             }
     }
