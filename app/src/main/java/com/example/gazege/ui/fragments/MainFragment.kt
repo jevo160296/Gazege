@@ -221,6 +221,9 @@ fun MainFragment(
                                         DropdownMenuItem(
                                             text = { Text(text = "Category sample") },
                                             onClick = { onInitDatabaseSample(SampleId.CategoriesSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Category with miultiple budget sample") },
+                                            onClick = { onInitDatabaseSample(SampleId.CategoriesMultipleBudgetSample) })
                                     }
                                 }
                                 IconButton(onClick = {

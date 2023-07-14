@@ -13,7 +13,8 @@ import java.time.LocalDate
 enum class SampleId {
     BigSample,
     SmallSample,
-    CategoriesSample
+    CategoriesSample,
+    CategoriesMultipleBudgetSample
 }
 
 fun sample(sampleId: SampleId, viewModel: MainViewModel) {
@@ -21,6 +22,7 @@ fun sample(sampleId: SampleId, viewModel: MainViewModel) {
         SampleId.BigSample -> bigSample(viewModel)
         SampleId.SmallSample -> smallSample(viewModel)
         SampleId.CategoriesSample -> categoriesSample(viewModel)
+        SampleId.CategoriesMultipleBudgetSample -> categoriesMultipleBudgetSample(viewModel)
     }
 }
 
@@ -119,6 +121,54 @@ private fun categoriesSample(
                 sourceId = 0,
                 destinationId = 4,
                 categoryId = 4,
+                date = startOfMonth,
+                aNombreDe = null,
+                description = ""
+            )
+        )
+    )
+}
+
+private fun categoriesMultipleBudgetSample(
+    viewModel: MainViewModel
+) {
+    val today = LocalDate.now()
+    val startOfMonth = today.withDayOfMonth(1)
+    buildSample(
+        viewModel,
+        personSample = listOf(
+            Person(0, "Pedro", 0),
+            Person(1, "Hortensia"),
+            Person(2, "Juan"),
+            Person(3, "__ESPECIAL__")
+        ),
+        accountSample = listOf(
+            Account(0, "Pedro", 0),
+            Account(1, "Hortensia", 1),
+            Account(2, "Pablo", 2),
+            Account(3, "__INGRESO__", 3, isIncome = true),
+            Account(4, "__GASTO__", 3, isOutcome = true)
+        ),
+        categorieSample = listOf(
+            Category(0, "Ingreso", null),
+            Category(1, "Hogar", null),
+            Category(2, "Renta", 1),
+            Category(3, "Servicios", null),
+            Category(4, "Luz", 3),
+            Category(5, "Agua", 3)
+        ),
+        listOf(
+            Budget.fromMonthly(0, 0, 1000000.0, BudgetType.FIXED),
+            Budget.fromMonthly(1, 0, 1000000.0, BudgetType.FIXED),
+            Budget.fromMonthly(2, 0, 1000000.0, BudgetType.FIXED)
+        ),
+        listOf(
+            Transaction(
+                0,
+                1000000.0,
+                sourceId = 3,
+                destinationId = 0,
+                categoryId = 0,
                 date = startOfMonth,
                 aNombreDe = null,
                 description = ""
