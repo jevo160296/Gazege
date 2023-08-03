@@ -117,8 +117,8 @@ fun CategoryListView(
             showExpandIcon = node.children.isNotEmpty(),
             isExpanded = scope.isExpanded(node),
             onIsExpandedChanged = { scope.toggleExpanded(node) },
-            onItemTapped = { onItemClick(node.content.category) },
-            onItemLongPressed = { onItemLongClick(node.content.category) },
+            onItemTapped = { onItemClick(node.content.category.category) },
+            onItemLongPressed = { onItemLongClick(node.content.category.category) },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
             val category = node.content.category
@@ -145,8 +145,8 @@ fun CategoryListView(
                 )
             } else {
                 EmptyCategoryAndBudgetViewHolder(
-                    node.content.category,
-                    onSetBudgetRequested = { onSetBudgetRequested(category) })
+                    node.content.category.category,
+                    onSetBudgetRequested = { onSetBudgetRequested(category.category) })
             }
         }
     }

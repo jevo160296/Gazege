@@ -346,20 +346,54 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             }
         }
 
+    private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
+        budgetAndCategoryWithTransactions.combine(range) { budgetAndCategoryWithTransactions, range ->
+            val categoryWithTransactions = budgetAndCategoryWithTransactions.map {
+                CategoryWithTransactions(
+                    it.category,
+                    it.inTransactions,
+                    it.outTransactions,
+                    it.person
+                )
+            }
+            val startDate = range.first
+            val endDate = range.second
+            if (startDate != null && endDate != null) {
+                CategoryWithCalculatedData.from(
+                    categoryWithTransactions = categoryWithTransactions,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+            } else {
+                emptyList()
+            }
+        }
+
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
         budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
         }
 
     private val editarCategoriasState: LiveData<EditarCategoriasState> =
-        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
-            LoadedEditarCategoriasState.from(
-                CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                    budgetWithCalculatedDataAndCategory,
-                    categoriesWithSubCategories
+        budgetWithCalculatedDataAndCategory
+            .combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
+                object {
+                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                    val categoriesWithSubCategories = categoriesWithSubCategories
+                }
+            }
+            .combine(categoryWithCalculatedData)
+            { combined, categoryWithCalculatedData ->
+                val categoryWithCalculatedDataMap =
+                    categoryWithCalculatedData.associateBy { it.category.id ?: 0 }
+                LoadedEditarCategoriasState.from(
+                    CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                        combined.budgetWithCalculatedDataAndCategory,
+                        combined.categoriesWithSubCategories,
+                        categoryWithCalculatedDataMap
+                    )
                 )
-            )
-        }
+            }
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 

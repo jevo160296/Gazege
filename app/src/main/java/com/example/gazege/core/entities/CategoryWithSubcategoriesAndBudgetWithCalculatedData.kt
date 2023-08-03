@@ -2,7 +2,7 @@ package com.example.gazege.core.entities
 
 
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
-    val category: Category,
+    val category: CategoryWithCalculatedData,
     val budget: BudgetWithCalculatedData?,
     val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
 ) {
@@ -31,20 +31,28 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
     companion object {
         fun from(
             budgetWithCalculatedDataAndCategory: List<BudgetWithCalculatedDataAndCategory>,
-            categoriesWithSubcategories: List<CategoryWithSubCategories>
+            categoriesWithSubcategories: List<CategoryWithSubCategories>,
+            categoriesWithCalculatedData: Map<Int, CategoryWithCalculatedData>
         ): List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
             budgetWithCalculatedDataAndCategory
                 .associateBy { it.budget.categoryId }
                 .let { mappedBudget ->
-                    categoriesWithSubcategories.map {
-                        CategoryWithSubcategoriesAndBudgetWithCalculatedData(
-                            category = it.category,
-                            budget = mappedBudget[it.category.id]?.toBudgetWithCalculatedData(),
-                            subCategories = from(
-                                budgetWithCalculatedDataAndCategory,
-                                it.subCategories
+                    categoriesWithSubcategories.mapNotNull {
+                        val categoryWithCalculatedData =
+                            categoriesWithCalculatedData[it.category.id]
+                        if (categoryWithCalculatedData != null) {
+                            CategoryWithSubcategoriesAndBudgetWithCalculatedData(
+                                category = categoryWithCalculatedData,
+                                budget = mappedBudget[it.category.id]?.toBudgetWithCalculatedData(),
+                                subCategories = from(
+                                    budgetWithCalculatedDataAndCategory,
+                                    it.subCategories,
+                                    categoriesWithCalculatedData
+                                )
                             )
-                        )
+                        } else {
+                            null
+                        }
                     }
                 }
     }
