@@ -130,6 +130,16 @@ fun CategoryListView(
             } else {
                 node.content.childrenAggregatedBudget
             }
+            val realFlow = categoryWithCalculatedData.realTotalFlow + if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenRealTotalFlow
+            }
+            val completion = if (isExpanded) {
+                categoryWithCalculatedData.completion
+            } else {
+                categoryWithCalculatedData.completionWithChildren
+            }
 
             if (aggregatedBudget != null || childrenBudget != null) {
                 val budget = (aggregatedBudget
@@ -141,8 +151,8 @@ fun CategoryListView(
                     leftToPay = budget.leftToPay,
                     expectedFlowUntilNow = budget.expectedFlowUntilNow,
                     expectedTotalFlow = budget.expectedTotalFlow,
-                    realTotalFlow = category.realTotalFlow,
-                    completion = categoryWithCalculatedData.completion
+                    realTotalFlow = realFlow,
+                    completion = completion
                 )
             } else {
                 EmptyCategoryAndBudgetViewHolder(
