@@ -324,6 +324,26 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 }
             }
 
+    private val categoryWithTransactions: LiveData<List<CategoryWithTransactions>> =
+        categories
+            .combine(principalPerson) { categories, principalPerson ->
+                object {
+                    val categories = categories
+                    val principalPerson = principalPerson
+                }
+            }
+            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+                if (combined.principalPerson != null) {
+                    CategoryWithTransactions.from(
+                        category = combined.categories,
+                        person = combined.principalPerson,
+                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+
     private val initialRange = LocalDate.now().withDayOfMonth(1).let {
         Pair(it, it.plusMonths(1L).minusDays(1L))
     }
@@ -347,15 +367,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
 
     private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
-        budgetAndCategoryWithTransactions.combine(range) { budgetAndCategoryWithTransactions, range ->
-            val categoryWithTransactions = budgetAndCategoryWithTransactions.map {
-                CategoryWithTransactions(
-                    it.category,
-                    it.inTransactions,
-                    it.outTransactions,
-                    it.person
-                )
-            }
+        categoryWithTransactions.combine(range) { categoryWithTransactions, range ->
             val startDate = range.first
             val endDate = range.second
             if (startDate != null && endDate != null) {
