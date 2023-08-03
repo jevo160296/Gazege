@@ -7,35 +7,22 @@ data class BudgetWithCalculatedData(
     val budget: Budget,
     val expectedTotalFlow: Double,
     val expectedRemainingFlow: Double,
-    val realTotalFlow: Double,
     val expectedFlowUntilNow: Double,
-    val compleition: Double,
     val leftToPay: Double
 ) {
     open class AggregatedBudgetWithCalculatedData(
         val expectedTotalFlow: Double,
         val expectedRemainingFlow: Double,
-        val realTotalFlow: Double,
         val expectedFlowUntilNow: Double,
-        val compleition: Double,
         val leftToPay: Double
     ) {
         operator fun plus(other: AggregatedBudgetWithCalculatedData) =
-            (realTotalFlow + other.realTotalFlow).let { realTotalFlow ->
-                (expectedTotalFlow + other.expectedTotalFlow).let { expectedTotalFlow ->
-                    AggregatedBudgetWithCalculatedData(
-                        expectedTotalFlow = expectedTotalFlow,
-                        expectedRemainingFlow = expectedRemainingFlow + other.expectedRemainingFlow,
-                        realTotalFlow = realTotalFlow,
-                        expectedFlowUntilNow = expectedFlowUntilNow + other.expectedFlowUntilNow,
-                        leftToPay = leftToPay + other.leftToPay,
-                        compleition = BudgetDao.calculateBudgetCompleition(
-                            realTotalFlow = realTotalFlow,
-                            expectedTotalFlow = expectedTotalFlow
-                        )
-                    )
-                }
-            }
+            AggregatedBudgetWithCalculatedData(
+                expectedTotalFlow = (expectedTotalFlow + other.expectedTotalFlow),
+                expectedRemainingFlow = expectedRemainingFlow + other.expectedRemainingFlow,
+                expectedFlowUntilNow = expectedFlowUntilNow + other.expectedFlowUntilNow,
+                leftToPay = leftToPay + other.leftToPay
+            )
 
         operator fun plus(other: BudgetWithCalculatedData) = this + from(other)
 
@@ -45,9 +32,7 @@ data class BudgetWithCalculatedData(
                     AggregatedBudgetWithCalculatedData(
                         expectedTotalFlow,
                         expectedRemainingFlow,
-                        realTotalFlow,
                         expectedFlowUntilNow,
-                        compleition,
                         leftToPay
                     )
                 }
@@ -57,9 +42,7 @@ data class BudgetWithCalculatedData(
     class ZeroAggregatedBudgetWithCalculatedData : AggregatedBudgetWithCalculatedData(
         expectedTotalFlow = 0.0,
         expectedRemainingFlow = 0.0,
-        realTotalFlow = 0.0,
         expectedFlowUntilNow = 0.0,
-        compleition = Double.NaN,
         leftToPay = 0.0
     )
 
@@ -102,13 +85,6 @@ data class BudgetWithCalculatedData(
                         endDate
                     ),
                     expectedRemainingFlow = expectedRemainingFlow,
-                    realTotalFlow = realTotalFlow,
-                    compleition = BudgetDao.calculateOneBudgetCompleition(
-                        it,
-                        coercedCurrentDate,
-                        startDate,
-                        endDate
-                    ),
                     expectedFlowUntilNow = expectedFlowUntilNow,
                     leftToPay = BudgetDao.calculateLeftToPay(
                         it.budget,

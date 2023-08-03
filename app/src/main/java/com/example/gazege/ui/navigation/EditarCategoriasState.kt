@@ -75,8 +75,7 @@ data class LoadedEditarCategoriasState(
 
             val realIncomeOutcome = categoriesWithCalculatedData
                 .map { actual ->
-                    (actual.aggregatedBudget?.realTotalFlow ?: 0.0) +
-                            (actual.childrenAggregatedBudget?.realTotalFlow ?: 0.0)
+                    (actual.realTotalFlow)
                 }
                 .fold(Pair(0.0, 0.0)) { accum, current ->
                     when (current > 0) {

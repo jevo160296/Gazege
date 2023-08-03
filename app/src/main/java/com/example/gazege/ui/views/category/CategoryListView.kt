@@ -117,10 +117,11 @@ fun CategoryListView(
             showExpandIcon = node.children.isNotEmpty(),
             isExpanded = scope.isExpanded(node),
             onIsExpandedChanged = { scope.toggleExpanded(node) },
-            onItemTapped = { onItemClick(node.content.category) },
-            onItemLongPressed = { onItemLongClick(node.content.category) },
+            onItemTapped = { onItemClick(node.content.category.category) },
+            onItemLongPressed = { onItemLongClick(node.content.category.category) },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
+            val categoryWithCalculatedData = node.content
             val category = node.content.category
             val aggregatedBudget = node.content.aggregatedBudget
             val isExpanded = scope.isExpanded(node)
@@ -140,13 +141,13 @@ fun CategoryListView(
                     leftToPay = budget.leftToPay,
                     expectedFlowUntilNow = budget.expectedFlowUntilNow,
                     expectedTotalFlow = budget.expectedTotalFlow,
-                    realTotalFlow = budget.realTotalFlow,
-                    completion = budget.compleition
+                    realTotalFlow = category.realTotalFlow,
+                    completion = categoryWithCalculatedData.completion
                 )
             } else {
                 EmptyCategoryAndBudgetViewHolder(
-                    node.content.category,
-                    onSetBudgetRequested = { onSetBudgetRequested(category) })
+                    node.content.category.category,
+                    onSetBudgetRequested = { onSetBudgetRequested(category.category) })
             }
         }
     }
