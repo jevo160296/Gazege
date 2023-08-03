@@ -17,14 +17,12 @@ data class BudgetWithCalculatedData(
         val leftToPay: Double
     ) {
         operator fun plus(other: AggregatedBudgetWithCalculatedData) =
-            (expectedTotalFlow + other.expectedTotalFlow).let { expectedTotalFlow ->
-                AggregatedBudgetWithCalculatedData(
-                    expectedTotalFlow = expectedTotalFlow,
-                    expectedRemainingFlow = expectedRemainingFlow + other.expectedRemainingFlow,
-                    expectedFlowUntilNow = expectedFlowUntilNow + other.expectedFlowUntilNow,
-                    leftToPay = leftToPay + other.leftToPay
-                )
-            }
+            AggregatedBudgetWithCalculatedData(
+                expectedTotalFlow = (expectedTotalFlow + other.expectedTotalFlow),
+                expectedRemainingFlow = expectedRemainingFlow + other.expectedRemainingFlow,
+                expectedFlowUntilNow = expectedFlowUntilNow + other.expectedFlowUntilNow,
+                leftToPay = leftToPay + other.leftToPay
+            )
 
         operator fun plus(other: BudgetWithCalculatedData) = this + from(other)
 
