@@ -6,8 +6,7 @@ import com.example.gazege.core.dao.CategoryDao
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
     val category: CategoryWithCalculatedData,
     val budget: List<BudgetWithCalculatedData>,
-    val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
-    val completion: Double
+    val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
 ) {
     val aggregatedBudget
         get(): BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData? =
@@ -38,6 +37,24 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
 
     val realTotalFlow get() = category.realTotalFlow
 
+    val childrenRealTotalFlow: Double
+        get() = subCategories
+            .sumOf {
+                it.realTotalFlow + it.childrenRealTotalFlow
+            }
+
+    val completion = CategoryDao.calculateCategoryCompleition(
+        realTotalFlow = realTotalFlow,
+        expectedTotalFlow = aggregatedBudget?.expectedTotalFlow
+            ?: 0.0
+    )
+
+    val completionWithChildren = CategoryDao.calculateCategoryCompleition(
+        realTotalFlow = realTotalFlow + childrenRealTotalFlow,
+        expectedTotalFlow = (aggregatedBudget?.expectedTotalFlow ?: 0.0) +
+                (childrenAggregatedBudget?.expectedTotalFlow ?: 0.0)
+    )
+
     companion object {
         fun from(
             budgetWithCalculatedDataAndCategory: List<BudgetWithCalculatedDataAndCategory>,
@@ -49,32 +66,20 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                 .let { mappedBudget ->
                     categoriesWithSubcategories.mapNotNull {
                         val budgetList = mappedBudget[it.category.id]
-                        val aggregatedBudget = budgetList
-                            ?.map { budget ->
-                                BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData.from(
-                                    budget.toBudgetWithCalculatedData()
-                                )
-                            }
-                            ?.sumOrNull()
                         val categoryWithCalculatedData =
                             categoriesWithCalculatedData[it.category.id]
                         if (categoryWithCalculatedData != null) {
-                            val completion = CategoryDao.calculateCategoryCompleition(
-                                realTotalFlow = categoryWithCalculatedData.realTotalFlow,
-                                expectedTotalFlow = aggregatedBudget?.expectedTotalFlow
-                                    ?: 0.0
+                            val subCategories = from(
+                                budgetWithCalculatedDataAndCategory,
+                                it.subCategories,
+                                categoriesWithCalculatedData
                             )
                             CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                                 category = categoryWithCalculatedData,
                                 budget = budgetList
                                     ?.map { budget -> budget.toBudgetWithCalculatedData() }
                                     ?: emptyList(),
-                                subCategories = from(
-                                    budgetWithCalculatedDataAndCategory,
-                                    it.subCategories,
-                                    categoriesWithCalculatedData
-                                ),
-                                completion = completion
+                                subCategories = subCategories
                             )
                         } else {
                             null
