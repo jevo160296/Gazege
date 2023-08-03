@@ -1,10 +1,13 @@
 package com.example.gazege.core.entities
 
+import com.example.gazege.core.dao.CategoryDao
+
 
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
     val category: CategoryWithCalculatedData,
     val budget: BudgetWithCalculatedData?,
-    val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
+    val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    val completion: Double
 ) {
     val aggregatedBudget
         get(): BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData? =
@@ -28,6 +31,8 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                 }
                 ?.sumOrNull()
 
+    val realTotalFlow get() = category.realTotalFlow
+
     companion object {
         fun from(
             budgetWithCalculatedDataAndCategory: List<BudgetWithCalculatedDataAndCategory>,
@@ -41,6 +46,11 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                         val categoryWithCalculatedData =
                             categoriesWithCalculatedData[it.category.id]
                         if (categoryWithCalculatedData != null) {
+                            val completion = CategoryDao.calculateCategoryCompleition(
+                                realTotalFlow = categoryWithCalculatedData.realTotalFlow,
+                                expectedTotalFlow = mappedBudget[it.category.id]?.budgetExpectedTotalFlow
+                                    ?: 0.0
+                            )
                             CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                                 category = categoryWithCalculatedData,
                                 budget = mappedBudget[it.category.id]?.toBudgetWithCalculatedData(),
@@ -48,7 +58,8 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                                     budgetWithCalculatedDataAndCategory,
                                     it.subCategories,
                                     categoriesWithCalculatedData
-                                )
+                                ),
+                                completion = completion
                             )
                         } else {
                             null

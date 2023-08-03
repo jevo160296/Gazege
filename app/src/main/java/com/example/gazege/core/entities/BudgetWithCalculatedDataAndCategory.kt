@@ -5,18 +5,14 @@ data class BudgetWithCalculatedDataAndCategory(
     val category: Category,
     val budgetExpectedTotalFlow: Double,
     val budgetExpectedRemainingFlow: Double,
-    val budgetRealTotalFlow: Double,
     val budgetExpectedFlowUntilNow: Double,
-    val budgetCompleition: Double,
     val budgetLeftToPay: Double
 ) {
     fun toBudgetWithCalculatedData(): BudgetWithCalculatedData = BudgetWithCalculatedData(
         budget = this.budget,
         expectedTotalFlow = budgetExpectedTotalFlow,
         expectedRemainingFlow = budgetExpectedRemainingFlow,
-        realTotalFlow = budgetRealTotalFlow,
         expectedFlowUntilNow = budgetExpectedFlowUntilNow,
-        compleition = budgetCompleition,
         leftToPay = budgetLeftToPay
     )
 
@@ -43,8 +39,6 @@ data class BudgetWithCalculatedDataAndCategory(
                                     category = notNullCategory,
                                     budgetExpectedTotalFlow = it.expectedTotalFlow,
                                     budgetExpectedRemainingFlow = it.expectedRemainingFlow,
-                                    budgetRealTotalFlow = it.realTotalFlow,
-                                    budgetCompleition = it.compleition,
                                     budgetExpectedFlowUntilNow = it.expectedFlowUntilNow,
                                     budgetLeftToPay = it.leftToPay
                                 )

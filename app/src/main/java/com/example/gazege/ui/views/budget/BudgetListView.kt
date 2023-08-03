@@ -34,7 +34,6 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.GazegeProgressIndicator
 
 @Composable
 private fun BudgetViewHolder(
@@ -45,19 +44,13 @@ private fun BudgetViewHolder(
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
     val leftToPayString = stringResource(id = R.string.Falta_pagar_recibir)
     val expectedFlowUntilNowString = stringResource(id = R.string.Flujo_estimado_hasta_hoy)
-    val realTotalFlowString = stringResource(id = R.string.Flujo_real)
     val expectedTotalFlowString = stringResource(id = R.string.Flujo_total)
     val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_hoy)
     val descripcionText = stringResource(id = R.string.descripcion)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
-            GazegeProgressIndicator(
-                budget.budgetCompleition,
-                stringResource(id = R.string.Progreso)
-            )
             Text(text = "$leftToPayString ${doubleToMoneyString(budget.budgetLeftToPay)}")
             Text(text = "$expectedFlowUntilNowString ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
-            Text(text = "$realTotalFlowString ${doubleToMoneyString(budget.budgetRealTotalFlow)}")
             Text(text = "$expectedTotalFlowString ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
             Text(text = "$expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")
             Text(

@@ -121,6 +121,7 @@ fun CategoryListView(
             onItemLongPressed = { onItemLongClick(node.content.category.category) },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
+            val categoryWithCalculatedData = node.content
             val category = node.content.category
             val aggregatedBudget = node.content.aggregatedBudget
             val isExpanded = scope.isExpanded(node)
@@ -140,8 +141,8 @@ fun CategoryListView(
                     leftToPay = budget.leftToPay,
                     expectedFlowUntilNow = budget.expectedFlowUntilNow,
                     expectedTotalFlow = budget.expectedTotalFlow,
-                    realTotalFlow = budget.realTotalFlow,
-                    completion = budget.compleition
+                    realTotalFlow = category.realTotalFlow,
+                    completion = categoryWithCalculatedData.completion
                 )
             } else {
                 EmptyCategoryAndBudgetViewHolder(

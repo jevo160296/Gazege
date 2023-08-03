@@ -42,5 +42,15 @@ interface CategoryDao {
                         .filter { trx -> dateBetween(trx.date, startDate, endDate) }
                         .sumOf { trx -> trx.amount }
         }
+
+        fun calculateCategoryCompleition(
+            realTotalFlow: Double,
+            expectedTotalFlow: Double
+        ) =
+            realTotalFlow
+                .div(expectedTotalFlow)
+                .takeIf { !it.isNaN() }
+                .let { it ?: 0.0 }
+                .coerceIn(0.0..1.0)
     }
 }

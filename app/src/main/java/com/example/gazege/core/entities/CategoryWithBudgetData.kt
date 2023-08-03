@@ -4,8 +4,6 @@ data class CategoryWithBudgetData(
     val category: Category,
     val budgetExpectedFlowUntilNow: Double,
     val budgetExpectedTotalFlow: Double,
-    val budgetRealTotalFlow: Double,
-    val completion: Double
 ) {
     companion object {
         fun from(categories: List<Category>, budget: List<BudgetWithCalculatedData>):
@@ -19,9 +17,7 @@ data class CategoryWithBudgetData(
                     CategoryWithBudgetData(
                         category = category,
                         budgetExpectedFlowUntilNow = aggregatedBudgets.expectedFlowUntilNow,
-                        budgetExpectedTotalFlow = aggregatedBudgets.expectedTotalFlow,
-                        budgetRealTotalFlow = aggregatedBudgets.realTotalFlow,
-                        completion = aggregatedBudgets.compleition
+                        budgetExpectedTotalFlow = aggregatedBudgets.expectedTotalFlow
                     )
                 }
             }
