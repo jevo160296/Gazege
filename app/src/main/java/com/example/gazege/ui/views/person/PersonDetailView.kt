@@ -22,7 +22,7 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
-import com.example.gazege.ui.views.transaction.TransactionPage
+import com.example.gazege.ui.views.transaction.LoadedTransactionPage
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.SmallBody
 import kotlinx.coroutines.launch
@@ -91,7 +91,7 @@ fun PersonDetail(
             )
             Text(text = stringResource(id = R.string.justPendingTransactions))
         }
-        TransactionPage(
+        LoadedTransactionPage(
             transactionList = transactionListItemDetails ?: emptyList(),
             delTransaction = {
                 modalController = BottomSheetController(

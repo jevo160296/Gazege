@@ -4,6 +4,29 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
+    id 'com.google.devtools.ksp'
+}
+
+class RoomSchemaArgProvider implements CommandLineArgumentProvider {
+
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    File schemaDir
+
+    RoomSchemaArgProvider(File schemaDir) {
+        this.schemaDir = schemaDir
+    }
+
+    @Override
+    Iterable<String> asArguments() {
+        // Note: If you're using KSP, change the line below to return
+        // ["room.schemaLocation=${schemaDir.path}".toString()].
+        return ["room.schemaLocation=${schemaDir.path}".toString()]
+    }
+}
+
+ksp {
+    arg(new RoomSchemaArgProvider(new File(projectDir, "schemas")))
 }
 
 android {
@@ -14,15 +37,8 @@ android {
         applicationId "com.example.gazege"
         minSdk 29
         targetSdk 33
-        versionCode 57
-        versionName '1.7.7'
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += ["room.schemaLocation":
-                                      "$projectDir/schemas".toString()]
-            }
-        }
+        versionCode 58
+        versionName '1.8.0'
 
         sourceSets {
             androidTest.assets.srcDirs +=
@@ -57,11 +73,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
         freeCompilerArgs = ["-opt-in=kotlin.RequiresOptIn", '-Xjvm-default=compatibility']
     }
     buildFeatures {
@@ -96,7 +112,7 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
 
-    implementation "androidx.activity:activity-compose:1.7.1"
+    implementation 'androidx.activity:activity-compose:1.7.2'
     implementation "androidx.compose.material:material:$material_version"
     implementation "androidx.compose.material3:material3:$material3_version"
     implementation "androidx.compose.runtime:runtime-livedata:$compose_runtime_version"
@@ -113,9 +129,9 @@ dependencies {
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.datastore:datastore-preferences:1.0.0"
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
-    implementation "com.patrykandpatrick.vico:compose-m3:1.6.4"
+    implementation 'com.patrykandpatrick.vico:compose-m3:1.8.1'
 
-    kapt "androidx.room:room-compiler:$room_version"
+    ksp "androidx.room:room-compiler:$room_version"
 
     testImplementation "junit:junit:4.13.2"
 }

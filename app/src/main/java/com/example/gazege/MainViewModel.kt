@@ -6,11 +6,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
-import com.example.gazege.core.dao.PersonDao
 import com.example.gazege.core.entities.*
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.example.gazege.ui.navigation.LoadedPersonSummaryState
+import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
+import com.example.gazege.ui.navigation.LoadingTransactionsDetailsState
+import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
@@ -55,7 +58,8 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         incluirDeudasEnSaldoActual.observeAsState(false)
 
     @Composable
-    fun rememberPersonSummaryState() = personSummaryState.observeAsState(null)
+    fun rememberPersonSummaryState() =
+        personSummaryState.observeAsState(loadingPersonSummaryState())
 
     @Composable
     fun rememberCategories() = categories.observeAsState(emptyList())
@@ -132,7 +136,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
-        filteredTransactionListitemDetails.observeAsState(emptyList())
+        filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
 
     @Composable
     fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
@@ -531,7 +535,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
-    private val filteredTransactionListitemDetails: LiveData<List<TransactionListItemDetails>> =
+    private val filteredTransactionListitemDetails: LiveData<LoadedTransactionDetailsState> =
         rangeTransactions
             .combine(categories) { rangeTransactions, categories ->
                 object {
@@ -567,7 +571,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 filteredTransactions.applyOutcomeFilter(outcomeFilterValue)
             }
             .combine(transferFilterValue) { filteredTransactions, transferFilterValue ->
-                filteredTransactions.applyTransferFilter(transferFilterValue)
+                LoadedTransactionDetailsState(
+                    filteredTransactions.applyTransferFilter(
+                        transferFilterValue
+                    )
+                )
             }
 
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
@@ -588,7 +596,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 }
             }
 
-    private val personSummaryState: LiveData<PersonSummaryState?> =
+    private val personSummaryState: LiveData<LoadedPersonSummaryState> =
         principalPersonWithAccounts
             .combine(range) { principalPersonWithAccounts, range ->
                 object {
@@ -635,25 +643,23 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             }
             .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
                 combined.run {
-                    principalPersonWithAccounts?.let { pp ->
-                        PersonSummaryState.from(
-                            pp,
-                            range?.first,
-                            range?.second,
-                            allPersons = personWithAccounts,
-                            allTransactions = allTransactionAndAccountsAndCategory
-                                .map {
-                                    TransactionAndAccounts(
-                                        it.transaction,
-                                        it.sourceAccount,
-                                        it.destinationAccount
-                                    )
-                                },
-                            budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
-                            includeBudget = incluirPresupuestoEnSaldoActual,
-                            includeDebts = incluirDeudasEnSaldoActual
-                        )
-                    }
+                    LoadedPersonSummaryState.from(
+                        principalPersonWithAccounts,
+                        range?.first,
+                        range?.second,
+                        allPersons = personWithAccounts,
+                        allTransactions = allTransactionAndAccountsAndCategory
+                            .map {
+                                TransactionAndAccounts(
+                                    it.transaction,
+                                    it.sourceAccount,
+                                    it.destinationAccount
+                                )
+                            },
+                        budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
+                        includeBudget = incluirPresupuestoEnSaldoActual,
+                        includeDebts = incluirDeudasEnSaldoActual
+                    )
                 }
             }
 
@@ -892,67 +898,6 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             filter {
                 it.transactionType != TransactionType.TRANSFER || transferFilterValue
             }
-        }
-    }
-}
-
-data class PersonSummaryState(
-    val person: Person,
-    val saldoActual: Double,
-    val ingresos: Double,
-    val egresos: Double,
-    val deudasFlujo: Map<Person, Double>,
-    val deudasTotal: Double,
-    val presupuestoTotal: Double
-) {
-    val flujo: Double get() = ingresos - egresos
-
-    companion object {
-        fun from(
-            personWithAccounts: PersonWithAccounts,
-            startDate: LocalDate?,
-            endDate: LocalDate?,
-            allPersons: List<PersonWithAccounts>,
-            allTransactions: List<TransactionAndAccounts>,
-            budgetWithCalculatedDatumAndCategories: List<BudgetWithCalculatedDataAndCategory>,
-            includeBudget: Boolean,
-            includeDebts: Boolean
-        ): PersonSummaryState {
-            val deudasFlujo = allPersons.associate { otherPerson ->
-                otherPerson.person to PersonDao.getFlujo(
-                    personWithAccounts,
-                    otherPerson,
-                    allTransactions
-                )
-            }
-            val deudasTotal = deudasFlujo.toList().sumOf { it.second }
-            val presupuestoTotal =
-                budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPay }
-            return PersonSummaryState(
-                person = personWithAccounts.person,
-                saldoActual = personWithAccounts.let {
-                    PersonDao.getTotal(
-                        it,
-                        null,
-                        null
-                    )
-                }
-                        + if (includeBudget) {
-                    presupuestoTotal
-                } else {
-                    0.0
-                }
-                        + if (includeDebts) {
-                    deudasTotal
-                } else {
-                    0.0
-                },
-                ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
-                egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
-                deudasFlujo = deudasFlujo,
-                deudasTotal = deudasTotal,
-                presupuestoTotal = presupuestoTotal
-            )
         }
     }
 }

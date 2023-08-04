@@ -1,7 +1,6 @@
 package com.example.gazege.ui
 
 import androidx.compose.runtime.Composable
-import com.example.gazege.PersonSummaryState
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
@@ -25,6 +24,7 @@ import com.example.gazege.core.entities.TransactionAndAccounts
 import com.example.gazege.core.entities.TransactionAndAccountsAndCategory
 import com.example.gazege.core.entities.TransactionListItemDetails
 import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.ui.navigation.FullPersonSummaryState
 import java.time.LocalDate
 import kotlin.random.Random
 
@@ -126,8 +126,8 @@ class DatabaseSampleScope(
     val transactionAndAccountsSample: List<TransactionAndAccounts> by lazy {
         TransactionAndAccounts.from(transactionSample, accountSample)
     }
-    val personSummaryStateSample: PersonSummaryState by lazy {
-        PersonSummaryState.from(
+    val personSummaryStateSample: FullPersonSummaryState by lazy {
+        FullPersonSummaryState.from(
             personWithAccountsSample.first(),
             startDateSample,
             endDateSample,

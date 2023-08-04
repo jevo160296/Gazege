@@ -12,21 +12,54 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.navigation.FullPersonSummaryState
+import com.example.gazege.ui.navigation.LoadingPersonSummaryState
+import com.example.gazege.ui.navigation.PersonSummaryState
 import com.example.gazege.ui.views.account.AccountSelectionPage
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaldoActualSettings(
     accountList: List<AccountAndOwnerWithTransactions>,
-    summaryState: PersonSummaryState?,
+    summaryState: PersonSummaryState,
+    saving: Int,
+    incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
+    onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
+    onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
+) {
+    when (summaryState) {
+        is FullPersonSummaryState -> {
+            LoadedSaldoActualSettings(
+                accountList = accountList,
+                summaryState = summaryState,
+                saving = saving,
+                incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+                incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
+                onIncluirPresupuestoEnSaldoActualChanged = onIncluirPresupuestoEnSaldoActualChanged,
+                onIncluirDeudasEnSaldoActualChanged = onIncluirDeudasEnSaldoActualChanged,
+                onUpdateSeleccion = onUpdateSeleccion
+            )
+        }
+
+        is LoadingPersonSummaryState -> {
+            EmptySaldoActualSettings()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoadedSaldoActualSettings(
+    accountList: List<AccountAndOwnerWithTransactions>,
+    summaryState: FullPersonSummaryState,
     saving: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
     incluirDeudasEnSaldoActual: Boolean,
@@ -70,7 +103,7 @@ fun SaldoActualSettings(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = stringResource(id = R.string.Incluir_presupuesto))
-                    Text(text = doubleToMoneyString(summaryState?.presupuestoTotal ?: 0.0))
+                    Text(text = doubleToMoneyString(summaryState.presupuestoTotal))
                 }
             }
             Row(
@@ -86,7 +119,7 @@ fun SaldoActualSettings(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = stringResource(R.string.Incluir_deudas))
-                    Text(text = doubleToMoneyString(summaryState?.deudasTotal ?: 0.0))
+                    Text(text = doubleToMoneyString(summaryState.deudasTotal))
                 }
             }
         }
@@ -102,4 +135,10 @@ fun SaldoActualSettings(
             endDate = null,
         )
     }
+}
+
+@Composable
+fun EmptySaldoActualSettings() {
+    // TODO Develop UI for loading saldo actual
+    Text(text = "Loading")
 }
