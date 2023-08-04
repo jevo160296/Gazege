@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,12 +38,13 @@ import com.example.gazege.ui.templates.GroupedLazyList
 import com.example.gazege.ui.templates.itemsGrouped
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.DefaultGroupViewHolder
+import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.SmallEmphasis
 
 @Composable
-fun TransactionPage(
+fun LoadedTransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     transactionList: List<TransactionListItemDetails>,
@@ -63,6 +66,23 @@ fun TransactionPage(
             contentPadding = itemHolderPaddingValues,
             state = state
         )
+    }
+}
+
+@Composable
+fun LoadingTransactionPage(
+    modifier: Modifier = Modifier,
+    onTitleSetted: (String) -> Unit
+) {
+    onTitleSetted(stringResource(id = R.string.transacciones))
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        GazegeIndefiniteCircularProgressIndicator()
+        Text(stringResource(id = R.string.Cargando))
     }
 }
 
@@ -235,7 +255,7 @@ private fun PreviewTransactionList() {
 private fun PreviewTransactionPage() {
     DatabaseSample {
         GazegeTheme(darkTheme = true) {
-            TransactionPage(
+            LoadedTransactionPage(
                 transactionList = transactionListItemDetailsSample,
                 state = LazyListState(),
                 editTransaction = {},

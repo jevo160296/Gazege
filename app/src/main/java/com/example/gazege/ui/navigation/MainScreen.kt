@@ -58,7 +58,7 @@ fun NavGraphBuilder.screenMain(
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackbarHostState = SnackbarHostState()
 
-        val dataLoaded = filteredTransactionListItemDetails.isNotEmpty()
+        val dataLoaded = filteredTransactionListItemDetails is LoadedTransactionDetailsState
 
         LaunchedEffect(key1 = dataLoaded) {
             if (dataLoaded) {

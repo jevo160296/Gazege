@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +37,7 @@ import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SelectableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SimpleTreeList
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import com.example.gazege.ui.widgets.treeview.Node
@@ -269,8 +272,15 @@ fun LoadedAccountPage(
 
 @Composable
 fun LoadingAccountPage() {
-    // Develop interface
-    Text("Loading...")
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        GazegeIndefiniteCircularProgressIndicator()
+        Text(stringResource(id = R.string.LoadingPersonSummaryView))
+    }
 }
 
 @Composable

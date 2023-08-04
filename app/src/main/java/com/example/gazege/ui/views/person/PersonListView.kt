@@ -150,8 +150,10 @@ fun LoadedPersonPage(
 @Composable
 fun NoPrincipalPersonPersonPage(
     onConfigurePrincipalPersonRequested: () -> Unit,
+    onTitleSetted: (String) -> Unit
 ) {
     val padding = Modifier.padding(horizontal = 8.dp)
+    onTitleSetted(stringResource(id = R.string.personas))
     Column {
         LargeBody(
             text = stringResource(id = R.string.persona_principal_vacia),

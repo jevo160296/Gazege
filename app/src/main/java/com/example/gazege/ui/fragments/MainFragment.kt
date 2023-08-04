@@ -24,8 +24,11 @@ import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.navigation.EmptyPersonSummaryState
 import com.example.gazege.ui.navigation.FullPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
+import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingPersonSummaryState
 import com.example.gazege.ui.navigation.PersonSummaryState
+import com.example.gazege.ui.navigation.TransactionDetailsState
+import com.example.gazege.ui.navigation.loadingTransactionDetailsState
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.AppMode
@@ -36,7 +39,8 @@ import com.example.gazege.ui.views.account.LoadedAccountPage
 import com.example.gazege.ui.views.account.LoadingAccountPage
 import com.example.gazege.ui.views.person.LoadedPersonPage
 import com.example.gazege.ui.views.person.NoPrincipalPersonPersonPage
-import com.example.gazege.ui.views.transaction.TransactionPage
+import com.example.gazege.ui.views.transaction.LoadedTransactionPage
+import com.example.gazege.ui.views.transaction.LoadingTransactionPage
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.treeview.TreeState
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
@@ -49,7 +53,7 @@ import java.time.LocalDate
 fun MainFragment(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: List<TransactionListItemDetails>,
+    filteredTransactionList: TransactionDetailsState,
     principalPersonSummaryState: PersonSummaryState,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
@@ -305,7 +309,7 @@ private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: List<TransactionListItemDetails>,
+    filteredTransactionList: TransactionDetailsState,
     principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
@@ -393,18 +397,29 @@ private fun MainFragmentResponsiveContent(
     val transactionPage = @Composable {
         val template = transactionDeleitionConfirmationBuilder()
         Column {
-            TransactionPage(
-                transactionList = filteredTransactionList,
-                itemHolderPaddingValues = paddingValues,
-                state = transactionState,
-                delTransaction = { transaction ->
-                    onActionChanged { delTransaction(transaction) }
-                    onModalSheetMsgChanged(template())
-                    scope.launch { sheetState.show() }
-                },
-                editTransaction = onEditTransactionRequested,
-                onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
-            )
+            Crossfade(targetState = filteredTransactionList, label = "CrosFade transactions") {
+                when (it) {
+                    is LoadedTransactionDetailsState -> {
+                        LoadedTransactionPage(
+                            transactionList = it.transactionList,
+                            itemHolderPaddingValues = paddingValues,
+                            state = transactionState,
+                            delTransaction = { transaction ->
+                                onActionChanged { delTransaction(transaction) }
+                                onModalSheetMsgChanged(template())
+                                scope.launch { sheetState.show() }
+                            },
+                            editTransaction = onEditTransactionRequested,
+                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
+                        )
+                    }
+
+                    loadingTransactionDetailsState() -> {
+                        LoadingTransactionPage(
+                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) })
+                    }
+                }
+            }
         }
     }
 
@@ -431,6 +446,7 @@ private fun MainFragmentResponsiveContent(
             }
 
             is LoadingPersonSummaryState -> {
+                onTitleChanged(stringResource(id = R.string.cuentas))
                 LoadingAccountPage()
             }
         }
@@ -469,10 +485,14 @@ private fun MainFragmentResponsiveContent(
                 }
 
                 EmptyPersonSummaryState -> {
-                    NoPrincipalPersonPersonPage(onSettingsClicked)
+                    NoPrincipalPersonPersonPage(
+                        onConfigurePrincipalPersonRequested = onSettingsClicked,
+                        onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
+                    )
                 }
 
                 is LoadingPersonSummaryState -> {
+                    onTitleChanged(stringResource(id = R.string.personas))
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -550,7 +570,9 @@ private fun DefaultPreview() {
             MainFragment(
                 allPerson = personSample,
                 accountList = accountAndOwnerWithTransactionsSample,
-                filteredTransactionList = transactionListItemDetailsSample,
+                filteredTransactionList = LoadedTransactionDetailsState(
+                    transactionListItemDetailsSample
+                ),
                 navPosition = navPosition,
                 range = Pair(LocalDate.now(), LocalDate.now()),
                 personFilterValue = false,

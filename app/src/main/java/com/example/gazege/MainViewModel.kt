@@ -11,6 +11,8 @@ import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
+import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
+import com.example.gazege.ui.navigation.LoadingTransactionsDetailsState
 import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
@@ -134,7 +136,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
 
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
-        filteredTransactionListitemDetails.observeAsState(emptyList())
+        filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
 
     @Composable
     fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
@@ -533,7 +535,7 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
-    private val filteredTransactionListitemDetails: LiveData<List<TransactionListItemDetails>> =
+    private val filteredTransactionListitemDetails: LiveData<LoadedTransactionDetailsState> =
         rangeTransactions
             .combine(categories) { rangeTransactions, categories ->
                 object {
@@ -569,7 +571,11 @@ class MainViewModel(private val repository: AppRepository, private val settings:
                 filteredTransactions.applyOutcomeFilter(outcomeFilterValue)
             }
             .combine(transferFilterValue) { filteredTransactions, transferFilterValue ->
-                filteredTransactions.applyTransferFilter(transferFilterValue)
+                LoadedTransactionDetailsState(
+                    filteredTransactions.applyTransferFilter(
+                        transferFilterValue
+                    )
+                )
             }
 
     private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =

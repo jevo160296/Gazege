@@ -5,6 +5,7 @@ import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.TransactionListItemDetails
 import java.time.LocalDate
 
 interface PersonSummaryState
@@ -128,3 +129,13 @@ data class FullPersonSummaryState(
 }
 
 fun loadingPersonSummaryState(): PersonSummaryState = LoadingPersonSummaryState
+
+interface TransactionDetailsState
+
+object LoadingTransactionsDetailsState : TransactionDetailsState
+
+data class LoadedTransactionDetailsState(
+    val transactionList: List<TransactionListItemDetails>
+) : TransactionDetailsState
+
+fun loadingTransactionDetailsState(): TransactionDetailsState = LoadingTransactionsDetailsState
