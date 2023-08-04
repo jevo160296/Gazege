@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -33,6 +35,7 @@ fun MainNavHost(
     onDataLoaded: () -> Unit
 ) {
     val current = navController.currentBackStackEntryAsState()
+    val backstackSize = navController.rememberBackQueueSize()
     val currentRoute = current.value?.destination?.route
     Box(modifier = Modifier
         .background(MaterialTheme.colorScheme.background)
@@ -96,7 +99,7 @@ fun MainNavHost(
             )
             screenAddTransaction(
                 viewModel = mainViewModel,
-                onNavigateUp = { navController.navigateUpOrClose { onCloseApp() } },
+                onNavigateUp = { navController.navigateUpOrClose(backstackSize) { onCloseApp() } },
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onDataLoaded = onDataLoaded
             )
@@ -181,11 +184,18 @@ fun MainNavHost(
     }
 }
 
+@Composable
+fun NavController.rememberBackQueueSize(): Int {
+    val currentBackStack by this.currentBackStack.collectAsState()
+    return currentBackStack.size
+}
+
 fun NavController.navigateUpOrClose(
+    backQueueSize: Int,
     onCloseApp: () -> Unit
 ) {
     navigateUp()
-    if (this.backQueue.size <= 1) {
+    if (backQueueSize <= 1) {
         onCloseApp()
     }
 }
