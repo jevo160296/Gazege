@@ -224,7 +224,7 @@ private fun AccountSelectableTreeView(
 }
 
 @Composable
-fun AccountPage(
+fun LoadedAccountPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     accountList: List<AccountAndOwnerWithTransactions>,
@@ -265,6 +265,12 @@ fun AccountPage(
             viewHolder = viewHolder
         )
     }
+}
+
+@Composable
+fun LoadingAccountPage() {
+    // Develop interface
+    Text("Loading...")
 }
 
 @Composable
@@ -377,7 +383,7 @@ private fun PreviewAccountTreeView() {
 private fun PreviewPage() {
     DatabaseSample {
         GazegeTheme(darkTheme = false) {
-            AccountPage(
+            LoadedAccountPage(
                 accountList = accountAndOwnerWithTransactionsSample,
                 treeState = rememberTreeState(),
                 editAccount = {},

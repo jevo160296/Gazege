@@ -1,7 +1,7 @@
 package com.example.gazege.ui.navigation
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -23,7 +23,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         val incluirDeudasEnSaldoActual by viewModel.rememberSettingsIncluirDeudasEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
 
-        var saving: Int by remember { mutableStateOf(0) }
+        var saving: Int by remember { mutableIntStateOf(0) }
         SaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
             summaryState = personSummaryState,

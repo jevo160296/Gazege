@@ -22,11 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.navigation.FullPersonSummaryState
 import com.example.gazege.ui.templates.ClickableListItemViewHolder
 import com.example.gazege.ui.templates.SimpleLazyList
 import com.example.gazege.ui.theme.GazegeTheme
@@ -36,8 +36,8 @@ import com.example.gazege.ui.widgets.SmallEmphasis
 import kotlin.math.absoluteValue
 
 @Composable
-private fun PersonViewHolder(
-    principalPersonSummaryState: PersonSummaryState,
+private fun LoadedPersonViewHolder(
+    principalPersonSummaryState: FullPersonSummaryState,
     person: Person
 ) {
     val flujo = principalPersonSummaryState.deudasFlujo[person] ?: 0.0
@@ -70,8 +70,8 @@ fun personDeudaString(flujo: Double) = if (flujo > 0) {
 }
 
 @Composable
-private fun PersonRecyclerView(
-    principalPersonSummaryState: PersonSummaryState,
+private fun LoadedPersonRecyclerView(
+    principalPersonSummaryState: FullPersonSummaryState,
     personList: List<Person>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
@@ -94,7 +94,7 @@ private fun PersonRecyclerView(
             onItemLongPressed = { menuIdExpanded = it.id }
         ) {
             Box {
-                PersonViewHolder(
+                LoadedPersonViewHolder(
                     person = it,
                     principalPersonSummaryState = principalPersonSummaryState
                 )
@@ -122,40 +122,44 @@ private fun PersonRecyclerView(
 }
 
 @Composable
-fun PersonPage(
+fun LoadedPersonPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    principalPersonSummaryState: PersonSummaryState?,
+    principalPersonSummaryState: FullPersonSummaryState,
     allPerson: List<Person>,
     delPerson: (Person) -> Unit,
     editPerson: (Person) -> Unit,
     detailPerson: (Person) -> Unit,
     state: LazyListState,
-    onConfigurePrincipalPersonRequested: () -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
     onTitleSetted(stringResource(id = R.string.personas))
     Column(modifier = modifier) {
-        val padding = Modifier.padding(horizontal = 8.dp)
-        if (principalPersonSummaryState == null) {
-            LargeBody(
-                text = stringResource(id = R.string.persona_principal_vacia),
-                modifier = padding,
-                textAlign = TextAlign.Justify
-            )
-            ButtonField(onClick = onConfigurePrincipalPersonRequested, modifier = padding) {
-                SmallEmphasis(text = stringResource(id = R.string.configurar_persona_principal))
-            }
-        } else {
-            PersonRecyclerView(
-                principalPersonSummaryState = principalPersonSummaryState,
-                personList = allPerson,
-                delPerson = { delPerson(it) },
-                editPerson = { editPerson(it) },
-                detailPerson = { detailPerson(it) },
-                itemHolderPaddingValues = itemHolderPaddingValues,
-                state = state
-            )
+        LoadedPersonRecyclerView(
+            principalPersonSummaryState = principalPersonSummaryState,
+            personList = allPerson,
+            delPerson = { delPerson(it) },
+            editPerson = { editPerson(it) },
+            detailPerson = { detailPerson(it) },
+            itemHolderPaddingValues = itemHolderPaddingValues,
+            state = state
+        )
+    }
+}
+
+@Composable
+fun NoPrincipalPersonPersonPage(
+    onConfigurePrincipalPersonRequested: () -> Unit,
+) {
+    val padding = Modifier.padding(horizontal = 8.dp)
+    Column {
+        LargeBody(
+            text = stringResource(id = R.string.persona_principal_vacia),
+            modifier = padding,
+            textAlign = TextAlign.Justify
+        )
+        ButtonField(onClick = onConfigurePrincipalPersonRequested, modifier = padding) {
+            SmallEmphasis(text = stringResource(id = R.string.configurar_persona_principal))
         }
     }
 }
@@ -164,7 +168,7 @@ fun PersonPage(
 @Composable
 private fun PreviewPersonItem() {
     DatabaseSample {
-        PersonViewHolder(
+        LoadedPersonViewHolder(
             person = personSample.first(),
             principalPersonSummaryState = personSummaryStateSample
         )
@@ -176,13 +180,12 @@ private fun PreviewPersonItem() {
 private fun PreviewPersonPage() {
     DatabaseSample {
         GazegeTheme {
-            PersonPage(
+            LoadedPersonPage(
                 allPerson = personSample,
                 state = LazyListState(),
                 editPerson = {},
                 delPerson = {},
                 onTitleSetted = {},
-                onConfigurePrincipalPersonRequested = {},
                 itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
                 detailPerson = {},
                 principalPersonSummaryState = personSummaryStateSample

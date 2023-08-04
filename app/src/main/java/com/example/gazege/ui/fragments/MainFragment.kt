@@ -16,20 +16,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
-import com.example.gazege.PersonSummaryState
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
 import com.example.gazege.sample.data.SampleId
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
+import com.example.gazege.ui.navigation.EmptyPersonSummaryState
+import com.example.gazege.ui.navigation.FullPersonSummaryState
+import com.example.gazege.ui.navigation.LoadedPersonSummaryState
+import com.example.gazege.ui.navigation.LoadingPersonSummaryState
+import com.example.gazege.ui.navigation.PersonSummaryState
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.AppMode
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.example.gazege.ui.views.*
-import com.example.gazege.ui.views.account.AccountPage
-import com.example.gazege.ui.views.person.PersonPage
+import com.example.gazege.ui.views.account.LoadedAccountPage
+import com.example.gazege.ui.views.account.LoadingAccountPage
+import com.example.gazege.ui.views.person.LoadedPersonPage
+import com.example.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.example.gazege.ui.views.transaction.TransactionPage
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.treeview.TreeState
@@ -44,7 +50,7 @@ fun MainFragment(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
     filteredTransactionList: List<TransactionListItemDetails>,
-    principalPersonSummaryState: PersonSummaryState?,
+    principalPersonSummaryState: PersonSummaryState,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
@@ -300,7 +306,7 @@ private fun MainFragmentResponsiveContent(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
     filteredTransactionList: List<TransactionListItemDetails>,
-    principalPersonSummaryState: PersonSummaryState?,
+    principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
@@ -361,14 +367,27 @@ private fun MainFragmentResponsiveContent(
     }
 
     val personMonthSummaryView = @Composable {
-        PersonMonthSummaryView(
-            modifier = Modifier.fillMaxWidth(),
-            saldoActual = principalPersonSummaryState?.saldoActual ?: 0.0,
-            ingresos = principalPersonSummaryState?.ingresos ?: 0.0,
-            egresos = principalPersonSummaryState?.egresos ?: 0.0,
-            flujo = principalPersonSummaryState?.flujo ?: 0.0,
-            onSaldoActualClick = onSaldoActualClick
-        )
+        Crossfade(targetState = principalPersonSummaryState, label = "CrossFadePerson") {
+            when (it) {
+                is LoadedPersonSummaryState -> {
+                    LoadedPersonMonthSummaryView(
+                        modifier = Modifier.fillMaxWidth(),
+                        saldoActual = it.saldoActual,
+                        ingresos = it.ingresos,
+                        egresos = it.egresos,
+                        flujo = it.flujo,
+                        onSaldoActualClick = onSaldoActualClick
+                    )
+                }
+
+                is LoadingPersonSummaryState -> {
+                    EmptyPersonMonthSummaryView(
+                        modifier = Modifier.fillMaxWidth(),
+                        onSaldoActualClick = onSaldoActualClick
+                    )
+                }
+            }
+        }
     }
 
     val transactionPage = @Composable {
@@ -391,55 +410,85 @@ private fun MainFragmentResponsiveContent(
 
     val cuentasPage = @Composable {
         val template = accountDeleitionConfirmationBuilder()
-        AccountPage(
-            accountList = accountList.filter { person ->
-                person.owner.id == principalPersonSummaryState?.person?.id
-            },
-            itemHolderPaddingValues = paddingValues,
-            treeState = accountState,
-            delAccount = { account ->
-                onActionChanged { delAccount(account) }
-                onModalSheetMsgChanged(template(account.name))
-                scope.launch { sheetState.show() }
-            },
-            editAccount = onEditAccountRequested,
-            startDate = null,
-            endDate = null,
-            detailAccount = onAccountDetailRequested
-        ) { newTitle -> onTitleChanged(newTitle) }
+        when (principalPersonSummaryState) {
+            is FullPersonSummaryState -> {
+                LoadedAccountPage(
+                    accountList = accountList.filter { person ->
+                        person.owner.id == principalPersonSummaryState.person.id
+                    },
+                    itemHolderPaddingValues = paddingValues,
+                    treeState = accountState,
+                    delAccount = { account ->
+                        onActionChanged { delAccount(account) }
+                        onModalSheetMsgChanged(template(account.name))
+                        scope.launch { sheetState.show() }
+                    },
+                    editAccount = onEditAccountRequested,
+                    startDate = null,
+                    endDate = null,
+                    detailAccount = onAccountDetailRequested
+                ) { newTitle -> onTitleChanged(newTitle) }
+            }
+
+            is LoadingPersonSummaryState -> {
+                LoadingAccountPage()
+            }
+        }
     }
 
     val personsPage = @Composable {
         val template = personaDeleitionConfirmationBuilder()
-        PersonPage(
-            allPerson = allPerson.filter { person ->
-                person.id != principalPersonSummaryState?.person?.id
-            }.filter { personWithAccounts ->
-                if (personFilterValue) {
-                    val flujo =
-                        principalPersonSummaryState?.deudasFlujo?.get(personWithAccounts) ?: 0.0
-                    flujo != 0.0
-                } else {
-                    true
+        Crossfade(targetState = principalPersonSummaryState, label = "CrossFade") {
+            when (it) {
+                is FullPersonSummaryState -> {
+                    LoadedPersonPage(
+                        allPerson = allPerson.filter { person ->
+                            person.id != it.person.id
+                        }.filter { personWithAccounts ->
+                            if (personFilterValue) {
+                                val flujo =
+                                    it.deudasFlujo[personWithAccounts]
+                                        ?: 0.0
+                                flujo != 0.0
+                            } else {
+                                true
+                            }
+                        },
+                        itemHolderPaddingValues = paddingValues,
+                        state = personState,
+                        delPerson = { person ->
+                            onActionChanged { delPerson(person) }
+                            onModalSheetMsgChanged(template(person.name))
+                            scope.launch { sheetState.show() }
+                        },
+                        editPerson = onEditPersonRequested,
+                        onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+                        detailPerson = onPersonDetailRequested,
+                        principalPersonSummaryState = it
+                    )
                 }
-            },
-            itemHolderPaddingValues = paddingValues,
-            state = personState,
-            delPerson = { person ->
-                onActionChanged { delPerson(person) }
-                onModalSheetMsgChanged(template(person.name))
-                scope.launch { sheetState.show() }
-            },
-            editPerson = onEditPersonRequested,
-            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-            onConfigurePrincipalPersonRequested = onSettingsClicked,
-            detailPerson = onPersonDetailRequested,
-            principalPersonSummaryState = principalPersonSummaryState
-        )
+
+                EmptyPersonSummaryState -> {
+                    NoPrincipalPersonPersonPage(onSettingsClicked)
+                }
+
+                is LoadingPersonSummaryState -> {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        GazegeIndefiniteCircularProgressIndicator()
+                        Text(stringResource(id = R.string.LoadingPersonSummaryView))
+                    }
+                }
+            }
+        }
     }
 
     val navigationView = @Composable {
-        Crossfade(targetState = navPosition) {
+        Crossfade(targetState = navPosition, label = "navigationView") {
             when (it) {
                 NavPosition.TRANSACCIONES -> {
                     transactionPage()

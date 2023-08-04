@@ -1,5 +1,11 @@
 package com.example.gazege.ui.widgets
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,8 +18,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,6 +62,58 @@ fun DataView(
             ) {
                 MediumHeadline(text = title)
                 MediumHeadline(text = value)
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingDataView(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    bigTitle: Boolean = false,
+    colors: CardColors = CardDefaults.cardColors(),
+    onClick: () -> Unit = {}
+) {
+    val infiniteTransition = rememberInfiniteTransition("Infinite transition")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 1.0F,
+        targetValue = 0.2F,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                1000, easing = CubicBezierEasing(
+                    0.22F, 1.0F, 0.36F, 1.0F
+                )
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Alpha animation"
+    )
+    Card(
+        modifier = modifier
+            .height(42.dp)
+            .alpha(alpha),
+        colors = colors,
+        enabled = enabled,
+        onClick = onClick
+    ) {
+        if (!bigTitle) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
+                Text("")
+                SmallEmphasis("")
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MediumHeadline(text = "")
+                MediumHeadline(text = "")
             }
         }
     }
@@ -113,7 +173,7 @@ fun DataViewProgressBar(
 }
 
 @Composable
-fun PersonMonthSummaryView(
+fun LoadedPersonMonthSummaryView(
     modifier: Modifier,
     saldoActual: Double,
     ingresos: Double,
@@ -177,6 +237,59 @@ fun PersonMonthSummaryView(
     }
 }
 
+@Composable
+fun EmptyPersonMonthSummaryView(
+    modifier: Modifier,
+    onSaldoActualClick: () -> Unit
+) {
+    val enabledColors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContainerColor = MaterialTheme.colorScheme.primary,
+        disabledContentColor = MaterialTheme.colorScheme.onPrimary
+    )
+    val disabledColors = CardDefaults.cardColors()
+    Column(
+        modifier = modifier
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            LoadingDataView(
+                bigTitle = true,
+                modifier = Modifier.weight(1f),
+                colors = enabledColors,
+                onClick = onSaldoActualClick
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            LoadingDataView(
+                modifier = Modifier.weight(1f),
+                enabled = false,
+                colors = disabledColors
+            )
+            LoadingDataView(
+                modifier = Modifier.weight(1f),
+                enabled = false,
+                colors = disabledColors
+            )
+            LoadingDataView(
+                modifier = Modifier.weight(1f),
+                enabled = false,
+                colors = disabledColors
+            )
+        }
+    }
+}
+
 @Preview
 @Composable
 fun DataViewWithProgressBarPreview() {
@@ -187,4 +300,10 @@ fun DataViewWithProgressBarPreview() {
             DataViewProgressBar(progress = 0.45)
         }
     )
+}
+
+@Preview
+@Composable
+fun LoadingDataPreview() {
+    LoadingDataView()
 }

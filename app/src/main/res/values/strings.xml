@@ -85,4 +85,5 @@
     <string name="Neto">Neto</string>
     <string name="Cargando">Cargando…</string>
     <string name="justPendingTransactions">Sólo transacciones pendientes</string>
+    <string name="LoadingPersonSummaryView">Calculando flujo de dinero.</string>
 </resources>

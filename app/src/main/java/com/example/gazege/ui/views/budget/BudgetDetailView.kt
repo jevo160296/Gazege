@@ -6,12 +6,12 @@ import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
 
 @Composable
 fun BudgetDetailView(budget: BudgetAndCategoryWithTransactions) {
-    //TODO diseñar interfaz
+    //TODO diseñar UI
     Text("Detalles para el presupuesto: ${budget.categoryName}")
 }
 
 @Composable
 fun EmptyBudgetDetailView() {
-    //TODO diseñar interfaz
+    //TODO diseñar UI
     Text("Presupuesto no encontrado en la base de datos")
 }
