@@ -59,6 +59,8 @@ fun TransactionAndAccountsForm(
     categoryList: List<Category>,
     onDoneAction: () -> Unit,
     isComplete: Boolean,
+    addAnotherTransaction: Boolean,
+    onAddAnotherTransactionChanged: (Boolean) -> Unit,
     showSourceAccountField: Boolean = true,
     showDestinationAccountField: Boolean = true,
     onAmountChanged: (Double) -> Unit,
@@ -66,7 +68,11 @@ fun TransactionAndAccountsForm(
     onSourceAccountIdChanged: (Int) -> Unit,
     onDestinationAccountIdChanged: (Int) -> Unit,
     onCategoryIdChanged: (Int?) -> Unit,
-    onDateChanged: (LocalDate) -> Unit
+    onDateChanged: (LocalDate) -> Unit,
+    focusRequester: FocusRequester = remember {
+        FocusRequester()
+    },
+    showAddAnotherTransactionButton: Boolean
 ) {
     val amount = transactionAndAccounts.transaction.amount ?: 0.0
     val description = transactionAndAccounts.transaction.description ?: ""
@@ -79,7 +85,6 @@ fun TransactionAndAccountsForm(
     } else {
         ImeAction.Next
     }
-    val focusRequester = remember { FocusRequester() }
     val keyboardActions = remember { KeyboardActions(onDone = { onDoneAction() }) }
 
     val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
@@ -116,6 +121,17 @@ fun TransactionAndAccountsForm(
         modifier = modifier.padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {
+        if (showAddAnotherTransactionButton) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = addAnotherTransaction,
+                    onCheckedChange = onAddAnotherTransactionChanged
+                )
+                Text(text = stringResource(R.string.AddAnotherTransaction))
+            }
+        }
         NumberField(
             modifier = Modifier.focusRequester(focusRequester),
             value = amount,
