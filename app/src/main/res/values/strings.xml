@@ -86,4 +86,5 @@
     <string name="Cargando">Cargando…</string>
     <string name="justPendingTransactions">Sólo transacciones pendientes</string>
     <string name="LoadingPersonSummaryView">Calculando flujo de dinero.</string>
+    <string name="AddAnotherTransaction">Agregar varias transacciones.</string>
 </resources>

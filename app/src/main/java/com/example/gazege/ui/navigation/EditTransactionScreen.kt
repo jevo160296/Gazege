@@ -45,8 +45,8 @@ fun NavGraphBuilder.screenEditTransaction(
             personList = allPerson,
             categoryList = categories,
             onAccountAddRequested = onNavigateToAddAccount
-        ) {
-            viewModel.updateTransaction(it)
+        ) { editedTransaction, _ ->
+            viewModel.updateTransaction(editedTransaction)
             onNavigateUp()
         }
     }

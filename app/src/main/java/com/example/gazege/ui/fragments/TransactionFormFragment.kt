@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,7 +40,7 @@ fun TransactionFormFragment(
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (Transaction) -> Unit
+    onTransactionAndAccountsAdd: (Transaction, Boolean) -> Unit
 ) {
 
     val id by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.id) }
@@ -100,13 +102,22 @@ fun TransactionFormFragment(
     var realizarANombreDe by rememberSaveable(aNombreDe) {
         mutableStateOf(aNombreDe != null)
     }
+    var addAnotherTransaction by rememberSaveable {
+        mutableStateOf(false)
+    }
     val completeState = currentTransaction != null
     val sourceAccount = accountList.firstOrNull { it.account.id == sourceId }
     val destinationAccount = accountList.firstOrNull { it.account.id == destinationId }
+    val focusRequester = remember { FocusRequester() }
+    val showAddAnotherTransactionButton = transactionAndAccounts == null
     val saveTransaction: () -> Unit = {
         currentTransaction?.let { fullTransaction ->
-            onTransactionAndAccountsAdd(fullTransaction)
+            onTransactionAndAccountsAdd(fullTransaction, addAnotherTransaction)
+            if (showAddAnotherTransactionButton) {
+                amount = null
+            }
         }
+        focusRequester.requestFocus()
     }
     val addTransactionAction: AddTransactionAction =
         if (sourceAccount?.account?.isIncome == true && destinationAccount?.account?.isOutcome != true) {
@@ -163,7 +174,11 @@ fun TransactionFormFragment(
             onCategoryIdChanged = { categoryId = it },
             onDescriptionChanged = { description = it },
             onDestinationAccountIdChanged = { destinationId = it },
-            onSourceAccountIdChanged = { sourceId = it }
+            onSourceAccountIdChanged = { sourceId = it },
+            showAddAnotherTransactionButton = showAddAnotherTransactionButton,
+            addAnotherTransaction = addAnotherTransaction,
+            onAddAnotherTransactionChanged = { addAnotherTransaction = it },
+            focusRequester = focusRequester
         )
     }
 }
