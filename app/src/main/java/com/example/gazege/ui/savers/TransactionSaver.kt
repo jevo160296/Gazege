@@ -73,9 +73,9 @@ data class PartialTransaction(
 }
 
 data class PartialTransactionAndAccounts(
-    var transaction: PartialTransaction,
-    var sourceAccount: Account?,
-    var destinationAccount: Account?
+    val transaction: PartialTransaction,
+    val sourceAccount: Account?,
+    val destinationAccount: Account?
 ): PartialEntity<TransactionAndAccounts>
 {
     override fun isComplete(): Boolean {
