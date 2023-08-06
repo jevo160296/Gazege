@@ -10,14 +10,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.dimensionResource
@@ -38,9 +39,9 @@ import com.example.gazege.ui.templates.GroupedLazyList
 import com.example.gazege.ui.templates.itemsGrouped
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.DefaultGroupViewHolder
-import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.LargeEmphasis
+import com.example.gazege.ui.widgets.PulsatingCard
 import com.example.gazege.ui.widgets.SmallEmphasis
 
 @Composable
@@ -55,7 +56,7 @@ fun LoadedTransactionPage(
 ) {
     onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
-        TransactionRecyclerView(
+        LoadedTransactionRecyclerView(
             transactionList = transactionList,
             editTransaction = { transactionAndAccounts ->
                 editTransaction(transactionAndAccounts.transaction)
@@ -72,17 +73,14 @@ fun LoadedTransactionPage(
 @Composable
 fun LoadingTransactionPage(
     modifier: Modifier = Modifier,
+    itemHolderPaddingValues: PaddingValues = PaddingValues(),
     onTitleSetted: (String) -> Unit
 ) {
     onTitleSetted(stringResource(id = R.string.transacciones))
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        GazegeIndefiniteCircularProgressIndicator()
-        Text(stringResource(id = R.string.Cargando))
+    Column(modifier = modifier) {
+        LoadingTransactionRecyclerView(
+            contentPadding = itemHolderPaddingValues
+        )
     }
 }
 
@@ -207,7 +205,7 @@ private fun TransactionGroupItemViewHolder(
 }
 
 @Composable
-private fun TransactionRecyclerView(
+private fun LoadedTransactionRecyclerView(
     transactionList: List<TransactionListItemDetails>,
     editTransaction: (TransactionListItemDetails) -> Unit,
     delTransaction: (TransactionListItemDetails) -> Unit,
@@ -223,6 +221,39 @@ private fun TransactionRecyclerView(
     groupViewHolder = { TransactionHeaderViewHolder(it) }
 ) {
     TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
+}
+
+@Composable
+private fun LoadingTransactionRecyclerView(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) = GroupedLazyList(
+    modifier = modifier,
+    state = LazyListState(),
+    contentPadding = contentPadding,
+    items = (0..10).toList(),
+    groupSelector = { "" },
+    groupViewHolder = {
+        PulsatingCard(
+            modifier = Modifier
+                .width(90.dp)
+                .height(18.dp)
+                .clip(shape = MaterialTheme.shapes.small),
+            color = MaterialTheme.colorScheme.scrim,
+            minAlpha = 0.0F,
+            maxAlpha = 0.2F
+        )
+    }
+) {
+    PulsatingCard(
+        modifier
+            .height(94.dp)
+            .fillMaxWidth()
+            .clip(shape = MaterialTheme.shapes.medium),
+        color = MaterialTheme.colorScheme.scrim,
+        minAlpha = 0.0F,
+        maxAlpha = 0.2F
+    )
 }
 
 @Preview(showBackground = true)
@@ -241,7 +272,7 @@ private fun PreviewTransactionItem() {
 @Composable
 private fun PreviewTransactionList() {
     DatabaseSample {
-        TransactionRecyclerView(
+        LoadedTransactionRecyclerView(
             transactionList = transactionListItemDetailsSample,
             editTransaction = {},
             delTransaction = {},

@@ -416,7 +416,9 @@ private fun MainFragmentResponsiveContent(
 
                     loadingTransactionDetailsState() -> {
                         LoadingTransactionPage(
-                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) })
+                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+                            itemHolderPaddingValues = paddingValues
+                        )
                     }
                 }
             }
