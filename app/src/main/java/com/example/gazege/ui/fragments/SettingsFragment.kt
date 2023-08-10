@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ fun SettingsFragment(
     onAddPersonRequested: () -> Unit,
     onAddCategoryRequested: () -> Unit,
     onAddBudgetRequested: () -> Unit,
+    onExportTransactionsRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
@@ -131,6 +133,12 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onExportTransactionsRequested
+        ) {
+            Text(text = stringResource(id = R.string.Export_transactions))
+        }
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

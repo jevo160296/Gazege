@@ -3,6 +3,8 @@ package com.example.gazege
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -22,9 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.export.writeCsv
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.fragments.IconVisibility
 import com.example.gazege.ui.fragments.SplashScreenFragment
@@ -33,6 +37,7 @@ import com.example.gazege.ui.navigation.MainNavHost
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.min
 
 class MainActivity : ComponentActivity() {
@@ -48,12 +53,25 @@ class MainActivity : ComponentActivity() {
     }
     private val settings by lazy { Settings(this) }
 
+    private lateinit var resultLauncher: ActivityResultLauncher<String>
+
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(repository, settings)
+        MainViewModelFactory(repository, settings, resultLauncher)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        resultLauncher = registerForActivityResult(CreateDocument("txt/csv")) { uri ->
+            mainViewModel.viewModelScope.launch {
+                mainViewModel.getExportedTransactions { exportTransactions ->
+                    uri?.also { uri ->
+                        contentResolver.openOutputStream(uri)?.use {
+                            writeCsv(it, exportTransactions)
+                        }
+                    }
+                }
+            }
+        }
         setContent {
             GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
                 SetStatusBarColors()

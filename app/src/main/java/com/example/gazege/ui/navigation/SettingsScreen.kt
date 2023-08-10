@@ -13,7 +13,8 @@ fun NavGraphBuilder.screenSettings(
     onNavigateToAddPerson: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
-    onNavigateToAddBudget: () -> Unit
+    onNavigateToAddBudget: () -> Unit,
+    onExportTransactionsRequested: () -> Unit
 ) {
     composable("settings") {
         val allPerson by viewModel.rememberAllPerson()
@@ -71,7 +72,8 @@ fun NavGraphBuilder.screenSettings(
                 }
             },
             onAddBudgetRequested = onNavigateToAddBudget,
-            onAddCategoryRequested = onNavigateToAddCategory
+            onAddCategoryRequested = onNavigateToAddCategory,
+            onExportTransactionsRequested = onExportTransactionsRequested
         )
     }
 }

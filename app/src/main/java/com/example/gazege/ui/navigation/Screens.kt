@@ -114,7 +114,10 @@ fun MainNavHost(
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onNavigateToAddPerson = navController::navigateToAddPerson,
                 onNavigateToAddBudget = navController::navigateToAddOneBudget,
-                onNavigateToAddCategory = navController::navigateToAddCategory
+                onNavigateToAddCategory = navController::navigateToAddCategory,
+                onExportTransactionsRequested = {
+                    mainViewModel.startActivityToSaveDocument("exportedTransactions.csv")
+                }
             )
             screenSaldoActualSettings(viewModel = mainViewModel)
             screenEditarCategorias(

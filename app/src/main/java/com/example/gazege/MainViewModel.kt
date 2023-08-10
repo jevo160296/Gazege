@@ -1,5 +1,6 @@
 package com.example.gazege
 
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
@@ -17,6 +18,8 @@ import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import java.time.LocalDate
 
 enum class NavPosition {
@@ -35,13 +38,220 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
-class MainViewModel(private val repository: AppRepository, private val settings: Settings) :
+fun unknownPerson(id: Int) = "Unknown person name, id: $id"
+
+fun unknownAccount(id: Int) = "Unknown account name, id: $id"
+
+fun unknownCategory(id: Int) = "Unknown category name, id: $id"
+
+data class ExportAccount(
+    val accountName: String,
+    val ownerName: String,
+    val ownerImportance: Int?,
+    val includedInTotal: Boolean,
+    val isIncome: Boolean,
+    val isOutcome: Boolean,
+    val parentAccountName: String?,
+    val parentAccountOwnerName: String?,
+    val parentAccountOwnerImportance: Int?,
+    val parentAccountIncludedInTotal: Boolean?,
+    val parentAccountIsIncome: Boolean?,
+    val parentAccountIsOutcome: Boolean?
+)
+
+data class ExportCategory(
+    val categoryName: String,
+    val categoryParentName: String?
+)
+
+data class ExportTransaction(
+    val transactionId: Int?,
+    val transactionAmount: Double,
+    val transactionDescription: String,
+    val accountSourceName: String,
+    val accountSourceOwnerName: String,
+    val accountSourceOwnerImportance: Int?,
+    val accountSourceIncludedInTotal: Boolean,
+    val accountSourceIsIncome: Boolean,
+    val accountSourceIsOutcome: Boolean,
+    val accountSourceParentAccountName: String?,
+    val accountSourceParentAccountOwnerName: String?,
+    val accountSourceParentAccountOwnerImportance: Int?,
+    val accountSourceParentAccountIncludedInTotal: Boolean?,
+    val accountSourceParentAccountIsIncome: Boolean?,
+    val accountSourceParentAccountIsOutcome: Boolean?,
+    val accountDestinationName: String,
+    val accountDestinationOwnerName: String,
+    val accountDestinationOwnerImportance: Int?,
+    val accountDestinationIncludedInTotal: Boolean,
+    val accountDestinationIsIncome: Boolean,
+    val accountDestinationIsOutcome: Boolean,
+    val accountDestinationParentAccountName: String?,
+    val accountDestinationParentAccountOwnerName: String?,
+    val accountDestinationParentAccountOwnerImportance: Int?,
+    val accountDestinationParentAccountIncludedInTotal: Boolean?,
+    val accountDestinationParentAccountIsIncome: Boolean?,
+    val accountDestinationParentAccountIsOutcome: Boolean?,
+    val categoryName: String?,
+    val categoryParentName: String?,
+    val date: LocalDate,
+    val aNombreDe: String?
+) {
+    companion object {
+        private fun getAccountInfo(
+            accountId: Int,
+            accountMap: Map<Int?, Account>,
+            personMap: Map<Int?, Person>
+        ): ExportAccount = accountMap[accountId].let { account ->
+            val parentInfo = account?.parentId?.let { getAccountInfo(it, accountMap, personMap) }
+            ExportAccount(
+                accountName = account?.name ?: unknownAccount(accountId),
+                ownerName = account?.let {
+                    personMap[account.ownerId]?.name ?: unknownPerson(account.ownerId)
+                } ?: unknownAccount(accountId),
+                ownerImportance = account?.let { personMap[account.ownerId]?.importance },
+                includedInTotal = account?.includedInTotal ?: true,
+                isIncome = account?.isIncome ?: false,
+                isOutcome = account?.isOutcome ?: false,
+                parentAccountName = parentInfo?.accountName,
+                parentAccountOwnerName = parentInfo?.ownerName,
+                parentAccountOwnerImportance = parentInfo?.ownerImportance,
+                parentAccountIncludedInTotal = parentInfo?.includedInTotal,
+                parentAccountIsIncome = parentInfo?.isIncome,
+                parentAccountIsOutcome = parentInfo?.isOutcome
+            )
+        }
+
+        private fun getCategoryInfo(
+            categoryId: Int,
+            categoryMap: Map<Int?, Category>
+        ): ExportCategory = categoryMap[categoryId].let { category ->
+            val parentCategory = category?.parentId?.let { parentId ->
+                getCategoryInfo(
+                    parentId,
+                    categoryMap
+                )
+            }
+            ExportCategory(
+                category?.name ?: unknownCategory(categoryId),
+                parentCategory?.categoryName
+            )
+        }
+
+        fun from(
+            transactions: List<Transaction>,
+            accounts: List<Account>,
+            categories: List<Category>,
+            persons: List<Person>
+        ): List<ExportTransaction> =
+            persons.let { personList ->
+                val personMap = personList.associateBy { it.id }
+                categories.let { categoryList ->
+                    val categoryMap = categoryList.associateBy { it.id }
+                    accounts.let { accountList ->
+                        val accountsMap = accountList.associateBy { it.id }
+                        transactions
+                            .map { transaction ->
+                                val sourceAccountInfo = getAccountInfo(
+                                    transaction.sourceId,
+                                    accountsMap,
+                                    personMap
+                                )
+                                val destinationAccountInfo = getAccountInfo(
+                                    transaction.destinationId,
+                                    accountsMap,
+                                    personMap
+                                )
+                                val categoryInfo = transaction.categoryId?.let {
+                                    getCategoryInfo(
+                                        transaction.categoryId,
+                                        categoryMap
+                                    )
+                                }
+                                ExportTransaction(
+                                    transactionId = transaction.id,
+                                    transactionAmount = transaction.amount,
+                                    transactionDescription = transaction.description,
+                                    accountSourceName = sourceAccountInfo.accountName,
+                                    accountSourceOwnerName = sourceAccountInfo.ownerName,
+                                    accountSourceOwnerImportance = sourceAccountInfo.ownerImportance,
+                                    accountSourceIncludedInTotal = sourceAccountInfo.includedInTotal,
+                                    accountSourceIsIncome = sourceAccountInfo.isIncome,
+                                    accountSourceIsOutcome = sourceAccountInfo.isOutcome,
+                                    accountSourceParentAccountIncludedInTotal = sourceAccountInfo.parentAccountIncludedInTotal,
+                                    accountSourceParentAccountIsIncome = sourceAccountInfo.parentAccountIsIncome,
+                                    accountSourceParentAccountIsOutcome = sourceAccountInfo.parentAccountIsOutcome,
+                                    accountSourceParentAccountName = sourceAccountInfo.parentAccountName,
+                                    accountSourceParentAccountOwnerName = sourceAccountInfo.parentAccountOwnerName,
+                                    accountSourceParentAccountOwnerImportance = sourceAccountInfo.ownerImportance,
+                                    accountDestinationName = destinationAccountInfo.accountName,
+                                    accountDestinationOwnerName = destinationAccountInfo.ownerName,
+                                    accountDestinationOwnerImportance = destinationAccountInfo.ownerImportance,
+                                    accountDestinationIncludedInTotal = destinationAccountInfo.includedInTotal,
+                                    accountDestinationIsIncome = destinationAccountInfo.isIncome,
+                                    accountDestinationIsOutcome = destinationAccountInfo.isOutcome,
+                                    accountDestinationParentAccountName = destinationAccountInfo.parentAccountName,
+                                    accountDestinationParentAccountOwnerName = destinationAccountInfo.parentAccountOwnerName,
+                                    accountDestinationParentAccountOwnerImportance = destinationAccountInfo.parentAccountOwnerImportance,
+                                    accountDestinationParentAccountIncludedInTotal = destinationAccountInfo.parentAccountIncludedInTotal,
+                                    accountDestinationParentAccountIsIncome = destinationAccountInfo.parentAccountIsIncome,
+                                    accountDestinationParentAccountIsOutcome = destinationAccountInfo.parentAccountIsOutcome,
+                                    categoryName = categoryInfo?.categoryName,
+                                    categoryParentName = categoryInfo?.categoryParentName,
+                                    date = transaction.date,
+                                    aNombreDe = transaction.aNombreDe?.let { aNombreDe ->
+                                        personMap[aNombreDe]?.name ?: unknownPerson(aNombreDe)
+                                    }
+                                )
+                            }
+                    }
+                }
+            }
+    }
+}
+
+class MainViewModel(
+    private val repository: AppRepository,
+    private val settings: Settings,
+    private val resultLauncher: ActivityResultLauncher<String>
+) :
     ViewModel() {
     fun appInitialized(): Boolean {
         val currentValue = appInitialized
         appInitialized = true
         return currentValue
     }
+
+    fun startActivityToSaveDocument(suggestedName: String) = resultLauncher.launch(suggestedName)
+
+    suspend fun getExportedTransactions(onGathered: (exportData: List<ExportTransaction>) -> Unit) =
+        repository.getTransactions(null, null)
+            .combine(repository.getAccounts()) { combined, accounts ->
+                object {
+                    val transactions = combined
+                    val accounts = accounts
+                }
+            }
+            .combine(repository.getCategories()) { combined, categories ->
+                object {
+                    val transactions = combined.transactions
+                    val accounts = combined.accounts
+                    val categories = categories
+                }
+            }
+            .combine(repository.getPersons()) { combined, persons ->
+                object {
+                    val transactions = ExportTransaction.from(
+                        combined.transactions,
+                        combined.accounts,
+                        combined.categories,
+                        persons
+                    )
+                }
+            }
+            .collectLatest {
+                onGathered(it.transactions)
+            }
 
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
@@ -902,12 +1112,16 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 }
 
-class MainViewModelFactory(private val repository: AppRepository, private val settings: Settings) :
+class MainViewModelFactory(
+    private val repository: AppRepository,
+    private val settings: Settings,
+    private val resultLauncher: ActivityResultLauncher<String>
+) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository, settings) as T
+            return MainViewModel(repository, settings, resultLauncher) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
