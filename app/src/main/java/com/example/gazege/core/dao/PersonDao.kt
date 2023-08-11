@@ -27,10 +27,15 @@ interface PersonDao {
     suspend fun insertAll(vararg persons: Person): List<Long>
 
     @Update
-    suspend fun update(person: Person)
+    suspend fun updateAll(vararg person: Person)
 
     @Delete
     suspend fun delete(person: Person): Int
+
+    @Query(
+        "DELETE FROM Person"
+    )
+    suspend fun deleteAll()
 
     companion object {
         private fun calculateValues(

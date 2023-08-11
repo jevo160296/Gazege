@@ -11,25 +11,29 @@ import java.time.LocalDate
             entity = Account::class,
             parentColumns = ["id"],
             childColumns = ["destinationId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            deferred = true
         ),
         ForeignKey(
             entity = Account::class,
             parentColumns = ["id"],
             childColumns = ["sourceId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            deferred = true
         ),
         ForeignKey(
             entity = Person::class,
             parentColumns = ["id"],
             childColumns = ["aNombreDe"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
+            deferred = true
         ),
         ForeignKey(
             entity = Category::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
+            deferred = true
         )
     ]
 )

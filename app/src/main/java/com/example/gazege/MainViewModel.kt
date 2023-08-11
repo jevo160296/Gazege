@@ -1,5 +1,6 @@
 package com.example.gazege
 
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
@@ -7,6 +8,17 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
+import com.example.gazege.core.export.readAccountFromCsv
+import com.example.gazege.core.export.readBudgetFromCsv
+import com.example.gazege.core.export.readCategoryFromCsv
+import com.example.gazege.core.export.readPersonsFromCsv
+import com.example.gazege.core.export.readTransactionsFromCsv
+import com.example.gazege.core.export.writeAccounts
+import com.example.gazege.core.export.writeBudget
+import com.example.gazege.core.export.writeCategories
+import com.example.gazege.core.export.writePersons
+import com.example.gazege.core.export.writeTransactions
+import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
@@ -17,7 +29,14 @@ import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.firstOrNull
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDate
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES
@@ -35,12 +54,198 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
-class MainViewModel(private val repository: AppRepository, private val settings: Settings) :
+class MainViewModel(
+    private val repository: AppRepository,
+    private val settings: Settings,
+    private val resultLauncherSaveData: ActivityResultLauncher<String>,
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
+) :
     ViewModel() {
     fun appInitialized(): Boolean {
         val currentValue = appInitialized
         appInitialized = true
         return currentValue
+    }
+
+    fun startActivityToSaveData(
+        suggestedName: String
+    ) =
+        resultLauncherSaveData.launch(suggestedName)
+
+    fun startActivityToLoadData() =
+        resultLauncherOpenDocument.launch(arrayOf("*/*"))
+
+    suspend fun getTransactions() =
+        repository.getTransactions(null, null)
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getPersons() =
+        repository.getPersons()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getCategories() =
+        repository.getCategories()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getAccounts() =
+        repository.getAccounts()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getBudget() =
+        repository.getBudgets()
+            .firstOrNull()
+            ?: emptyList()
+
+    fun exportData(outputStream: OutputStream) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val persons = getPersons()
+                val personsOutputStream = ByteArrayOutputStream()
+                personsOutputStream.use {
+                    writePersons(it, persons)
+                }
+
+                val categories = getCategories()
+                val categoriesOutputStream = ByteArrayOutputStream()
+                categoriesOutputStream.use {
+                    writeCategories(it, categories)
+                }
+
+                val accounts = getAccounts()
+                val accountsOutputStream = ByteArrayOutputStream()
+                accountsOutputStream.use {
+                    writeAccounts(it, accounts)
+                }
+
+                val budget = getBudget()
+                val budgetOutputStream = ByteArrayOutputStream()
+                budgetOutputStream.use {
+                    writeBudget(it, budget)
+                }
+
+                val transactions = getTransactions()
+                val transactionsOutputStream = ByteArrayOutputStream()
+                transactionsOutputStream.use {
+                    writeTransactions(it, transactions)
+                }
+
+                val personsInputStream = ByteArrayInputStream(personsOutputStream.toByteArray())
+                val categoriesInputStream =
+                    ByteArrayInputStream(categoriesOutputStream.toByteArray())
+                val budgetInputStream = ByteArrayInputStream(budgetOutputStream.toByteArray())
+                val accountsInputStream = ByteArrayInputStream(accountsOutputStream.toByteArray())
+                val transactionsInputStream =
+                    ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                ZipOutputStream(outputStream)
+                    .use { zipOurpurStream ->
+                        writeZipBackup(
+                            transactionsInputStream,
+                            personsInputStream,
+                            categoriesInputStream,
+                            accountsInputStream,
+                            budgetInputStream,
+                            zipOurpurStream
+                        )
+                    }
+            }
+        }
+    }
+
+    fun importData(inputStream: InputStream) {
+        var transactions: List<Transaction>? = null
+        var categories: List<Category>? = null
+        var persons: List<Person>? = null
+        var budget: List<Budget>? = null
+        var accounts: List<Account>? = null
+        ZipInputStream(inputStream)
+            .use { zipInputStream ->
+                generateSequence {
+                    val entry = zipInputStream.nextEntry
+                    entry
+                }
+                    .map {
+                        when (it.name) {
+                            "transacciones.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        transactions = readTransactionsFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "categorias.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        categories = readCategoryFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "cuentas.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        accounts = readAccountFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "presupuesto.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        budget = readBudgetFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "personas.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        persons = readPersonsFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }
+                    .toList()
+            }
+        deleteAll().invokeOnCompletion {
+            persons?.also { persons ->
+                insertPerson(*persons.toTypedArray()) {}
+            }
+            accounts?.also { accounts ->
+                insertAccount(
+                    *accounts.toTypedArray(),
+                    onErrorAction = {
+                    }
+                ) {}
+            }
+            categories?.also { categories ->
+                insertCategory(
+                    *categories.toTypedArray(),
+                    onErrorAction = {
+                    },
+                    onCompleitionAction = {}
+                )
+            }
+            budget?.also { budget ->
+                insertBudget(
+                    *budget.toTypedArray(),
+                    onCompleitionAction = {},
+                    onErrorAction = {
+                    }
+                )
+            }
+            transactions?.also { transactions ->
+                insertTransaction(*transactions.toTypedArray()) {
+                }
+            }
+        }
     }
 
     @Composable
@@ -672,9 +877,9 @@ class MainViewModel(private val repository: AppRepository, private val settings:
             repository.insertPerson(*person)
         }
 
-    fun updatePerson(person: Person, onErrorAction: (Throwable) -> Unit) =
+    fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {
-            repository.updatePerson(person)
+            repository.updatePerson(*person)
         }
 
     fun deletePerson(person: Person) = viewModelScope.launch {
@@ -820,6 +1025,10 @@ class MainViewModel(private val repository: AppRepository, private val settings:
         repository.deleteBudget(budget)
     }
 
+    fun deleteAll() = viewModelScope.launch {
+        repository.deleteAllData()
+    }
+
     fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
         settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
     }
@@ -902,12 +1111,22 @@ class MainViewModel(private val repository: AppRepository, private val settings:
     }
 }
 
-class MainViewModelFactory(private val repository: AppRepository, private val settings: Settings) :
+class MainViewModelFactory(
+    private val repository: AppRepository,
+    private val settings: Settings,
+    private val resultLauncherSaveTransaction: ActivityResultLauncher<String>,
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
+) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository, settings) as T
+            return MainViewModel(
+                repository,
+                settings,
+                resultLauncherSaveTransaction,
+                resultLauncherOpenDocument
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

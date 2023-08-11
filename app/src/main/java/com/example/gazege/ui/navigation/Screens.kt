@@ -114,7 +114,13 @@ fun MainNavHost(
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onNavigateToAddPerson = navController::navigateToAddPerson,
                 onNavigateToAddBudget = navController::navigateToAddOneBudget,
-                onNavigateToAddCategory = navController::navigateToAddCategory
+                onNavigateToAddCategory = navController::navigateToAddCategory,
+                onExportDataRequested = {
+                    mainViewModel.startActivityToSaveData("backup.gazip")
+                },
+                onImportDataRequested = {
+                    mainViewModel.startActivityToLoadData()
+                }
             )
             screenSaldoActualSettings(viewModel = mainViewModel)
             screenEditarCategorias(

@@ -1,8 +1,11 @@
 package com.example.gazege
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -25,6 +28,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.export.CreateBackupDocument
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.fragments.IconVisibility
 import com.example.gazege.ui.fragments.SplashScreenFragment
@@ -48,15 +52,53 @@ class MainActivity : ComponentActivity() {
     }
     private val settings by lazy { Settings(this) }
 
+    private lateinit var resultLauncherSaveData: ActivityResultLauncher<String>
+
+    private lateinit var resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
+
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(repository, settings)
+        MainViewModelFactory(
+            repository,
+            settings,
+            resultLauncherSaveData,
+            resultLauncherOpenDocument
+        )
+    }
+
+    private fun handleIntent() {
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent?.data
+            val scheme = uri?.scheme
+            if (scheme != "https") {
+                uri?.also {
+                    contentResolver.openInputStream(uri)?.use {
+                        mainViewModel.importData(it)
+                    }
+                }
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        resultLauncherSaveData = registerForActivityResult(CreateBackupDocument()) { uri ->
+            uri?.also {
+                contentResolver.openOutputStream(uri)?.let { outputStream ->
+                    mainViewModel.exportData(outputStream)
+                }
+            }
+        }
+        resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
+            uri?.also {
+                contentResolver.openInputStream(uri)?.use {
+                    mainViewModel.importData(it)
+                }
+            }
+        }
         setContent {
             GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
                 SetStatusBarColors()
+                handleIntent()
 
                 val showSplashScreen = mainViewModel.appInitialized()
                 val splashScreenState by rememberSplashScreenState(showSplashScreen = showSplashScreen)

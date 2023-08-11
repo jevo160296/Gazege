@@ -87,4 +87,7 @@
     <string name="justPendingTransactions">Sólo transacciones pendientes</string>
     <string name="LoadingPersonSummaryView">Calculando flujo de dinero.</string>
     <string name="AddAnotherTransaction">Agregar varias transacciones.</string>
+    <string name="Export_transactions">Exportar transacciones</string>
+    <string name="Export_budget">Exportar presupuesto</string>
+    <string name="Importar_transacciones">Importar transacciones</string>
 </resources>

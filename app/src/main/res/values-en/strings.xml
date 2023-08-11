@@ -86,4 +86,7 @@
     <string name="justPendingTransactions">Just pending transactions</string>
     <string name="LoadingPersonSummaryView">Computing money flow.</string>
     <string name="AddAnotherTransaction">Add multiple transactions.</string>
+    <string name="Export_transactions">Export transactions</string>
+    <string name="Export_budget">Export budget</string>
+    <string name="Importar_transacciones">Import transactions</string>
 </resources>

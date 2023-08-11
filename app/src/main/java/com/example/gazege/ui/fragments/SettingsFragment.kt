@@ -34,6 +34,8 @@ import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.SegmentedButton
+import com.example.gazege.ui.widgets.SegmentedButtonItem
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +51,9 @@ fun SettingsFragment(
     onAddPersonRequested: () -> Unit,
     onAddCategoryRequested: () -> Unit,
     onAddBudgetRequested: () -> Unit,
-    onNavigateUpRequested: () -> Unit
+    onNavigateUpRequested: () -> Unit,
+    onExportDataRequested: () -> Unit,
+    onImportDataRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
         mutableStateOf(false)
@@ -131,6 +135,27 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
+        SegmentedButton(
+            selectedIndex = null,
+            items = listOf(
+                SegmentedButtonItem(
+                    text = {
+                        Text(text = "Exportar data")
+                    },
+                    leadingIcon = {}
+                ),
+                SegmentedButtonItem(
+                    text = {
+                        Text(text = "Importar data")
+                    },
+                    leadingIcon = {}
+                )
+            )) {
+            when (it) {
+                0 -> onExportDataRequested()
+                1 -> onImportDataRequested()
+            }
+        }
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

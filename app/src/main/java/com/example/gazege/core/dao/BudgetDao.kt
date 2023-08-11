@@ -28,6 +28,11 @@ interface BudgetDao {
     @Update
     suspend fun update(budget: Budget)
 
+    @Query(
+        "DELETE FROM Budget"
+    )
+    suspend fun deleteAll()
+
     companion object {
         fun calculateOneBudgetRealFlow(
             budget: BudgetAndCategoryWithTransactions,

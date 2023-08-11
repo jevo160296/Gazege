@@ -53,8 +53,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updatePerson(person: Person) {
-        personDao.update(person)
+    suspend fun updatePerson(vararg person: Person) {
+        personDao.updateAll(*person)
     }
 
     @WorkerThread
@@ -116,5 +116,14 @@ class AppRepository(
     @WorkerThread
     suspend fun deleteBudget(budget: Budget) {
         budgetDao.deleteAll(budget)
+    }
+
+    @WorkerThread
+    suspend fun deleteAllData() {
+        accountDao.deleteAll()
+        budgetDao.deleteAll()
+        categoryDao.deleteAll()
+        personDao.deleteAll()
+        transactionDao.deleteAll()
     }
 }

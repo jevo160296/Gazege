@@ -37,6 +37,11 @@ interface AccountDao {
     @Delete
     suspend fun delete(account: Account): Int
 
+    @Query(
+        "DELETE FROM Account"
+    )
+    suspend fun deleteAll()
+
     companion object {
         fun calculateIngresos(
             account: AccountAndOwnerWithTransactions,
