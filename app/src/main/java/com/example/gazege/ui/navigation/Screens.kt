@@ -117,6 +117,9 @@ fun MainNavHost(
                 onNavigateToAddCategory = navController::navigateToAddCategory,
                 onExportTransactionsRequested = {
                     mainViewModel.startActivityToSaveDocument("exportedTransactions.csv")
+                },
+                onImportTransactionsRequested = {
+                    mainViewModel.startActivityToOpenDocument(arrayOf("*/*"))
                 }
             )
             screenSaldoActualSettings(viewModel = mainViewModel)

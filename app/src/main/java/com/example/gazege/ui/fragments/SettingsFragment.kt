@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,8 @@ import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.SegmentedButton
+import com.example.gazege.ui.widgets.SegmentedButtonItem
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +52,7 @@ fun SettingsFragment(
     onAddCategoryRequested: () -> Unit,
     onAddBudgetRequested: () -> Unit,
     onExportTransactionsRequested: () -> Unit,
+    onImportTransactionsRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
@@ -133,12 +135,29 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onExportTransactionsRequested
-        ) {
-            Text(text = stringResource(id = R.string.Export_transactions))
-        }
+        SegmentedButton(
+            items = listOf(
+                SegmentedButtonItem(
+                    text = {
+                        Text(text = stringResource(id = R.string.Export_transactions))
+                    },
+                    leadingIcon = {}
+                ),
+                SegmentedButtonItem(
+                    text = {
+                        Text(text = stringResource(id = R.string.Importar_transacciones))
+                    },
+                    leadingIcon = {}
+                )
+            ),
+            onItemClicked = {
+                when (it) {
+                    0 -> onExportTransactionsRequested()
+                    1 -> onImportTransactionsRequested()
+                }
+            },
+            selectedIndex = null
+        )
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

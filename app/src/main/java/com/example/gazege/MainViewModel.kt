@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
+import com.example.gazege.core.export.readTransactionsFromCsv
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
@@ -20,6 +21,8 @@ import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import java.io.InputStream
 import java.time.LocalDate
 
 enum class NavPosition {
@@ -126,15 +129,12 @@ data class ExportTransaction(
             categoryId: Int,
             categoryMap: Map<Int?, Category>
         ): ExportCategory = categoryMap[categoryId].let { category ->
-            val parentCategory = category?.parentId?.let { parentId ->
-                getCategoryInfo(
-                    parentId,
-                    categoryMap
-                )
+            val parentCategoryName = category?.parentId?.let { parentId ->
+                (categoryMap[parentId]?.name) ?: unknownCategory(parentId)
             }
             ExportCategory(
                 category?.name ?: unknownCategory(categoryId),
-                parentCategory?.categoryName
+                parentCategoryName
             )
         }
 
@@ -213,7 +213,8 @@ data class ExportTransaction(
 class MainViewModel(
     private val repository: AppRepository,
     private val settings: Settings,
-    private val resultLauncher: ActivityResultLauncher<String>
+    private val resultLauncherSaveDocument: ActivityResultLauncher<String>,
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 ) :
     ViewModel() {
     fun appInitialized(): Boolean {
@@ -222,7 +223,11 @@ class MainViewModel(
         return currentValue
     }
 
-    fun startActivityToSaveDocument(suggestedName: String) = resultLauncher.launch(suggestedName)
+    fun startActivityToSaveDocument(suggestedName: String) =
+        resultLauncherSaveDocument.launch(suggestedName)
+
+    fun startActivityToOpenDocument(mimeTypes: Array<String>): Unit =
+        resultLauncherOpenDocument.launch(mimeTypes)
 
     suspend fun getExportedTransactions(onGathered: (exportData: List<ExportTransaction>) -> Unit) =
         repository.getTransactions(null, null)
@@ -240,18 +245,67 @@ class MainViewModel(
                 }
             }
             .combine(repository.getPersons()) { combined, persons ->
-                object {
-                    val transactions = ExportTransaction.from(
-                        combined.transactions,
-                        combined.accounts,
-                        combined.categories,
-                        persons
-                    )
-                }
+                ExportTransaction.from(
+                    combined.transactions,
+                    combined.accounts,
+                    combined.categories,
+                    persons
+                )
             }
             .collectLatest {
-                onGathered(it.transactions)
+                onGathered(it)
             }
+
+    fun importTransactions(inputStream: InputStream) {
+        val exportTransactions = readTransactionsFromCsv(inputStream)
+        val personsExtracted = exportTransactions
+            .flatMap { exportTransaction ->
+                listOfNotNull(
+                    Person(
+                        id = null,
+                        name = exportTransaction.accountSourceOwnerName,
+                        importance = exportTransaction.accountSourceOwnerImportance
+                    ),
+                    Person(
+                        id = null,
+                        name = exportTransaction.accountDestinationOwnerName,
+                        importance = exportTransaction.accountDestinationOwnerImportance
+                    ),
+                    exportTransaction.accountSourceParentAccountOwnerName?.let {
+                        Person(
+                            id = null,
+                            name = exportTransaction.accountSourceParentAccountOwnerName,
+                            importance = exportTransaction.accountSourceOwnerImportance
+                        )
+                    },
+                    exportTransaction.accountDestinationParentAccountOwnerName?.let {
+                        Person(
+                            id = null,
+                            name = exportTransaction.accountDestinationParentAccountOwnerName,
+                            importance = exportTransaction.accountDestinationParentAccountOwnerImportance
+                        )
+                    }
+                )
+            }
+            .filter { it.name != "" }
+            .associateBy { person -> person.name }
+            .map { tuple -> tuple.value }
+        viewModelScope.launch {
+            val personsToUpsert = mutableListOf<Person>()
+            val currentPersons = repository.getPersons().firstOrNull() ?: emptyList()
+            val currentPersonMap = currentPersons.associate { Pair(it.name, it.id) }
+            personsExtracted.forEach { person ->
+                val personId = currentPersonMap[person.name]
+                personsToUpsert.add(person.copy(id = personId))
+            }
+            insertPerson(*personsToUpsert
+                .filter { it.id == null }
+                .toTypedArray()) {}
+            updatePerson(*personsToUpsert
+                .filter { it.id != null }
+                .toTypedArray()) {}
+        }
+    }
 
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
@@ -882,9 +936,9 @@ class MainViewModel(
             repository.insertPerson(*person)
         }
 
-    fun updatePerson(person: Person, onErrorAction: (Throwable) -> Unit) =
+    fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {
-            repository.updatePerson(person)
+            repository.updatePerson(*person)
         }
 
     fun deletePerson(person: Person) = viewModelScope.launch {
@@ -1115,13 +1169,19 @@ class MainViewModel(
 class MainViewModelFactory(
     private val repository: AppRepository,
     private val settings: Settings,
-    private val resultLauncher: ActivityResultLauncher<String>
+    private val resultLauncherSaveDocument: ActivityResultLauncher<String>,
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 ) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository, settings, resultLauncher) as T
+            return MainViewModel(
+                repository,
+                settings,
+                resultLauncherSaveDocument,
+                resultLauncherOpenDocument
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

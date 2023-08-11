@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -53,15 +54,22 @@ class MainActivity : ComponentActivity() {
     }
     private val settings by lazy { Settings(this) }
 
-    private lateinit var resultLauncher: ActivityResultLauncher<String>
+    private lateinit var resultLauncherSaveDocument: ActivityResultLauncher<String>
+
+    private lateinit var resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(repository, settings, resultLauncher)
+        MainViewModelFactory(
+            repository,
+            settings,
+            resultLauncherSaveDocument,
+            resultLauncherOpenDocument
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        resultLauncher = registerForActivityResult(CreateDocument("txt/csv")) { uri ->
+        resultLauncherSaveDocument = registerForActivityResult(CreateDocument("txt/csv")) { uri ->
             mainViewModel.viewModelScope.launch {
                 mainViewModel.getExportedTransactions { exportTransactions ->
                     uri?.also { uri ->
@@ -69,6 +77,13 @@ class MainActivity : ComponentActivity() {
                             writeCsv(it, exportTransactions)
                         }
                     }
+                }
+            }
+        }
+        resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
+            uri?.also {
+                contentResolver.openInputStream(uri)?.use {
+                    mainViewModel.importTransactions(it)
                 }
             }
         }

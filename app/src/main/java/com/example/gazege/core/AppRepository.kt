@@ -53,8 +53,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updatePerson(person: Person) {
-        personDao.update(person)
+    suspend fun updatePerson(vararg person: Person) {
+        personDao.updateAll(*person)
     }
 
     @WorkerThread
