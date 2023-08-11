@@ -1,5 +1,6 @@
 package com.example.gazege
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,6 +65,20 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun handleIntent() {
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent?.data
+            val scheme = uri?.scheme
+            if (scheme != "https") {
+                uri?.also {
+                    contentResolver.openInputStream(uri)?.use {
+                        mainViewModel.importData(it)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         resultLauncherSaveData = registerForActivityResult(CreateBackupDocument()) { uri ->
@@ -83,6 +98,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
                 SetStatusBarColors()
+                handleIntent()
 
                 val showSplashScreen = mainViewModel.appInitialized()
                 val splashScreenState by rememberSplashScreenState(showSplashScreen = showSplashScreen)

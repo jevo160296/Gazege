@@ -73,7 +73,7 @@ class MainViewModel(
         resultLauncherSaveData.launch(suggestedName)
 
     fun startActivityToLoadData() =
-        resultLauncherOpenDocument.launch(arrayOf("application/gazip"))
+        resultLauncherOpenDocument.launch(arrayOf("*/*"))
 
     suspend fun getTransactions() =
         repository.getTransactions(null, null)

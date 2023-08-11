@@ -17,7 +17,7 @@ import com.example.gazege.core.migrations.MigrateSpec56
         Category::class,
         Budget::class
     ],
-    version = 11,
+    version = 12,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 4, to = 5),
@@ -26,7 +26,8 @@ import com.example.gazege.core.migrations.MigrateSpec56
         AutoMigration(from = 7, to = 8),
         AutoMigration(8, 9),
         AutoMigration(9, 10),
-        AutoMigration(10, 11)
+        AutoMigration(10, 11),
+        AutoMigration(11, 12)
     ]
 )
 @TypeConverters(Converters::class)
