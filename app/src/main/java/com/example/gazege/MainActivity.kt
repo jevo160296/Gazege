@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
@@ -25,11 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
-import com.example.gazege.core.export.writeCsv
+import com.example.gazege.core.export.CreateBackupDocument
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.fragments.IconVisibility
 import com.example.gazege.ui.fragments.SplashScreenFragment
@@ -38,7 +36,6 @@ import com.example.gazege.ui.navigation.MainNavHost
 import com.example.gazege.ui.theme.GazegeTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.min
 
 class MainActivity : ComponentActivity() {
@@ -54,7 +51,7 @@ class MainActivity : ComponentActivity() {
     }
     private val settings by lazy { Settings(this) }
 
-    private lateinit var resultLauncherSaveDocument: ActivityResultLauncher<String>
+    private lateinit var resultLauncherSaveData: ActivityResultLauncher<String>
 
     private lateinit var resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 
@@ -62,28 +59,24 @@ class MainActivity : ComponentActivity() {
         MainViewModelFactory(
             repository,
             settings,
-            resultLauncherSaveDocument,
+            resultLauncherSaveData,
             resultLauncherOpenDocument
         )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        resultLauncherSaveDocument = registerForActivityResult(CreateDocument("txt/csv")) { uri ->
-            mainViewModel.viewModelScope.launch {
-                mainViewModel.getExportedTransactions { exportTransactions ->
-                    uri?.also { uri ->
-                        contentResolver.openOutputStream(uri)?.use {
-                            writeCsv(it, exportTransactions)
-                        }
-                    }
+        resultLauncherSaveData = registerForActivityResult(CreateBackupDocument()) { uri ->
+            uri?.also {
+                contentResolver.openOutputStream(uri)?.let { outputStream ->
+                    mainViewModel.exportData(outputStream)
                 }
             }
         }
         resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
             uri?.also {
                 contentResolver.openInputStream(uri)?.use {
-                    mainViewModel.importTransactions(it)
+                    mainViewModel.importData(it)
                 }
             }
         }

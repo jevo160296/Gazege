@@ -115,11 +115,11 @@ fun MainNavHost(
                 onNavigateToAddPerson = navController::navigateToAddPerson,
                 onNavigateToAddBudget = navController::navigateToAddOneBudget,
                 onNavigateToAddCategory = navController::navigateToAddCategory,
-                onExportTransactionsRequested = {
-                    mainViewModel.startActivityToSaveDocument("exportedTransactions.csv")
+                onExportDataRequested = {
+                    mainViewModel.startActivityToSaveData("backup.gazip")
                 },
-                onImportTransactionsRequested = {
-                    mainViewModel.startActivityToOpenDocument(arrayOf("*/*"))
+                onImportDataRequested = {
+                    mainViewModel.startActivityToLoadData()
                 }
             )
             screenSaldoActualSettings(viewModel = mainViewModel)

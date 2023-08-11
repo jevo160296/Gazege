@@ -51,9 +51,9 @@ fun SettingsFragment(
     onAddPersonRequested: () -> Unit,
     onAddCategoryRequested: () -> Unit,
     onAddBudgetRequested: () -> Unit,
-    onExportTransactionsRequested: () -> Unit,
-    onImportTransactionsRequested: () -> Unit,
-    onNavigateUpRequested: () -> Unit
+    onNavigateUpRequested: () -> Unit,
+    onExportDataRequested: () -> Unit,
+    onImportDataRequested: () -> Unit
 ) {
     var principalPersonExpanded by rememberSaveable {
         mutableStateOf(false)
@@ -136,28 +136,26 @@ fun SettingsFragment(
             onAccountAddRequested = onAddAccountRequested
         )
         SegmentedButton(
+            selectedIndex = null,
             items = listOf(
                 SegmentedButtonItem(
                     text = {
-                        Text(text = stringResource(id = R.string.Export_transactions))
+                        Text(text = "Exportar data")
                     },
                     leadingIcon = {}
                 ),
                 SegmentedButtonItem(
                     text = {
-                        Text(text = stringResource(id = R.string.Importar_transacciones))
+                        Text(text = "Importar data")
                     },
                     leadingIcon = {}
                 )
-            ),
-            onItemClicked = {
-                when (it) {
-                    0 -> onExportTransactionsRequested()
-                    1 -> onImportTransactionsRequested()
-                }
-            },
-            selectedIndex = null
-        )
+            )) {
+            when (it) {
+                0 -> onExportDataRequested()
+                1 -> onImportDataRequested()
+            }
+        }
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

@@ -8,7 +8,17 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
 import com.example.gazege.core.entities.*
+import com.example.gazege.core.export.readAccountFromCsv
+import com.example.gazege.core.export.readBudgetFromCsv
+import com.example.gazege.core.export.readCategoryFromCsv
+import com.example.gazege.core.export.readPersonsFromCsv
 import com.example.gazege.core.export.readTransactionsFromCsv
+import com.example.gazege.core.export.writeAccounts
+import com.example.gazege.core.export.writeBudget
+import com.example.gazege.core.export.writeCategories
+import com.example.gazege.core.export.writePersons
+import com.example.gazege.core.export.writeTransactions
+import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
@@ -19,11 +29,14 @@ import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDate
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES
@@ -41,179 +54,10 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
-fun unknownPerson(id: Int) = "Unknown person name, id: $id"
-
-fun unknownAccount(id: Int) = "Unknown account name, id: $id"
-
-fun unknownCategory(id: Int) = "Unknown category name, id: $id"
-
-data class ExportAccount(
-    val accountName: String,
-    val ownerName: String,
-    val ownerImportance: Int?,
-    val includedInTotal: Boolean,
-    val isIncome: Boolean,
-    val isOutcome: Boolean,
-    val parentAccountName: String?,
-    val parentAccountOwnerName: String?,
-    val parentAccountOwnerImportance: Int?,
-    val parentAccountIncludedInTotal: Boolean?,
-    val parentAccountIsIncome: Boolean?,
-    val parentAccountIsOutcome: Boolean?
-)
-
-data class ExportCategory(
-    val categoryName: String,
-    val categoryParentName: String?
-)
-
-data class ExportTransaction(
-    val transactionId: Int?,
-    val transactionAmount: Double,
-    val transactionDescription: String,
-    val accountSourceName: String,
-    val accountSourceOwnerName: String,
-    val accountSourceOwnerImportance: Int?,
-    val accountSourceIncludedInTotal: Boolean,
-    val accountSourceIsIncome: Boolean,
-    val accountSourceIsOutcome: Boolean,
-    val accountSourceParentAccountName: String?,
-    val accountSourceParentAccountOwnerName: String?,
-    val accountSourceParentAccountOwnerImportance: Int?,
-    val accountSourceParentAccountIncludedInTotal: Boolean?,
-    val accountSourceParentAccountIsIncome: Boolean?,
-    val accountSourceParentAccountIsOutcome: Boolean?,
-    val accountDestinationName: String,
-    val accountDestinationOwnerName: String,
-    val accountDestinationOwnerImportance: Int?,
-    val accountDestinationIncludedInTotal: Boolean,
-    val accountDestinationIsIncome: Boolean,
-    val accountDestinationIsOutcome: Boolean,
-    val accountDestinationParentAccountName: String?,
-    val accountDestinationParentAccountOwnerName: String?,
-    val accountDestinationParentAccountOwnerImportance: Int?,
-    val accountDestinationParentAccountIncludedInTotal: Boolean?,
-    val accountDestinationParentAccountIsIncome: Boolean?,
-    val accountDestinationParentAccountIsOutcome: Boolean?,
-    val categoryName: String?,
-    val categoryParentName: String?,
-    val date: LocalDate,
-    val aNombreDe: String?
-) {
-    companion object {
-        private fun getAccountInfo(
-            accountId: Int,
-            accountMap: Map<Int?, Account>,
-            personMap: Map<Int?, Person>
-        ): ExportAccount = accountMap[accountId].let { account ->
-            val parentInfo = account?.parentId?.let { getAccountInfo(it, accountMap, personMap) }
-            ExportAccount(
-                accountName = account?.name ?: unknownAccount(accountId),
-                ownerName = account?.let {
-                    personMap[account.ownerId]?.name ?: unknownPerson(account.ownerId)
-                } ?: unknownAccount(accountId),
-                ownerImportance = account?.let { personMap[account.ownerId]?.importance },
-                includedInTotal = account?.includedInTotal ?: true,
-                isIncome = account?.isIncome ?: false,
-                isOutcome = account?.isOutcome ?: false,
-                parentAccountName = parentInfo?.accountName,
-                parentAccountOwnerName = parentInfo?.ownerName,
-                parentAccountOwnerImportance = parentInfo?.ownerImportance,
-                parentAccountIncludedInTotal = parentInfo?.includedInTotal,
-                parentAccountIsIncome = parentInfo?.isIncome,
-                parentAccountIsOutcome = parentInfo?.isOutcome
-            )
-        }
-
-        private fun getCategoryInfo(
-            categoryId: Int,
-            categoryMap: Map<Int?, Category>
-        ): ExportCategory = categoryMap[categoryId].let { category ->
-            val parentCategoryName = category?.parentId?.let { parentId ->
-                (categoryMap[parentId]?.name) ?: unknownCategory(parentId)
-            }
-            ExportCategory(
-                category?.name ?: unknownCategory(categoryId),
-                parentCategoryName
-            )
-        }
-
-        fun from(
-            transactions: List<Transaction>,
-            accounts: List<Account>,
-            categories: List<Category>,
-            persons: List<Person>
-        ): List<ExportTransaction> =
-            persons.let { personList ->
-                val personMap = personList.associateBy { it.id }
-                categories.let { categoryList ->
-                    val categoryMap = categoryList.associateBy { it.id }
-                    accounts.let { accountList ->
-                        val accountsMap = accountList.associateBy { it.id }
-                        transactions
-                            .map { transaction ->
-                                val sourceAccountInfo = getAccountInfo(
-                                    transaction.sourceId,
-                                    accountsMap,
-                                    personMap
-                                )
-                                val destinationAccountInfo = getAccountInfo(
-                                    transaction.destinationId,
-                                    accountsMap,
-                                    personMap
-                                )
-                                val categoryInfo = transaction.categoryId?.let {
-                                    getCategoryInfo(
-                                        transaction.categoryId,
-                                        categoryMap
-                                    )
-                                }
-                                ExportTransaction(
-                                    transactionId = transaction.id,
-                                    transactionAmount = transaction.amount,
-                                    transactionDescription = transaction.description,
-                                    accountSourceName = sourceAccountInfo.accountName,
-                                    accountSourceOwnerName = sourceAccountInfo.ownerName,
-                                    accountSourceOwnerImportance = sourceAccountInfo.ownerImportance,
-                                    accountSourceIncludedInTotal = sourceAccountInfo.includedInTotal,
-                                    accountSourceIsIncome = sourceAccountInfo.isIncome,
-                                    accountSourceIsOutcome = sourceAccountInfo.isOutcome,
-                                    accountSourceParentAccountIncludedInTotal = sourceAccountInfo.parentAccountIncludedInTotal,
-                                    accountSourceParentAccountIsIncome = sourceAccountInfo.parentAccountIsIncome,
-                                    accountSourceParentAccountIsOutcome = sourceAccountInfo.parentAccountIsOutcome,
-                                    accountSourceParentAccountName = sourceAccountInfo.parentAccountName,
-                                    accountSourceParentAccountOwnerName = sourceAccountInfo.parentAccountOwnerName,
-                                    accountSourceParentAccountOwnerImportance = sourceAccountInfo.ownerImportance,
-                                    accountDestinationName = destinationAccountInfo.accountName,
-                                    accountDestinationOwnerName = destinationAccountInfo.ownerName,
-                                    accountDestinationOwnerImportance = destinationAccountInfo.ownerImportance,
-                                    accountDestinationIncludedInTotal = destinationAccountInfo.includedInTotal,
-                                    accountDestinationIsIncome = destinationAccountInfo.isIncome,
-                                    accountDestinationIsOutcome = destinationAccountInfo.isOutcome,
-                                    accountDestinationParentAccountName = destinationAccountInfo.parentAccountName,
-                                    accountDestinationParentAccountOwnerName = destinationAccountInfo.parentAccountOwnerName,
-                                    accountDestinationParentAccountOwnerImportance = destinationAccountInfo.parentAccountOwnerImportance,
-                                    accountDestinationParentAccountIncludedInTotal = destinationAccountInfo.parentAccountIncludedInTotal,
-                                    accountDestinationParentAccountIsIncome = destinationAccountInfo.parentAccountIsIncome,
-                                    accountDestinationParentAccountIsOutcome = destinationAccountInfo.parentAccountIsOutcome,
-                                    categoryName = categoryInfo?.categoryName,
-                                    categoryParentName = categoryInfo?.categoryParentName,
-                                    date = transaction.date,
-                                    aNombreDe = transaction.aNombreDe?.let { aNombreDe ->
-                                        personMap[aNombreDe]?.name ?: unknownPerson(aNombreDe)
-                                    }
-                                )
-                            }
-                    }
-                }
-            }
-    }
-}
-
 class MainViewModel(
     private val repository: AppRepository,
     private val settings: Settings,
-    private val resultLauncherSaveDocument: ActivityResultLauncher<String>,
+    private val resultLauncherSaveData: ActivityResultLauncher<String>,
     private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 ) :
     ViewModel() {
@@ -223,87 +67,184 @@ class MainViewModel(
         return currentValue
     }
 
-    fun startActivityToSaveDocument(suggestedName: String) =
-        resultLauncherSaveDocument.launch(suggestedName)
+    fun startActivityToSaveData(
+        suggestedName: String
+    ) =
+        resultLauncherSaveData.launch(suggestedName)
 
-    fun startActivityToOpenDocument(mimeTypes: Array<String>): Unit =
-        resultLauncherOpenDocument.launch(mimeTypes)
+    fun startActivityToLoadData() =
+        resultLauncherOpenDocument.launch(arrayOf("application/gazip"))
 
-    suspend fun getExportedTransactions(onGathered: (exportData: List<ExportTransaction>) -> Unit) =
+    suspend fun getTransactions() =
         repository.getTransactions(null, null)
-            .combine(repository.getAccounts()) { combined, accounts ->
-                object {
-                    val transactions = combined
-                    val accounts = accounts
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getPersons() =
+        repository.getPersons()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getCategories() =
+        repository.getCategories()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getAccounts() =
+        repository.getAccounts()
+            .firstOrNull()
+            ?: emptyList()
+
+    suspend fun getBudget() =
+        repository.getBudgets()
+            .firstOrNull()
+            ?: emptyList()
+
+    fun exportData(outputStream: OutputStream) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val persons = getPersons()
+                val personsOutputStream = ByteArrayOutputStream()
+                personsOutputStream.use {
+                    writePersons(it, persons)
                 }
-            }
-            .combine(repository.getCategories()) { combined, categories ->
-                object {
-                    val transactions = combined.transactions
-                    val accounts = combined.accounts
-                    val categories = categories
+
+                val categories = getCategories()
+                val categoriesOutputStream = ByteArrayOutputStream()
+                categoriesOutputStream.use {
+                    writeCategories(it, categories)
                 }
+
+                val accounts = getAccounts()
+                val accountsOutputStream = ByteArrayOutputStream()
+                accountsOutputStream.use {
+                    writeAccounts(it, accounts)
+                }
+
+                val budget = getBudget()
+                val budgetOutputStream = ByteArrayOutputStream()
+                budgetOutputStream.use {
+                    writeBudget(it, budget)
+                }
+
+                val transactions = getTransactions()
+                val transactionsOutputStream = ByteArrayOutputStream()
+                transactionsOutputStream.use {
+                    writeTransactions(it, transactions)
+                }
+
+                val personsInputStream = ByteArrayInputStream(personsOutputStream.toByteArray())
+                val categoriesInputStream =
+                    ByteArrayInputStream(categoriesOutputStream.toByteArray())
+                val budgetInputStream = ByteArrayInputStream(budgetOutputStream.toByteArray())
+                val accountsInputStream = ByteArrayInputStream(accountsOutputStream.toByteArray())
+                val transactionsInputStream =
+                    ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                ZipOutputStream(outputStream)
+                    .use { zipOurpurStream ->
+                        writeZipBackup(
+                            transactionsInputStream,
+                            personsInputStream,
+                            categoriesInputStream,
+                            accountsInputStream,
+                            budgetInputStream,
+                            zipOurpurStream
+                        )
+                    }
             }
-            .combine(repository.getPersons()) { combined, persons ->
-                ExportTransaction.from(
-                    combined.transactions,
-                    combined.accounts,
-                    combined.categories,
-                    persons
+        }
+    }
+
+    fun importData(inputStream: InputStream) {
+        var transactions: List<Transaction>? = null
+        var categories: List<Category>? = null
+        var persons: List<Person>? = null
+        var budget: List<Budget>? = null
+        var accounts: List<Account>? = null
+        ZipInputStream(inputStream)
+            .use { zipInputStream ->
+                generateSequence {
+                    val entry = zipInputStream.nextEntry
+                    entry
+                }
+                    .map {
+                        when (it.name) {
+                            "transacciones.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        transactions = readTransactionsFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "categorias.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        categories = readCategoryFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "cuentas.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        accounts = readAccountFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "presupuesto.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        budget = readBudgetFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            "personas.csv" -> {
+                                zipInputStream.readBytes().run {
+                                    inputStream().run {
+                                        persons = readPersonsFromCsv(this)
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }
+                    .toList()
+            }
+        deleteAll().invokeOnCompletion {
+            persons?.also { persons ->
+                insertPerson(*persons.toTypedArray()) {}
+            }
+            accounts?.also { accounts ->
+                insertAccount(
+                    *accounts.toTypedArray(),
+                    onErrorAction = {
+                    }
+                ) {}
+            }
+            categories?.also { categories ->
+                insertCategory(
+                    *categories.toTypedArray(),
+                    onErrorAction = {
+                    },
+                    onCompleitionAction = {}
                 )
             }
-            .collectLatest {
-                onGathered(it)
-            }
-
-    fun importTransactions(inputStream: InputStream) {
-        val exportTransactions = readTransactionsFromCsv(inputStream)
-        val personsExtracted = exportTransactions
-            .flatMap { exportTransaction ->
-                listOfNotNull(
-                    Person(
-                        id = null,
-                        name = exportTransaction.accountSourceOwnerName,
-                        importance = exportTransaction.accountSourceOwnerImportance
-                    ),
-                    Person(
-                        id = null,
-                        name = exportTransaction.accountDestinationOwnerName,
-                        importance = exportTransaction.accountDestinationOwnerImportance
-                    ),
-                    exportTransaction.accountSourceParentAccountOwnerName?.let {
-                        Person(
-                            id = null,
-                            name = exportTransaction.accountSourceParentAccountOwnerName,
-                            importance = exportTransaction.accountSourceOwnerImportance
-                        )
-                    },
-                    exportTransaction.accountDestinationParentAccountOwnerName?.let {
-                        Person(
-                            id = null,
-                            name = exportTransaction.accountDestinationParentAccountOwnerName,
-                            importance = exportTransaction.accountDestinationParentAccountOwnerImportance
-                        )
+            budget?.also { budget ->
+                insertBudget(
+                    *budget.toTypedArray(),
+                    onCompleitionAction = {},
+                    onErrorAction = {
                     }
                 )
             }
-            .filter { it.name != "" }
-            .associateBy { person -> person.name }
-            .map { tuple -> tuple.value }
-        viewModelScope.launch {
-            val personsToUpsert = mutableListOf<Person>()
-            val currentPersons = repository.getPersons().firstOrNull() ?: emptyList()
-            val currentPersonMap = currentPersons.associate { Pair(it.name, it.id) }
-            personsExtracted.forEach { person ->
-                val personId = currentPersonMap[person.name]
-                personsToUpsert.add(person.copy(id = personId))
+            transactions?.also { transactions ->
+                insertTransaction(*transactions.toTypedArray()) {
+                }
             }
-            insertPerson(*personsToUpsert
-                .filter { it.id == null }
-                .toTypedArray()) {}
-            updatePerson(*personsToUpsert
-                .filter { it.id != null }
-                .toTypedArray()) {}
         }
     }
 
@@ -1084,6 +1025,10 @@ class MainViewModel(
         repository.deleteBudget(budget)
     }
 
+    fun deleteAll() = viewModelScope.launch {
+        repository.deleteAllData()
+    }
+
     fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
         settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
     }
@@ -1169,7 +1114,7 @@ class MainViewModel(
 class MainViewModelFactory(
     private val repository: AppRepository,
     private val settings: Settings,
-    private val resultLauncherSaveDocument: ActivityResultLauncher<String>,
+    private val resultLauncherSaveTransaction: ActivityResultLauncher<String>,
     private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 ) :
     ViewModelProvider.Factory {
@@ -1179,7 +1124,7 @@ class MainViewModelFactory(
             return MainViewModel(
                 repository,
                 settings,
-                resultLauncherSaveDocument,
+                resultLauncherSaveTransaction,
                 resultLauncherOpenDocument
             ) as T
         }

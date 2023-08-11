@@ -12,13 +12,15 @@ import androidx.room.PrimaryKey
             entity = Person::class,
             parentColumns = ["id"],
             childColumns = ["ownerId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            deferred = true
         ),
         ForeignKey(
             entity = Account::class,
             parentColumns = ["id"],
             childColumns = ["parentId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
+            deferred = true
         )],
     indices = [
         Index(value = ["name", "ownerId"], unique = true)

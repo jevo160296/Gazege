@@ -29,6 +29,11 @@ interface CategoryDao {
     @Update
     suspend fun updateAll(vararg category: Category)
 
+    @Query(
+        "DELETE FROM Category"
+    )
+    suspend fun deleteAll()
+
     companion object {
         fun calculateOneCategoryRealFlow(
             categoryWithTransactions: CategoryWithTransactions,

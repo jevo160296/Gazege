@@ -32,6 +32,11 @@ interface PersonDao {
     @Delete
     suspend fun delete(person: Person): Int
 
+    @Query(
+        "DELETE FROM Person"
+    )
+    suspend fun deleteAll()
+
     companion object {
         private fun calculateValues(
             person: PersonWithAccounts,

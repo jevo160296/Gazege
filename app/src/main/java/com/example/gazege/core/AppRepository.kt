@@ -117,4 +117,13 @@ class AppRepository(
     suspend fun deleteBudget(budget: Budget) {
         budgetDao.deleteAll(budget)
     }
+
+    @WorkerThread
+    suspend fun deleteAllData() {
+        accountDao.deleteAll()
+        budgetDao.deleteAll()
+        categoryDao.deleteAll()
+        personDao.deleteAll()
+        transactionDao.deleteAll()
+    }
 }
