@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
             val scheme = uri?.scheme
             if (scheme != "https") {
                 uri?.also {
-                    contentResolver.openInputStream(uri)?.use {
+                    contentResolver.openInputStream(uri)?.also {
                         mainViewModel.importData(it)
                     }
                 }
@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
         }
         resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
             uri?.also {
-                contentResolver.openInputStream(uri)?.use {
+                contentResolver.openInputStream(uri)?.also {
                     mainViewModel.importData(it)
                 }
             }

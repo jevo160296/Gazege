@@ -161,21 +161,24 @@ class MainViewModel(
         var persons: List<Person>? = null
         var budget: List<Budget>? = null
         var accounts: List<Account>? = null
-        ZipInputStream(inputStream)
-            .use { zipInputStream ->
-                generateSequence {
-                    val entry = zipInputStream.nextEntry
-                    entry
-                }
-                    .map {
-                        when (it.name) {
-                            "transacciones.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        transactions = readTransactionsFromCsv(this)
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                ZipInputStream(inputStream)
+                    .use { zipInputStream ->
+                        generateSequence {
+                            val entry = zipInputStream.nextEntry
+                            entry
+                        }
+                            .map {
+                                when (it.name) {
+                                    "transacciones.csv" -> {
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                transactions = readTransactionsFromCsv(this)
+                                            }
+                                        }
                                     }
-                                }
-                            }
 
                             "categorias.csv" -> {
                                 zipInputStream.readBytes().run {
@@ -193,13 +196,13 @@ class MainViewModel(
                                 }
                             }
 
-                            "presupuesto.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        budget = readBudgetFromCsv(this)
+                                    "presupuesto.csv" -> {
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                budget = readBudgetFromCsv(this)
+                                            }
+                                        }
                                     }
-                                }
-                            }
 
                             "personas.csv" -> {
                                 zipInputStream.readBytes().run {
@@ -209,40 +212,42 @@ class MainViewModel(
                                 }
                             }
 
-                            else -> {}
+                                    else -> {}
+                                }
+                            }
+                            .toList()
+                    }
+                deleteAll().invokeOnCompletion {
+                    persons?.also { persons ->
+                        insertPerson(*persons.toTypedArray()) {}
+                    }
+                    accounts?.also { accounts ->
+                        insertAccount(
+                            *accounts.toTypedArray(),
+                            onErrorAction = {
+                            }
+                        ) {}
+                    }
+                    categories?.also { categories ->
+                        insertCategory(
+                            *categories.toTypedArray(),
+                            onErrorAction = {
+                            },
+                            onCompleitionAction = {}
+                        )
+                    }
+                    budget?.also { budget ->
+                        insertBudget(
+                            *budget.toTypedArray(),
+                            onCompleitionAction = {},
+                            onErrorAction = {
+                            }
+                        )
+                    }
+                    transactions?.also { transactions ->
+                        insertTransaction(*transactions.toTypedArray()) {
                         }
                     }
-                    .toList()
-            }
-        deleteAll().invokeOnCompletion {
-            persons?.also { persons ->
-                insertPerson(*persons.toTypedArray()) {}
-            }
-            accounts?.also { accounts ->
-                insertAccount(
-                    *accounts.toTypedArray(),
-                    onErrorAction = {
-                    }
-                ) {}
-            }
-            categories?.also { categories ->
-                insertCategory(
-                    *categories.toTypedArray(),
-                    onErrorAction = {
-                    },
-                    onCompleitionAction = {}
-                )
-            }
-            budget?.also { budget ->
-                insertBudget(
-                    *budget.toTypedArray(),
-                    onCompleitionAction = {},
-                    onErrorAction = {
-                    }
-                )
-            }
-            transactions?.also { transactions ->
-                insertTransaction(*transactions.toTypedArray()) {
                 }
             }
         }
