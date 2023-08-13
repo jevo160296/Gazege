@@ -224,7 +224,11 @@ class MainViewModel(
         var budget: List<Budget>? = null
         var accounts: List<Account>? = null
 
-        viewModelScope.launch {
+        viewModelScope.safeLaunch(
+            onErrorAction = {
+                progressStatus.error("Error: ${it.message}")
+            }
+        ) {
             withContext(Dispatchers.IO) {
                 ZipInputStream(inputStream)
                     .use { zipInputStream ->
@@ -740,6 +744,10 @@ class MainViewModel(
     private val outcomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     private val transferFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    fun updateImportStateStatus(newState: Status) {
+        loadingDataState.value = loadingDataState.value?.copy(status = newState)
+    }
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue

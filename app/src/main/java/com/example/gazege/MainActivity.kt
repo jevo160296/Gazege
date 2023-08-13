@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -147,8 +148,20 @@ class MainActivity : ComponentActivity() {
                         }
 
                         Status.ERROR -> {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("ERROR")
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column {
+                                    Text(importState.message)
+                                    TextButton(onClick = {
+                                        mainViewModel.updateImportStateStatus(
+                                            Status.NOT_STARTED
+                                        )
+                                    }) {
+                                        Text(text = "Continue")
+                                    }
+                                }
                             }
                         }
 
