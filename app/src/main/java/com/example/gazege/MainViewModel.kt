@@ -133,24 +133,17 @@ class MainViewModel(
             )
         )
 
-    @Composable
-    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
-        .observeAsState(
-            ProgressStatusState(
-                "Not started",
-                0.0,
-                Status.NOT_STARTED,
-                Type.IMPORT,
-            )
-        )
-
     fun exportData(outputStream: OutputStream) {
         val progressStatus = HistoricalProgressStatus.start(
             "Exporting data",
             totalWork = 8.0,
             defaultIncrement = 1.0
         ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
-        viewModelScope.launch {
+        viewModelScope.safeLaunch(
+            onErrorAction = {
+                progressStatus.error("Error: ${it.message}")
+            }
+        ) {
             withContext(Dispatchers.IO) {
                 progressStatus.incrementProgress("ConvertingPersons")
                 val persons = getPersons()
@@ -224,7 +217,11 @@ class MainViewModel(
         var budget: List<Budget>? = null
         var accounts: List<Account>? = null
 
-        viewModelScope.launch {
+        viewModelScope.safeLaunch(
+            onErrorAction = {
+                progressStatus.error("Error: ${it.message}")
+            }
+        ) {
             withContext(Dispatchers.IO) {
                 ZipInputStream(inputStream)
                     .use { zipInputStream ->
@@ -305,65 +302,94 @@ class MainViewModel(
                             }
                             .toList()
                     }
-                progressStatus.setCompletedWork("Deleting all data", 0.5)
-                deleteAll().invokeOnCompletion {
-                    val totalSize = (persons?.size ?: 0) +
-                            (accounts?.size ?: 0) +
-                            (categories?.size ?: 0) +
-                            (budget?.size ?: 0) +
-                            (transactions?.size ?: 0)
-                    progressStatus.incrementProgress("Inserting values")
-                    persons?.also { persons ->
-                        insertPerson(*persons.toTypedArray()) {}
-                    }
-                    progressStatus.incrementProgress(
-                        "Person inserted",
-                        (persons?.size ?: 0).toDouble() / totalSize
+                progressStatus.incrementProgress("Checking imported data")
+                if (transactions == null ||
+                    categories == null ||
+                    persons == null ||
+                    budget == null ||
+                    accounts == null
+                ) {
+                    throw Exception(
+                        """Error loading data, parsed data:
+                        |transactions: ${transactions?.size}
+                        |categories: ${categories?.size}
+                        |persons: ${persons?.size}
+                        |budget: ${budget?.size}
+                        |accounts: ${accounts?.size}
+                    """.trimMargin()
                     )
-                    accounts?.also { accounts ->
-                        insertAccount(
-                            *accounts.toTypedArray(),
-                            onErrorAction = {
-                            }
-                        ) {}
-                    }
-                    progressStatus.incrementProgress(
-                        "Accounts inserted",
-                        (accounts?.size ?: 0).toDouble() / totalSize
-                    )
-                    categories?.also { categories ->
-                        insertCategory(
-                            *categories.toTypedArray(),
-                            onErrorAction = {
-                            },
-                            onCompleitionAction = {}
-                        )
-                    }
-                    progressStatus.incrementProgress(
-                        "Categories inserted",
-                        (categories?.size ?: 0).toDouble() / totalSize
-                    )
-                    budget?.also { budget ->
-                        insertBudget(
-                            *budget.toTypedArray(),
-                            onCompleitionAction = {},
-                            onErrorAction = {
-                            }
-                        )
-                    }
-                    progressStatus.incrementProgress(
-                        "Budget inserted",
-                        (budget?.size ?: 0).toDouble() / totalSize
-                    )
-                    transactions?.also { transactions ->
-                        insertTransaction(*transactions.toTypedArray()) {
+                } else {
+                    progressStatus.setCompletedWork("Deleting all data", 0.5)
+                    deleteAll().invokeOnCompletion {
+                        val totalSize = (persons?.size ?: 0) +
+                                (accounts?.size ?: 0) +
+                                (categories?.size ?: 0) +
+                                (budget?.size ?: 0) +
+                                (transactions?.size ?: 0)
+                        progressStatus.incrementProgress("Inserting values")
+                        persons?.also { persons ->
+                            insertPerson(*persons.toTypedArray()) {}
                         }
+                        progressStatus.incrementProgress(
+                            "Person inserted",
+                            (persons?.size ?: 0).toDouble() / totalSize
+                        )
+                        accounts?.also { accounts ->
+                            insertAccount(
+                                *accounts.toTypedArray(),
+                                onErrorAction = {
+                                }
+                            ) {}
+                        }
+                        progressStatus.incrementProgress(
+                            "Accounts inserted",
+                            (accounts?.size ?: 0).toDouble() / totalSize
+                        )
+                        categories?.also { categories ->
+                            insertCategory(
+                                *categories.toTypedArray(),
+                                onErrorAction = {
+                                },
+                                onCompleitionAction = {}
+                            )
+                        }
+                        progressStatus.incrementProgress(
+                            "Categories inserted",
+                            (categories?.size ?: 0).toDouble() / totalSize
+                        )
+                        budget?.also { budget ->
+                            insertBudget(
+                                *budget.toTypedArray(),
+                                onCompleitionAction = {},
+                                onErrorAction = {
+                                }
+                            )
+                        }
+                        progressStatus.incrementProgress(
+                            "Budget inserted",
+                            (budget?.size ?: 0).toDouble() / totalSize
+                        )
+                        transactions?.also { transactions ->
+                            insertTransaction(*transactions.toTypedArray()) {
+                            }
+                        }
+                        progressStatus.finish("Done")
                     }
-                    progressStatus.finish("Done")
                 }
             }
         }
     }
+
+    @Composable
+    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
+        .observeAsState(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
 
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
@@ -740,6 +766,10 @@ class MainViewModel(
     private val outcomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     private val transferFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    fun updateImportStateStatus(newState: Status) {
+        loadingDataState.value = loadingDataState.value?.copy(status = newState)
+    }
 
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue

@@ -16,12 +16,58 @@ import java.io.OutputStream
 import java.io.Writer
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.DateTimeParseException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class CreateBackupDocument : CreateDocument("application/gazip")
 
 private fun getCSVFormat() = CSVFormat.EXCEL
+
+fun realizeFormatter(sampleDates: Array<String>): DateTimeFormatter {
+    val sampleDate = sampleDates.firstOrNull() ?: ""
+    val divider =
+        if (sampleDate.contains("-")) {
+            "-"
+        } else if (sampleDate.contains("/")) {
+            "/"
+        } else if (sampleDate.contains("\\")) {
+            "\\"
+        } else {
+            null
+        }
+    val isFirstYear =
+        if ("\\d{4}.*".toRegex().matchEntire(sampleDate) != null) {
+            true
+        } else if (".*\\d{4}".toRegex().matchEntire(sampleDate) != null) {
+            false
+        } else {
+            null
+        }
+    if (divider != null && isFirstYear != null) {
+        return if (isFirstYear) {
+            DateTimeFormatterBuilder()
+                .parseLenient()
+                .parseCaseInsensitive()
+                .appendPattern("yyyy${divider}MM${divider}dd")
+                .toFormatter()
+        } else {
+            DateTimeFormatterBuilder()
+                .parseLenient()
+                .parseCaseInsensitive()
+                .appendPattern("dd${divider}MM${divider}yyyy")
+                .toFormatter()
+        }
+    } else {
+        throw DateTimeParseException("Failed to resolve format: ", sampleDate, 0)
+    }
+}
+
+fun parseDate(dateText: String, formatter: DateTimeFormatter): LocalDate {
+    return LocalDate.parse(dateText, formatter)
+}
 
 fun <T> writeCsv(
     outputStream: OutputStream,
@@ -236,17 +282,32 @@ fun <T> readFromCsv(
 
 fun readTransactionsFromCsv(inputStream: InputStream): List<Transaction> =
     readFromCsv(inputStream) { record, columnIndex, _ ->
-        Transaction(
-            id = record[columnIndex["id"] ?: 0].toIntOrNull(),
-            amount = record[columnIndex["amount"] ?: 0].toDoubleOrNull() ?: 0.0,
-            description = record[columnIndex["description"] ?: 0],
-            sourceId = record[columnIndex["sourceId"] ?: 0].toIntOrNull() ?: 0,
-            destinationId = record[columnIndex["destinationId"] ?: 0].toIntOrNull() ?: 0,
-            categoryId = record[columnIndex["categoryId"] ?: 0].toIntOrNull(),
-            date = LocalDate.parse(record[columnIndex["date"] ?: 0]),
-            aNombreDe = record[columnIndex["aNombreDe"] ?: 0].toIntOrNull()
-        )
+        object {
+            val id = record[columnIndex["id"] ?: 0]
+            val amount = record[columnIndex["amount"] ?: 0]
+            val description = record[columnIndex["description"] ?: 0]
+            val sourceId = record[columnIndex["sourceId"] ?: 0]
+            val destinationId = record[columnIndex["destinationId"] ?: 0]
+            val categoryId = record[columnIndex["categoryId"] ?: 0]
+            val date = record[columnIndex["date"] ?: 0]
+            val aNombreDe = record[columnIndex["aNombreDe"] ?: 0]
+        }
     }
+        .let { items ->
+            val formatter = realizeFormatter(items.take(30).map { it.date }.toTypedArray())
+            items.map { item ->
+                Transaction(
+                    id = item.id.toIntOrNull(),
+                    amount = item.amount.toDoubleOrNull() ?: 0.0,
+                    description = item.description,
+                    sourceId = item.sourceId.toIntOrNull() ?: 0,
+                    destinationId = item.destinationId.toIntOrNull() ?: 0,
+                    categoryId = item.categoryId.toIntOrNull(),
+                    date = parseDate(item.date, formatter),
+                    aNombreDe = item.aNombreDe.toIntOrNull()
+                )
+            }
+        }
 
 fun readPersonsFromCsv(inputStream: InputStream): List<Person> =
     readFromCsv(inputStream) { record, columnIndex, _ ->
@@ -272,18 +333,34 @@ fun readAccountFromCsv(inputStream: InputStream): List<Account> =
 
 fun readBudgetFromCsv(inputStream: InputStream): List<Budget> =
     readFromCsv(inputStream) { record, columnIndex, index ->
-        Budget(
-            id = record[columnIndex["id"] ?: 0].toIntOrNull(),
-            categoryId = record[columnIndex["categoryId"] ?: 0].toIntOrNull() ?: 0,
-            value = record[columnIndex["value"] ?: 0].toDoubleOrNull() ?: 0.0,
-            each = record[columnIndex["each"] ?: 0].toIntOrNull() ?: 0,
-            frequency = record[columnIndex["frequency"] ?: 0].toIntOrNull() ?: 0,
-            frequencyType = FrequencyType.valueOf(record[columnIndex["frequencyType"] ?: 0]),
-            budgetType = BudgetType.valueOf(record[columnIndex["budgetType"] ?: 0]),
-            startDate = LocalDate.parse(record[columnIndex["startDate"] ?: 0]),
-            description = record[columnIndex["description"] ?: 0]
-        )
+        object {
+            val id = record[columnIndex["id"] ?: 0]
+            val categoryId = record[columnIndex["categoryId"] ?: 0]
+            val value = record[columnIndex["value"] ?: 0]
+            val each = record[columnIndex["each"] ?: 0]
+            val frequency = record[columnIndex["frequency"] ?: 0]
+            val frequencyType = record[columnIndex["frequencyType"] ?: 0]
+            val budgetType = record[columnIndex["budgetType"] ?: 0]
+            val startDate = record[columnIndex["startDate"] ?: 0]
+            val description = record[columnIndex["description"] ?: 0]
+        }
     }
+        .let { items ->
+            val formatter = realizeFormatter(items.take(30).map { it.startDate }.toTypedArray())
+            items.map { item ->
+                Budget(
+                    id = item.id.toIntOrNull(),
+                    categoryId = item.categoryId.toIntOrNull() ?: 0,
+                    value = item.value.toDoubleOrNull() ?: 0.0,
+                    each = item.each.toIntOrNull() ?: 0,
+                    frequency = item.frequency.toIntOrNull() ?: 0,
+                    frequencyType = FrequencyType.valueOf(item.frequencyType),
+                    budgetType = BudgetType.valueOf(item.budgetType),
+                    startDate = parseDate(item.startDate, formatter),
+                    description = item.description
+                )
+            }
+        }
 
 fun readCategoryFromCsv(inputStream: InputStream): List<Category> =
     readFromCsv(inputStream) { record, columnIndex, _ ->

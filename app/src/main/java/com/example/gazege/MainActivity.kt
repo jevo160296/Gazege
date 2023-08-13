@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -147,8 +149,22 @@ class MainActivity : ComponentActivity() {
                         }
 
                         Status.ERROR -> {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("ERROR")
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(dimensionResource(id = R.dimen.DefaultPadding)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(importState.message)
+                                    TextButton(onClick = {
+                                        mainViewModel.updateImportStateStatus(
+                                            Status.NOT_STARTED
+                                        )
+                                    }) {
+                                        Text(text = "Skip")
+                                    }
+                                }
                             }
                         }
 

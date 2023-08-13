@@ -24,7 +24,14 @@ abstract class IMutableProgressStatus(
     message: String,
     status: Status,
     open val onUpdate: (progressStatus: IMutableProgressStatus) -> Unit
-) : IProgressStatus(message, status)
+) : IProgressStatus(message, status) {
+    open fun error(message: String) = this
+        .apply {
+            this.status = Status.ERROR
+            this.message = message
+        }
+        .also(onUpdate)
+}
 
 open class IncrementalProgressStatus(
     message: String,
