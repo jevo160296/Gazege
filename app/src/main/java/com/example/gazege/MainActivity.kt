@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -149,17 +150,19 @@ class MainActivity : ComponentActivity() {
 
                         Status.ERROR -> {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(dimensionResource(id = R.dimen.DefaultPadding)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Column {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(importState.message)
                                     TextButton(onClick = {
                                         mainViewModel.updateImportStateStatus(
                                             Status.NOT_STARTED
                                         )
                                     }) {
-                                        Text(text = "Continue")
+                                        Text(text = "Skip")
                                     }
                                 }
                             }
