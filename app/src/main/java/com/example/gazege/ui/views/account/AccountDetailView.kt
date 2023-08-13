@@ -64,10 +64,15 @@ import com.example.gazege.ui.views.BottomSheetController
 import com.example.gazege.ui.views.EntityDetail
 import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
+import com.example.gazege.ui.widgets.BooleanFilters
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.Filter
+import com.example.gazege.ui.widgets.INCOME_FILTER
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.OUTCOME_FILTER
+import com.example.gazege.ui.widgets.TRANSFER_FILTER
+import com.example.gazege.ui.widgets.booleanFilterOf
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -117,9 +122,7 @@ data class AccountDetailData constructor(
             startDate: LocalDate?,
             endDate: LocalDate?,
             principalPerson: Person?,
-            incomeFilter: Boolean,
-            outcomeFilter: Boolean,
-            transferFilter: Boolean
+            filters: BooleanFilters
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -150,9 +153,9 @@ data class AccountDetailData constructor(
                             principalPerson?.id
                         )
                     }
-                    .applyIncomeFilter(incomeFilter)
-                    .applyOutcomeFilter(outcomeFilter)
-                    .applyTransferFilter(transferFilter),
+                    .applyIncomeFilter(filters[INCOME_FILTER])
+                    .applyOutcomeFilter(filters[OUTCOME_FILTER])
+                    .applyTransferFilter(filters[TRANSFER_FILTER]),
                 inTransactions = account
                     .allInTransactionsWithInPocketTransactions
                     .sortedByDescending { it.date }
@@ -304,18 +307,14 @@ fun AccountDetail(
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
-    incomeFilterValue: Boolean,
-    outcomeFilterValue: Boolean,
-    transferFilterValue: Boolean,
-    onIncomeFilterValueChanged: (Boolean) -> Unit,
-    onTransferFilterValueChanged: (Boolean) -> Unit,
-    onOutcomeFilterValueChanged: (Boolean) -> Unit
+    filters: BooleanFilters,
+    onFiltersChanged: (newFilters: BooleanFilters) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
     }
     val showLoadingScreen = data == null || data.account.account.id != accountAndOwner.account.id
-    Crossfade(targetState = showLoadingScreen) {
+    Crossfade(targetState = showLoadingScreen, label = "") {
         if (it) {
             NullAccountDetail(accountAndOwner)
         } else {
@@ -333,12 +332,8 @@ fun AccountDetail(
                 fabExpanded = fabExpanded,
                 onFabExpandedChanged = onFabExpandedChanged,
                 onAddTransactionRequested = onAddTransactionRequested,
-                incomeFilterValue = incomeFilterValue,
-                outcomeFilterValue = outcomeFilterValue,
-                transferFilterValue = transferFilterValue,
-                onIncomeFilterValueChanged = onIncomeFilterValueChanged,
-                onTransferFilterValueChanged = onTransferFilterValueChanged,
-                onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
+                filters = filters,
+                onFiltersChanged = onFiltersChanged
             )
         }
     }
@@ -359,12 +354,8 @@ private fun NotNullAccountDetail(
     fabExpanded: Boolean,
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
-    incomeFilterValue: Boolean,
-    outcomeFilterValue: Boolean,
-    transferFilterValue: Boolean,
-    onIncomeFilterValueChanged: (Boolean) -> Unit,
-    onTransferFilterValueChanged: (Boolean) -> Unit,
-    onOutcomeFilterValueChanged: (Boolean) -> Unit,
+    filters: BooleanFilters,
+    onFiltersChanged: (newFilters: BooleanFilters) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total
@@ -432,12 +423,8 @@ private fun NotNullAccountDetail(
             endDate = null,
             onRangeChanged = { _, _ -> },
             transactionsFilterVisible = true,
-            incomeFilterValue = incomeFilterValue,
-            outcomeFilterValue = outcomeFilterValue,
-            transferFilterValue = transferFilterValue,
-            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
-            onTransferFilterValueChanged = onTransferFilterValueChanged,
-            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged
+            filters = filters,
+            onFiltersChanged = onFiltersChanged
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -572,12 +559,8 @@ private fun NullAccountDetail(
         onAddTransactionRequested = {},
         onFabExpandedChanged = {},
         dynamicFabEnabled = false,
-        onOutcomeFilterValueChanged = {},
-        onTransferFilterValueChanged = {},
-        onIncomeFilterValueChanged = {},
-        transferFilterValue = true,
-        outcomeFilterValue = true,
-        incomeFilterValue = true
+        filters = booleanFilterOf(),
+        onFiltersChanged = {}
     )
 }
 
@@ -606,9 +589,7 @@ private fun AccountDetailPreview() {
                                 startDateSample,
                                 endDateSample,
                                 personSample.first(),
-                                true,
-                                true,
-                                true
+                                booleanFilterOf()
                             )
                         }
                     }
@@ -640,12 +621,8 @@ private fun AccountDetailPreview() {
                         onAddTransactionRequested = {},
                         onFabExpandedChanged = {},
                         fabExpanded = false,
-                        onOutcomeFilterValueChanged = {},
-                        onTransferFilterValueChanged = {},
-                        onIncomeFilterValueChanged = {},
-                        transferFilterValue = true,
-                        outcomeFilterValue = true,
-                        incomeFilterValue = true
+                        filters = booleanFilterOf(),
+                        onFiltersChanged = {}
                     )
                 }
             }

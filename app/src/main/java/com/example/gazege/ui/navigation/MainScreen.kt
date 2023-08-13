@@ -46,10 +46,8 @@ fun NavGraphBuilder.screenMain(
         val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
         val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
         val range by viewModel.rememberRange()
+        val filtersValue by viewModel.rememberFiltersValue()
         val personFilterValue by viewModel.rememberPersonFilterValue()
-        val incomeFilterValue by viewModel.rememberIncomeFilterValue()
-        val outcomeFilterValue by viewModel.rememberOutcomeFilterValue()
-        val transferFilterValue by viewModel.rememberTransferFilterValue()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
@@ -117,12 +115,8 @@ fun NavGraphBuilder.screenMain(
                 drawerState = drawerState,
                 onOpenCategoriesRequested = onNavigateToCategories,
                 onOpenBudgetRequested = onNavigateToBudget,
-                incomeFilterValue = incomeFilterValue,
-                outcomeFilterValue = outcomeFilterValue,
-                transferFilterValue = transferFilterValue,
-                onIncomeFilterValueChanged = viewModel::updateIncomeFilterValue,
-                onOutcomeFilterValueChanged = viewModel::updateOutcomeFilterValue,
-                onTransferFilterValueChanged = viewModel::updateTransferFilterValue,
+                filters = filtersValue,
+                onFiltersChanged = viewModel::updateFiltersValue,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
                         sample(it, viewModel)

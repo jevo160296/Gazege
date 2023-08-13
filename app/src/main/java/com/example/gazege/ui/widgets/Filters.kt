@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -29,7 +30,7 @@ import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import java.time.LocalDate
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Filter(
     modifier: Modifier = Modifier,
@@ -41,12 +42,8 @@ fun Filter(
     personFilterValue: Boolean = false,
     onPersonFilterValueChanged: (newValue: Boolean) -> Unit = {},
     transactionsFilterVisible: Boolean = true,
-    incomeFilterValue: Boolean = true,
-    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit = {},
-    outcomeFilterValue: Boolean = true,
-    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit = {},
-    transferFilterValue: Boolean = true,
-    onTransferFilterValueChanged: (newValue: Boolean) -> Unit = {}
+    filters: BooleanFilters,
+    onFiltersChanged: (newFilters: BooleanFilters) -> Unit
 ) {
     val animatedVisibility: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit =
         @Composable { visible, content ->
@@ -61,9 +58,7 @@ fun Filter(
         startDate != null ||
                 endDate != null ||
                 personFilterValue ||
-                !incomeFilterValue ||
-                !outcomeFilterValue ||
-                !transferFilterValue
+                filters.anyFiltered()
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
@@ -75,8 +70,10 @@ fun Filter(
             visible = transactionsFilterVisible
         ) {
             FilterChip(
-                selected = incomeFilterValue,
-                onClick = { onIncomeFilterValueChanged(!incomeFilterValue) },
+                selected = filters[INCOME_FILTER],
+                onClick = {
+                    onFiltersChanged(filters.switchOrDefault(INCOME_FILTER))
+                },
                 label = {
                     Icon(
                         painter = painterResource(id = R.drawable.ingreso_icon),
@@ -92,8 +89,10 @@ fun Filter(
             visible = transactionsFilterVisible
         ) {
             FilterChip(
-                selected = transferFilterValue,
-                onClick = { onTransferFilterValueChanged(!transferFilterValue) },
+                selected = filters[TRANSFER_FILTER],
+                onClick = {
+                    onFiltersChanged(filters.switchOrDefault(TRANSFER_FILTER))
+                },
                 label = {
                     Icon(
                         painter = painterResource(id = R.drawable.transfer_icon),
@@ -109,8 +108,8 @@ fun Filter(
             visible = transactionsFilterVisible
         ) {
             FilterChip(
-                selected = outcomeFilterValue,
-                onClick = { onOutcomeFilterValueChanged(!outcomeFilterValue) },
+                selected = filters[OUTCOME_FILTER],
+                onClick = { onFiltersChanged(filters.switchOrDefault(OUTCOME_FILTER)) },
                 label = {
                     Icon(
                         painter = painterResource(id = R.drawable.gasto_icon),
@@ -144,9 +143,7 @@ fun Filter(
             onClick = {
                 onRangeChanged(null, null)
                 onPersonFilterValueChanged(false)
-                onIncomeFilterValueChanged(true)
-                onOutcomeFilterValueChanged(true)
-                onTransferFilterValueChanged(true)
+                onFiltersChanged(filters.resetValues())
             },
             enabled = isFiltered
         ) {
@@ -242,14 +239,52 @@ fun rangeToString(startDate: LocalDate?, endDate: LocalDate?) =
         localDateToString(startDate, DateFormat.YEARMONTHNAME)
     else "?"
 
+const val INCOME_FILTER = "INCOME"
+const val OUTCOME_FILTER = "OUTCOME"
+const val TRANSFER_FILTER = "TRANSFER"
+
+data class BooleanFilters(
+    val values: Map<String, Boolean>,
+    val defaultValue: Boolean
+) {
+    private fun isFiltered(value: Boolean) = value != defaultValue
+    fun allFiltered() = values.values.all { isFiltered(it) }
+
+    fun anyFiltered() = values.values.any { isFiltered(it) }
+
+    fun switchOrDefault(valueName: String) =
+        copy(values = this.values
+            .toMutableMap()
+            .also {
+                it.merge(valueName, !defaultValue) { oldValue, _ -> !oldValue }
+            }
+            .toMap()
+        )
+
+    fun resetValues() = copy(values = emptyMap())
+
+    operator fun get(valueName: String): Boolean = values.getOrDefault(valueName, defaultValue)
+}
+
+fun booleanFilterOf(defaultValue: Boolean = false) = BooleanFilters(
+    mapOf(),
+    defaultValue
+)
+
 @Preview
 @Composable
 private fun FilterPreview() {
     var startDate: LocalDate? by remember { mutableStateOf(null) }
     var endDate: LocalDate? by remember { mutableStateOf(null) }
     var personFilterValue by remember { mutableStateOf(false) }
+    var filters by remember { mutableStateOf(booleanFilterOf(true)) }
     GazegeTheme(darkTheme = true) {
-        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
             Filter(
                 startDate = LocalDate.of(2022, 1, 1),
                 endDate = LocalDate.of(2022, 1, 31),
@@ -259,7 +294,9 @@ private fun FilterPreview() {
                 },
                 personFilterVisible = true,
                 personFilterValue = personFilterValue,
-                onPersonFilterValueChanged = { personFilterValue = it }
+                onPersonFilterValueChanged = { personFilterValue = it },
+                filters = filters,
+                onFiltersChanged = { filters = it }
             )
         }
     }

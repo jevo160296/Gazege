@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -18,6 +17,7 @@ import com.example.gazege.ui.views.AccountAction
 import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.account.AccountDetail
+import com.example.gazege.ui.widgets.booleanFilterOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,14 +39,11 @@ fun NavGraphBuilder.screenAccountDetail(
         )
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
-        var incomeFilter by rememberSaveable { mutableStateOf(true) }
-        var outcomeFilter by rememberSaveable { mutableStateOf(true) }
-        var transferFilter by rememberSaveable { mutableStateOf(true) }
+
+        var accountFilterValue by remember { mutableStateOf(booleanFilterOf(true)) }
         val data by viewModel.rememberAccountDetailData(
             accountId,
-            incomeFilter,
-            outcomeFilter,
-            transferFilter
+            accountFilterValue
         )
         var fabExpanded by remember { mutableStateOf(false) }
 
@@ -98,12 +95,8 @@ fun NavGraphBuilder.screenAccountDetail(
                         account.account
                     )
                 },
-                incomeFilterValue = incomeFilter,
-                outcomeFilterValue = outcomeFilter,
-                transferFilterValue = transferFilter,
-                onIncomeFilterValueChanged = { incomeFilter = it },
-                onTransferFilterValueChanged = { transferFilter = it },
-                onOutcomeFilterValueChanged = { outcomeFilter = it }
+                filters = accountFilterValue,
+                onFiltersChanged = { accountFilterValue = it }
             )
         } else {
             Text("Cuenta vacía")
