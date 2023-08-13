@@ -133,17 +133,6 @@ class MainViewModel(
             )
         )
 
-    @Composable
-    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
-        .observeAsState(
-            ProgressStatusState(
-                "Not started",
-                0.0,
-                Status.NOT_STARTED,
-                Type.IMPORT,
-            )
-        )
-
     fun exportData(outputStream: OutputStream) {
         val progressStatus = HistoricalProgressStatus.start(
             "Exporting data",
@@ -368,6 +357,17 @@ class MainViewModel(
             }
         }
     }
+
+    @Composable
+    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
+        .observeAsState(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
 
     @Composable
     fun rememberAllPerson() = allPerson.observeAsState(emptyList())
