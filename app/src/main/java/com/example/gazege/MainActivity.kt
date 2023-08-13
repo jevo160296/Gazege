@@ -8,21 +8,29 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import androidx.navigation.compose.rememberNavController
@@ -34,7 +42,11 @@ import com.example.gazege.ui.fragments.IconVisibility
 import com.example.gazege.ui.fragments.SplashScreenFragment
 import com.example.gazege.ui.fragments.TextVisibility
 import com.example.gazege.ui.navigation.MainNavHost
+import com.example.gazege.ui.progressStatus.Status
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.GazegeDefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.LargeBody
+import com.example.gazege.ui.widgets.MediumHeadline
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
 import kotlin.math.min
@@ -71,7 +83,7 @@ class MainActivity : ComponentActivity() {
             val scheme = uri?.scheme
             if (scheme != "https") {
                 uri?.also {
-                    contentResolver.openInputStream(uri)?.use {
+                    contentResolver.openInputStream(uri)?.also {
                         mainViewModel.importData(it)
                     }
                 }
@@ -90,7 +102,7 @@ class MainActivity : ComponentActivity() {
         }
         resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
             uri?.also {
-                contentResolver.openInputStream(uri)?.use {
+                contentResolver.openInputStream(uri)?.also {
                     mainViewModel.importData(it)
                 }
             }
@@ -98,20 +110,59 @@ class MainActivity : ComponentActivity() {
         setContent {
             GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
                 SetStatusBarColors()
-                handleIntent()
+                val importState by mainViewModel.rememberImportState()
+                LaunchedEffect(key1 = Unit) {
+                    handleIntent()
+                }
 
                 val showSplashScreen = mainViewModel.appInitialized()
                 val splashScreenState by rememberSplashScreenState(showSplashScreen = showSplashScreen)
 
                 val navController = rememberNavController()
 
-                SplashScreenLayout(splashScreenState) {
-                    MainNavHost(
-                        navController = navController,
-                        mainViewModel = mainViewModel,
-                        onCloseApp = { this@MainActivity.finish() },
-                        onDataLoaded = { splashScreenState.hideAndShowContent() }
-                    )
+                val currentState = importState.status
+                Crossfade(targetState = currentState, label = "CrossFade") {
+                    when (it) {
+                        Status.STARTED -> {
+                            Column(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(
+                                    dimensionResource(id = R.dimen.DefaultPadding),
+                                    Alignment.CenterVertically
+                                )
+                            ) {
+                                when (importState.type) {
+                                    MainViewModel.Type.IMPORT -> MediumHeadline(text = "Importing data")
+                                    MainViewModel.Type.EXPORT -> MediumHeadline(text = "Exporting data")
+                                }
+                                GazegeDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
+                                LargeBody(
+                                    modifier = Modifier.animateContentSize(),
+                                    text = importState.message
+                                )
+                            }
+                        }
+
+                        Status.ERROR -> {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("ERROR")
+                            }
+                        }
+
+                        else -> {
+                            SplashScreenLayout(splashScreenState) {
+                                MainNavHost(
+                                    navController = navController,
+                                    mainViewModel = mainViewModel,
+                                    onCloseApp = { this@MainActivity.finish() },
+                                    onDataLoaded = { splashScreenState.hideAndShowContent() }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

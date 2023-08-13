@@ -27,6 +27,9 @@ import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingTransactionsDetailsState
 import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
+import com.example.gazege.ui.progressStatus.HistoricalProgressStatus
+import com.example.gazege.ui.progressStatus.IProgressStatus
+import com.example.gazege.ui.progressStatus.Status
 import com.example.gazege.ui.views.account.AccountDetailData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
@@ -100,39 +103,91 @@ class MainViewModel(
             .firstOrNull()
             ?: emptyList()
 
+    enum class Type {
+        IMPORT,
+        EXPORT
+    }
+
+    private fun IProgressStatus.toState(type: Type) = ProgressStatusState(
+        message = this.message,
+        progress = this.progress,
+        status = this.status,
+        type = type
+    )
+
+    data class ProgressStatusState(
+        override var message: String,
+        override val progress: Double,
+        override var status: Status,
+        val type: Type
+    ) : IProgressStatus(message, status)
+
+
+    private val loadingDataState: MutableLiveData<ProgressStatusState> =
+        MutableLiveData(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
+
+    @Composable
+    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
+        .observeAsState(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
+
     fun exportData(outputStream: OutputStream) {
+        val progressStatus = HistoricalProgressStatus.start(
+            "Exporting data",
+            totalWork = 8.0,
+            defaultIncrement = 1.0
+        ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                progressStatus.incrementProgress("ConvertingPersons")
                 val persons = getPersons()
                 val personsOutputStream = ByteArrayOutputStream()
                 personsOutputStream.use {
                     writePersons(it, persons)
                 }
 
+                progressStatus.incrementProgress("Converting caategories")
                 val categories = getCategories()
                 val categoriesOutputStream = ByteArrayOutputStream()
                 categoriesOutputStream.use {
                     writeCategories(it, categories)
                 }
 
+                progressStatus.incrementProgress("Converting accounts")
                 val accounts = getAccounts()
                 val accountsOutputStream = ByteArrayOutputStream()
                 accountsOutputStream.use {
                     writeAccounts(it, accounts)
                 }
 
+                progressStatus.incrementProgress("Converting budget")
                 val budget = getBudget()
                 val budgetOutputStream = ByteArrayOutputStream()
                 budgetOutputStream.use {
                     writeBudget(it, budget)
                 }
 
+                progressStatus.incrementProgress("Converting transactions")
                 val transactions = getTransactions()
                 val transactionsOutputStream = ByteArrayOutputStream()
                 transactionsOutputStream.use {
                     writeTransactions(it, transactions)
                 }
 
+                progressStatus.incrementProgress("Saving files")
                 val personsInputStream = ByteArrayInputStream(personsOutputStream.toByteArray())
                 val categoriesInputStream =
                     ByteArrayInputStream(categoriesOutputStream.toByteArray())
@@ -140,6 +195,7 @@ class MainViewModel(
                 val accountsInputStream = ByteArrayInputStream(accountsOutputStream.toByteArray())
                 val transactionsInputStream =
                     ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                progressStatus.incrementProgress("Compressing files")
                 ZipOutputStream(outputStream)
                     .use { zipOurpurStream ->
                         writeZipBackup(
@@ -151,98 +207,159 @@ class MainViewModel(
                             zipOurpurStream
                         )
                     }
+                progressStatus.finish("Done")
             }
         }
     }
 
     fun importData(inputStream: InputStream) {
+        val progressStatus = HistoricalProgressStatus.start(
+            "Starting data import...",
+            1.0,
+            0.0
+        ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
         var transactions: List<Transaction>? = null
         var categories: List<Category>? = null
         var persons: List<Person>? = null
         var budget: List<Budget>? = null
         var accounts: List<Account>? = null
-        ZipInputStream(inputStream)
-            .use { zipInputStream ->
-                generateSequence {
-                    val entry = zipInputStream.nextEntry
-                    entry
-                }
-                    .map {
-                        when (it.name) {
-                            "transacciones.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        transactions = readTransactionsFromCsv(this)
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                ZipInputStream(inputStream)
+                    .use { zipInputStream ->
+                        generateSequence {
+                            val entry = zipInputStream.nextEntry
+                            entry
+                        }
+                            .map {
+                                when (it.name) {
+                                    "transacciones.csv" -> {
+                                        progressStatus.incrementProgress("Loading transactions")
+                                        zipInputStream.readBytes()
+                                            .run {
+                                                inputStream().run {
+                                                    transactions = readTransactionsFromCsv(this)
+                                                }
+                                            }
+                                        progressStatus.incrementProgress(
+                                            "Transactions loaded",
+                                            0.238
+                                        )
                                     }
+
+                                    "categorias.csv" -> {
+                                        progressStatus.incrementProgress("Loading categories")
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                categories = readCategoryFromCsv(this)
+                                            }
+                                        }
+                                        progressStatus.incrementProgress(
+                                            "Categories loaded",
+                                            0.048
+                                        )
+                                    }
+
+                                    "cuentas.csv" -> {
+                                        progressStatus.incrementProgress("Loading accounts")
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                accounts = readAccountFromCsv(this)
+                                            }
+                                        }
+                                        progressStatus.incrementProgress(
+                                            "Accounts loaded",
+                                            0.119
+                                        )
+                                    }
+
+                                    "presupuesto.csv" -> {
+                                        progressStatus.incrementProgress("Loading budget")
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                budget = readBudgetFromCsv(this)
+                                            }
+                                        }
+                                        progressStatus.incrementProgress(
+                                            "Budget loaded",
+                                            0.048
+                                        )
+                                    }
+
+                                    "personas.csv" -> {
+                                        progressStatus.incrementProgress("Loading persons")
+                                        zipInputStream.readBytes().run {
+                                            inputStream().run {
+                                                persons = readPersonsFromCsv(this)
+                                            }
+                                        }
+                                        progressStatus.incrementProgress(
+                                            "Persons loaded",
+                                            0.048
+                                        )
+                                    }
+
+                                    else -> {}
                                 }
                             }
-
-                            "categorias.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        categories = readCategoryFromCsv(this)
-                                    }
-                                }
+                            .toList()
+                    }
+                progressStatus.setCompletedWork("Deleting all data", 0.5)
+                deleteAll().invokeOnCompletion {
+                    val totalSize = (persons?.size ?: 0) +
+                            (accounts?.size ?: 0) +
+                            (categories?.size ?: 0) +
+                            (budget?.size ?: 0) +
+                            (transactions?.size ?: 0)
+                    progressStatus.incrementProgress("Inserting values")
+                    persons?.also { persons ->
+                        insertPerson(*persons.toTypedArray()) {}
+                    }
+                    progressStatus.incrementProgress(
+                        "Person inserted",
+                        (persons?.size ?: 0).toDouble() / totalSize
+                    )
+                    accounts?.also { accounts ->
+                        insertAccount(
+                            *accounts.toTypedArray(),
+                            onErrorAction = {
                             }
-
-                            "cuentas.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        accounts = readAccountFromCsv(this)
-                                    }
-                                }
+                        ) {}
+                    }
+                    progressStatus.incrementProgress(
+                        "Accounts inserted",
+                        (accounts?.size ?: 0).toDouble() / totalSize
+                    )
+                    categories?.also { categories ->
+                        insertCategory(
+                            *categories.toTypedArray(),
+                            onErrorAction = {
+                            },
+                            onCompleitionAction = {}
+                        )
+                    }
+                    progressStatus.incrementProgress(
+                        "Categories inserted",
+                        (categories?.size ?: 0).toDouble() / totalSize
+                    )
+                    budget?.also { budget ->
+                        insertBudget(
+                            *budget.toTypedArray(),
+                            onCompleitionAction = {},
+                            onErrorAction = {
                             }
-
-                            "presupuesto.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        budget = readBudgetFromCsv(this)
-                                    }
-                                }
-                            }
-
-                            "personas.csv" -> {
-                                zipInputStream.readBytes().run {
-                                    inputStream().run {
-                                        persons = readPersonsFromCsv(this)
-                                    }
-                                }
-                            }
-
-                            else -> {}
+                        )
+                    }
+                    progressStatus.incrementProgress(
+                        "Budget inserted",
+                        (budget?.size ?: 0).toDouble() / totalSize
+                    )
+                    transactions?.also { transactions ->
+                        insertTransaction(*transactions.toTypedArray()) {
                         }
                     }
-                    .toList()
-            }
-        deleteAll().invokeOnCompletion {
-            persons?.also { persons ->
-                insertPerson(*persons.toTypedArray()) {}
-            }
-            accounts?.also { accounts ->
-                insertAccount(
-                    *accounts.toTypedArray(),
-                    onErrorAction = {
-                    }
-                ) {}
-            }
-            categories?.also { categories ->
-                insertCategory(
-                    *categories.toTypedArray(),
-                    onErrorAction = {
-                    },
-                    onCompleitionAction = {}
-                )
-            }
-            budget?.also { budget ->
-                insertBudget(
-                    *budget.toTypedArray(),
-                    onCompleitionAction = {},
-                    onErrorAction = {
-                    }
-                )
-            }
-            transactions?.also { transactions ->
-                insertTransaction(*transactions.toTypedArray()) {
+                    progressStatus.finish("Done")
                 }
             }
         }
