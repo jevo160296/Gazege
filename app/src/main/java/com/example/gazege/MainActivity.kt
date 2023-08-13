@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -119,8 +120,9 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
 
-                Crossfade(targetState = importState, label = "CrossFade") {
-                    when (it.status) {
+                val currentState = importState.status
+                Crossfade(targetState = currentState, label = "CrossFade") {
+                    when (it) {
                         Status.STARTED -> {
                             Column(
                                 Modifier
@@ -132,12 +134,15 @@ class MainActivity : ComponentActivity() {
                                     Alignment.CenterVertically
                                 )
                             ) {
-                                when (it.type) {
+                                when (importState.type) {
                                     MainViewModel.Type.IMPORT -> MediumHeadline(text = "Importing data")
                                     MainViewModel.Type.EXPORT -> MediumHeadline(text = "Exporting data")
                                 }
                                 GazegeDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
-                                LargeBody(text = importState.message)
+                                LargeBody(
+                                    modifier = Modifier.animateContentSize(),
+                                    text = importState.message
+                                )
                             }
                         }
 
