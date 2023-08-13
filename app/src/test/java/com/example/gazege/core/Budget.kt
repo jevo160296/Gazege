@@ -443,11 +443,6 @@ class BudgetCalculationTests {
         val calculatedInt: Int
     }
 
-    private fun IExample.assert() {
-        assertEquals(this.expectedStringRepresentation, this.calculatedStringRepresentation)
-        assertEquals(this.expectedInt, this.calculatedInt)
-    }
-
     @Test
     fun testBudgetCalculatedData() {
         val today = LocalDate.of(2023, 4, 20)
@@ -485,36 +480,28 @@ class BudgetCalculationTests {
                 expectedTotalFlow = -300000.0,
                 expectedFlowUntilNow = -200000.0,
                 leftToPay = -294000.0,
-                realTotalFlow = -6000.0,
                 expectedRemainingFlow = -100000.0,
-                compleition = (-6000.0).div(-200000.0)
             ),
             BudgetWithCalculatedData(
                 Budget.fromDaily(1, 1, -11000.0, 1, startDate, BudgetType.VARIABLE),
                 expectedTotalFlow = -330000.0,
                 expectedFlowUntilNow = -220000.0,
                 leftToPay = -220000.0,
-                realTotalFlow = -20000.0,
-                expectedRemainingFlow = -110000.0,
-                compleition = (-20000.0).div(-220000.0)
+                expectedRemainingFlow = -110000.0
             ),
             BudgetWithCalculatedData(
                 Budget.fromMonthly(2, 2, -600000.0, BudgetType.FIXED),
                 expectedTotalFlow = -600000.0,
                 expectedFlowUntilNow = -600000.0,
                 leftToPay = -100000.0,
-                realTotalFlow = -500000.0,
-                expectedRemainingFlow = -0.0,
-                compleition = (-500000.0).div(-600000.0)
+                expectedRemainingFlow = -0.0
             ),
             BudgetWithCalculatedData(
                 Budget.fromMonthly(3, 3, 3000000.0, BudgetType.FIXED),
                 expectedTotalFlow = 3000000.0,
                 expectedFlowUntilNow = 3000000.0,
                 leftToPay = 200000.0,
-                realTotalFlow = 2800000.0,
-                expectedRemainingFlow = 0.0,
-                compleition = (2800000.0).div(3000000.0)
+                expectedRemainingFlow = 0.0
             )
         )
     }
