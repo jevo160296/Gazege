@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.core.lastDayOfMonth
@@ -28,6 +31,7 @@ import com.example.gazege.core.stablePlusMonths
 import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
+import com.example.gazege.ui.widgets.menu.DropdownMenu
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +58,7 @@ fun Filter(
                 content = { content() }
             )
         }
+    var menuExpanded by remember { mutableStateOf(false) }
     val isFiltered =
         startDate != null ||
                 endDate != null ||
@@ -66,68 +71,74 @@ fun Filter(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        animatedVisibility(
-            visible = transactionsFilterVisible
-        ) {
-            FilterChip(
-                selected = filters[INCOME_FILTER],
-                onClick = {
-                    onFiltersChanged(filters.switchOrDefault(INCOME_FILTER))
-                },
-                label = {
+        Box {
+            AssistChip(
+                onClick = { menuExpanded = !menuExpanded },
+                label = { Text(text = "Filtros") },
+                leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ingreso_icon),
-                        contentDescription = "Filter income"
+                        painter = painterResource(id = R.drawable.ic_round_arrow_drop_down_24),
+                        contentDescription = "Filtros"
                     )
                 }
             )
-        }
-        animatedVisibility(transactionsFilterVisible) {
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
-        }
-        animatedVisibility(
-            visible = transactionsFilterVisible
-        ) {
-            FilterChip(
-                selected = filters[TRANSFER_FILTER],
-                onClick = {
-                    onFiltersChanged(filters.switchOrDefault(TRANSFER_FILTER))
-                },
-                label = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.transfer_icon),
-                        contentDescription = "Filter transfer"
-                    )
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+                Column(
+                    Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .padding(dimensionResource(id = R.dimen.DefaultPadding))
+                        .widthIn(min = 200.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (transactionsFilterVisible) {
+                        Text("Transacciones")
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+                        ) {
+                            FilterChip(
+                                selected = filters[INCOME_FILTER],
+                                onClick = { onFiltersChanged(filters.switchOrDefault(INCOME_FILTER)) },
+                                label = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ingreso_icon),
+                                        contentDescription = "Filter income"
+                                    )
+                                }
+                            )
+                            FilterChip(
+                                selected = filters[TRANSFER_FILTER],
+                                onClick = { onFiltersChanged(filters.switchOrDefault(TRANSFER_FILTER)) },
+                                label = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.transfer_icon),
+                                        contentDescription = "Filter transfer"
+                                    )
+                                }
+                            )
+                            FilterChip(
+                                selected = filters[OUTCOME_FILTER],
+                                onClick = { onFiltersChanged(filters.switchOrDefault(OUTCOME_FILTER)) },
+                                label = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.gasto_icon),
+                                        contentDescription = "Filter gasto"
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    if (personFilterVisible) {
+                        Text("Persons")
+                        PersonFilter(personFilterValue, onValueChanged = onPersonFilterValueChanged)
+                    }
                 }
-            )
-        }
-        animatedVisibility(transactionsFilterVisible) {
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
-        }
-        animatedVisibility(
-            visible = transactionsFilterVisible
-        ) {
-            FilterChip(
-                selected = filters[OUTCOME_FILTER],
-                onClick = { onFiltersChanged(filters.switchOrDefault(OUTCOME_FILTER)) },
-                label = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.gasto_icon),
-                        contentDescription = "Filter gasto"
-                    )
-                }
-            )
-        }
-        animatedVisibility(transactionsFilterVisible) {
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
-        }
-        animatedVisibility(
-            visible = personFilterVisible
-        ) {
-            PersonFilter(personFilterValue, onValueChanged = onPersonFilterValueChanged)
-        }
-        animatedVisibility(personFilterVisible) {
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
+            }
         }
         animatedVisibility(dateFilterVisible) {
             DateFilterItems(
