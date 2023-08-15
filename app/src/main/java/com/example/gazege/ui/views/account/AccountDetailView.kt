@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gazege.MainViewModel.Companion.applyCategoriesFilter
 import com.example.gazege.MainViewModel.Companion.applyIncomeFilter
 import com.example.gazege.MainViewModel.Companion.applyOutcomeFilter
 import com.example.gazege.MainViewModel.Companion.applyTransferFilter
@@ -122,7 +123,8 @@ data class AccountDetailData constructor(
             startDate: LocalDate?,
             endDate: LocalDate?,
             principalPerson: Person?,
-            filters: BooleanFilters<String, Nothing>
+            transactionFilters: BooleanFilters<String, Nothing>,
+            categoriesFilter: BooleanFilters<Int, Pair<String, Int>>
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -153,9 +155,10 @@ data class AccountDetailData constructor(
                             principalPerson?.id
                         )
                     }
-                    .applyIncomeFilter(filters[INCOME_FILTER])
-                    .applyOutcomeFilter(filters[OUTCOME_FILTER])
-                    .applyTransferFilter(filters[TRANSFER_FILTER]),
+                    .applyIncomeFilter(transactionFilters[INCOME_FILTER])
+                    .applyOutcomeFilter(transactionFilters[OUTCOME_FILTER])
+                    .applyTransferFilter(transactionFilters[TRANSFER_FILTER])
+                    .applyCategoriesFilter(categoriesFilter),
                 inTransactions = account
                     .allInTransactionsWithInPocketTransactions
                     .sortedByDescending { it.date }
@@ -603,7 +606,8 @@ private fun AccountDetailPreview() {
                                     listOf(
                                         INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER
                                     )
-                                )
+                                ),
+                                booleanFilterOf(emptyList())
                             )
                         }
                     }

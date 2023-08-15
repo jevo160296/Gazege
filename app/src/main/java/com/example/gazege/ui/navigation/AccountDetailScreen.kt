@@ -53,18 +53,6 @@ fun NavGraphBuilder.screenAccountDetail(
                 )
             )
         }
-        val data by viewModel.rememberAccountDetailData(
-            accountId,
-            accountFilterValue
-        )
-        var fabExpanded by remember { mutableStateOf(false) }
-
-        val accountAndOwner by viewModel.rememberAccountAndOwner()
-
-        val coroutineScope = rememberCoroutineScope()
-
-        val account = accountAndOwner
-            .firstOrNull { it.account.id == accountId }
         val categories by viewModel.rememberCategoriesWithSubcategories()
         var categoriesFilter by remember(accountId) {
             mutableStateOf(
@@ -82,6 +70,19 @@ fun NavGraphBuilder.screenAccountDetail(
 
             )
         }
+        val data by viewModel.rememberAccountDetailData(
+            accountId,
+            accountFilterValue,
+            categoriesFilter
+        )
+        var fabExpanded by remember { mutableStateOf(false) }
+
+        val accountAndOwner by viewModel.rememberAccountAndOwner()
+
+        val coroutineScope = rememberCoroutineScope()
+
+        val account = accountAndOwner
+            .firstOrNull { it.account.id == accountId }
         if (account != null) {
             var showGraphs by remember {
                 mutableStateOf(false)

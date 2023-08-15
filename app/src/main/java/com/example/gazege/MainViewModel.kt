@@ -494,11 +494,13 @@ class MainViewModel(
     @Composable
     fun rememberAccountDetailData(
         accountId: Int?,
-        accountFilters: BooleanFilters<String, Nothing>
+        accountFilters: BooleanFilters<String, Nothing>,
+        accountCategoryFilters: BooleanFilters<Int, Pair<String, Int>>
     ): State<AccountDetailData?> {
         updateAccountDetailIdIfDifferent(
             accountId,
-            accountFilters
+            accountFilters,
+            accountCategoryFilters
         )
         return accountDetailData.observeAsState()
     }
@@ -857,6 +859,9 @@ class MainViewModel(
             )
         )
     )
+    private val accountCategoryFilterValue = MutableLiveData(
+        booleanFilterOf<Int, Pair<String, Int>>(emptyList())
+    )
     private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
         .combine(allAccount) { accountDetail, allAccount ->
             object {
@@ -899,6 +904,17 @@ class MainViewModel(
             }
         }
         .combine(accountFilterValue) { combined, accountFilterValue ->
+            object {
+                val accountDetail = combined.accountDetail
+                val allAccount = combined.allAccount
+                val categories = combined.categories
+                val budget = combined.budget
+                val range = combined.range
+                val principalPerson = combined.principalPerson
+                val accountFilterValue = accountFilterValue
+            }
+        }
+        .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
             combined.run {
                 accountDetail?.let {
                     AccountDetailData.build(
@@ -909,7 +925,8 @@ class MainViewModel(
                         startDate = range?.first,
                         endDate = range?.second,
                         principalPerson = principalPerson,
-                        filters = accountFilterValue
+                        transactionFilters = accountFilterValue,
+                        categoriesFilter = accountCategoryFilterValue
                     )
                 }
             }
@@ -946,11 +963,14 @@ class MainViewModel(
                 }
             }
             .combine(transactionFilters) { filteredTransactions, filtersValue ->
+                filteredTransactions
+                    .applyIncomeFilter(filtersValue[INCOME_FILTER])
+                    .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
+                    .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+            }
+            .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
                 LoadedTransactionDetailsState(
-                    filteredTransactions
-                        .applyIncomeFilter(filtersValue[INCOME_FILTER])
-                        .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
-                        .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+                    filteredTransactions.applyCategoriesFilter(filtersValue)
                 )
             }
 
@@ -1118,13 +1138,17 @@ class MainViewModel(
 
     private fun updateAccountDetailIdIfDifferent(
         newId: Int?,
-        accountFilters: BooleanFilters<String, Nothing>
+        accountFilters: BooleanFilters<String, Nothing>,
+        accountCategoryFilters: BooleanFilters<Int, Pair<String, Int>>
     ) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId
         }
         if (accountFilters != accountFilterValue.value) {
             accountFilterValue.value = accountFilters
+        }
+        if (accountCategoryFilters != accountCategoryFilterValue.value) {
+            accountCategoryFilterValue.value = accountCategoryFilters
         }
     }
 
@@ -1269,6 +1293,16 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter {
                 it.transactionType != TransactionType.TRANSFER || transferFilterValue
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyCategoriesFilter(
+            filters: BooleanFilters<Int, Pair<String, Int>>
+        ) = withContext(Dispatchers.Default) {
+            filter { transaction ->
+                transaction.category?.id?.let {
+                    filters.values.getOrDefault(it, filters.defaultValue)
+                } ?: false
             }
         }
     }
