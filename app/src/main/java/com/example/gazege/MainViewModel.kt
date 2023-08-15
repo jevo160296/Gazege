@@ -62,6 +62,18 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
+fun categoriesMergeBooleanFilter(
+    categories: List<CategoryWithSubCategories>,
+    booleanFilters: BooleanFilters<Int, Pair<String, Int>>
+) = categories
+    .sortedBy { it.category.name }
+    .flattenWithLevel()
+    .let { categoryWithLevel ->
+        booleanFilters.updateWithMetadata(
+            categoryWithLevel.map { (it.first.id ?: 0) to (it.first.name to it.second) }
+        )
+    }
+
 class MainViewModel(
     private val repository: AppRepository,
     private val settings: Settings,
@@ -448,10 +460,24 @@ class MainViewModel(
         accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
 
     @Composable
+    fun rememberCategoriesWithSubcategories() =
+        categoriesWithSubCategories.observeAsState(emptyList())
+
+    @Composable
     fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
 
     @Composable
-    fun rememberFiltersValue() = filtersValue.observeAsState(booleanFilterOf(true))
+    fun rememberTransactionFiltersValue() = transactionFilters
+        .observeAsState(
+            booleanFilterOf(
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                true
+            )
+        )
+
+    @Composable
+    fun rememberCategoriesFiltersValue() =
+        categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
 
     @Composable
     fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
@@ -468,7 +494,7 @@ class MainViewModel(
     @Composable
     fun rememberAccountDetailData(
         accountId: Int?,
-        accountFilters: BooleanFilters
+        accountFilters: BooleanFilters<String, Nothing>
     ): State<AccountDetailData?> {
         updateAccountDetailIdIfDifferent(
             accountId,
@@ -754,8 +780,42 @@ class MainViewModel(
                 )
             }
 
-    private val filtersValue: MutableLiveData<BooleanFilters> =
-        MutableLiveData(booleanFilterOf(true))
+    private val transactionFilters: MutableLiveData<BooleanFilters<String, Nothing>> =
+        MutableLiveData(
+            booleanFilterOf(
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                true
+            )
+        )
+
+    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int, Pair<String, Int>>> =
+        MediatorLiveData(booleanFilterOf<Int, Pair<String, Int>>(emptyList(), defaultValue = true))
+            .apply {
+                addSource(categoriesWithSubCategories) { categories ->
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            val orderedCategories = categories
+                                .sortedBy { it.category.name }
+                                .flattenWithLevel(0)
+                            val updatedValue = if (isInitialized) {
+                                val oldValue = value!!
+                                val updatedValue = categoriesMergeBooleanFilter(
+                                    categories, oldValue
+                                )
+                                updatedValue
+                            } else {
+                                booleanFilterOf(
+                                    filterNames = orderedCategories.map { it.first.id ?: 0 },
+                                    metadata = orderedCategories.associate {
+                                        (it.first.id ?: 0) to (it.first.name to it.second)
+                                    }
+                                )
+                            }
+                            postValue(updatedValue)
+                        }
+                    }
+                }
+            }
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
@@ -763,8 +823,12 @@ class MainViewModel(
         loadingDataState.value = loadingDataState.value?.copy(status = newState)
     }
 
-    fun updateFiltersValue(newValue: BooleanFilters) {
-        filtersValue.value = newValue
+    fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) {
+        transactionFilters.value = newValue
+    }
+
+    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int, Pair<String, Int>>) {
+        categoriesFiltersValue.value = newValue
     }
 
     fun updatePersonFilterValue(newValue: Boolean) {
@@ -784,7 +848,15 @@ class MainViewModel(
                 it.accountAndOwnerWithTransactions.account.id == accountDetailId
             }
         }
-    private val accountFilterValue = MutableLiveData(booleanFilterOf())
+    private val accountFilterValue = MutableLiveData(
+        booleanFilterOf<String, Nothing>(
+            listOf(
+                INCOME_FILTER,
+                OUTCOME_FILTER,
+                TRANSFER_FILTER
+            )
+        )
+    )
     private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
         .combine(allAccount) { accountDetail, allAccount ->
             object {
@@ -873,7 +945,7 @@ class MainViewModel(
                     )
                 }
             }
-            .combine(filtersValue) { filteredTransactions, filtersValue ->
+            .combine(transactionFilters) { filteredTransactions, filtersValue ->
                 LoadedTransactionDetailsState(
                     filteredTransactions
                         .applyIncomeFilter(filtersValue[INCOME_FILTER])
@@ -1046,7 +1118,7 @@ class MainViewModel(
 
     private fun updateAccountDetailIdIfDifferent(
         newId: Int?,
-        accountFilters: BooleanFilters
+        accountFilters: BooleanFilters<String, Nothing>
     ) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId

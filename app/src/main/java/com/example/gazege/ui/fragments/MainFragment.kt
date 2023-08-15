@@ -58,7 +58,8 @@ fun MainFragment(
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
-    filters: BooleanFilters,
+    transactionFilters: BooleanFilters<String, Nothing>,
+    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
@@ -80,7 +81,8 @@ fun MainFragment(
     onPersonFilterValueChanged: (Boolean) -> Unit,
     onOpenCategoriesRequested: () -> Unit,
     onOpenBudgetRequested: () -> Unit,
-    onFiltersChanged: (newValue: BooleanFilters) -> Unit,
+    onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
@@ -284,8 +286,10 @@ fun MainFragment(
                     onSettingsClicked = onSettingsClicked,
                     showVertical = showVertical,
                     principalPersonSummaryState = principalPersonSummaryState,
-                    filters = filters,
-                    onFiltersChanged = onFiltersChanged
+                    transactionFilters = transactionFilters,
+                    onTransactionFiltersChanged = onTransactionFiltersChanged,
+                    categoriesFilter = categoriesFilter,
+                    onCategoriesFilterChanged = onCategoriesFilterChanged
                 )
             }
         }
@@ -326,8 +330,10 @@ private fun MainFragmentResponsiveContent(
     sheetState: SheetState,
     onTitleChanged: (String) -> Unit,
     onSettingsClicked: () -> Unit,
-    filters: BooleanFilters,
-    onFiltersChanged: (newValue: BooleanFilters) -> Unit,
+    transactionFilters: BooleanFilters<String, Nothing>,
+    onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
+    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -349,8 +355,10 @@ private fun MainFragmentResponsiveContent(
             personFilterValue = personFilterValue,
             onPersonFilterValueChanged = onPersonFilterValueChanged,
             transactionsFilterVisible = navPosition == NavPosition.TRANSACCIONES,
-            filters = filters,
-            onFiltersChanged = onFiltersChanged
+            transactionFilters = transactionFilters,
+            onTransactionFiltersChanged = onTransactionFiltersChanged,
+            categoriesFilter = categoriesFilter,
+            onCategoriesFilterChanged = onCategoriesFilterChanged
         )
     }
 
@@ -627,9 +635,11 @@ private fun DefaultPreview() {
                 drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
                 onOpenBudgetRequested = {},
                 onOpenCategoriesRequested = {},
-                filters = booleanFilterOf(),
-                onFiltersChanged = {},
-                onInitDatabaseSample = {}
+                transactionFilters = booleanFilterOf(emptyList()),
+                onTransactionFiltersChanged = {},
+                onInitDatabaseSample = {},
+                categoriesFilter = booleanFilterOf(emptyList()),
+                onCategoriesFilterChanged = {}
             )
         }
     }

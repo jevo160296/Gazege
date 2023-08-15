@@ -122,7 +122,7 @@ data class AccountDetailData constructor(
             startDate: LocalDate?,
             endDate: LocalDate?,
             principalPerson: Person?,
-            filters: BooleanFilters
+            filters: BooleanFilters<String, Nothing>
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -307,8 +307,10 @@ fun AccountDetail(
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
-    filters: BooleanFilters,
-    onFiltersChanged: (newFilters: BooleanFilters) -> Unit
+    filters: BooleanFilters<String, Nothing>,
+    onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
+    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int, Pair<String, Int>>) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -333,7 +335,9 @@ fun AccountDetail(
                 onFabExpandedChanged = onFabExpandedChanged,
                 onAddTransactionRequested = onAddTransactionRequested,
                 filters = filters,
-                onFiltersChanged = onFiltersChanged
+                onFiltersChanged = onFiltersChanged,
+                categoriesFilter = categoriesFilter,
+                onCategoriesFilterChanged = onCategoriesFilterChanged
             )
         }
     }
@@ -354,8 +358,10 @@ private fun NotNullAccountDetail(
     fabExpanded: Boolean,
     onFabExpandedChanged: (Boolean) -> Unit,
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
-    filters: BooleanFilters,
-    onFiltersChanged: (newFilters: BooleanFilters) -> Unit,
+    filters: BooleanFilters<String, Nothing>,
+    onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
+    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total
@@ -423,8 +429,10 @@ private fun NotNullAccountDetail(
             endDate = null,
             onRangeChanged = { _, _ -> },
             transactionsFilterVisible = true,
-            filters = filters,
-            onFiltersChanged = onFiltersChanged
+            transactionFilters = filters,
+            onTransactionFiltersChanged = onFiltersChanged,
+            categoriesFilter = categoriesFilter,
+            onCategoriesFilterChanged = onCategoriesFilterChanged
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -559,8 +567,10 @@ private fun NullAccountDetail(
         onAddTransactionRequested = {},
         onFabExpandedChanged = {},
         dynamicFabEnabled = false,
-        filters = booleanFilterOf(),
-        onFiltersChanged = {}
+        filters = booleanFilterOf(emptyList()),
+        onFiltersChanged = {},
+        categoriesFilter = booleanFilterOf(emptyList()),
+        onCategoriesFilterChanged = {}
     )
 }
 
@@ -589,7 +599,11 @@ private fun AccountDetailPreview() {
                                 startDateSample,
                                 endDateSample,
                                 personSample.first(),
-                                booleanFilterOf()
+                                booleanFilterOf(
+                                    listOf(
+                                        INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER
+                                    )
+                                )
                             )
                         }
                     }
@@ -621,8 +635,10 @@ private fun AccountDetailPreview() {
                         onAddTransactionRequested = {},
                         onFabExpandedChanged = {},
                         fabExpanded = false,
-                        filters = booleanFilterOf(),
-                        onFiltersChanged = {}
+                        filters = booleanFilterOf(emptyList()),
+                        onFiltersChanged = {},
+                        categoriesFilter = booleanFilterOf(emptyList()),
+                        onCategoriesFilterChanged = {}
                     )
                 }
             }
