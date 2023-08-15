@@ -64,13 +64,13 @@ fun CoroutineScope.safeLaunch(
 
 fun categoriesMergeBooleanFilter(
     categories: List<CategoryWithSubCategories>,
-    booleanFilters: BooleanFilters<Int, Pair<String, Int>>
+    booleanFilters: BooleanFilters<Int?, Pair<String, Int>>
 ) = categories
     .sortedBy { it.category.name }
     .flattenWithLevel()
     .let { categoryWithLevel ->
         booleanFilters.updateWithMetadata(
-            categoryWithLevel.map { (it.first.id ?: 0) to (it.first.name to it.second) }
+            categoryWithLevel.map { (it.first.id) to (it.first.name to it.second) }
         )
     }
 
@@ -495,7 +495,7 @@ class MainViewModel(
     fun rememberAccountDetailData(
         accountId: Int?,
         accountFilters: BooleanFilters<String, Nothing>,
-        accountCategoryFilters: BooleanFilters<Int, Pair<String, Int>>
+        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
     ): State<AccountDetailData?> {
         updateAccountDetailIdIfDifferent(
             accountId,
@@ -790,8 +790,8 @@ class MainViewModel(
             )
         )
 
-    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int, Pair<String, Int>>> =
-        MediatorLiveData(booleanFilterOf<Int, Pair<String, Int>>(emptyList(), defaultValue = true))
+    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int?, Pair<String, Int>>> =
+        MediatorLiveData(booleanFilterOf<Int?, Pair<String, Int>>(emptyList(), defaultValue = true))
             .apply {
                 addSource(categoriesWithSubCategories) { categories ->
                     viewModelScope.launch {
@@ -807,13 +807,19 @@ class MainViewModel(
                                 updatedValue
                             } else {
                                 booleanFilterOf(
-                                    filterNames = orderedCategories.map { it.first.id ?: 0 },
+                                    filterNames = orderedCategories.map { it.first.id },
                                     metadata = orderedCategories.associate {
-                                        (it.first.id ?: 0) to (it.first.name to it.second)
+                                        (it.first.id) to (it.first.name to it.second)
                                     }
                                 )
                             }
-                            postValue(updatedValue)
+                            postValue(
+                                updatedValue
+                                    .copy(
+                                        values = updatedValue.values.plus(null to true),
+                                        metadata = updatedValue.metadata.plus(null to ("" to 0))
+                                    )
+                            )
                         }
                     }
                 }
@@ -829,7 +835,7 @@ class MainViewModel(
         transactionFilters.value = newValue
     }
 
-    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int, Pair<String, Int>>) {
+    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) {
         categoriesFiltersValue.value = newValue
     }
 
@@ -860,7 +866,7 @@ class MainViewModel(
         )
     )
     private val accountCategoryFilterValue = MutableLiveData(
-        booleanFilterOf<Int, Pair<String, Int>>(emptyList())
+        booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
     )
     private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
         .combine(allAccount) { accountDetail, allAccount ->
@@ -1139,7 +1145,7 @@ class MainViewModel(
     private fun updateAccountDetailIdIfDifferent(
         newId: Int?,
         accountFilters: BooleanFilters<String, Nothing>,
-        accountCategoryFilters: BooleanFilters<Int, Pair<String, Int>>
+        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
     ) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId
@@ -1297,12 +1303,10 @@ class MainViewModel(
         }
 
         suspend fun List<TransactionListItemDetails>.applyCategoriesFilter(
-            filters: BooleanFilters<Int, Pair<String, Int>>
+            filters: BooleanFilters<Int?, Pair<String, Int>>
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
-                transaction.category?.id?.let {
-                    filters.values.getOrDefault(it, filters.defaultValue)
-                } ?: false
+                filters.values.getOrDefault(transaction.category?.id, filters.defaultValue)
             }
         }
     }

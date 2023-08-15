@@ -124,7 +124,7 @@ data class AccountDetailData constructor(
             endDate: LocalDate?,
             principalPerson: Person?,
             transactionFilters: BooleanFilters<String, Nothing>,
-            categoriesFilter: BooleanFilters<Int, Pair<String, Int>>
+            categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -312,8 +312,8 @@ fun AccountDetail(
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
     filters: BooleanFilters<String, Nothing>,
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
-    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
-    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int, Pair<String, Int>>) -> Unit
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -363,8 +363,8 @@ private fun NotNullAccountDetail(
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
     filters: BooleanFilters<String, Nothing>,
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
-    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
-    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total

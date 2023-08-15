@@ -61,10 +61,13 @@ fun NavGraphBuilder.screenAccountDetail(
                     .let { categories ->
                         booleanFilterOf(
                             defaultValue = true,
-                            filterNames = categories.map { it.first.id ?: 0 },
+                            filterNames = categories
+                                .map { it.first.id }
+                                .plus(null),
                             metadata = categories.associate {
                                 (it.first.id ?: 0) to (it.first.name to it.second)
                             }
+                                .plus(null to ("" to 0))
                         )
                     }
 

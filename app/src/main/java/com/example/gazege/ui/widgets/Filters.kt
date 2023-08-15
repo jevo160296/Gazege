@@ -54,8 +54,8 @@ fun Filter(
     personFilterValue: Boolean = false,
     onPersonFilterValueChanged: (newValue: Boolean) -> Unit = {},
     transactionsFilterVisible: Boolean = true,
-    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
-    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     transactionFilters: BooleanFilters<String, Nothing>,
     onTransactionFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit
 ) {
@@ -285,8 +285,12 @@ fun Filter(
                                             },
                                             label = {
                                                 Text(
-                                                    text = categoriesFilter.metadata[filterId]?.first
-                                                        ?: "FilterId: $filterId"
+                                                    text = (categoriesFilter.metadata[filterId]?.first
+                                                        ?: "FilterId: $filterId").ifEmpty {
+                                                        stringResource(
+                                                            id = R.string.No_category
+                                                        )
+                                                    }
                                                 )
                                             },
                                             colors = FilterChipDefaults.filterChipColors(
@@ -478,7 +482,7 @@ private fun FilterPreview() {
     var filters by remember { mutableStateOf(booleanFilterOf<String, Nothing>(emptyList(), true)) }
     var categoriesFilter by remember {
         mutableStateOf(
-            booleanFilterOf<Int, Pair<String, Int>>(
+            booleanFilterOf<Int?, Pair<String, Int>>(
                 (1..50).toList(),
                 true
             )

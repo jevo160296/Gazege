@@ -59,7 +59,7 @@ fun MainFragment(
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
     transactionFilters: BooleanFilters<String, Nothing>,
-    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
@@ -82,7 +82,7 @@ fun MainFragment(
     onOpenCategoriesRequested: () -> Unit,
     onOpenBudgetRequested: () -> Unit,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
-    onCategoriesFilterChanged: (newValue: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
@@ -332,8 +332,8 @@ private fun MainFragmentResponsiveContent(
     onSettingsClicked: () -> Unit,
     transactionFilters: BooleanFilters<String, Nothing>,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
-    categoriesFilter: BooleanFilters<Int, Pair<String, Int>>,
-    onCategoriesFilterChanged: (newValue: BooleanFilters<Int, Pair<String, Int>>) -> Unit,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
