@@ -58,9 +58,8 @@ fun MainFragment(
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
-    incomeFilterValue: Boolean,
-    outcomeFilterValue: Boolean,
-    transferFilterValue: Boolean,
+    transactionFilters: BooleanFilters<String, Nothing>,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
@@ -82,9 +81,8 @@ fun MainFragment(
     onPersonFilterValueChanged: (Boolean) -> Unit,
     onOpenCategoriesRequested: () -> Unit,
     onOpenBudgetRequested: () -> Unit,
-    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
-    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
-    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
+    onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
@@ -288,12 +286,10 @@ fun MainFragment(
                     onSettingsClicked = onSettingsClicked,
                     showVertical = showVertical,
                     principalPersonSummaryState = principalPersonSummaryState,
-                    incomeFilterValue = incomeFilterValue,
-                    outcomeFilterValue = outcomeFilterValue,
-                    transferFilterValue = transferFilterValue,
-                    onIncomeFilterValueChanged = onIncomeFilterValueChanged,
-                    onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
-                    onTransferFilterValueChanged = onTransferFilterValueChanged
+                    transactionFilters = transactionFilters,
+                    onTransactionFiltersChanged = onTransactionFiltersChanged,
+                    categoriesFilter = categoriesFilter,
+                    onCategoriesFilterChanged = onCategoriesFilterChanged
                 )
             }
         }
@@ -334,12 +330,10 @@ private fun MainFragmentResponsiveContent(
     sheetState: SheetState,
     onTitleChanged: (String) -> Unit,
     onSettingsClicked: () -> Unit,
-    incomeFilterValue: Boolean,
-    onIncomeFilterValueChanged: (newValue: Boolean) -> Unit,
-    outcomeFilterValue: Boolean,
-    onOutcomeFilterValueChanged: (newValue: Boolean) -> Unit,
-    transferFilterValue: Boolean,
-    onTransferFilterValueChanged: (newValue: Boolean) -> Unit,
+    transactionFilters: BooleanFilters<String, Nothing>,
+    onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
+    categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -361,12 +355,10 @@ private fun MainFragmentResponsiveContent(
             personFilterValue = personFilterValue,
             onPersonFilterValueChanged = onPersonFilterValueChanged,
             transactionsFilterVisible = navPosition == NavPosition.TRANSACCIONES,
-            incomeFilterValue = incomeFilterValue,
-            onIncomeFilterValueChanged = onIncomeFilterValueChanged,
-            outcomeFilterValue = outcomeFilterValue,
-            onOutcomeFilterValueChanged = onOutcomeFilterValueChanged,
-            transferFilterValue = transferFilterValue,
-            onTransferFilterValueChanged = onTransferFilterValueChanged
+            transactionFilters = transactionFilters,
+            onTransactionFiltersChanged = onTransactionFiltersChanged,
+            categoriesFilter = categoriesFilter,
+            onCategoriesFilterChanged = onCategoriesFilterChanged
         )
     }
 
@@ -643,13 +635,11 @@ private fun DefaultPreview() {
                 drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
                 onOpenBudgetRequested = {},
                 onOpenCategoriesRequested = {},
-                onTransferFilterValueChanged = {},
-                onOutcomeFilterValueChanged = {},
-                onIncomeFilterValueChanged = {},
-                transferFilterValue = true,
-                outcomeFilterValue = true,
-                incomeFilterValue = true,
-                onInitDatabaseSample = {}
+                transactionFilters = booleanFilterOf(emptyList()),
+                onTransactionFiltersChanged = {},
+                onInitDatabaseSample = {},
+                categoriesFilter = booleanFilterOf(emptyList()),
+                onCategoriesFilterChanged = {}
             )
         }
     }

@@ -31,6 +31,11 @@ import com.example.gazege.ui.progressStatus.HistoricalProgressStatus
 import com.example.gazege.ui.progressStatus.IProgressStatus
 import com.example.gazege.ui.progressStatus.Status
 import com.example.gazege.ui.views.account.AccountDetailData
+import com.example.gazege.ui.widgets.BooleanFilters
+import com.example.gazege.ui.widgets.INCOME_FILTER
+import com.example.gazege.ui.widgets.OUTCOME_FILTER
+import com.example.gazege.ui.widgets.TRANSFER_FILTER
+import com.example.gazege.ui.widgets.booleanFilterOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.ByteArrayInputStream
@@ -56,6 +61,18 @@ fun CoroutineScope.safeLaunch(
         launchBody.invoke()
     }
 }
+
+fun categoriesMergeBooleanFilter(
+    categories: List<CategoryWithSubCategories>,
+    booleanFilters: BooleanFilters<Int?, Pair<String, Int>>
+) = categories
+    .sortedBy { it.category.name }
+    .flattenWithLevel()
+    .let { categoryWithLevel ->
+        booleanFilters.updateWithMetadata(
+            categoryWithLevel.map { (it.first.id) to (it.first.name to it.second) }
+        )
+    }
 
 class MainViewModel(
     private val repository: AppRepository,
@@ -443,19 +460,27 @@ class MainViewModel(
         accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
 
     @Composable
+    fun rememberCategoriesWithSubcategories() =
+        categoriesWithSubCategories.observeAsState(emptyList())
+
+    @Composable
     fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
 
     @Composable
+    fun rememberTransactionFiltersValue() = transactionFilters
+        .observeAsState(
+            booleanFilterOf(
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                true
+            )
+        )
+
+    @Composable
+    fun rememberCategoriesFiltersValue() =
+        categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
+
+    @Composable
     fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
-
-    @Composable
-    fun rememberIncomeFilterValue() = incomeFilterValue.observeAsState(true)
-
-    @Composable
-    fun rememberOutcomeFilterValue() = outcomeFilterValue.observeAsState(true)
-
-    @Composable
-    fun rememberTransferFilterValue() = transferFilterValue.observeAsState(true)
 
     @Composable
     fun rememberPrincipalPerson() = principalPerson.observeAsState()
@@ -469,15 +494,13 @@ class MainViewModel(
     @Composable
     fun rememberAccountDetailData(
         accountId: Int?,
-        incomeFilterValue: Boolean,
-        outcomeFilterValue: Boolean,
-        transferFilterValue: Boolean
+        accountFilters: BooleanFilters<String, Nothing>,
+        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
     ): State<AccountDetailData?> {
         updateAccountDetailIdIfDifferent(
             accountId,
-            incomeFilterValue,
-            outcomeFilterValue,
-            transferFilterValue
+            accountFilters,
+            accountCategoryFilters
         )
         return accountDetailData.observeAsState()
     }
@@ -759,32 +782,65 @@ class MainViewModel(
                 )
             }
 
+    private val transactionFilters: MutableLiveData<BooleanFilters<String, Nothing>> =
+        MutableLiveData(
+            booleanFilterOf(
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                true
+            )
+        )
+
+    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int?, Pair<String, Int>>> =
+        MediatorLiveData(booleanFilterOf<Int?, Pair<String, Int>>(emptyList(), defaultValue = true))
+            .apply {
+                addSource(categoriesWithSubCategories) { categories ->
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            val orderedCategories = categories
+                                .sortedBy { it.category.name }
+                                .flattenWithLevel(0)
+                            val updatedValue = if (isInitialized) {
+                                val oldValue = value!!
+                                val updatedValue = categoriesMergeBooleanFilter(
+                                    categories, oldValue
+                                )
+                                updatedValue
+                            } else {
+                                booleanFilterOf(
+                                    filterNames = orderedCategories.map { it.first.id },
+                                    metadata = orderedCategories.associate {
+                                        (it.first.id) to (it.first.name to it.second)
+                                    }
+                                )
+                            }
+                            postValue(
+                                updatedValue
+                                    .copy(
+                                        values = updatedValue.values.plus(null to true),
+                                        metadata = updatedValue.metadata.plus(null to ("" to 0))
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
-
-    private val incomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
-
-    private val outcomeFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
-
-    private val transferFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
     fun updateImportStateStatus(newState: Status) {
         loadingDataState.value = loadingDataState.value?.copy(status = newState)
     }
 
+    fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) {
+        transactionFilters.value = newValue
+    }
+
+    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) {
+        categoriesFiltersValue.value = newValue
+    }
+
     fun updatePersonFilterValue(newValue: Boolean) {
         personFilterValue.value = newValue
-    }
-
-    fun updateIncomeFilterValue(newValue: Boolean) {
-        incomeFilterValue.value = newValue
-    }
-
-    fun updateOutcomeFilterValue(newValue: Boolean) {
-        outcomeFilterValue.value = newValue
-    }
-
-    fun updateTransferFilterValue(newValue: Boolean) {
-        transferFilterValue.value = newValue
     }
 
     private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
@@ -800,9 +856,18 @@ class MainViewModel(
                 it.accountAndOwnerWithTransactions.account.id == accountDetailId
             }
         }
-    private val accountIncomeFilterValue = MutableLiveData(true)
-    private val accountOutcomeFilterValue = MutableLiveData(true)
-    private val accountTransferFilterValue = MutableLiveData(true)
+    private val accountFilterValue = MutableLiveData(
+        booleanFilterOf<String, Nothing>(
+            listOf(
+                INCOME_FILTER,
+                OUTCOME_FILTER,
+                TRANSFER_FILTER
+            )
+        )
+    )
+    private val accountCategoryFilterValue = MutableLiveData(
+        booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
+    )
     private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
         .combine(allAccount) { accountDetail, allAccount ->
             object {
@@ -844,7 +909,7 @@ class MainViewModel(
                 val principalPerson = principalPerson
             }
         }
-        .combine(accountIncomeFilterValue) { combined, incomeFilterValue ->
+        .combine(accountFilterValue) { combined, accountFilterValue ->
             object {
                 val accountDetail = combined.accountDetail
                 val allAccount = combined.allAccount
@@ -852,22 +917,10 @@ class MainViewModel(
                 val budget = combined.budget
                 val range = combined.range
                 val principalPerson = combined.principalPerson
-                val incomeFilterValue = incomeFilterValue
+                val accountFilterValue = accountFilterValue
             }
         }
-        .combine(accountOutcomeFilterValue) { combined, outcomeFilterValue ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = combined.categories
-                val budget = combined.budget
-                val range = combined.range
-                val principalPerson = combined.principalPerson
-                val incomeFilterValue = combined.incomeFilterValue
-                val outcomeFilterValue = outcomeFilterValue
-            }
-        }
-        .combine(accountTransferFilterValue) { combined, transferFilterValue ->
+        .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
             combined.run {
                 accountDetail?.let {
                     AccountDetailData.build(
@@ -878,9 +931,8 @@ class MainViewModel(
                         startDate = range?.first,
                         endDate = range?.second,
                         principalPerson = principalPerson,
-                        incomeFilter = incomeFilterValue,
-                        outcomeFilter = outcomeFilterValue,
-                        transferFilter = transferFilterValue
+                        transactionFilters = accountFilterValue,
+                        categoriesFilter = accountCategoryFilterValue
                     )
                 }
             }
@@ -916,17 +968,15 @@ class MainViewModel(
                     )
                 }
             }
-            .combine(incomeFilterValue) { filteredTransactions, incomeFilterValue ->
-                filteredTransactions.applyIncomeFilter(incomeFilterValue)
+            .combine(transactionFilters) { filteredTransactions, filtersValue ->
+                filteredTransactions
+                    .applyIncomeFilter(filtersValue[INCOME_FILTER])
+                    .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
+                    .applyTransferFilter(filtersValue[TRANSFER_FILTER])
             }
-            .combine(outcomeFilterValue) { filteredTransactions, outcomeFilterValue ->
-                filteredTransactions.applyOutcomeFilter(outcomeFilterValue)
-            }
-            .combine(transferFilterValue) { filteredTransactions, transferFilterValue ->
+            .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
                 LoadedTransactionDetailsState(
-                    filteredTransactions.applyTransferFilter(
-                        transferFilterValue
-                    )
+                    filteredTransactions.applyCategoriesFilter(filtersValue)
                 )
             }
 
@@ -1094,21 +1144,17 @@ class MainViewModel(
 
     private fun updateAccountDetailIdIfDifferent(
         newId: Int?,
-        incomeFilterValue: Boolean,
-        outcomeFilterValue: Boolean,
-        transferFilterValue: Boolean
+        accountFilters: BooleanFilters<String, Nothing>,
+        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
     ) {
         if (newId != accountDetailId.value) {
             accountDetailId.value = newId
         }
-        if (incomeFilterValue != accountIncomeFilterValue.value) {
-            accountIncomeFilterValue.value = incomeFilterValue
+        if (accountFilters != accountFilterValue.value) {
+            accountFilterValue.value = accountFilters
         }
-        if (outcomeFilterValue != accountOutcomeFilterValue.value) {
-            accountOutcomeFilterValue.value = outcomeFilterValue
-        }
-        if (transferFilterValue != accountTransferFilterValue.value) {
-            accountTransferFilterValue.value = transferFilterValue
+        if (accountCategoryFilters != accountCategoryFilterValue.value) {
+            accountCategoryFilterValue.value = accountCategoryFilters
         }
     }
 
@@ -1253,6 +1299,14 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter {
                 it.transactionType != TransactionType.TRANSFER || transferFilterValue
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyCategoriesFilter(
+            filters: BooleanFilters<Int?, Pair<String, Int>>
+        ) = withContext(Dispatchers.Default) {
+            filter { transaction ->
+                filters.values.getOrDefault(transaction.category?.id, filters.defaultValue)
             }
         }
     }

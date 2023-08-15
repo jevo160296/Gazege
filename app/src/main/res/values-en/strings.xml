@@ -89,4 +89,6 @@
     <string name="Export_transactions">Export transactions</string>
     <string name="Export_budget">Export budget</string>
     <string name="Importar_transacciones">Import transactions</string>
+    <string name="Filters">Filters</string>
+    <string name="No_category">No category</string>
 </resources>

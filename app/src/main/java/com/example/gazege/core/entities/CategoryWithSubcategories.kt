@@ -5,6 +5,14 @@ fun categories(
     categoryWithSubCategories: CategoryWithSubCategoriesScope.() -> Unit
 ): List<CategoryWithSubCategories> = categories(null, categoryWithSubCategories)
 
+fun List<CategoryWithSubCategories>.flattenWithLevel(level: Int = 0): List<Pair<Category, Int>> =
+    flatMap {
+        listOf(
+            Pair(it.category, level),
+            *it.subCategories.flattenWithLevel(level + 1).toTypedArray()
+        )
+    }
+
 data class CategoryWithSubCategories(
     val category: Category,
     val subCategories: List<CategoryWithSubCategories>
