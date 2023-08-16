@@ -35,25 +35,37 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                 }
                 ?.sumOrNull()
 
+    val expectedTotalFlow get() = aggregatedBudget?.expectedTotalFlow ?: 0.0
+
+    val childrenExpectedTotalFlow
+        get(): Double =
+            subCategories.sumOf { it.expectedTotalFlow + it.childrenExpectedTotalFlow }
+
     val realTotalFlow get() = category.realTotalFlow
 
     val childrenRealTotalFlow: Double
         get() = subCategories
-            .sumOf {
-                it.realTotalFlow + it.childrenRealTotalFlow
-            }
+            .sumOf { it.realTotalFlow + it.childrenRealTotalFlow }
 
     val completion = CategoryDao.calculateCategoryCompleition(
         realTotalFlow = realTotalFlow,
-        expectedTotalFlow = aggregatedBudget?.expectedTotalFlow
-            ?: 0.0
+        expectedTotalFlow = expectedTotalFlow
     )
 
     val completionWithChildren = CategoryDao.calculateCategoryCompleition(
         realTotalFlow = realTotalFlow + childrenRealTotalFlow,
-        expectedTotalFlow = (aggregatedBudget?.expectedTotalFlow ?: 0.0) +
-                (childrenAggregatedBudget?.expectedTotalFlow ?: 0.0)
+        expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
     )
+
+    val leftToPay get() = aggregatedBudget?.leftToPay ?: 0.0
+
+    val childrenLeftToPay get(): Double = subCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
+
+    val expectedFlowUntilNow get(): Double = aggregatedBudget?.expectedFlowUntilNow ?: 0.0
+
+    val childrenExpectedFlowUntilNow
+        get(): Double =
+            subCategories.sumOf { it.expectedFlowUntilNow + it.childrenExpectedFlowUntilNow }
 
     companion object {
         fun from(
