@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.ui.DatabaseSample
@@ -125,32 +124,52 @@ fun CategoryListView(
             val category = node.content.category
             val aggregatedBudget = node.content.aggregatedBudget
             val isExpanded = scope.isExpanded(node)
-            val childrenBudget = if (isExpanded) {
-                null
-            } else {
-                node.content.childrenAggregatedBudget
-            }
-            val realFlow = categoryWithCalculatedData.realTotalFlow + if (isExpanded) {
-                0.0
-            } else {
-                categoryWithCalculatedData.childrenRealTotalFlow
-            }
-            val completion = if (isExpanded) {
-                categoryWithCalculatedData.completion
-            } else {
-                categoryWithCalculatedData.completionWithChildren
-            }
+            val childrenBudget =
+                if (isExpanded) {
+                    null
+                } else {
+                    node.content.childrenAggregatedBudget
+                }
+            val realFlow = categoryWithCalculatedData.realTotalFlow +
+                    if (isExpanded) {
+                        0.0
+                    } else {
+                        categoryWithCalculatedData.childrenRealTotalFlow
+                    }
+            val completion =
+                if (isExpanded) {
+                    categoryWithCalculatedData.completion
+                } else {
+                    categoryWithCalculatedData.completionWithChildren
+                }
+
+            val leftToPay = categoryWithCalculatedData.leftToPay +
+                    if (isExpanded) {
+                        0.0
+                    } else {
+                        categoryWithCalculatedData.childrenLeftToPay
+                    }
+
+            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilNow +
+                    if (isExpanded) {
+                        0.0
+                    } else {
+                        categoryWithCalculatedData.childrenExpectedFlowUntilNow
+                    }
+
+            val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +
+                    if (isExpanded) {
+                        0.0
+                    } else {
+                        categoryWithCalculatedData.childrenExpectedTotalFlow
+                    }
 
             if (aggregatedBudget != null || childrenBudget != null) {
-                val budget = (aggregatedBudget
-                    ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData()) +
-                        (childrenBudget
-                            ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData())
                 CategoryAndBudgetViewHolder(
                     categoryName = category.name,
-                    leftToPay = budget.leftToPay,
-                    expectedFlowUntilNow = budget.expectedFlowUntilNow,
-                    expectedTotalFlow = budget.expectedTotalFlow,
+                    leftToPay = leftToPay,
+                    expectedFlowUntilNow = expectedFlowUntilNow,
+                    expectedTotalFlow = expectedTotalFlow,
                     realTotalFlow = realFlow,
                     completion = completion
                 )
