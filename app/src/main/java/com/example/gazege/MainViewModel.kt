@@ -805,6 +805,23 @@ class MainViewModel(
                                     categories, oldValue
                                 )
                                 updatedValue
+                                    .copy(
+                                        values = updatedValue
+                                            .let {
+                                                it.values.toMutableMap().apply {
+                                                    this[null] = oldValue.values.getOrDefault(
+                                                        null,
+                                                        updatedValue.defaultValue
+                                                    )
+                                                }
+                                            },
+                                        metadata = updatedValue
+                                            .let {
+                                                it.metadata.toMutableMap().apply {
+                                                    this[null] = "" to 0
+                                                }
+                                            }
+                                    )
                             } else {
                                 booleanFilterOf(
                                     filterNames = orderedCategories.map { it.first.id },
@@ -812,14 +829,14 @@ class MainViewModel(
                                         (it.first.id) to (it.first.name to it.second)
                                     }
                                 )
+                                    .let {
+                                        it.copy(
+                                            values = it.values.plus(null to true),
+                                            metadata = it.metadata.plus(null to ("" to 0))
+                                        )
+                                    }
                             }
-                            postValue(
-                                updatedValue
-                                    .copy(
-                                        values = updatedValue.values.plus(null to true),
-                                        metadata = updatedValue.metadata.plus(null to ("" to 0))
-                                    )
-                            )
+                            postValue(updatedValue)
                         }
                     }
                 }
