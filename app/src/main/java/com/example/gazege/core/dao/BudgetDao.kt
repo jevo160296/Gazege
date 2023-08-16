@@ -134,31 +134,6 @@ interface BudgetDao {
             it.value * cantRepetitions
         }
 
-        fun calculateOneBudgetCompleition(
-            budget: BudgetAndCategoryWithTransactions,
-            currentDate: LocalDate,
-            startDate: LocalDate,
-            endDate: LocalDate
-        ): Double {
-            val budgetExpectedTotalFlow = calculateOneBudgetExpectedFlow(
-                budget.budget,
-                startDate,
-                endDate
-            )
-            val realTotalFlow = calculateOneBudgetRealFlow(
-                budget,
-                startDate,
-                currentDate
-            )
-            return calculateBudgetCompleition(realTotalFlow, budgetExpectedTotalFlow)
-        }
-
-        fun calculateBudgetCompleition(realTotalFlow: Double, expectedTotalFlow: Double) =
-            realTotalFlow
-                .div(expectedTotalFlow)
-                .takeIf { !it.isNaN() }
-                .let { it ?: 0.0 }
-                .coerceIn(0.0..1.0)
 
         /**
          * Calculates the amount left to pay for a budget, based on the expected remaining flow and the real total flow.
