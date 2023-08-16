@@ -437,6 +437,15 @@ data class BooleanFilters<U, T>(
             .toMap()
         )
 
+    fun setValue(valueName: U, value: Boolean) =
+        copy(values = this.values
+            .toMutableMap()
+            .also {
+                it[valueName] = value
+            }
+            .toMap()
+        )
+
     fun setValues(newValue: Boolean) = copy(
         values = values.mapValues { newValue }
     )
