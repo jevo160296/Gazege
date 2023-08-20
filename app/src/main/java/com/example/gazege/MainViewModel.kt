@@ -4,6 +4,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.*
 import com.example.gazege.core.AppRepository
@@ -36,6 +37,7 @@ import com.example.gazege.ui.widgets.DoubleFilter
 import com.example.gazege.ui.widgets.INCOME_FILTER
 import com.example.gazege.ui.widgets.OUTCOME_FILTER
 import com.example.gazege.ui.widgets.TRANSFER_FILTER
+import com.example.gazege.ui.widgets.TextFilter
 import com.example.gazege.ui.widgets.booleanFilterOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
@@ -44,6 +46,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.LocalDate
+import java.util.Locale
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
@@ -488,6 +491,10 @@ class MainViewModel(
         valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
 
     @Composable
+    fun rememberDescriptionFilterValue() =
+        descriptionFilterValue.observeAsState(TextFilter(null))
+
+    @Composable
     fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
     @Composable
@@ -495,20 +502,6 @@ class MainViewModel(
 
     @Composable
     fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-    @Composable
-    fun rememberAccountDetailData(
-        accountId: Int?,
-        accountFilters: BooleanFilters<String, Nothing>,
-        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
-    ): State<AccountDetailData?> {
-        updateAccountDetailIdIfDifferent(
-            accountId,
-            accountFilters,
-            accountCategoryFilters
-        )
-        return accountDetailData.observeAsState()
-    }
 
     @Composable
     fun rememberFilteredTransactionListItemDetails() =
@@ -869,6 +862,10 @@ class MainViewModel(
         valueFilterValue.value = newValue
     }
 
+    fun updateDescriptionFilterValue(newValue: TextFilter) {
+        descriptionFilterValue.value = newValue
+    }
+
     private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
     private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
 
@@ -893,92 +890,13 @@ class MainViewModel(
                     )
                 }
             }
+    private val descriptionFilterValue: MutableLiveData<TextFilter> =
+        MutableLiveData(TextFilter(null))
     private val accountDetailId = MutableLiveData<Int?>(null)
     private val accountDetail = accountAndOwnerWithTransactionsAndPockets
         .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
             accountAndOwnerWithTransactionsAndPockets.firstOrNull {
                 it.accountAndOwnerWithTransactions.account.id == accountDetailId
-            }
-        }
-    private val accountFilterValue = MutableLiveData(
-        booleanFilterOf<String, Nothing>(
-            listOf(
-                INCOME_FILTER,
-                OUTCOME_FILTER,
-                TRANSFER_FILTER
-            )
-        )
-    )
-    private val accountCategoryFilterValue = MutableLiveData(
-        booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
-    )
-    private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
-        .combine(allAccount) { accountDetail, allAccount ->
-            object {
-                val accountDetail = accountDetail
-                val allAccount = allAccount
-            }
-        }
-        .combine(categories) { combined, categories ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = categories
-            }
-        }
-        .combine(budget) { combined, budget ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = combined.categories
-                val budget = budget
-            }
-        }
-        .combine(range) { combined, range ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = combined.categories
-                val budget = combined.budget
-                val range = range
-            }
-        }
-        .combine(principalPerson) { combined, principalPerson ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = combined.categories
-                val budget = combined.budget
-                val range = combined.range
-                val principalPerson = principalPerson
-            }
-        }
-        .combine(accountFilterValue) { combined, accountFilterValue ->
-            object {
-                val accountDetail = combined.accountDetail
-                val allAccount = combined.allAccount
-                val categories = combined.categories
-                val budget = combined.budget
-                val range = combined.range
-                val principalPerson = combined.principalPerson
-                val accountFilterValue = accountFilterValue
-            }
-        }
-        .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
-            combined.run {
-                accountDetail?.let {
-                    AccountDetailData.build(
-                        account = accountDetail,
-                        allAccounts = allAccount,
-                        allCategories = categories,
-                        budget = budget,
-                        startDate = range?.first,
-                        endDate = range?.second,
-                        principalPerson = principalPerson,
-                        transactionFilters = accountFilterValue,
-                        categoriesFilter = accountCategoryFilterValue
-                    )
-                }
             }
         }
     private val principalPersonWithAccounts =
@@ -1022,10 +940,13 @@ class MainViewModel(
                 filteredTransactions.applyCategoriesFilter(filtersValue)
             }
             .combine(valueFilterValue) { filteredTransactions, valueFilterValue ->
+                valueFilterValue?.let {
+                    filteredTransactions.applyValueFilter(valueFilterValue)
+                } ?: filteredTransactions
+            }
+            .combine(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
                 LoadedTransactionDetailsState(
-                    valueFilterValue?.let {
-                        filteredTransactions.applyValueFilter(valueFilterValue)
-                    } ?: filteredTransactions
+                    filteredTransactions.applyDescriptionFilter(descriptionFilterValue)
                 )
             }
 
@@ -1191,22 +1112,6 @@ class MainViewModel(
         }
     }
 
-    private fun updateAccountDetailIdIfDifferent(
-        newId: Int?,
-        accountFilters: BooleanFilters<String, Nothing>,
-        accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>
-    ) {
-        if (newId != accountDetailId.value) {
-            accountDetailId.value = newId
-        }
-        if (accountFilters != accountFilterValue.value) {
-            accountFilterValue.value = accountFilters
-        }
-        if (accountCategoryFilters != accountCategoryFilterValue.value) {
-            accountCategoryFilterValue.value = accountCategoryFilters
-        }
-    }
-
     fun insertTransaction(
         vararg transaction: Transaction,
         onErrorAction: (Throwable) -> Unit = {}
@@ -1326,6 +1231,193 @@ class MainViewModel(
         }
     }
 
+    inner class AccountDetailScreenState {
+        private var accountId: Int? = null
+        private val descriptionFilter: MutableLiveData<TextFilter> = MutableLiveData()
+        private val accountFilterValue = MutableLiveData(
+            booleanFilterOf<String, Nothing>(
+                listOf(
+                    INCOME_FILTER,
+                    OUTCOME_FILTER,
+                    TRANSFER_FILTER
+                )
+            )
+        )
+        private val accountCategoryFilterValue = MutableLiveData(
+            booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
+        )
+        private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
+            .combine(allAccount) { accountDetail, allAccount ->
+                object {
+                    val accountDetail = accountDetail
+                    val allAccount = allAccount
+                }
+            }
+            .combine(categories) { combined, categories ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = categories
+                }
+            }
+            .combine(budget) { combined, budget ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = budget
+                }
+            }
+            .combine(range) { combined, range ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = combined.budget
+                    val range = range
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = combined.budget
+                    val range = combined.range
+                    val principalPerson = principalPerson
+                }
+            }
+            .combine(accountFilterValue) { combined, accountFilterValue ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = combined.budget
+                    val range = combined.range
+                    val principalPerson = combined.principalPerson
+                    val accountFilterValue = accountFilterValue
+                }
+            }
+            .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = combined.budget
+                    val range = combined.range
+                    val principalPerson = combined.principalPerson
+                    val accountFilterValue = combined.accountFilterValue
+                    val accountCategoryFilterValue = accountCategoryFilterValue
+                }
+            }
+            .combine(descriptionFilter) { combined, descriptionFilter ->
+                combined.run {
+                    accountDetail?.let {
+                        AccountDetailData.build(
+                            account = accountDetail,
+                            allAccounts = allAccount,
+                            allCategories = categories,
+                            budget = budget,
+                            startDate = range?.first,
+                            endDate = range?.second,
+                            principalPerson = principalPerson,
+                            transactionFilters = accountFilterValue,
+                            categoriesFilter = accountCategoryFilterValue,
+                            descriptionFilter = descriptionFilter
+                        )
+                    }
+                }
+            }
+
+        @Composable
+        fun rememberCategoriesFilter(
+            accountId: Int?,
+            categories: List<CategoryWithSubCategories>
+        ) = remember(accountId) {
+            mutableStateOf(
+                categories
+                    .flattenWithLevel()
+                    .let { categories ->
+                        booleanFilterOf(
+                            defaultValue = true,
+                            filterNames = categories
+                                .map { it.first.id }
+                                .plus(null),
+                            metadata = categories.associate {
+                                (it.first.id ?: 0) to (it.first.name to it.second)
+                            }
+                                .plus(null to ("" to 0))
+                        )
+                    }
+
+            )
+        }
+
+        @Composable
+        fun rememberDescriptionFilter(accountId: Int?) =
+            descriptionFilter
+                .also {
+                    if (accountId != this.accountId) {
+                        it.value = TextFilter(null)
+                        this.accountId = accountId
+                    }
+                }
+                .observeAsState(TextFilter(null))
+
+        @Composable
+        fun rememberAccountFilterValue(accountId: Int?) = remember(accountId) {
+            mutableStateOf(
+                booleanFilterOf<String, Nothing>(
+                    listOf(
+                        TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
+                    ), true
+                )
+            )
+        }
+
+        @Composable
+        fun rememberAccountDetailData(
+            accountId: Int?,
+            accountFilters: BooleanFilters<String, Nothing>,
+            accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>,
+            descriptionFilter: TextFilter
+        ): State<AccountDetailData?> {
+            updateAccountDetailIdIfDifferent(
+                accountId,
+                accountFilters,
+                accountCategoryFilters,
+                descriptionFilter
+            )
+            return accountDetailData.observeAsState()
+        }
+
+        private fun updateAccountDetailIdIfDifferent(
+            newId: Int?,
+            accountFilters: BooleanFilters<String, Nothing>,
+            accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>,
+            descriptionFilter: TextFilter
+        ) {
+            if (newId != accountDetailId.value) {
+                accountDetailId.value = newId
+            }
+            if (accountFilters != accountFilterValue.value) {
+                accountFilterValue.value = accountFilters
+            }
+            if (accountCategoryFilters != accountCategoryFilterValue.value) {
+                accountCategoryFilterValue.value = accountCategoryFilters
+            }
+            if (descriptionFilter != descriptionFilterValue.value) {
+                descriptionFilterValue.value = descriptionFilter
+            }
+        }
+
+        fun updateDescriptionFilter(newValue: TextFilter) {
+            descriptionFilter.value = newValue
+        }
+    }
+
+    val accountDetailScreenState = AccountDetailScreenState()
+
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(
             incomeFilterValue: Boolean
@@ -1356,6 +1448,24 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
                 filters.values.getOrDefault(transaction.category?.id, filters.defaultValue)
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyDescriptionFilter(
+            descriptionFilter: TextFilter
+        ) = withContext(Dispatchers.Default) {
+            filter { transaction ->
+                val locale = Locale.getDefault()
+                val searchTokens = descriptionFilter.value
+                    ?.lowercase(locale)
+                    ?.split(" ")
+                    ?.toSet()
+                    ?.map { ".*$it.*".toRegex() }
+                val descriptionTokens = transaction.transaction.description
+                    .lowercase(locale)
+                searchTokens == null ||
+                        searchTokens
+                            .any { it.containsMatchIn(descriptionTokens) }
             }
         }
 
