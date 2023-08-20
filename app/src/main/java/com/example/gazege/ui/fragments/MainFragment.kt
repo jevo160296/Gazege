@@ -60,6 +60,7 @@ fun MainFragment(
     personFilterValue: Boolean,
     transactionFilters: BooleanFilters<String, Nothing>,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+    valueFilterState: DoubleFilter,
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
@@ -83,6 +84,7 @@ fun MainFragment(
     onOpenBudgetRequested: () -> Unit,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
+    onValueFilterStateChanged: (DoubleFilter) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
 ) {
@@ -289,7 +291,9 @@ fun MainFragment(
                     transactionFilters = transactionFilters,
                     onTransactionFiltersChanged = onTransactionFiltersChanged,
                     categoriesFilter = categoriesFilter,
-                    onCategoriesFilterChanged = onCategoriesFilterChanged
+                    onCategoriesFilterChanged = onCategoriesFilterChanged,
+                    valueFilterState = valueFilterState,
+                    onValueFilterStateChanged = onValueFilterStateChanged
                 )
             }
         }
@@ -334,6 +338,8 @@ private fun MainFragmentResponsiveContent(
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
+    valueFilterState: DoubleFilter,
+    onValueFilterStateChanged: (DoubleFilter) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -358,7 +364,9 @@ private fun MainFragmentResponsiveContent(
             transactionFilters = transactionFilters,
             onTransactionFiltersChanged = onTransactionFiltersChanged,
             categoriesFilter = categoriesFilter,
-            onCategoriesFilterChanged = onCategoriesFilterChanged
+            onCategoriesFilterChanged = onCategoriesFilterChanged,
+            valueFilterState = valueFilterState,
+            onValueFilterStateChanged = onValueFilterStateChanged
         )
     }
 
@@ -493,7 +501,7 @@ private fun MainFragmentResponsiveContent(
                             .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        GazegeIndefiniteCircularProgressIndicator()
+                        GIndefiniteCircularProgressIndicator()
                         Text(stringResource(id = R.string.LoadingPersonSummaryView))
                     }
                 }
@@ -639,7 +647,9 @@ private fun DefaultPreview() {
                 onTransactionFiltersChanged = {},
                 onInitDatabaseSample = {},
                 categoriesFilter = booleanFilterOf(emptyList()),
-                onCategoriesFilterChanged = {}
+                onCategoriesFilterChanged = {},
+                valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
+                onValueFilterStateChanged = {}
             )
         }
     }

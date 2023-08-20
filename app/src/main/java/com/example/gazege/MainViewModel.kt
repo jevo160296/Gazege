@@ -32,6 +32,7 @@ import com.example.gazege.ui.progressStatus.IProgressStatus
 import com.example.gazege.ui.progressStatus.Status
 import com.example.gazege.ui.views.account.AccountDetailData
 import com.example.gazege.ui.widgets.BooleanFilters
+import com.example.gazege.ui.widgets.DoubleFilter
 import com.example.gazege.ui.widgets.INCOME_FILTER
 import com.example.gazege.ui.widgets.OUTCOME_FILTER
 import com.example.gazege.ui.widgets.TRANSFER_FILTER
@@ -483,6 +484,10 @@ class MainViewModel(
     fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
 
     @Composable
+    fun rememberValueFilterValue() =
+        valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
+
+    @Composable
     fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
     @Composable
@@ -860,12 +865,34 @@ class MainViewModel(
         personFilterValue.value = newValue
     }
 
+    fun updateValueFilterValue(newValue: DoubleFilter) {
+        valueFilterValue.value = newValue
+    }
+
     private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
     private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
 
     private val rangeTransactions = range.switchMap { range ->
         repository.getTransactions(range?.first, range?.second).asLiveData()
     }
+    private val transactionAmountRangeValue =
+        rangeTransactions.map {
+            val amountList = it.map { transaction -> transaction.amount }.distinct()
+            val max = (amountList.maxOrNull() ?: 0.0).toFloat()
+            val min = (amountList.minOrNull() ?: 0.0).toFloat()
+            min..max
+        }
+    private val valueFilterValue: MutableLiveData<DoubleFilter> =
+        MediatorLiveData<DoubleFilter>()
+            .apply {
+                addSource(transactionAmountRangeValue) {
+                    val oldValue = value?.value
+                    value = DoubleFilter(
+                        value = oldValue,
+                        range = it
+                    )
+                }
+            }
     private val accountDetailId = MutableLiveData<Int?>(null)
     private val accountDetail = accountAndOwnerWithTransactionsAndPockets
         .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
@@ -992,8 +1019,13 @@ class MainViewModel(
                     .applyTransferFilter(filtersValue[TRANSFER_FILTER])
             }
             .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
+                filteredTransactions.applyCategoriesFilter(filtersValue)
+            }
+            .combine(valueFilterValue) { filteredTransactions, valueFilterValue ->
                 LoadedTransactionDetailsState(
-                    filteredTransactions.applyCategoriesFilter(filtersValue)
+                    valueFilterValue?.let {
+                        filteredTransactions.applyValueFilter(valueFilterValue)
+                    } ?: filteredTransactions
                 )
             }
 
@@ -1324,6 +1356,16 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
                 filters.values.getOrDefault(transaction.category?.id, filters.defaultValue)
+            }
+        }
+
+        suspend fun List<TransactionListItemDetails>.applyValueFilter(
+            filterValue: DoubleFilter
+        ) = withContext(Dispatchers.Default) {
+            filterValue.value?.let {
+                filter { transaction ->
+                    filterValue.value.contains(transaction.transaction.amount.toFloat())
+                }
             }
         }
     }

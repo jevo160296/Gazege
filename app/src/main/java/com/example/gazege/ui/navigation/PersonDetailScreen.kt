@@ -19,7 +19,7 @@ import com.example.gazege.R
 import com.example.gazege.ui.views.PersonAction
 import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.person.PersonDetail
-import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 
 fun NavGraphBuilder.screenPersonDetail(
     viewModel: MainViewModel,
@@ -78,7 +78,7 @@ fun NavGraphBuilder.screenPersonDetail(
                         .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    GazegeIndefiniteCircularProgressIndicator()
+                    GIndefiniteCircularProgressIndicator()
                     Text(stringResource(id = R.string.LoadingPersonSummaryView))
                 }
             }

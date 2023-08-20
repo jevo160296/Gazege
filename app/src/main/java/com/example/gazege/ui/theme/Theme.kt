@@ -1,8 +1,17 @@
 package com.example.gazege.ui.theme
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBar
@@ -16,8 +25,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -144,11 +156,46 @@ object GazegeTheme {
         get() = LocalGazegeColorScheme.current
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ThemePreviewLight() {
     GazegeTheme {
+        val colors = MaterialTheme.colorScheme.let {
+            listOf(
+                it.primary to "primary",
+                it.onPrimary to "on primary",
+                it.primaryContainer to "primary container",
+                it.onPrimaryContainer to "on primary container",
+                it.secondary to "secondary",
+                it.onSecondary to "on secondary",
+                it.secondaryContainer to "secondary container",
+                it.onSecondaryContainer to "on secondary container",
+                it.tertiary to "tertiary",
+                it.onTertiary to "on tertiary",
+                it.tertiaryContainer to "tertiary container",
+                it.onTertiaryContainer to "on tertiary container",
+                it.background to "background",
+                it.onBackground to "on background",
+                it.surface to "surface",
+                it.onSurface to "on surface",
+                it.surfaceTint to "surface tint",
+                it.surfaceVariant to "surface variant",
+                it.onSurfaceVariant to "on surface variant",
+                it.inverseSurface to "inverse surface",
+                it.inverseOnSurface to "inverse on surface",
+                it.inversePrimary to "inverse primary",
+                it.error to "error",
+                it.onError to "on error",
+                it.errorContainer to "error container",
+                it.onErrorContainer to "on error container",
+                it.outline to "outline",
+                it.outlineVariant to "outline variant",
+                it.scrim to "scrim",
+            )
+        }
         Scaffold(
+            Modifier.padding(vertical = 50.dp, horizontal = 8.dp),
             bottomBar = {
                 BottomAppBar {
                     Image(
@@ -157,19 +204,75 @@ private fun ThemePreviewLight() {
                     )
                 }
             }
-        ) {
-            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.padding(it)) {
-                Text(text = "Surface", color = MaterialTheme.colorScheme.onSurface)
+        ) { padding ->
+            FlowRow(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
+                    .padding(padding),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                colors.forEach {
+                    Column(
+                        Modifier
+                            .width(84.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            Modifier
+                                .background(color = it.first)
+                                .padding(42.dp)
+                        ) {}
+                        Text(it.second, overflow = TextOverflow.Ellipsis, softWrap = true)
+                    }
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ThemePreviewDark() {
     GazegeTheme(darkTheme = true) {
+        val colors = MaterialTheme.colorScheme.let {
+            listOf(
+                it.primary to "primary",
+                it.onPrimary to "on primary",
+                it.primaryContainer to "primary container",
+                it.onPrimaryContainer to "on primary container",
+                it.secondary to "secondary",
+                it.onSecondary to "on secondary",
+                it.secondaryContainer to "secondary container",
+                it.onSecondaryContainer to "on secondary container",
+                it.tertiary to "tertiary",
+                it.onTertiary to "on tertiary",
+                it.tertiaryContainer to "tertiary container",
+                it.onTertiaryContainer to "on tertiary container",
+                it.background to "background",
+                it.onBackground to "on background",
+                it.surface to "surface",
+                it.onSurface to "on surface",
+                it.surfaceTint to "surface tint",
+                it.surfaceVariant to "surface variant",
+                it.onSurfaceVariant to "on surface variant",
+                it.inverseSurface to "inverse surface",
+                it.inverseOnSurface to "inverse on surface",
+                it.inversePrimary to "inverse primary",
+                it.error to "error",
+                it.onError to "on error",
+                it.errorContainer to "error container",
+                it.onErrorContainer to "on error container",
+                it.outline to "outline",
+                it.outlineVariant to "outline variant",
+                it.scrim to "scrim",
+            )
+        }
         Scaffold(
+            Modifier.padding(vertical = 50.dp, horizontal = 8.dp),
             bottomBar = {
                 BottomAppBar {
                     Image(
@@ -177,11 +280,31 @@ private fun ThemePreviewDark() {
                         contentDescription = ""
                     )
                 }
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) {
-            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.padding(it)) {
-                Text(text = "Surface", color = MaterialTheme.colorScheme.onSurface)
+            }
+        ) { padding ->
+            FlowRow(
+                Modifier
+                    .padding(padding)
+                    .fillMaxWidth()
+                    .verticalScroll(
+                        rememberScrollState()
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                colors.forEach {
+                    Column(
+                        Modifier
+                            .width(84.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            Modifier
+                                .background(color = it.first)
+                                .padding(42.dp)
+                        ) {}
+                        Text(it.second, overflow = TextOverflow.Ellipsis, softWrap = true)
+                    }
+                }
             }
         }
     }

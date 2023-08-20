@@ -67,6 +67,7 @@ import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.transaction.transactionLazyListItems
 import com.example.gazege.ui.widgets.BooleanFilters
 import com.example.gazege.ui.widgets.DataView
+import com.example.gazege.ui.widgets.DoubleFilter
 import com.example.gazege.ui.widgets.Filter
 import com.example.gazege.ui.widgets.INCOME_FILTER
 import com.example.gazege.ui.widgets.LargeEmphasis
@@ -435,7 +436,9 @@ private fun NotNullAccountDetail(
             transactionFilters = filters,
             onTransactionFiltersChanged = onFiltersChanged,
             categoriesFilter = categoriesFilter,
-            onCategoriesFilterChanged = onCategoriesFilterChanged
+            onCategoriesFilterChanged = onCategoriesFilterChanged,
+            valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
+            onValueFilterStateChanged = {}
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
