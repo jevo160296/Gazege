@@ -165,7 +165,7 @@ fun DataViewWithTrailingComposable(
 fun DataViewProgressBar(
     progress: Double
 ) {
-    GazegeProgressIndicator(
+    GProgressIndicator(
         compleition = progress,
         color = MaterialTheme.colorScheme.tertiary,
         compact = true

@@ -49,6 +49,7 @@ fun NavGraphBuilder.screenMain(
         val transactionFilters by viewModel.rememberTransactionFiltersValue()
         val categoriesFiltersValue by viewModel.rememberCategoriesFiltersValue()
         val personFilterValue by viewModel.rememberPersonFilterValue()
+        val valueFilterState by viewModel.rememberValueFilterValue()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
@@ -126,7 +127,9 @@ fun NavGraphBuilder.screenMain(
                     }
                 } else {
                     {}
-                }
+                },
+                valueFilterState = valueFilterState,
+                onValueFilterStateChanged = viewModel::updateValueFilterValue
             )
         }
     }

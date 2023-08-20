@@ -37,7 +37,7 @@ import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SelectableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SimpleTreeList
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.SmallEmphasis
 import com.example.gazege.ui.widgets.treeview.Node
@@ -278,7 +278,7 @@ fun LoadingAccountPage() {
             .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        GazegeIndefiniteCircularProgressIndicator()
+        GIndefiniteCircularProgressIndicator()
         Text(stringResource(id = R.string.LoadingPersonSummaryView))
     }
 }

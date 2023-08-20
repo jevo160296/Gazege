@@ -29,7 +29,7 @@ import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SimpleTreeList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
-import com.example.gazege.ui.widgets.GazegeProgressIndicator
+import com.example.gazege.ui.widgets.GProgressIndicator
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
@@ -64,7 +64,7 @@ private fun CategoryAndBudgetViewHolder(
             Text(doubleToMoneyString(realTotalFlow))
         }
     }
-    GazegeProgressIndicator(
+    GProgressIndicator(
         completion,
         stringResource(id = R.string.Progreso),
         color = MaterialTheme.colorScheme.tertiary

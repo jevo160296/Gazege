@@ -36,7 +36,7 @@ import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.DataViewProgressBar
 import com.example.gazege.ui.widgets.DataViewWithTrailingComposable
-import com.example.gazege.ui.widgets.GazegeIndefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetLayout
 import com.example.gazege.ui.widgets.fab.FAB
@@ -101,7 +101,7 @@ fun EmptyEditarCategorias(
                 }
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column {
-                        GazegeIndefiniteCircularProgressIndicator()
+                        GIndefiniteCircularProgressIndicator()
                         Text(stringResource(id = R.string.Cargando))
                     }
                 }

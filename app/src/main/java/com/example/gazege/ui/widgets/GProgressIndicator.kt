@@ -29,7 +29,7 @@ import com.example.gazege.ui.doubleToPercentageString
 import com.example.gazege.ui.theme.GazegeTheme
 
 @Composable
-fun GazegeProgressIndicator(
+fun GProgressIndicator(
     compleition: Double,
     labelString: String = "Progress",
     compact: Boolean = false,
@@ -49,7 +49,7 @@ fun GazegeProgressIndicator(
 }
 
 @Composable
-fun GazegeDefiniteCircularProgressIndicator(
+fun GDefiniteCircularProgressIndicator(
     modifier: Modifier = Modifier,
     progress: Float,
     animated: Boolean = true,
@@ -80,7 +80,7 @@ fun GazegeDefiniteCircularProgressIndicator(
                 repeatMode = RepeatMode.Restart
             ), label = "Rotation"
         )
-        GazegeDefiniteCircularProgressIndicator(
+        GDefiniteCircularProgressIndicator(
             progress = animatedProgress,
             angularPosition = animatedAngularPosition + 360.0F * progress / 2
         )
@@ -94,7 +94,7 @@ fun GazegeDefiniteCircularProgressIndicator(
 }
 
 @Composable
-fun GazegeDefiniteCircularProgressIndicator(
+fun GDefiniteCircularProgressIndicator(
     modifier: Modifier = Modifier,
     progress: Float,
     angularPosition: Float
@@ -109,7 +109,7 @@ fun GazegeDefiniteCircularProgressIndicator(
 }
 
 @Composable
-fun GazegeIndefiniteCircularProgressIndicator(modifier: Modifier = Modifier) {
+fun GIndefiniteCircularProgressIndicator(modifier: Modifier = Modifier) {
     CircularProgressIndicator(
         modifier = modifier,
         strokeCap = StrokeCap.Round
@@ -121,7 +121,7 @@ fun GazegeIndefiniteCircularProgressIndicator(modifier: Modifier = Modifier) {
 fun IndefiniteCircularProgress() {
     GazegeTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            GazegeIndefiniteCircularProgressIndicator()
+            GIndefiniteCircularProgressIndicator()
         }
     }
 }
@@ -132,7 +132,7 @@ fun TurningCircularProgress() {
     val currentProgress = 0.2F
     GazegeTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            GazegeDefiniteCircularProgressIndicator(
+            GDefiniteCircularProgressIndicator(
                 progress = currentProgress,
                 animated = true
             )

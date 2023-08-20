@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.util.toRange
 import com.example.gazege.R
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.core.lastDayOfMonth
@@ -38,6 +39,7 @@ import com.example.gazege.ui.DateFormat
 import com.example.gazege.ui.localDateToString
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.menu.DropdownMenu
+import com.example.gazege.ui.widgets.sliders.GRangeSlider
 import java.time.LocalDate
 
 @OptIn(
@@ -57,8 +59,15 @@ fun Filter(
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     transactionFilters: BooleanFilters<String, Nothing>,
-    onTransactionFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit
+    onTransactionFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
+    valueFilterState: DoubleFilter,
+    onValueFilterStateChanged: (DoubleFilter) -> Unit
 ) {
+    val (valueFilterUI, onValueFilterUIChanged) = remember(valueFilterState) {
+        mutableStateOf(
+            valueFilterState.copy()
+        )
+    }
     val transactionFilterCheckboxState by remember(transactionFilters) {
         mutableStateOf(
             if (transactionFilters.allFiltered()) {
@@ -87,12 +96,14 @@ fun Filter(
                 endDate != null ||
                 personFilterValue ||
                 transactionFilters.anyFiltered() ||
-                categoriesFilter.anyFiltered()
+                categoriesFilter.anyFiltered() ||
+                valueFilterState.anyFiltered()
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-        horizontalArrangement = Arrangement.End,
+        horizontalArrangement = Arrangement
+            .spacedBy(dimensionResource(id = R.dimen.DefaultPadding), Alignment.End),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
@@ -126,34 +137,9 @@ fun Filter(
                             .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        if (dateFilterVisible) {
-                            DateFilterItems(
-                                Modifier.weight(1f, fill = true),
-                                startDate = startDate,
-                                endDate = endDate,
-                                onRangeChanged = onRangeChanged
-                            )
-                        } else {
-                            Spacer(modifier = Modifier)
-                        }
-                        IconButton(
-                            onClick = {
-                                onRangeChanged(null, null)
-                                onPersonFilterValueChanged(false)
-                                onTransactionFiltersChanged(transactionFilters.resetValues())
-                                onCategoriesFilterChanged(categoriesFilter.resetValues())
-                            },
-                            enabled = isFiltered
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.round_filter_list_off_24
-                                ),
-                                contentDescription = "Clear filters"
-                            )
-                        }
+                        Spacer(modifier = Modifier)
                     }
-                    if (transactionsFilterVisible || personFilterVisible) {
+                    if (transactionsFilterVisible || personFilterVisible || dateFilterVisible) {
                         Column(
                             Modifier
                                 .fillMaxWidth()
@@ -163,12 +149,36 @@ fun Filter(
                                 .verticalScroll(rememberScrollState())
                                 .padding(dimensionResource(id = R.dimen.DefaultPadding))
                         ) {
+                            if (dateFilterVisible) {
+                                Box(
+                                    Modifier.fillMaxWidth()
+                                ) {
+                                    IconButton(
+                                        enabled = startDate != null || endDate != null,
+                                        onClick = { onRangeChanged(null, null) },
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.secondary
+                                        )
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.round_restart_alt_24),
+                                            contentDescription = "Restart"
+                                        )
+                                    }
+                                    DateFilterItems(
+                                        modifier = Modifier.align(Alignment.Center),
+                                        startDate = startDate,
+                                        endDate = endDate,
+                                        onRangeChanged = onRangeChanged
+                                    )
+                                }
+                            }
                             if (transactionsFilterVisible) {
                                 Row(
                                     modifier = Modifier.align(Alignment.Start),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    TriStateCheckbox(
+                                    GTriStateCheckbox(
                                         state = transactionFilterCheckboxState,
                                         onClick = {
                                             onTransactionFiltersChanged(
@@ -181,8 +191,7 @@ fun Filter(
                                                     ToggleableState.Indeterminate -> transactionFilters.resetValues()
                                                 }
                                             )
-                                        },
-                                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                                        }
                                     )
                                     Text(stringResource(id = R.string.transacciones))
                                 }
@@ -246,7 +255,43 @@ fun Filter(
                                     modifier = Modifier.align(Alignment.Start),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    TriStateCheckbox(
+                                    IconButton(
+                                        enabled = valueFilterState.anyFiltered(),
+                                        onClick = {
+                                            onValueFilterStateChanged(valueFilterState.resetValues())
+                                        },
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.secondary
+                                        )
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.round_restart_alt_24),
+                                            contentDescription = "Restart"
+                                        )
+                                    }
+                                    Text("Value filter")
+                                }
+                                GRangeSlider(
+                                    value = valueFilterUI.value ?: valueFilterUI.range,
+                                    onValueChange = {
+                                        onValueFilterUIChanged(
+                                            valueFilterUI.copy(
+                                                value = it.start..it.endInclusive
+                                            )
+                                        )
+                                    },
+                                    valueRange = valueFilterUI.range,
+                                    onValueChangeFinished = {
+                                        onValueFilterStateChanged(
+                                            valueFilterUI
+                                        )
+                                    }
+                                )
+                                Row(
+                                    modifier = Modifier.align(Alignment.Start),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    GTriStateCheckbox(
                                         state = categoryFilterCheckboxState,
                                         onClick = {
                                             onCategoriesFilterChanged(
@@ -259,10 +304,7 @@ fun Filter(
                                                     ToggleableState.Indeterminate -> categoriesFilter.resetValues()
                                                 }
                                             )
-                                        },
-                                        colors = CheckboxDefaults.colors(
-                                            checkedColor = MaterialTheme.colorScheme.secondary
-                                        )
+                                        }
                                     )
                                     Text(stringResource(id = R.string.Categorias))
                                 }
@@ -324,6 +366,23 @@ fun Filter(
                     }
                 }
             }
+        }
+        IconButton(
+            onClick = {
+                onRangeChanged(null, null)
+                onPersonFilterValueChanged(false)
+                onTransactionFiltersChanged(transactionFilters.resetValues())
+                onCategoriesFilterChanged(categoriesFilter.resetValues())
+                onValueFilterStateChanged(valueFilterState.resetValues())
+            },
+            enabled = isFiltered
+        ) {
+            Icon(
+                painter = painterResource(
+                    id = R.drawable.round_filter_list_off_24
+                ),
+                contentDescription = "Clear filters"
+            )
         }
     }
 }
@@ -418,21 +477,28 @@ const val INCOME_FILTER = "INCOME"
 const val OUTCOME_FILTER = "OUTCOME"
 const val TRANSFER_FILTER = "TRANSFER"
 
+interface Filter<T : Filter<T>> {
+    fun allFiltered(): Boolean
+    fun anyFiltered(): Boolean
+    fun resetValues(): T
+}
+
 data class BooleanFilters<U, T>(
     val values: Map<U, Boolean>,
     val defaultValue: Boolean,
     val metadata: Map<U, T>
-) {
+) : Filter<BooleanFilters<U, T>> {
     private fun isFiltered(value: Boolean) = value != defaultValue
-    fun allFiltered() = values.values.all { isFiltered(it) }
+    override fun allFiltered() = values.values.all { isFiltered(it) }
 
-    fun anyFiltered() = values.values.any { isFiltered(it) }
+    override fun anyFiltered() = values.values.any { isFiltered(it) }
 
     fun switchOrDefault(valueName: U) =
-        copy(values = this.values
-            .toMutableMap()
-            .also {
-                it.merge(valueName, !defaultValue) { oldValue, _ -> !oldValue }
+        copy(
+            values = this.values
+                .toMutableMap()
+                .also {
+                    it.merge(valueName, !defaultValue) { oldValue, _ -> !oldValue }
             }
             .toMap()
         )
@@ -450,7 +516,8 @@ data class BooleanFilters<U, T>(
         values = values.mapValues { newValue }
     )
 
-    fun resetValues() = setValues(defaultValue)
+
+    override fun resetValues() = setValues(defaultValue)
 
     fun update(items: List<U>) = copy(
         values = items.associateWith { this.values.getOrDefault(it, defaultValue) }
@@ -481,6 +548,27 @@ fun <U, T> booleanFilterOf(
     defaultValue,
     metadata
 )
+
+data class DoubleFilter(
+    val value: ClosedFloatingPointRange<Float>?,
+    val range: ClosedFloatingPointRange<Float>
+) : Filter<DoubleFilter> {
+    override fun allFiltered(): Boolean = value?.let {
+        it.endInclusive < range.start ||
+                it.start > range.endInclusive
+    } ?: false
+
+    override fun anyFiltered(): Boolean = value?.let {
+        range.toRange().contains(it.toRange().intersect(range.toRange()))
+    } ?: false
+
+    override fun resetValues(): DoubleFilter = DoubleFilter(
+        value = null,
+        range = range
+    )
+
+}
+
 
 @Preview
 @Composable
@@ -517,7 +605,9 @@ private fun FilterPreview() {
                 transactionFilters = filters,
                 onTransactionFiltersChanged = { filters = it },
                 categoriesFilter = categoriesFilter,
-                onCategoriesFilterChanged = { categoriesFilter = it }
+                onCategoriesFilterChanged = { categoriesFilter = it },
+                valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
+                onValueFilterStateChanged = {}
             )
         }
     }

@@ -46,7 +46,7 @@ import com.example.gazege.ui.fragments.TextVisibility
 import com.example.gazege.ui.navigation.MainNavHost
 import com.example.gazege.ui.progressStatus.Status
 import com.example.gazege.ui.theme.GazegeTheme
-import com.example.gazege.ui.widgets.GazegeDefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.GDefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
                                     MainViewModel.Type.IMPORT -> MediumHeadline(text = "Importing data")
                                     MainViewModel.Type.EXPORT -> MediumHeadline(text = "Exporting data")
                                 }
-                                GazegeDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
+                                GDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
                                 LargeBody(
                                     modifier = Modifier.animateContentSize(),
                                     text = importState.message
