@@ -84,6 +84,8 @@ fun MainFragment(
     onOpenBudgetRequested: () -> Unit,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
+    descriptionFilterState: TextFilter,
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     showVertical: Boolean
@@ -293,7 +295,9 @@ fun MainFragment(
                     categoriesFilter = categoriesFilter,
                     onCategoriesFilterChanged = onCategoriesFilterChanged,
                     valueFilterState = valueFilterState,
-                    onValueFilterStateChanged = onValueFilterStateChanged
+                    onValueFilterStateChanged = onValueFilterStateChanged,
+                    descriptionFilterState = descriptionFilterState,
+                    onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
                 )
             }
         }
@@ -340,6 +344,8 @@ private fun MainFragmentResponsiveContent(
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     valueFilterState: DoubleFilter,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
+    descriptionFilterState: TextFilter,
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -366,7 +372,9 @@ private fun MainFragmentResponsiveContent(
             categoriesFilter = categoriesFilter,
             onCategoriesFilterChanged = onCategoriesFilterChanged,
             valueFilterState = valueFilterState,
-            onValueFilterStateChanged = onValueFilterStateChanged
+            onValueFilterStateChanged = onValueFilterStateChanged,
+            descriptionFilterState = descriptionFilterState,
+            onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
         )
     }
 
@@ -649,7 +657,9 @@ private fun DefaultPreview() {
                 categoriesFilter = booleanFilterOf(emptyList()),
                 onCategoriesFilterChanged = {},
                 valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-                onValueFilterStateChanged = {}
+                onValueFilterStateChanged = {},
+                descriptionFilterState = TextFilter(null),
+                onDescriptionFilterStateChanged = {}
             )
         }
     }

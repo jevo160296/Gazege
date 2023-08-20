@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.MainViewModel.Companion.applyCategoriesFilter
+import com.example.gazege.MainViewModel.Companion.applyDescriptionFilter
 import com.example.gazege.MainViewModel.Companion.applyIncomeFilter
 import com.example.gazege.MainViewModel.Companion.applyOutcomeFilter
 import com.example.gazege.MainViewModel.Companion.applyTransferFilter
@@ -74,6 +75,7 @@ import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.OUTCOME_FILTER
 import com.example.gazege.ui.widgets.TRANSFER_FILTER
+import com.example.gazege.ui.widgets.TextFilter
 import com.example.gazege.ui.widgets.booleanFilterOf
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
@@ -125,7 +127,8 @@ data class AccountDetailData constructor(
             endDate: LocalDate?,
             principalPerson: Person?,
             transactionFilters: BooleanFilters<String, Nothing>,
-            categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>
+            categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
+            descriptionFilter: TextFilter
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -159,7 +162,8 @@ data class AccountDetailData constructor(
                     .applyIncomeFilter(transactionFilters[INCOME_FILTER])
                     .applyOutcomeFilter(transactionFilters[OUTCOME_FILTER])
                     .applyTransferFilter(transactionFilters[TRANSFER_FILTER])
-                    .applyCategoriesFilter(categoriesFilter),
+                    .applyCategoriesFilter(categoriesFilter)
+                    .applyDescriptionFilter(descriptionFilter),
                 inTransactions = account
                     .allInTransactionsWithInPocketTransactions
                     .sortedByDescending { it.date }
@@ -314,7 +318,9 @@ fun AccountDetail(
     filters: BooleanFilters<String, Nothing>,
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
-    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit
+    onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
+    descriptionFilterState: TextFilter,
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -341,7 +347,9 @@ fun AccountDetail(
                 filters = filters,
                 onFiltersChanged = onFiltersChanged,
                 categoriesFilter = categoriesFilter,
-                onCategoriesFilterChanged = onCategoriesFilterChanged
+                onCategoriesFilterChanged = onCategoriesFilterChanged,
+                descriptionFilterState = descriptionFilterState,
+                onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
             )
         }
     }
@@ -366,6 +374,8 @@ private fun NotNullAccountDetail(
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
+    descriptionFilterState: TextFilter,
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
     val total = data.total
@@ -438,7 +448,9 @@ private fun NotNullAccountDetail(
             categoriesFilter = categoriesFilter,
             onCategoriesFilterChanged = onCategoriesFilterChanged,
             valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-            onValueFilterStateChanged = {}
+            onValueFilterStateChanged = {},
+            descriptionFilterState = descriptionFilterState,
+            onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -576,7 +588,9 @@ private fun NullAccountDetail(
         filters = booleanFilterOf(emptyList()),
         onFiltersChanged = {},
         categoriesFilter = booleanFilterOf(emptyList()),
-        onCategoriesFilterChanged = {}
+        onCategoriesFilterChanged = {},
+        descriptionFilterState = TextFilter(null),
+        onDescriptionFilterStateChanged = {}
     )
 }
 
@@ -610,7 +624,8 @@ private fun AccountDetailPreview() {
                                         INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER
                                     )
                                 ),
-                                booleanFilterOf(emptyList())
+                                booleanFilterOf(emptyList()),
+                                descriptionFilter = TextFilter(null)
                             )
                         }
                     }
@@ -645,7 +660,9 @@ private fun AccountDetailPreview() {
                         filters = booleanFilterOf(emptyList()),
                         onFiltersChanged = {},
                         categoriesFilter = booleanFilterOf(emptyList()),
-                        onCategoriesFilterChanged = {}
+                        onCategoriesFilterChanged = {},
+                        descriptionFilterState = TextFilter(null),
+                        onDescriptionFilterStateChanged = {}
                     )
                 }
             }

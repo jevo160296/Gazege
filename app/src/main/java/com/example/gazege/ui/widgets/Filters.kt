@@ -1,6 +1,7 @@
 package com.example.gazege.ui.widgets
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.util.toRange
 import com.example.gazege.R
 import com.example.gazege.core.firstDayOfMonth
 import com.example.gazege.core.lastDayOfMonth
@@ -41,6 +40,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.menu.DropdownMenu
 import com.example.gazege.ui.widgets.sliders.GRangeSlider
 import java.time.LocalDate
+import kotlin.math.min
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class
@@ -61,7 +61,9 @@ fun Filter(
     transactionFilters: BooleanFilters<String, Nothing>,
     onTransactionFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
     valueFilterState: DoubleFilter,
-    onValueFilterStateChanged: (DoubleFilter) -> Unit
+    onValueFilterStateChanged: (DoubleFilter) -> Unit,
+    descriptionFilterState: TextFilter,
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit
 ) {
     val (valueFilterUI, onValueFilterUIChanged) = remember(valueFilterState) {
         mutableStateOf(
@@ -91,13 +93,23 @@ fun Filter(
         )
     }
     var menuExpanded by remember { mutableStateOf(false) }
+    var searchBarActive by remember { mutableStateOf(false) }
+    val searchBarTonalElevation by animateDpAsState(
+        targetValue = if (searchBarActive) {
+            2.dp
+        } else {
+            8.dp
+        },
+        label = "Tonal elevation"
+    )
     val isFiltered =
         startDate != null ||
                 endDate != null ||
                 personFilterValue ||
                 transactionFilters.anyFiltered() ||
                 categoriesFilter.anyFiltered() ||
-                valueFilterState.anyFiltered()
+                valueFilterState.anyFiltered() ||
+                descriptionFilterState.anyFiltered()
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
@@ -131,13 +143,39 @@ fun Filter(
                         .heightIn(max = 400.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Spacer(modifier = Modifier)
+                    if (transactionsFilterVisible) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                                .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding)),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            SearchBar(
+                                query = descriptionFilterState.value ?: "",
+                                onQueryChange = {
+                                    onDescriptionFilterStateChanged(
+                                        descriptionFilterState.copy(
+                                            value = it.substring(
+                                                0,
+                                                min(30, it.length)
+                                            )
+                                        )
+                                    )
+                                },
+                                onSearch = { searchBarActive = false },
+                                active = false,
+                                onActiveChange = { searchBarActive = it },
+                                placeholder = { Text(text = stringResource(id = R.string.descripcion)) },
+                                trailingIcon = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.round_search_24),
+                                        contentDescription = "Search"
+                                    )
+                                },
+                                tonalElevation = searchBarTonalElevation
+                            ) {}
+                        }
                     }
                     if (transactionsFilterVisible || personFilterVisible || dateFilterVisible) {
                         Column(
@@ -269,7 +307,7 @@ fun Filter(
                                             contentDescription = "Restart"
                                         )
                                     }
-                                    Text("Value filter")
+                                    Text(stringResource(id = R.string.Valor))
                                 }
                                 GRangeSlider(
                                     value = valueFilterUI.value ?: valueFilterUI.range,
@@ -356,7 +394,7 @@ fun Filter(
                                 }
                             }
                             if (personFilterVisible) {
-                                Text("Persons")
+                                Text(stringResource(id = R.string.personas))
                                 PersonFilter(
                                     personFilterValue,
                                     onValueChanged = onPersonFilterValueChanged
@@ -374,6 +412,7 @@ fun Filter(
                 onTransactionFiltersChanged(transactionFilters.resetValues())
                 onCategoriesFilterChanged(categoriesFilter.resetValues())
                 onValueFilterStateChanged(valueFilterState.resetValues())
+                onDescriptionFilterStateChanged(descriptionFilterState.resetValues())
             },
             enabled = isFiltered
         ) {
@@ -559,7 +598,8 @@ data class DoubleFilter(
     } ?: false
 
     override fun anyFiltered(): Boolean = value?.let {
-        range.toRange().contains(it.toRange().intersect(range.toRange()))
+        it.endInclusive >= range.start ||
+                it.start <= range.endInclusive
     } ?: false
 
     override fun resetValues(): DoubleFilter = DoubleFilter(
@@ -569,6 +609,15 @@ data class DoubleFilter(
 
 }
 
+data class TextFilter(
+    val value: String?
+) : Filter<TextFilter> {
+    override fun allFiltered(): Boolean = false
+
+    override fun anyFiltered(): Boolean = value != null
+
+    override fun resetValues(): TextFilter = copy(value = null)
+}
 
 @Preview
 @Composable
@@ -576,7 +625,18 @@ private fun FilterPreview() {
     var startDate: LocalDate? by remember { mutableStateOf(null) }
     var endDate: LocalDate? by remember { mutableStateOf(null) }
     var personFilterValue by remember { mutableStateOf(false) }
-    var filters by remember { mutableStateOf(booleanFilterOf<String, Nothing>(emptyList(), true)) }
+    var descriptionFilter by remember { mutableStateOf(TextFilter(null)) }
+    var filters by remember {
+        mutableStateOf(
+            booleanFilterOf<String, Nothing>(
+                listOf(
+                    INCOME_FILTER,
+                    OUTCOME_FILTER,
+                    TRANSFER_FILTER
+                ), true
+            )
+        )
+    }
     var categoriesFilter by remember {
         mutableStateOf(
             booleanFilterOf<Int?, Pair<String, Int>>(
@@ -585,7 +645,7 @@ private fun FilterPreview() {
             )
         )
     }
-    GazegeTheme(darkTheme = true) {
+    GazegeTheme {
         Box(
             Modifier
                 .fillMaxSize()
@@ -607,7 +667,9 @@ private fun FilterPreview() {
                 categoriesFilter = categoriesFilter,
                 onCategoriesFilterChanged = { categoriesFilter = it },
                 valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-                onValueFilterStateChanged = {}
+                onValueFilterStateChanged = {},
+                descriptionFilterState = descriptionFilter,
+                onDescriptionFilterStateChanged = { descriptionFilter = it }
             )
         }
     }
