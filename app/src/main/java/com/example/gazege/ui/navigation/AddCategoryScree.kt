@@ -43,7 +43,8 @@ fun NavGraphBuilder.screenAddCategory(
             },
             onBudgetDeleteRequested = {},
             onBudgetDetailRequested = {},
-            onBudgetEditRequested = {}
+            onBudgetEditRequested = {},
+            onBudgetAddRequested = null
         )
     }
 }

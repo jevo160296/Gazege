@@ -1,9 +1,14 @@
 package com.example.gazege.ui.views.category
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -16,10 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -30,6 +37,7 @@ import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
 import com.example.gazege.ui.views.budget.BudgetRecyclerView
 import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.LargeBody
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.TextField
 import kotlinx.coroutines.launch
@@ -41,7 +49,8 @@ fun CategoryForm(
     onCategorySave: (Category, SnackbarHostState) -> Unit,
     onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
     onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
-    onBudgetDeleteRequested: (BudgetWithCalculatedDataAndCategory) -> Unit
+    onBudgetDeleteRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetAddRequested: ((Category) -> Unit)?
 ) {
     val category = categoryMap?.first
     val budgetData = categoryMap?.second?.takeIf { it.isNotEmpty() }
@@ -89,8 +98,24 @@ fun CategoryForm(
                 partialCategory = partialCategory.copy(parentId = it?.id)
             }
         )
-        if (budgetData != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             MediumHeadline(text = stringResource(id = R.string.Presupuesto))
+            onBudgetAddRequested?.let { action ->
+                category?.let { category ->
+                    SmallFloatingActionButton(onClick = { action(category) }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                            contentDescription = "Add budget"
+                        )
+                    }
+                }
+            }
+        }
+        if (budgetData != null) {
             val mensaje = stringResource(id = R.string.confirma_la_eliminacion_de).format(
                 stringResource(
                     id = R.string.Presupuesto
@@ -117,6 +142,8 @@ fun CategoryForm(
                 onBudgetEditRequested = onBudgetEditRequested,
                 modifier = Modifier.heightIn(max = 1024.dp)
             )
+        } else {
+            LargeBody(text = stringResource(id = R.string.Presupuesto_vacio))
         }
     }
     LaunchedEffect(key1 = Unit) {

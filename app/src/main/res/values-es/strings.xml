@@ -91,4 +91,6 @@
     <string name="Importar_transacciones">Importar transacciones</string>
     <string name="Filters">Filtros</string>
     <string name="No_category">Sin categoría</string>
+    <string name="Agregar_presupuesto">Agregar presupuesto</string>
+    <string name="Presupuesto_vacio">Presupuesto vacío</string>
 </resources>
