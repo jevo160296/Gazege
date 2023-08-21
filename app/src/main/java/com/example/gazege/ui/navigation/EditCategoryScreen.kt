@@ -9,13 +9,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.gazege.MainViewModel
+import com.example.gazege.core.entities.Category
 import com.example.gazege.ui.views.category.CategoryForm
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenEditCategory(
     viewModel: MainViewModel,
     onNavigateUp: () -> Unit,
-    onNavigateToEditOneBudgetRequested: (Int) -> Unit
+    onNavigateToEditOneBudgetRequested: (Int) -> Unit,
+    onNavigateToAddOneBudgetRequested: (Category) -> Unit
 ) {
     composable(
         "editCategory/{categoryId}",
@@ -65,7 +67,8 @@ fun NavGraphBuilder.screenEditCategory(
                         it
                     )
                 }
-            }
+            },
+            onBudgetAddRequested = onNavigateToAddOneBudgetRequested
         )
     }
 }

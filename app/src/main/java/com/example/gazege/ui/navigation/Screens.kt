@@ -142,7 +142,12 @@ fun MainNavHost(
             screenEditCategory(
                 viewModel = mainViewModel,
                 onNavigateUp = navController::navigateUp,
-                onNavigateToEditOneBudgetRequested = navController::navigateToEditOneBudget
+                onNavigateToEditOneBudgetRequested = navController::navigateToEditOneBudget,
+                onNavigateToAddOneBudgetRequested = {
+                    navController.navigateToAddOneBudget(
+                        it.id ?: 0
+                    )
+                }
             )
             screenAccountDetail(
                 viewModel = mainViewModel,
