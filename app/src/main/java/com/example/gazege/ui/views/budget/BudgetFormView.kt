@@ -13,9 +13,11 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.*
 import com.example.gazege.ui.widgets.TextField
@@ -277,5 +279,21 @@ private fun WeekDaysPicker(
             }
         }
         FrequencyType.MONTHLY -> {}
+    }
+}
+
+@Preview
+@Composable
+fun BudgetPreview2() {
+    GazegeTheme {
+        Box(Modifier.fillMaxSize()) {
+            BudgetFormView(
+                budget = null,
+                categories = (1..10).map {
+                    Category(it, "Cat$it", null)
+                },
+                onSaveBudget = {}
+            )
+        }
     }
 }
