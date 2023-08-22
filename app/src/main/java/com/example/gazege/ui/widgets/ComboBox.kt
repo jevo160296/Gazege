@@ -83,7 +83,7 @@ fun <T> ComboBox(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <N, C : Node<N, C>> TreeComboBox(
     modifier: Modifier = Modifier,
@@ -109,9 +109,9 @@ fun <N, C : Node<N, C>> TreeComboBox(
         AnimatedContent(
             targetState = showClearButton,
             transitionSpec = {
-                scaleIn() with scaleOut()
+                scaleIn() togetherWith scaleOut()
             },
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center, label = ""
         ) {
             if (it) {
                 IconButton(onClick = onClearSelectionClicked) {
