@@ -67,11 +67,7 @@ fun <T> ComboBox(
             filteringNotStarted = false
             currentText = it
         },
-        label = {
-            if (label != null) {
-                label()
-            }
-        },
+        label = label,
         keyboardActions = keyboardActions,
         keyboardOptions = keyboardOptions,
         trailingIcon = { trailingIcon() },
@@ -272,7 +268,7 @@ private fun <T> CoreComboBox(
     onCurrentTextChanged: (String) -> Unit,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    label: @Composable () -> Unit,
+    label: (@Composable () -> Unit)?,
     keyboardActions: KeyboardActions,
     keyboardOptions: KeyboardOptions,
     trailingIcon: @Composable () -> Unit,
