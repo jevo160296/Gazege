@@ -13,12 +13,13 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.*
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.category.CategoryDropDown
 import com.example.gazege.ui.widgets.*
-import com.example.gazege.ui.widgets.TextField
 import java.lang.Integer.max
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -38,7 +39,7 @@ fun BudgetFormView(
     var frequencyType: FrequencyType by rememberSaveable(budget) {
         mutableStateOf(budget?.frequencyType ?: FrequencyType.MONTHLY)
     }
-    var frequency by rememberSaveable(budget) { mutableStateOf(budget?.frequency ?: 1) }
+    var frequency by rememberSaveable(budget) { mutableIntStateOf(budget?.frequency ?: 1) }
     var startDate by rememberSaveable(budget) {
         mutableStateOf(
             budget?.startDate ?: LocalDate.now()
@@ -52,7 +53,7 @@ fun BudgetFormView(
             budget?.budgetType ?: BudgetType.VARIABLE
         )
     }
-    var value by rememberSaveable(budget) { mutableStateOf(abs(budget?.value ?: 0.0)) }
+    var value by rememberSaveable(budget) { mutableDoubleStateOf(abs(budget?.value ?: 0.0)) }
     var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
@@ -277,5 +278,21 @@ private fun WeekDaysPicker(
             }
         }
         FrequencyType.MONTHLY -> {}
+    }
+}
+
+@Preview
+@Composable
+fun BudgetPreview2() {
+    GazegeTheme {
+        Box(Modifier.fillMaxSize()) {
+            BudgetFormView(
+                budget = null,
+                categories = (1..10).map {
+                    Category(it, "Cat$it", null)
+                },
+                onSaveBudget = {}
+            )
+        }
     }
 }

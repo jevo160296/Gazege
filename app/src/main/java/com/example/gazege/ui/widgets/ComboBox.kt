@@ -16,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.treeview.ColumnTreeView
 import com.example.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.example.gazege.ui.widgets.treeview.Node
@@ -65,11 +67,7 @@ fun <T> ComboBox(
             filteringNotStarted = false
             currentText = it
         },
-        label = {
-            if (label != null) {
-                label()
-            }
-        },
+        label = label,
         keyboardActions = keyboardActions,
         keyboardOptions = keyboardOptions,
         trailingIcon = { trailingIcon() },
@@ -81,7 +79,7 @@ fun <T> ComboBox(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <N, C : Node<N, C>> TreeComboBox(
     modifier: Modifier = Modifier,
@@ -107,9 +105,9 @@ fun <N, C : Node<N, C>> TreeComboBox(
         AnimatedContent(
             targetState = showClearButton,
             transitionSpec = {
-                scaleIn() with scaleOut()
+                scaleIn() togetherWith scaleOut()
             },
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center, label = ""
         ) {
             if (it) {
                 IconButton(onClick = onClearSelectionClicked) {
@@ -270,7 +268,7 @@ private fun <T> CoreComboBox(
     onCurrentTextChanged: (String) -> Unit,
     dropDownExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    label: @Composable () -> Unit,
+    label: (@Composable () -> Unit)?,
     keyboardActions: KeyboardActions,
     keyboardOptions: KeyboardOptions,
     trailingIcon: @Composable () -> Unit,
@@ -366,6 +364,28 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
                 onItemClick = onNodeClick,
                 contentPadding = contentPadding,
                 enabled = nodeEnabled(node)
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ComboBoxPreview() {
+    val (dropDownExpanded, onDropDownExpandedChange) = remember { mutableStateOf(false) }
+    val (selectedItem, onSelectedItemChanged) = remember { mutableStateOf<String?>(null) }
+
+    val options = (1..10).map { "Item$it" }
+    val itemToString = { it: String? -> it ?: "NULL" }
+    GazegeTheme {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            ComboBox(
+                dropDownExpanded = dropDownExpanded,
+                onExpandedChange = onDropDownExpandedChange,
+                options = options,
+                selectedItem = selectedItem,
+                itemToString = itemToString,
+                onItemClick = onSelectedItemChanged
             )
         }
     }
