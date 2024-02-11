@@ -10,10 +10,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -31,6 +37,7 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.GProgressIndicator
 import com.example.gazege.ui.widgets.LargeEmphasis
+import com.example.gazege.ui.widgets.treeview.NodeId
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 
 @Composable
@@ -96,11 +103,14 @@ private fun EmptyCategoryAndBudgetViewHolder(
 @Composable
 fun CategoryListView(
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
-    onItemClick: (category: Category) -> Unit,
+    editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
-    onItemLongClick: (category: Category) -> Unit
+    delCategory: (category: Category) -> Unit
 ) {
     val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
+    var menuIdExpanded: NodeId? by remember {
+        mutableStateOf(null)
+    }
     SimpleTreeList(
         contentPadding = PaddingValues(
             bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
@@ -116,8 +126,8 @@ fun CategoryListView(
             showExpandIcon = node.children.isNotEmpty(),
             isExpanded = scope.isExpanded(node),
             onIsExpandedChanged = { scope.toggleExpanded(node) },
-            onItemTapped = { onItemClick(node.content.category.category) },
-            onItemLongPressed = { onItemLongClick(node.content.category.category) },
+            onItemTapped = { editCategory(node.content.category.category) },
+            onItemLongPressed = { menuIdExpanded = node.id() },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
             val categoryWithCalculatedData = node.content
@@ -164,19 +174,39 @@ fun CategoryListView(
                         categoryWithCalculatedData.childrenExpectedTotalFlow
                     }
 
-            if (aggregatedBudget != null || childrenBudget != null) {
-                CategoryAndBudgetViewHolder(
-                    categoryName = category.name,
-                    leftToPay = leftToPay,
-                    expectedFlowUntilNow = expectedFlowUntilNow,
-                    expectedTotalFlow = expectedTotalFlow,
-                    realTotalFlow = realFlow,
-                    completion = completion
-                )
-            } else {
-                EmptyCategoryAndBudgetViewHolder(
-                    node.content.category.category,
-                    onSetBudgetRequested = { onSetBudgetRequested(category.category) })
+            Box {
+                if (aggregatedBudget != null || childrenBudget != null) {
+                    CategoryAndBudgetViewHolder(
+                        categoryName = category.name,
+                        leftToPay = leftToPay,
+                        expectedFlowUntilNow = expectedFlowUntilNow,
+                        expectedTotalFlow = expectedTotalFlow,
+                        realTotalFlow = realFlow,
+                        completion = completion
+                    )
+                } else {
+                    EmptyCategoryAndBudgetViewHolder(
+                        node.content.category.category,
+                        onSetBudgetRequested = { onSetBudgetRequested(category.category) })
+                }
+                DropdownMenu(
+                    expanded = menuIdExpanded == node.id(),
+                    onDismissRequest = { menuIdExpanded = null }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.Editar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            editCategory(node.content.category.category)
+                        })
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.Eliminar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            delCategory(node.content.category.category)
+                        }
+                    )
+                }
             }
         }
     }
@@ -190,8 +220,8 @@ private fun CategoryListPreview() {
             Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                 CategoryListView(
                     categoriesWithCalculatedData = categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
-                    onItemClick = {},
-                    onItemLongClick = {},
+                    editCategory = {},
+                    delCategory = {},
                     onSetBudgetRequested = {}
                 )
             }

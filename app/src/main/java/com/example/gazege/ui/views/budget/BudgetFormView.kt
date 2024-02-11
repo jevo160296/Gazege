@@ -1,10 +1,27 @@
 package com.example.gazege.ui.views.budget
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -16,10 +33,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.BudgetType
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.FrequencyType
+import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.core.entities.toList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.category.CategoryDropDown
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.ComboBox
+import com.example.gazege.ui.widgets.DatePicker
+import com.example.gazege.ui.widgets.Form
+import com.example.gazege.ui.widgets.GazegeSegmentedButton
+import com.example.gazege.ui.widgets.NumberField
+import com.example.gazege.ui.widgets.SegmentedButtonItem
+import com.example.gazege.ui.widgets.TextField
 import java.lang.Integer.max
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -128,7 +156,8 @@ fun BudgetFormView(
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding),
         itemsColumnsModifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))
     ) {
-        SegmentedButton(
+        GazegeSegmentedButton(
+            modifier = Modifier.fillMaxWidth(),
             selectedIndex = if (isGasto) {
                 0
             } else {

@@ -187,8 +187,8 @@ fun LoadedEditarCategorias(
                 }
                 CategoryListView(
                     categoriesWithCalculatedData = categoriesWithCalculatedData,
-                    onItemClick = onEditCategoryRequested,
-                    onItemLongClick = {
+                    editCategory = onEditCategoryRequested,
+                    delCategory = {
                         scope.launch {
                             categoryClicked = it
                             sheetState.show()

@@ -34,7 +34,7 @@ import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
-import com.example.gazege.ui.widgets.SegmentedButton
+import com.example.gazege.ui.widgets.GazegeSegmentedButton
 import com.example.gazege.ui.widgets.SegmentedButtonItem
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -89,71 +89,26 @@ fun SettingsFragment(
         itemSpacing = 8.dp,
         itemsColumnsModifier = Modifier.padding(PaddingValues(8.dp))
     ) {
-        if (personList.isEmpty()) {
-            ButtonField(onClick = onAddPersonRequested) {
-                Text(text = stringResource(id = R.string.Nueva_persona))
-            }
-        } else {
-            ComboBox(
-                dropDownExpanded = principalPersonExpanded,
-                onExpandedChange = { principalPersonExpanded = it },
-                options = personList,
-                selectedItem = personSelected,
-                itemToString = { it?.name ?: "" },
-                onItemClick = { personIdSelected = it.id },
-                label = { Text(stringResource(id = R.string.Persona_principal)) }
-            )
-        }
-        AccountDropDownMenu(
-            accountsList = accountList,
-            selectedAccountNode = incomeSelected?.let {
-                AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
-            },
-            label = { Text(stringResource(id = R.string.Ingreso)) },
-            onItemClick = { incomeIdSelected = it.content.account.id },
-            deactivatedAccountList = deactivatedAccountListNoOutcome,
-            canClearSelection = true,
-            onClearSelectionClicked = { incomeIdSelected = null },
-            onAccountAddRequested = onAddAccountRequested
-        )
-        AccountDropDownMenu(
-            accountsList = accountList,
-            selectedAccountNode = outcomeSelected?.let {
-                AccountAndOwnerNode(
-                    it,
-                    accountList,
-                    0,
-                    0,
-                    listOf(),
-                    null
-                )
-            },
-            label = { Text(stringResource(id = R.string.Gasto)) },
-            onItemClick = { outcomeIdSelected = it.content.account.id },
-            deactivatedAccountList = deactivatedAccountListNoIncome,
-            canClearSelection = true,
-            onClearSelectionClicked = { outcomeIdSelected = null },
-            onAccountAddRequested = onAddAccountRequested
-        )
-        SegmentedButton(
+        GazegeSegmentedButton(
+            modifier = Modifier.fillMaxWidth(),
             selectedIndex = null,
             items = listOf(
-                SegmentedButtonItem(
-                    text = {
-                        Text(text = "Exportar data")
-                    },
-                    leadingIcon = {}
-                ),
                 SegmentedButtonItem(
                     text = {
                         Text(text = "Importar data")
                     },
                     leadingIcon = {}
+                ),
+                SegmentedButtonItem(
+                    text = {
+                        Text(text = "Exportar data")
+                    },
+                    leadingIcon = {}
                 )
             )) {
             when (it) {
-                0 -> onExportDataRequested()
-                1 -> onImportDataRequested()
+                0 -> onImportDataRequested()
+                1 -> onExportDataRequested()
             }
         }
         FlowRow(
@@ -204,5 +159,51 @@ fun SettingsFragment(
                     }
                 }
         }
+        if (personList.isEmpty()) {
+            ButtonField(onClick = onAddPersonRequested) {
+                Text(text = stringResource(id = R.string.Nueva_persona))
+            }
+        } else {
+            ComboBox(
+                dropDownExpanded = principalPersonExpanded,
+                onExpandedChange = { principalPersonExpanded = it },
+                options = personList,
+                selectedItem = personSelected,
+                itemToString = { it?.name ?: "" },
+                onItemClick = { personIdSelected = it.id },
+                label = { Text(stringResource(id = R.string.Persona_principal)) }
+            )
+        }
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = incomeSelected?.let {
+                AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
+            },
+            label = { Text(stringResource(id = R.string.Ingreso)) },
+            onItemClick = { incomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoOutcome,
+            canClearSelection = true,
+            onClearSelectionClicked = { incomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = outcomeSelected?.let {
+                AccountAndOwnerNode(
+                    it,
+                    accountList,
+                    0,
+                    0,
+                    listOf(),
+                    null
+                )
+            },
+            label = { Text(stringResource(id = R.string.Gasto)) },
+            onItemClick = { outcomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoIncome,
+            canClearSelection = true,
+            onClearSelectionClicked = { outcomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
     }
 }
