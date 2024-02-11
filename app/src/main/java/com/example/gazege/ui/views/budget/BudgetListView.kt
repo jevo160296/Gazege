@@ -49,7 +49,7 @@ private fun BudgetViewHolder(
     val descripcionText = stringResource(id = R.string.descripcion)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
-            Text(text = "$leftToPayString ${doubleToMoneyString(budget.budgetLeftToPay)}")
+            Text(text = "$leftToPayString ${doubleToMoneyString(budget.budgetLeftToPayFromToday)}")
             Text(text = "$expectedFlowUntilNowString ${doubleToMoneyString(budget.budgetExpectedFlowUntilNow)}")
             Text(text = "$expectedTotalFlowString ${doubleToMoneyString(budget.budgetExpectedTotalFlow)}")
             Text(text = "$expectedRemainingFlow ${doubleToMoneyString(budget.budgetExpectedRemainingFlow)}")

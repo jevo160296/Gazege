@@ -108,6 +108,7 @@ class DatabaseSampleScope(
             budgetAndCategoryWithTransactionSample,
             currentDateSample,
             startDateSample,
+            currentDateSample,
             endDateSample
         )
     }
@@ -251,8 +252,9 @@ private fun getBudgetWithCalculatedData(
     budget: List<BudgetAndCategoryWithTransactions>,
     currentDate: LocalDate,
     startDate: LocalDate,
+    today: LocalDate,
     endDate: LocalDate
-) = BudgetWithCalculatedData.from(budget, currentDate, startDate, endDate)
+) = BudgetWithCalculatedData.from(budget, currentDate, startDate, today, endDate)
 
 private fun getBudgetAndCategoryWithCalculatedData(
     budget: List<BudgetWithCalculatedData>,

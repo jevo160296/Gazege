@@ -6,9 +6,38 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.distinctUntilChanged
+import androidx.lifecycle.map
+import androidx.lifecycle.switchMap
+import androidx.lifecycle.viewModelScope
 import com.example.gazege.core.AppRepository
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwner
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
+import com.example.gazege.core.entities.BudgetWithCalculatedData
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
+import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithCalculatedData
+import com.example.gazege.core.entities.CategoryWithSubCategories
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.core.entities.CategoryWithTransactions
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.PersonWithAccounts
+import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.TransactionAndAccounts
+import com.example.gazege.core.entities.TransactionAndAccountsAndCategory
+import com.example.gazege.core.entities.TransactionListItemDetails
+import com.example.gazege.core.entities.TransactionType
+import com.example.gazege.core.entities.flattenWithLevel
 import com.example.gazege.core.export.readAccountFromCsv
 import com.example.gazege.core.export.readBudgetFromCsv
 import com.example.gazege.core.export.readCategoryFromCsv
@@ -39,8 +68,13 @@ import com.example.gazege.ui.widgets.OUTCOME_FILTER
 import com.example.gazege.ui.widgets.TRANSFER_FILTER
 import com.example.gazege.ui.widgets.TextFilter
 import com.example.gazege.ui.widgets.booleanFilterOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -49,6 +83,29 @@ import java.time.LocalDate
 import java.util.Locale
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.any
+import kotlin.collections.associate
+import kotlin.collections.associateBy
+import kotlin.collections.distinct
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.filter
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.maxOrNull
+import kotlin.collections.minOrNull
+import kotlin.collections.plus
+import kotlin.collections.set
+import kotlin.collections.sortedBy
+import kotlin.collections.sortedByDescending
+import kotlin.collections.takeWhile
+import kotlin.collections.toMutableMap
+import kotlin.collections.toSet
+import kotlin.collections.toTypedArray
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES
@@ -445,6 +502,10 @@ class MainViewModel(
         budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
 
     @Composable
+    fun rememberBudgetAndCategoryWithCalculatedDataMap() =
+        budgetWithCalculatedDataAndCategoryMap.observeAsState(emptyMap())
+
+    @Composable
     fun rememberEditarCategoriasState() =
         editarCategoriasState.observeAsState(nullCategoriasState())
 
@@ -732,6 +793,7 @@ class MainViewModel(
                     budgetAndCategoryWithTransactions,
                     LocalDate.now(),
                     startDate,
+                    today = LocalDate.now(),
                     endDate
                 )
             } else {
@@ -757,6 +819,11 @@ class MainViewModel(
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
         budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
+        }
+
+    private val budgetWithCalculatedDataAndCategoryMap: LiveData<Map<Category, BudgetWithCalculatedDataAndCategory>> =
+        budgetWithCalculatedDataAndCategory.map {
+            it.associateBy { value -> value.category }
         }
 
     private val editarCategoriasState: LiveData<EditarCategoriasState> =

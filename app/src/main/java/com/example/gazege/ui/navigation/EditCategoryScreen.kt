@@ -28,6 +28,7 @@ fun NavGraphBuilder.screenEditCategory(
         )
     ) { navStack ->
         val categories by viewModel.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
         val budgetAndCategoryWithCalculatedData by viewModel.rememberBudgetAndCategoryWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
@@ -40,6 +41,7 @@ fun NavGraphBuilder.screenEditCategory(
         CategoryForm(
             category?.let { Pair(category, categoryBudget) },
             categories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onCategorySave = { newCategory, state ->
                 viewModel.updateCategory(
                     newCategory,
