@@ -98,7 +98,7 @@ data class FullPersonSummaryState(
             }
             val deudasTotal = deudasFlujo.toList().sumOf { it.second }
             val presupuestoTotal =
-                budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPay }
+                budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPayFromToday }
             return FullPersonSummaryState(
                 person = personWithAccounts.person,
                 saldoActual = personWithAccounts.let {

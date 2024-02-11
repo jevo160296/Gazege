@@ -48,6 +48,7 @@ fun NavGraphBuilder.screenAddTransaction(
         val allPerson by viewModel.rememberAllPerson()
         val allAccount by viewModel.rememberAllAccount()
         val categories by viewModel.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
 
         LaunchedEffect(key1 = allPerson.isNotEmpty()) {
             if (allPerson.isNotEmpty()) {
@@ -86,6 +87,7 @@ fun NavGraphBuilder.screenAddTransaction(
             accountList = orderedAccounts,
             personList = allPerson,
             categoryList = categories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             defaultDate = LocalDate.of(
                 yearMonthDay.div(10000),
                 yearMonthDay.mod(10000).div(100),

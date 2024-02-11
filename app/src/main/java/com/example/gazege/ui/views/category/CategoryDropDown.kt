@@ -7,12 +7,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.widgets.TreeComboBox
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
+import kotlin.math.absoluteValue
 
 data class CategoryWithBudgetNode(
     override val content: CategoryWithSubcategoriesAndBudgetWithCalculatedData,
@@ -41,6 +44,7 @@ data class CategoryNode(
 @Composable
 fun CategoryDropDown(
     categoryList: List<Category>,
+    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
     selectedCategory: Category?,
     label: @Composable () -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -59,7 +63,18 @@ fun CategoryDropDown(
     var dropDownExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    val itemToString = { it: CategoryNode? -> it?.content?.category?.name ?: "" }
+    val itemToString = { it: CategoryNode? ->
+        val category = it?.content?.category
+        if (category == null) {
+            ""
+        } else {
+            val leftToPayToday = budgetWithCalculatedDataAndCategory.getOrDefault(
+                category,
+                null
+            )?.budgetLeftToPayToday?.absoluteValue ?: 0.0
+            "${category.name}: ${doubleToMoneyString(leftToPayToday)}"
+        }
+    }
     TreeComboBox(
         dropDownExpanded = dropDownExpanded,
         onExpandedChange = {

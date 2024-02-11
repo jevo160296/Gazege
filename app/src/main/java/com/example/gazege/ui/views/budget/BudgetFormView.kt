@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetType
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.WeekDays
@@ -58,6 +59,7 @@ import kotlin.math.withSign
 fun BudgetFormView(
     budget: Budget?,
     categories: List<Category>,
+    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
     onSaveBudget: (Budget) -> Unit
 ) {
     var isGasto by rememberSaveable(budget) {
@@ -203,6 +205,7 @@ fun BudgetFormView(
         WeekDaysPicker(frequencyType, weekDaysDays) { weekDaysDays = it }
         CategoryDropDown(
             categoryList = categories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             selectedCategory = selectedCategory,
             label = { Text(stringResource(R.string.Categoria)) },
             onItemClick = { selectedCategoryId = it?.id }
@@ -320,6 +323,7 @@ fun BudgetPreview2() {
                 categories = (1..10).map {
                     Category(it, "Cat$it", null)
                 },
+                budgetWithCalculatedDataAndCategory = emptyMap(),
                 onSaveBudget = {}
             )
         }

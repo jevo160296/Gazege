@@ -448,17 +448,18 @@ class BudgetCalculationTests {
         val today = LocalDate.of(2023, 4, 20)
         val startDate = today.withDayOfMonth(1)
         val endDate = today.plusMonths(1L).withDayOfMonth(1).minusDays(1L)
-        val budgetWithCalculatedData = budgetWithCalculatedDataDSL(today, startDate, endDate) {
-            withCategory("Desayunos", "Alimentacion")
-                .andBudgetDaily(-10000.0, 1, startDate, BudgetType.FIXED)
-                .andSourceAccount("Efectivo")
-                .addExpense(6000.0, "Gasto", startDate)
-                .finish() // Total 30000
+        val budgetWithCalculatedData =
+            budgetWithCalculatedDataDSL(today, startDate, today, endDate) {
+                withCategory("Desayunos", "Alimentacion")
+                    .andBudgetDaily(-10000.0, 1, startDate, BudgetType.FIXED)
+                    .andSourceAccount("Efectivo")
+                    .addExpense(6000.0, "Gasto", startDate)
+                    .finish() // Total 30000
 
-            withCategory("Almuerzos", "Alimentacion")
-                .andBudgetDaily(-11000.0, 1, startDate, BudgetType.VARIABLE)
-                .andSourceAccount("Banco")
-                .addExpense(10000.0, "Gasto", startDate)
+                withCategory("Almuerzos", "Alimentacion")
+                    .andBudgetDaily(-11000.0, 1, startDate, BudgetType.VARIABLE)
+                    .andSourceAccount("Banco")
+                    .addExpense(10000.0, "Gasto", startDate)
                 .addExpense(10000.0, "Gasto", startDate)
                 .finish()
 
@@ -479,29 +480,33 @@ class BudgetCalculationTests {
                 Budget.fromDaily(0, 0, -10000.0, 1, startDate, BudgetType.FIXED),
                 expectedTotalFlow = -300000.0,
                 expectedFlowUntilNow = -200000.0,
-                leftToPay = -294000.0,
-                expectedRemainingFlow = -100000.0,
+                leftToPayFromToday = -294000.0,
+                expectedRemainingFlowFromToday = -100000.0,
+                leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
                 Budget.fromDaily(1, 1, -11000.0, 1, startDate, BudgetType.VARIABLE),
                 expectedTotalFlow = -330000.0,
                 expectedFlowUntilNow = -220000.0,
-                leftToPay = -220000.0,
-                expectedRemainingFlow = -110000.0
+                leftToPayFromToday = -220000.0,
+                expectedRemainingFlowFromToday = -110000.0,
+                leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
                 Budget.fromMonthly(2, 2, -600000.0, BudgetType.FIXED),
                 expectedTotalFlow = -600000.0,
                 expectedFlowUntilNow = -600000.0,
-                leftToPay = -100000.0,
-                expectedRemainingFlow = -0.0
+                leftToPayFromToday = -100000.0,
+                expectedRemainingFlowFromToday = -0.0,
+                leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
                 Budget.fromMonthly(3, 3, 3000000.0, BudgetType.FIXED),
                 expectedTotalFlow = 3000000.0,
                 expectedFlowUntilNow = 3000000.0,
-                leftToPay = 200000.0,
-                expectedRemainingFlow = 0.0
+                leftToPayFromToday = 200000.0,
+                expectedRemainingFlowFromToday = 0.0,
+                leftToPayToday = -1000.0
             )
         )
     }

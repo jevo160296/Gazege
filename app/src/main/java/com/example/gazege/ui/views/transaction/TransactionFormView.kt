@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithPockets
+import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
@@ -57,6 +58,7 @@ fun TransactionAndAccountsForm(
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     categoryList: List<Category>,
+    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
     onDoneAction: () -> Unit,
     isComplete: Boolean,
     addAnotherTransaction: Boolean,
@@ -202,6 +204,7 @@ fun TransactionAndAccountsForm(
         if (categoryList.isNotEmpty()) {
             CategoryDropDown(
                 categoryList = categoryList,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
                 selectedCategory = selectedCategory,
                 label = { Text(stringResource(id = R.string.Categoria)) },
                 keyboardOptions = KeyboardOptions(imeAction = nextAction),

@@ -16,12 +16,14 @@ fun NavGraphBuilder.screenAddCategory(
 ) {
     composable("addCategory") {
         val categories by viewModel.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
 
         val coroutineScope = rememberCoroutineScope()
 
         CategoryForm(
             null,
             categories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onCategorySave = { category, snackbar ->
                 viewModel.insertCategory(
                     category,

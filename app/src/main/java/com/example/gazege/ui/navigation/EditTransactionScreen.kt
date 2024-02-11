@@ -31,6 +31,7 @@ fun NavGraphBuilder.screenEditTransaction(
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
         val allPerson by viewModel.rememberAllPerson()
         val categories by viewModel.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
 
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
@@ -44,6 +45,7 @@ fun NavGraphBuilder.screenEditTransaction(
             },
             personList = allPerson,
             categoryList = categories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onAccountAddRequested = onNavigateToAddAccount
         ) { editedTransaction, _ ->
             viewModel.updateTransaction(editedTransaction)

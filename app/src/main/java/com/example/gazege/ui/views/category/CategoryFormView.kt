@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 fun CategoryForm(
     categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
     categories: List<Category>,
+    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
     onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
     onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
@@ -92,6 +93,7 @@ fun CategoryForm(
         )
         CategoryDropDown(
             categoryList = filteredCategories,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             selectedCategory = selectedCategory,
             label = { Text(stringResource(id = R.string.CategoriaPadre)) },
             onItemClick = {
