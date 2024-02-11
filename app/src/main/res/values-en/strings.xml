@@ -79,7 +79,7 @@
     <string name="Flujo_total">Total flow</string>
     <string name="Flujo_real">Real flow</string>
     <string name="Falta_pagar_recibir">Left to pay-receive</string>
-    <string name="Flujo_estimado_desde_hoy">Estimated flow since now</string>
+    <string name="Flujo_estimado_desde_manana">Estimated flow since tomorrow</string>
     <string name="Nueva_transaccion">Add transaction</string>
     <string name="Neto">Net</string>
     <string name="Cargando">Loading…</string>

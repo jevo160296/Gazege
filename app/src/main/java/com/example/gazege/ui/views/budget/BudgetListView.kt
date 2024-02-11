@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +45,7 @@ private fun BudgetViewHolder(
     val leftToPayString = stringResource(id = R.string.Falta_pagar_recibir)
     val expectedFlowUntilNowString = stringResource(id = R.string.Flujo_estimado_hasta_hoy)
     val expectedTotalFlowString = stringResource(id = R.string.Flujo_total)
-    val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_hoy)
+    val expectedRemainingFlow = stringResource(id = R.string.Flujo_estimado_desde_manana)
     val descripcionText = stringResource(id = R.string.descripcion)
     val supportingView = @Composable {
         Column(Modifier.fillMaxWidth()) {
@@ -132,7 +132,7 @@ private fun BudgetPreview() {
             ) {
                 Column {
                     Text("$currentDateSample")
-                    Divider()
+                    HorizontalDivider()
                     Text("$startDateSample")
                     Text("$endDateSample")
                     BudgetRecyclerView(

@@ -64,7 +64,7 @@ data class BudgetWithCalculatedData(
                 val coercedCurrentDate = currentDate.coerceIn(startDate..endDate)
                 val expectedRemainingFlow = BudgetDao.calculateOneBudgetExpectedFlow(
                     it.budget,
-                    coercedCurrentDate,
+                    coercedCurrentDate.plusDays(1L),
                     endDate
                 )
                 val expectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
