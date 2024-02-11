@@ -6,13 +6,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Favorite
@@ -20,8 +16,12 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -68,8 +68,9 @@ fun ButtonField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SegmentedButton(
+fun GazegeSegmentedButton(
     modifier: Modifier = Modifier,
     buttonModifier: RowScope.() -> Modifier = { Modifier.weight(1f) },
     selectedIndex: Int?,
@@ -77,31 +78,22 @@ fun SegmentedButton(
     onItemClicked: (index: Int) -> Unit
 ) {
     val cantItems = items.size
-    fun Int.isFirst() = this == 0
-    fun Int.isLast() = this == cantItems - 1
-    Row(modifier = modifier) {
+    SingleChoiceSegmentedButtonRow(modifier) {
         items.forEachIndexed { index, segmentedButtonItem ->
-            val isFirst = index.isFirst()
-            val isLast = index.isLast()
-            OutlinedButton(
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = cantItems),
+                icon = { segmentedButtonItem.leadingIcon() },
+                selected = index == selectedIndex,
                 onClick = { onItemClicked(index) },
-                shape = RoundedCornerShape(
-                    topStartPercent = 50.takeIf { isFirst } ?: 0,
-                    bottomStartPercent = 50.takeIf { isFirst } ?: 0,
-                    topEndPercent = 50.takeIf { isLast } ?: 0,
-                    bottomEndPercent = 50.takeIf { isLast } ?: 0
-                ),
+                label = { segmentedButtonItem.text() },
                 modifier = buttonModifier(),
-                colors = if (index == selectedIndex) {
-                    ButtonDefaults.buttonColors()
-                } else {
-                    ButtonDefaults.outlinedButtonColors()
-                }
-            ) {
-                segmentedButtonItem.leadingIcon()
-                Spacer(modifier = Modifier.width(8.dp))
-                segmentedButtonItem.text()
-            }
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = ButtonDefaults.buttonColors().containerColor,
+                    activeContentColor = ButtonDefaults.buttonColors().contentColor,
+                    inactiveContainerColor = ButtonDefaults.outlinedButtonColors().containerColor,
+                    inactiveContentColor = ButtonDefaults.outlinedButtonColors().contentColor
+                )
+            )
         }
     }
 }
@@ -138,7 +130,8 @@ private fun Preview() {
                 Text("New person")
             }
             Text("SegmentedButton")
-            SegmentedButton(
+            GazegeSegmentedButton(
+                modifier = Modifier.fillMaxWidth(),
                 items = listOf(
                     SegmentedButtonItem(
                         text = { Text("Opción") },
@@ -153,7 +146,8 @@ private fun Preview() {
                 onItemClicked = onItemClicked,
                 selectedIndex = selectedItem
             )
-            SegmentedButton(
+            GazegeSegmentedButton(
+                modifier = Modifier.fillMaxWidth(),
                 items = listOf(
                     SegmentedButtonItem(
                         text = { Text("Opción1") },
@@ -177,7 +171,8 @@ private fun Preview() {
                 onItemClicked = onItemClicked,
                 selectedIndex = selectedItem
             )
-            SegmentedButton(
+            GazegeSegmentedButton(
+                modifier = Modifier.fillMaxWidth(),
                 items = listOf(
                     SegmentedButtonItem(
                         text = { Text("Opción1", maxLines = 1) },

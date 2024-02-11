@@ -34,7 +34,7 @@ import com.example.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.ComboBox
 import com.example.gazege.ui.widgets.Form
-import com.example.gazege.ui.widgets.SegmentedButton
+import com.example.gazege.ui.widgets.GazegeSegmentedButton
 import com.example.gazege.ui.widgets.SegmentedButtonItem
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -135,7 +135,8 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
-        SegmentedButton(
+        GazegeSegmentedButton(
+            modifier = Modifier.fillMaxWidth(),
             selectedIndex = null,
             items = listOf(
                 SegmentedButtonItem(
