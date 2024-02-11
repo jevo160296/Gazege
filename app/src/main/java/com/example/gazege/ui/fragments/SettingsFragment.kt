@@ -89,52 +89,6 @@ fun SettingsFragment(
         itemSpacing = 8.dp,
         itemsColumnsModifier = Modifier.padding(PaddingValues(8.dp))
     ) {
-        if (personList.isEmpty()) {
-            ButtonField(onClick = onAddPersonRequested) {
-                Text(text = stringResource(id = R.string.Nueva_persona))
-            }
-        } else {
-            ComboBox(
-                dropDownExpanded = principalPersonExpanded,
-                onExpandedChange = { principalPersonExpanded = it },
-                options = personList,
-                selectedItem = personSelected,
-                itemToString = { it?.name ?: "" },
-                onItemClick = { personIdSelected = it.id },
-                label = { Text(stringResource(id = R.string.Persona_principal)) }
-            )
-        }
-        AccountDropDownMenu(
-            accountsList = accountList,
-            selectedAccountNode = incomeSelected?.let {
-                AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
-            },
-            label = { Text(stringResource(id = R.string.Ingreso)) },
-            onItemClick = { incomeIdSelected = it.content.account.id },
-            deactivatedAccountList = deactivatedAccountListNoOutcome,
-            canClearSelection = true,
-            onClearSelectionClicked = { incomeIdSelected = null },
-            onAccountAddRequested = onAddAccountRequested
-        )
-        AccountDropDownMenu(
-            accountsList = accountList,
-            selectedAccountNode = outcomeSelected?.let {
-                AccountAndOwnerNode(
-                    it,
-                    accountList,
-                    0,
-                    0,
-                    listOf(),
-                    null
-                )
-            },
-            label = { Text(stringResource(id = R.string.Gasto)) },
-            onItemClick = { outcomeIdSelected = it.content.account.id },
-            deactivatedAccountList = deactivatedAccountListNoIncome,
-            canClearSelection = true,
-            onClearSelectionClicked = { outcomeIdSelected = null },
-            onAccountAddRequested = onAddAccountRequested
-        )
         GazegeSegmentedButton(
             modifier = Modifier.fillMaxWidth(),
             selectedIndex = null,
@@ -205,5 +159,51 @@ fun SettingsFragment(
                     }
                 }
         }
+        if (personList.isEmpty()) {
+            ButtonField(onClick = onAddPersonRequested) {
+                Text(text = stringResource(id = R.string.Nueva_persona))
+            }
+        } else {
+            ComboBox(
+                dropDownExpanded = principalPersonExpanded,
+                onExpandedChange = { principalPersonExpanded = it },
+                options = personList,
+                selectedItem = personSelected,
+                itemToString = { it?.name ?: "" },
+                onItemClick = { personIdSelected = it.id },
+                label = { Text(stringResource(id = R.string.Persona_principal)) }
+            )
+        }
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = incomeSelected?.let {
+                AccountAndOwnerNode(it, accountList, 0, 0, listOf(), null)
+            },
+            label = { Text(stringResource(id = R.string.Ingreso)) },
+            onItemClick = { incomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoOutcome,
+            canClearSelection = true,
+            onClearSelectionClicked = { incomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
+        AccountDropDownMenu(
+            accountsList = accountList,
+            selectedAccountNode = outcomeSelected?.let {
+                AccountAndOwnerNode(
+                    it,
+                    accountList,
+                    0,
+                    0,
+                    listOf(),
+                    null
+                )
+            },
+            label = { Text(stringResource(id = R.string.Gasto)) },
+            onItemClick = { outcomeIdSelected = it.content.account.id },
+            deactivatedAccountList = deactivatedAccountListNoIncome,
+            canClearSelection = true,
+            onClearSelectionClicked = { outcomeIdSelected = null },
+            onAccountAddRequested = onAddAccountRequested
+        )
     }
 }
