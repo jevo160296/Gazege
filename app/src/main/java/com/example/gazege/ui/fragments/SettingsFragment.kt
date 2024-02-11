@@ -140,20 +140,20 @@ fun SettingsFragment(
             items = listOf(
                 SegmentedButtonItem(
                     text = {
-                        Text(text = "Exportar data")
+                        Text(text = "Importar data")
                     },
                     leadingIcon = {}
                 ),
                 SegmentedButtonItem(
                     text = {
-                        Text(text = "Importar data")
+                        Text(text = "Exportar data")
                     },
                     leadingIcon = {}
                 )
             )) {
             when (it) {
-                0 -> onExportDataRequested()
-                1 -> onImportDataRequested()
+                0 -> onImportDataRequested()
+                1 -> onExportDataRequested()
             }
         }
         FlowRow(
