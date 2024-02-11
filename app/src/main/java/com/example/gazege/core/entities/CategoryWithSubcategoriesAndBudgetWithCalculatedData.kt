@@ -57,7 +57,7 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
         expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
     )
 
-    val leftToPay get() = aggregatedBudget?.leftToPay ?: 0.0
+    val leftToPay get() = aggregatedBudget?.leftToPayFromToday ?: 0.0
 
     val childrenLeftToPay get(): Double = subCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
 

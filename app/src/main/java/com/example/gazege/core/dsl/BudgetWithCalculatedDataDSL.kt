@@ -171,6 +171,7 @@ class BudgetWithCalculatedDataScope {
     fun build(
         currentDate: LocalDate,
         startDate: LocalDate,
+        today: LocalDate,
         endDate: LocalDate
     ): List<BudgetWithCalculatedData> {
         val accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions> =
@@ -185,6 +186,7 @@ class BudgetWithCalculatedDataScope {
             budgetAndCategoryWithTransactions,
             currentDate,
             startDate,
+            today,
             endDate
         )
     }
@@ -217,10 +219,11 @@ class BudgetWithCalculatedDataScope {
 fun budgetWithCalculatedDataDSL(
     currentDate: LocalDate,
     startDate: LocalDate,
+    today: LocalDate,
     endDate: LocalDate,
     builder: BudgetWithCalculatedDataScope.() -> BudgetWithCalculatedDataScope
 ) = BudgetWithCalculatedDataScope()
     .run {
         builder()
-        build(currentDate, startDate, endDate)
+        build(currentDate, startDate, today, endDate)
     }

@@ -6,14 +6,16 @@ data class BudgetWithCalculatedDataAndCategory(
     val budgetExpectedTotalFlow: Double,
     val budgetExpectedRemainingFlow: Double,
     val budgetExpectedFlowUntilNow: Double,
-    val budgetLeftToPay: Double
+    val budgetLeftToPayFromToday: Double,
+    val budgetLeftToPayToday: Double
 ) {
     fun toBudgetWithCalculatedData(): BudgetWithCalculatedData = BudgetWithCalculatedData(
         budget = this.budget,
         expectedTotalFlow = budgetExpectedTotalFlow,
-        expectedRemainingFlow = budgetExpectedRemainingFlow,
+        expectedRemainingFlowFromToday = budgetExpectedRemainingFlow,
         expectedFlowUntilNow = budgetExpectedFlowUntilNow,
-        leftToPay = budgetLeftToPay
+        leftToPayFromToday = budgetLeftToPayFromToday,
+        leftToPayToday = budgetLeftToPayToday
     )
 
     val budgetId get() = budget.id
@@ -38,13 +40,13 @@ data class BudgetWithCalculatedDataAndCategory(
                                     budget = it.budget,
                                     category = notNullCategory,
                                     budgetExpectedTotalFlow = it.expectedTotalFlow,
-                                    budgetExpectedRemainingFlow = it.expectedRemainingFlow,
+                                    budgetExpectedRemainingFlow = it.expectedRemainingFlowFromToday,
                                     budgetExpectedFlowUntilNow = it.expectedFlowUntilNow,
-                                    budgetLeftToPay = it.leftToPay
+                                    budgetLeftToPayFromToday = it.leftToPayFromToday,
+                                    budgetLeftToPayToday = it.leftToPayToday
                                 )
                             }
                         }
                 }
-
     }
 }
