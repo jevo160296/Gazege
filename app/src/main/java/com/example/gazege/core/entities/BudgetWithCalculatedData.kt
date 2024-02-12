@@ -6,25 +6,25 @@ import java.time.LocalDate
 data class BudgetWithCalculatedData(
     val budget: Budget,
     val expectedTotalFlow: Double,
-    val expectedRemainingFlowFromToday: Double,
-    val expectedFlowUntilNow: Double,
-    val leftToPayFromToday: Double,
-    val leftToPayToday: Double
+    val expectedFlowUntilToday: Double,
+    val expectedFlowUntilTomorrow: Double,
+    val expectedFlowFromToday: Double,
+    val expectedFlowFromTomorrow: Double
 ) {
     open class AggregatedBudgetWithCalculatedData(
         val expectedTotalFlow: Double,
-        val expectedRemainingFlow: Double,
-        val expectedFlowUntilNow: Double,
-        val leftToPayFromToday: Double,
-        val leftToPayToday: Double
+        val expectedFlowUntilToday: Double,
+        val expectedFlowUntilTomorrow: Double,
+        val expectedFlowFromToday: Double,
+        val expectedFlowFromTomorrow: Double
     ) {
         operator fun plus(other: AggregatedBudgetWithCalculatedData) =
             AggregatedBudgetWithCalculatedData(
                 expectedTotalFlow = (expectedTotalFlow + other.expectedTotalFlow),
-                expectedRemainingFlow = expectedRemainingFlow + other.expectedRemainingFlow,
-                expectedFlowUntilNow = expectedFlowUntilNow + other.expectedFlowUntilNow,
-                leftToPayFromToday = leftToPayFromToday + other.leftToPayFromToday,
-                leftToPayToday = leftToPayToday + other.leftToPayToday
+                expectedFlowUntilToday = expectedFlowUntilToday + other.expectedFlowUntilToday,
+                expectedFlowUntilTomorrow = expectedFlowUntilTomorrow + other.expectedFlowUntilTomorrow,
+                expectedFlowFromToday = expectedFlowFromToday + other.expectedFlowFromToday,
+                expectedFlowFromTomorrow = expectedFlowFromTomorrow + other.expectedFlowFromTomorrow
             )
 
         operator fun plus(other: BudgetWithCalculatedData) = this + from(other)
@@ -34,10 +34,10 @@ data class BudgetWithCalculatedData(
                 budgetWithCalculatedData.run {
                     AggregatedBudgetWithCalculatedData(
                         expectedTotalFlow,
-                        expectedRemainingFlowFromToday,
-                        expectedFlowUntilNow,
-                        leftToPayFromToday,
-                        leftToPayToday
+                        expectedFlowUntilToday,
+                        expectedFlowUntilTomorrow,
+                        expectedFlowFromToday,
+                        expectedFlowFromTomorrow
                     )
                 }
         }
@@ -45,10 +45,10 @@ data class BudgetWithCalculatedData(
 
     class ZeroAggregatedBudgetWithCalculatedData : AggregatedBudgetWithCalculatedData(
         expectedTotalFlow = 0.0,
-        expectedRemainingFlow = 0.0,
-        expectedFlowUntilNow = 0.0,
-        leftToPayFromToday = 0.0,
-        leftToPayToday = 0.0
+        expectedFlowUntilToday = 0.0,
+        expectedFlowUntilTomorrow = 0.0,
+        expectedFlowFromToday = 0.0,
+        expectedFlowFromTomorrow = 0.0
     )
 
     operator fun plus(other: BudgetWithCalculatedData) =
@@ -63,43 +63,30 @@ data class BudgetWithCalculatedData(
             budget: List<BudgetAndCategoryWithTransactions>,
             currentDate: LocalDate,
             startDate: LocalDate,
-            today: LocalDate,
             endDate: LocalDate
         ): List<BudgetWithCalculatedData> = budget
             .map {
-                val coercedCurrentDate = currentDate.coerceIn(startDate..endDate)
-                val expectedRemainingFlowTomorrow = BudgetDao.calculateOneBudgetExpectedFlow(
-                    it.budget,
-                    coercedCurrentDate.plusDays(1L),
-                    endDate
-                )
-                val expectedRemainingFlowToday = BudgetDao.calculateOneBudgetExpectedFlow(
-                    it.budget,
-                    coercedCurrentDate,
-                    endDate
-                )
+                val coercedToday = currentDate.coerceIn(startDate..endDate)
+                val coercedTomorrow = coercedToday.plusDays(1L).coerceIn(startDate..endDate)
                 val expectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
                     it.budget,
                     startDate,
-                    coercedCurrentDate
+                    coercedToday
                 )
-                val realTotalFlow = BudgetDao.calculateOneBudgetRealFlow(
-                    it,
+                val expectedFlowUntilTomorrow = BudgetDao.calculateOneBudgetExpectedFlow(
+                    it.budget,
                     startDate,
+                    coercedTomorrow
+                )
+                val expectedFlowFromTomorrow = BudgetDao.calculateOneBudgetExpectedFlow(
+                    it.budget,
+                    coercedTomorrow,
                     endDate
                 )
-                val realTotalFlowToday = BudgetDao.calculateOneBudgetRealFlow(
-                    it,
-                    today,
-                    today
-                )
-                val leftToPayToday = BudgetDao.calculateLeftToPayToday(
+                val expectedFlowFromToday = BudgetDao.calculateOneBudgetExpectedFlow(
                     it.budget,
-                    expectedRemainingFlowTomorrow = expectedRemainingFlowTomorrow,
-                    expectedRemainingFlowToday = expectedRemainingFlowToday,
-                    realTotalFlowToday = realTotalFlowToday,
-                    expectedFlowUntilNow = expectedFlowUntilNow,
-                    realTotalFlow = realTotalFlow
+                    coercedToday,
+                    endDate
                 )
                 BudgetWithCalculatedData(
                     budget = it.budget,
@@ -108,16 +95,10 @@ data class BudgetWithCalculatedData(
                         startDate,
                         endDate
                     ),
-                    expectedRemainingFlowFromToday = expectedRemainingFlowToday,
-                    expectedFlowUntilNow = expectedFlowUntilNow,
-                    leftToPayFromToday = BudgetDao.calculateLeftToPayFromToday(
-                        it.budget,
-                        expectedFlowUntilNow = expectedFlowUntilNow,
-                        realTotalFlow = realTotalFlow,
-                        expectedRemainingFlowTomorrow = expectedRemainingFlowTomorrow,
-                        leftToPayToday = leftToPayToday
-                    ),
-                    leftToPayToday = leftToPayToday
+                    expectedFlowUntilToday = expectedFlowUntilNow,
+                    expectedFlowUntilTomorrow = expectedFlowUntilTomorrow,
+                    expectedFlowFromTomorrow = expectedFlowFromTomorrow,
+                    expectedFlowFromToday = expectedFlowFromToday
                 )
             }
     }

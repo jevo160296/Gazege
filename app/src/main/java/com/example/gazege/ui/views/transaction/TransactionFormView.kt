@@ -29,9 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.AccountAndOwner
 import com.example.gazege.core.entities.AccountAndOwnerWithPockets
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.ui.savers.PartialTransactionAndAccounts
 import com.example.gazege.ui.views.account.AccountDropDownMenu
 import com.example.gazege.ui.views.category.CategoryDropDown
@@ -58,7 +59,7 @@ fun TransactionAndAccountsForm(
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (Int?) -> Unit,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onDoneAction: () -> Unit,
     isComplete: Boolean,
     addAnotherTransaction: Boolean,
@@ -117,7 +118,8 @@ fun TransactionAndAccountsForm(
             null
         )
     }
-    val selectedCategory = categoryList.firstOrNull { it.id == selectedCategoryId }
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
 
     Column(
         modifier = modifier.padding(contentPadding),

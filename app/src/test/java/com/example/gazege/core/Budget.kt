@@ -139,8 +139,7 @@ class BudgetTests {
             val calculatedCantRepetitions
                 get() = BudgetDao.calculateCantRepetitions(
                     Budget.fromDaily(
-                        0, 0, 0.0, frequency, budgetStartDate,
-                        budgetType = BudgetType.VARIABLE
+                        0, 0, 0.0, frequency, budgetStartDate
                     ), startDate, endDate
                 )
 
@@ -232,10 +231,9 @@ class BudgetTests {
                     id = id,
                     categoryId = 0,
                     value = 0.0,
-                    frequency = frequency,
-                    startDate = budgetStartDate,
                     each = each,
-                    budgetType = BudgetType.VARIABLE
+                    frequency = frequency,
+                    startDate = budgetStartDate
                 )
 
             fun assert() {
@@ -383,8 +381,7 @@ class BudgetTests {
                 get() = Budget.fromMonthly(
                     id = id,
                     categoryId = 0,
-                    value = 0.0,
-                    budgetType = BudgetType.VARIABLE
+                    value = 0.0
                 )
 
             fun assert() {
@@ -477,7 +474,7 @@ class BudgetCalculationTests {
         }
         val expectedBudgetWithCalculatedData = listOf(
             BudgetWithCalculatedData(
-                Budget.fromDaily(0, 0, -10000.0, 1, startDate, BudgetType.FIXED),
+                Budget.fromDaily(0, 0, -10000.0, 1, startDate),
                 expectedTotalFlow = -300000.0,
                 expectedFlowUntilNow = -200000.0,
                 leftToPayFromToday = -294000.0,
@@ -485,7 +482,7 @@ class BudgetCalculationTests {
                 leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
-                Budget.fromDaily(1, 1, -11000.0, 1, startDate, BudgetType.VARIABLE),
+                Budget.fromDaily(1, 1, -11000.0, 1, startDate),
                 expectedTotalFlow = -330000.0,
                 expectedFlowUntilNow = -220000.0,
                 leftToPayFromToday = -220000.0,
@@ -493,7 +490,7 @@ class BudgetCalculationTests {
                 leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
-                Budget.fromMonthly(2, 2, -600000.0, BudgetType.FIXED),
+                Budget.fromMonthly(2, 2, -600000.0),
                 expectedTotalFlow = -600000.0,
                 expectedFlowUntilNow = -600000.0,
                 leftToPayFromToday = -100000.0,
@@ -501,7 +498,7 @@ class BudgetCalculationTests {
                 leftToPayToday = -1000.0
             ),
             BudgetWithCalculatedData(
-                Budget.fromMonthly(3, 3, 3000000.0, BudgetType.FIXED),
+                Budget.fromMonthly(3, 3, 3000000.0),
                 expectedTotalFlow = 3000000.0,
                 expectedFlowUntilNow = 3000000.0,
                 leftToPayFromToday = 200000.0,

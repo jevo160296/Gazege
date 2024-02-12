@@ -11,7 +11,6 @@ import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
-import com.example.gazege.core.entities.CategoryWithBudgetData
 import com.example.gazege.core.entities.CategoryWithCalculatedData
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
@@ -108,15 +107,11 @@ class DatabaseSampleScope(
             budgetAndCategoryWithTransactionSample,
             currentDateSample,
             startDateSample,
-            currentDateSample,
             endDateSample
         )
     }
     val budgetAndCategoryWithCalculatedDataSample by lazy {
         getBudgetAndCategoryWithCalculatedData(budgetWithCalculatedDataSample, categorieSample)
-    }
-    val categoryWithBudgetDataSample by lazy {
-        getCategoryWithBudgetDataSample(categorieSample, budgetWithCalculatedDataSample)
     }
     val personWithAccountsSample by lazy {
         getPersonWithAccountsSample(
@@ -134,7 +129,7 @@ class DatabaseSampleScope(
             endDateSample,
             personWithAccountsSample,
             transactionAndAccountsSample,
-            budgetAndCategoryWithCalculatedDataSample,
+            categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
             includeBudgetSample,
             includeDebtsSample
         )
@@ -164,6 +159,7 @@ class DatabaseSampleScope(
     val categoryWithCalculatedDataSample by lazy {
         getCategoryWithCalculatedDataSample(
             categoryWithTransactionsSample,
+            currentDateSample,
             startDateSample,
             endDateSample
         )
@@ -252,9 +248,8 @@ private fun getBudgetWithCalculatedData(
     budget: List<BudgetAndCategoryWithTransactions>,
     currentDate: LocalDate,
     startDate: LocalDate,
-    today: LocalDate,
     endDate: LocalDate
-) = BudgetWithCalculatedData.from(budget, currentDate, startDate, today, endDate)
+) = BudgetWithCalculatedData.from(budget, currentDate, startDate, endDate)
 
 private fun getBudgetAndCategoryWithCalculatedData(
     budget: List<BudgetWithCalculatedData>,
@@ -262,17 +257,14 @@ private fun getBudgetAndCategoryWithCalculatedData(
 ): List<BudgetWithCalculatedDataAndCategory> =
     BudgetWithCalculatedDataAndCategory.from(budget, categories)
 
-private fun getCategoryWithBudgetDataSample(
-    categories: List<Category>,
-    budget: List<BudgetWithCalculatedData>
-) = CategoryWithBudgetData.from(categories, budget)
-
 private fun getCategoryWithCalculatedDataSample(
     categoryWithTransactions: List<CategoryWithTransactions>,
+    currentDate: LocalDate,
     startDate: LocalDate,
     endDate: LocalDate
 ) = CategoryWithCalculatedData.from(
     categoryWithTransactions = categoryWithTransactions,
+    currentDate = currentDate,
     startDate = startDate,
     endDate = endDate
 )

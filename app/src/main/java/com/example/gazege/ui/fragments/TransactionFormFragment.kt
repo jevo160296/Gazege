@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwner
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionAndAccounts
@@ -37,7 +37,7 @@ fun TransactionFormFragment(
     accountList: List<AccountAndOwner>,
     personList: List<Person>,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     defaultDate: LocalDate = LocalDate.now(),
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,

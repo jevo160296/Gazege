@@ -24,7 +24,7 @@ fun NavGraphBuilder.screenEditOneBudget(
         val budgetId = navStack.arguments?.getInt("budgetId")
         val budgets by viewModel.rememberBudget()
         val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
         BudgetFormView(
             budget = budgets.firstOrNull { it.id == budgetId },
             categories = categories,

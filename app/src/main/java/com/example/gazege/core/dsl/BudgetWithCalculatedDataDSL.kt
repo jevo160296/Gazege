@@ -186,7 +186,6 @@ class BudgetWithCalculatedDataScope {
             budgetAndCategoryWithTransactions,
             currentDate,
             startDate,
-            today,
             endDate
         )
     }

@@ -1,6 +1,8 @@
 package com.example.gazege.core.entities
 
 import com.example.gazege.core.dao.CategoryDao
+import kotlin.math.absoluteValue
+import kotlin.math.withSign
 
 
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
@@ -9,10 +11,11 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
     val subCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
 ) {
     val aggregatedBudget
-        get(): BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData? =
+        get(): BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData =
             budget
                 .map { BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData.from(it) }
                 .sumOrNull()
+                ?: BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData()
     val childrenAggregatedBudget
         get(): BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData? =
             subCategories
@@ -35,7 +38,7 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                 }
                 ?.sumOrNull()
 
-    val expectedTotalFlow get() = aggregatedBudget?.expectedTotalFlow ?: 0.0
+    val expectedTotalFlow get() = aggregatedBudget.expectedTotalFlow
 
     val childrenExpectedTotalFlow
         get(): Double =
@@ -57,15 +60,35 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
         expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
     )
 
-    val leftToPay get() = aggregatedBudget?.leftToPayFromToday ?: 0.0
+    val expectedFlowUntilToday
+        get() = aggregatedBudget.expectedFlowUntilToday
 
-    val childrenLeftToPay get(): Double = subCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
+    val childrenExpectedFlowUntilToday: Double
+        get() = subCategories
+            .sumOf { it.expectedFlowUntilToday + it.childrenExpectedFlowUntilToday }
 
-    val expectedFlowUntilNow get(): Double = aggregatedBudget?.expectedFlowUntilNow ?: 0.0
+    val leftToPayToday: Double
+        get() {
+            val availableToPayToday =
+                (aggregatedBudget.expectedFlowUntilTomorrow - aggregatedBudget.expectedFlowUntilToday).absoluteValue
+            return (availableToPayToday - category.realTotalFlowToday).coerceAtLeast(0.0)
+                .withSign(aggregatedBudget.expectedTotalFlow)
+        }
 
-    val childrenExpectedFlowUntilNow
-        get(): Double =
-            subCategories.sumOf { it.expectedFlowUntilNow + it.childrenExpectedFlowUntilNow }
+    val leftToPay: Double
+        get() {
+            val availableToPayToday =
+                (aggregatedBudget.expectedFlowUntilTomorrow - aggregatedBudget.expectedFlowUntilToday).absoluteValue
+            val expectedFlowFromTomorrow = aggregatedBudget.expectedFlowFromTomorrow.absoluteValue
+            return (expectedFlowFromTomorrow + (availableToPayToday - category.realTotalFlowToday).coerceAtLeast(
+                0.0
+            ))
+                .withSign(aggregatedBudget.expectedTotalFlow)
+        }
+
+    val childrenLeftToPay: Double
+        get() = subCategories
+            .sumOf { it.leftToPay + it.childrenLeftToPay }
 
     companion object {
         fun from(
@@ -74,7 +97,7 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
             categoriesWithCalculatedData: Map<Int, CategoryWithCalculatedData>
         ): List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
             budgetWithCalculatedDataAndCategory
-                .groupBy { it.budget.categoryId }
+                .groupBy { it.category.id }
                 .let { mappedBudget ->
                     categoriesWithSubcategories.mapNotNull {
                         val budgetList = mappedBudget[it.category.id]
@@ -100,3 +123,9 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                 }
     }
 }
+
+fun List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>.recursiveFirstOrNull(predicate: (CategoryWithSubcategoriesAndBudgetWithCalculatedData) -> Boolean):
+        CategoryWithSubcategoriesAndBudgetWithCalculatedData? =
+    this.firstOrNull(predicate) ?: this.firstNotNullOfOrNull {
+        it.subCategories.recursiveFirstOrNull(predicate)
+    }

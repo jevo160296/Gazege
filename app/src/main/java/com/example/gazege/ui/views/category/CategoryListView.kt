@@ -160,11 +160,11 @@ fun CategoryListView(
                         categoryWithCalculatedData.childrenLeftToPay
                     }
 
-            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilNow +
+            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilToday +
                     if (isExpanded) {
                         0.0
                     } else {
-                        categoryWithCalculatedData.childrenExpectedFlowUntilNow
+                        categoryWithCalculatedData.childrenExpectedFlowUntilToday
                     }
 
             val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +

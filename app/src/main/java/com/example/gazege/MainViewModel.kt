@@ -485,8 +485,8 @@ class MainViewModel(
         budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
 
     @Composable
-    fun rememberBudgetAndCategoryWithCalculatedDataMap() =
-        budgetWithCalculatedDataAndCategoryMap.observeAsState(emptyMap())
+    fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+        categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
 
     @Composable
     fun rememberEditarCategoriasState() =
@@ -776,7 +776,6 @@ class MainViewModel(
                     budgetAndCategoryWithTransactions,
                     LocalDate.now(),
                     startDate,
-                    today = LocalDate.now(),
                     endDate
                 )
             } else {
@@ -791,6 +790,7 @@ class MainViewModel(
             if (startDate != null && endDate != null) {
                 CategoryWithCalculatedData.from(
                     categoryWithTransactions = categoryWithTransactions,
+                    currentDate = LocalDate.now(),
                     startDate = startDate,
                     endDate = endDate
                 )
@@ -802,6 +802,22 @@ class MainViewModel(
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
         budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
+        }
+
+    private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
+            object {
+                val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                val categoriesWithSubcategories = categoriesWithSubcategories
+            }
+        }.combine(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
+            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                budgetWithCalculatedDataAndCategory = combined.budgetWithCalculatedDataAndCategory,
+                categoriesWithSubcategories = combined.categoriesWithSubcategories,
+                categoriesWithCalculatedData = categoryWithCalculatedData.associateBy {
+                    it.category.id ?: 0
+                }
+            )
         }
 
     private val budgetWithCalculatedDataAndCategoryMap: LiveData<Map<Category, BudgetWithCalculatedDataAndCategory>> =
@@ -1045,7 +1061,7 @@ class MainViewModel(
                     val allTransactionAndAccountsAndCategory = allTransactionAndAccountsAndCategory
                 }
             }
-            .combine(budgetWithCalculatedDataAndCategory) { combined, budgetWithCalculatedDataAndCategory ->
+            .combine(categoryWithSubcategoriesAndBudgetWithCalculatedData) { combined, budgetWithCalculatedDataAndCategory ->
                 object {
                     val principalPersonWithAccounts = combined.principalPersonWithAccounts
                     val range = combined.range

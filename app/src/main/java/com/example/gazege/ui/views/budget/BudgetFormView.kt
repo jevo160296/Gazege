@@ -35,10 +35,11 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetType
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.core.entities.toList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.category.CategoryDropDown
@@ -59,7 +60,7 @@ import kotlin.math.withSign
 fun BudgetFormView(
     budget: Budget?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onSaveBudget: (Budget) -> Unit
 ) {
     var isGasto by rememberSaveable(budget) {
@@ -86,7 +87,8 @@ fun BudgetFormView(
     var value by rememberSaveable(budget) { mutableDoubleStateOf(abs(budget?.value ?: 0.0)) }
     var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
-    val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
     val budgetId = budget?.id
     val weekDays = WeekDays(weekDaysDays)
     val sign = if (isGasto) {
@@ -323,7 +325,7 @@ fun BudgetPreview2() {
                 categories = (1..10).map {
                     Category(it, "Cat$it", null)
                 },
-                budgetWithCalculatedDataAndCategory = emptyMap(),
+                budgetWithCalculatedDataAndCategory = emptyList(),
                 onSaveBudget = {}
             )
         }

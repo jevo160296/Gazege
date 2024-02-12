@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
 import com.example.gazege.ui.views.budget.BudgetRecyclerView
@@ -46,7 +48,7 @@ import kotlinx.coroutines.launch
 fun CategoryForm(
     categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
     onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
     onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
@@ -69,7 +71,8 @@ fun CategoryForm(
     val scope = rememberCoroutineScope()
 
     val snackbarHostState = SnackbarHostState()
-    val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
 
     val focusRequester = remember { FocusRequester() }
