@@ -81,7 +81,7 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
             budgetType = category.category.budgetType,
             expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrow,
             leftToPayToday = leftToPayToday,
-            expectedFlowUntilNow = aggregatedBudget.expectedFlowUntilToday,
+            expectedTotalFlow = aggregatedBudget.expectedTotalFlow,
             realTotalFlow = category.realTotalFlow
         )
 

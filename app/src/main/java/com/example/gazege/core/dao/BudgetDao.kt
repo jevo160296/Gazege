@@ -140,7 +140,7 @@ interface BudgetDao {
          *
          * @param budgetType The budget to calculate the amount left to pay for.
          * @param expectedRemainingFlowToday The expected remaining flow for the budget from tomorrow.
-         * @param expectedFlowUntilNow The expected flow until now for the budget.
+         * @param expectedTotalFlow The expected flow until now for the budget.
          * @param realTotalFlow The real total flow for the budget.
          *
          * @return The amount left to pay for the budget.
@@ -149,11 +149,11 @@ interface BudgetDao {
             budgetType: BudgetType,
             expectedRemainingFlowTomorrow: Double,
             leftToPayToday: Double,
-            expectedFlowUntilNow: Double,
+            expectedTotalFlow: Double,
             realTotalFlow: Double
         ): Double = when (budgetType) {
-            BudgetType.FIXED -> (expectedFlowUntilNow - realTotalFlow).let { difference ->
-                if (expectedFlowUntilNow > 0) {
+            BudgetType.FIXED -> (expectedTotalFlow - realTotalFlow).let { difference ->
+                if (expectedTotalFlow > 0) {
                     difference.coerceAtLeast(0.0)
                 } else {
                     difference.coerceAtMost(0.0)

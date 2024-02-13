@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -217,7 +215,6 @@ fun BudgetFormView(
             onValueChange = { value = it },
             label = { Text(stringResource(id = R.string.Valor)) }
         )
-        BudgetTypeSelector(budgetType) { budgetType = it }
         TextField(value = descripcion, onValueChange = { descripcion = it }, label = {
             Text(
                 stringResource(id = R.string.descripcion)
@@ -233,35 +230,6 @@ fun BudgetFormView(
 }
 
 @Composable
-private fun budgetTypeMapper(budgetType: BudgetType) = when (budgetType) {
-    BudgetType.FIXED -> stringResource(id = R.string.Fijo)
-    BudgetType.VARIABLE -> stringResource(id = R.string.Variable)
-}
-
-@Composable
-private fun BudgetTypeSelector(
-    budgetType: BudgetType,
-    onBudgetTypeChanged: (newType: BudgetType) -> Unit
-) {
-    Column {
-        Text(text = stringResource(id = R.string.Tipo))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = budgetType == BudgetType.VARIABLE,
-                onClick = { onBudgetTypeChanged(BudgetType.VARIABLE) })
-            Text(budgetTypeMapper(BudgetType.VARIABLE))
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = budgetType == BudgetType.FIXED,
-                onClick = { onBudgetTypeChanged(BudgetType.FIXED) })
-            Text(budgetTypeMapper(BudgetType.FIXED))
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun WeekDaysPicker(
     frequencyType: FrequencyType,
     weekDaysDays: Set<DayOfWeek>,
