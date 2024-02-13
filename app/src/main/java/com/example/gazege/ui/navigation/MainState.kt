@@ -1,7 +1,7 @@
 package com.example.gazege.ui.navigation
 
 import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.PersonWithAccounts
 import com.example.gazege.core.entities.TransactionAndAccounts
@@ -43,7 +43,7 @@ interface LoadedPersonSummaryState : PersonSummaryState {
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
-            budgetWithCalculatedDatumAndCategories: List<BudgetWithCalculatedDataAndCategory>,
+            budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,
             includeDebts: Boolean
         ): LoadedPersonSummaryState {
@@ -85,7 +85,7 @@ data class FullPersonSummaryState(
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
-            budgetWithCalculatedDatumAndCategories: List<BudgetWithCalculatedDataAndCategory>,
+            budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,
             includeDebts: Boolean
         ): FullPersonSummaryState {
@@ -98,7 +98,7 @@ data class FullPersonSummaryState(
             }
             val deudasTotal = deudasFlujo.toList().sumOf { it.second }
             val presupuestoTotal =
-                budgetWithCalculatedDatumAndCategories.sumOf { it.budgetLeftToPayFromToday }
+                budgetWithCalculatedDatumAndCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
             return FullPersonSummaryState(
                 person = personWithAccounts.person,
                 saldoActual = personWithAccounts.let {

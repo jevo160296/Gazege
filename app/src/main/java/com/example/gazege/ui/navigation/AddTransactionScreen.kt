@@ -48,7 +48,7 @@ fun NavGraphBuilder.screenAddTransaction(
         val allPerson by viewModel.rememberAllPerson()
         val allAccount by viewModel.rememberAllAccount()
         val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         LaunchedEffect(key1 = allPerson.isNotEmpty()) {
             if (allPerson.isNotEmpty()) {

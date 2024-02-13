@@ -1,6 +1,7 @@
 package com.example.gazege.ui.views.category
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -31,8 +33,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.ui.savers.PartialCategory
 import com.example.gazege.ui.savers.categorySaver
 import com.example.gazege.ui.views.budget.BudgetRecyclerView
@@ -46,7 +51,7 @@ import kotlinx.coroutines.launch
 fun CategoryForm(
     categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
     onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
     onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
@@ -60,7 +65,7 @@ fun CategoryForm(
     ) {
         mutableStateOf(
             if (category == null) {
-                PartialCategory.blankEntity()
+                PartialCategory.blankEntity().copy(budgetType = BudgetType.FIXED)
             } else {
                 PartialCategory.from(category)
             }
@@ -69,7 +74,8 @@ fun CategoryForm(
     val scope = rememberCoroutineScope()
 
     val snackbarHostState = SnackbarHostState()
-    val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
 
     val focusRequester = remember { FocusRequester() }
@@ -91,6 +97,9 @@ fun CategoryForm(
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             singleLine = true
         )
+        BudgetTypeSelector(partialCategory.budgetType) {
+            partialCategory = partialCategory.copy(budgetType = it)
+        }
         CategoryDropDown(
             categoryList = filteredCategories,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
@@ -150,5 +159,33 @@ fun CategoryForm(
     }
     LaunchedEffect(key1 = Unit) {
         focusRequester.requestFocus()
+    }
+}
+
+@Composable
+private fun budgetTypeMapper(budgetType: BudgetType) = when (budgetType) {
+    BudgetType.FIXED -> stringResource(id = R.string.Fijo)
+    BudgetType.VARIABLE -> stringResource(id = R.string.Variable)
+}
+
+@Composable
+private fun BudgetTypeSelector(
+    budgetType: BudgetType?,
+    onBudgetTypeChanged: (newType: BudgetType) -> Unit
+) {
+    Column {
+        Text(text = stringResource(id = R.string.Tipo))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(
+                selected = budgetType == BudgetType.VARIABLE,
+                onClick = { onBudgetTypeChanged(BudgetType.VARIABLE) })
+            Text(budgetTypeMapper(BudgetType.VARIABLE))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(
+                selected = budgetType == BudgetType.FIXED,
+                onClick = { onBudgetTypeChanged(BudgetType.FIXED) })
+            Text(budgetTypeMapper(BudgetType.FIXED))
+        }
     }
 }

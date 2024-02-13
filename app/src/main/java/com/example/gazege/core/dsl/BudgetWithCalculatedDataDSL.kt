@@ -42,8 +42,7 @@ class BudgetWithCalculatedDataScope {
             category.id ?: -1,
             value,
             frequency,
-            startDate,
-            budgetType
+            startDate
         )
             .run {
                 budgets.add(this)
@@ -56,8 +55,7 @@ class BudgetWithCalculatedDataScope {
         ) = Budget.fromMonthly(
             budgetIndex++,
             category.id ?: -1,
-            value,
-            budgetType
+            value
         ).run {
             budgets.add(this)
             BudgetScope(category)
@@ -75,8 +73,7 @@ class BudgetWithCalculatedDataScope {
             value,
             each,
             frequency,
-            startDate,
-            budgetType
+            startDate
         )
             .run {
                 budgets.add(this)
@@ -163,7 +160,7 @@ class BudgetWithCalculatedDataScope {
     fun withCategory(categoryName: String, parent: String?): CategoryScope {
         val parentAccount = parent?.let { getCategoryByName(parent) }
         val parentId = parentAccount?.id
-        val category = Category(categoryIndex++, categoryName, parentId)
+        val category = Category(categoryIndex++, categoryName, BudgetType.FIXED, parentId)
         categories.add(category)
         return CategoryScope(category)
     }
@@ -186,7 +183,6 @@ class BudgetWithCalculatedDataScope {
             budgetAndCategoryWithTransactions,
             currentDate,
             startDate,
-            today,
             endDate
         )
     }
@@ -195,7 +191,7 @@ class BudgetWithCalculatedDataScope {
         .firstOrNull { it.name == name }
         .run {
             this
-                ?: Category(categoryIndex++, name, null)
+                ?: Category(categoryIndex++, name, BudgetType.FIXED, null)
         }
 
     private fun getAccountByName(name: String): Account = accounts

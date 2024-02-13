@@ -16,7 +16,7 @@ fun NavGraphBuilder.screenAddCategory(
 ) {
     composable("addCategory") {
         val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
 

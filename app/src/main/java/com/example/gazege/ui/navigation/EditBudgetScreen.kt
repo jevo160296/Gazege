@@ -22,7 +22,7 @@ fun NavGraphBuilder.screenEditBudget(
             onDeleteBudgetRequested = { id ->
                 budget
                     .firstOrNull { it.budgetId == id }
-                    ?.let { viewModel.deleteBudget(it.budget) }
+                    ?.let { viewModel.deleteBudget(it.budget.budget) }
             },
             onEditBudgetRequested = onNavigateToOneBudgetEdit
         )

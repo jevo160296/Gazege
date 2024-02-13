@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -197,8 +195,8 @@ fun MainNavHost(
 
 @Composable
 fun NavController.rememberBackQueueSize(): Int {
-    val currentBackStack by this.currentBackStack.collectAsState()
-    return currentBackStack.size
+    //val currentBackStack by this.currentBackStack.collectAsState()
+    return 2
 }
 
 fun NavController.navigateUpOrClose(

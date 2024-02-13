@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubCategories
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
@@ -15,7 +14,6 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.widgets.TreeComboBox
 import com.example.gazege.ui.widgets.treeview.Node
 import com.example.gazege.ui.widgets.treeview.NodeId
-import kotlin.math.absoluteValue
 
 data class CategoryWithBudgetNode(
     override val content: CategoryWithSubcategoriesAndBudgetWithCalculatedData,
@@ -44,34 +42,28 @@ data class CategoryNode(
 @Composable
 fun CategoryDropDown(
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
-    selectedCategory: Category?,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    selectedCategory: CategoryWithSubcategoriesAndBudgetWithCalculatedData?,
     label: @Composable () -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     onItemClick: (Category?) -> Unit
 ) {
     val selectedNode = selectedCategory
-        ?.let { CategoryNode(CategoryWithSubCategories(it, listOf())) }
-    val categoryWithBudgetNodes: List<CategoryNode> = categoryList
-        .let {
-            CategoryWithSubCategories.from(it)
-        }
+        ?.let { CategoryWithBudgetNode(it) }
+    val categoryWithBudgetNodes: List<CategoryWithBudgetNode> = budgetWithCalculatedDataAndCategory
         .map {
-            CategoryNode(it)
+            CategoryWithBudgetNode(it)
         }
     var dropDownExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    val itemToString = { it: CategoryNode? ->
+    val itemToString = { it: CategoryWithBudgetNode? ->
         val category = it?.content?.category
         if (category == null) {
             ""
         } else {
-            val leftToPayToday = budgetWithCalculatedDataAndCategory.getOrDefault(
-                category,
-                null
-            )?.budgetLeftToPayToday?.absoluteValue ?: 0.0
+            val leftToPayToday = it.content.leftToPayToday
             "${category.name}: ${doubleToMoneyString(leftToPayToday)}"
         }
     }
@@ -84,7 +76,7 @@ fun CategoryDropDown(
         selectedItem = selectedNode,
         itemToString = itemToString,
         label = label,
-        onItemClick = { onItemClick(it.content.category) },
+        onItemClick = { onItemClick(it.content.category.category) },
         canClearSelection = true,
         onClearSelectionClicked = {
             onItemClick(null)

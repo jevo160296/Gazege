@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,10 +33,11 @@ import androidx.compose.ui.unit.dp
 import com.example.gazege.R
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetType
-import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.WeekDays
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.core.entities.toList
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.category.CategoryDropDown
@@ -59,7 +58,7 @@ import kotlin.math.withSign
 fun BudgetFormView(
     budget: Budget?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: Map<Category, BudgetWithCalculatedDataAndCategory>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onSaveBudget: (Budget) -> Unit
 ) {
     var isGasto by rememberSaveable(budget) {
@@ -78,15 +77,11 @@ fun BudgetFormView(
     var weekDaysDays: Set<DayOfWeek> by rememberSaveable(budget) {
         mutableStateOf((budget?.eachClass as? WeekDays)?.days ?: WeekDays.from(0b1111111).days)
     }
-    var budgetType by rememberSaveable(budget) {
-        mutableStateOf(
-            budget?.budgetType ?: BudgetType.VARIABLE
-        )
-    }
     var value by rememberSaveable(budget) { mutableDoubleStateOf(abs(budget?.value ?: 0.0)) }
     var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
-    val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
     val budgetId = budget?.id
     val weekDays = WeekDays(weekDaysDays)
     val sign = if (isGasto) {
@@ -105,7 +100,6 @@ fun BudgetFormView(
                 value = value.withSign(sign),
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType,
                 description = descripcion
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
@@ -115,14 +109,12 @@ fun BudgetFormView(
                 each = weekDays,
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType,
                 description = descripcion
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
                 value = value.withSign(sign),
-                budgetType = budgetType,
                 description = descripcion
             )
         }
@@ -215,7 +207,6 @@ fun BudgetFormView(
             onValueChange = { value = it },
             label = { Text(stringResource(id = R.string.Valor)) }
         )
-        BudgetTypeSelector(budgetType) { budgetType = it }
         TextField(value = descripcion, onValueChange = { descripcion = it }, label = {
             Text(
                 stringResource(id = R.string.descripcion)
@@ -231,35 +222,6 @@ fun BudgetFormView(
 }
 
 @Composable
-private fun budgetTypeMapper(budgetType: BudgetType) = when (budgetType) {
-    BudgetType.FIXED -> stringResource(id = R.string.Fijo)
-    BudgetType.VARIABLE -> stringResource(id = R.string.Variable)
-}
-
-@Composable
-private fun BudgetTypeSelector(
-    budgetType: BudgetType,
-    onBudgetTypeChanged: (newType: BudgetType) -> Unit
-) {
-    Column {
-        Text(text = stringResource(id = R.string.Tipo))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = budgetType == BudgetType.VARIABLE,
-                onClick = { onBudgetTypeChanged(BudgetType.VARIABLE) })
-            Text(budgetTypeMapper(BudgetType.VARIABLE))
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = budgetType == BudgetType.FIXED,
-                onClick = { onBudgetTypeChanged(BudgetType.FIXED) })
-            Text(budgetTypeMapper(BudgetType.FIXED))
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun WeekDaysPicker(
     frequencyType: FrequencyType,
     weekDaysDays: Set<DayOfWeek>,
@@ -321,9 +283,9 @@ fun BudgetPreview2() {
             BudgetFormView(
                 budget = null,
                 categories = (1..10).map {
-                    Category(it, "Cat$it", null)
+                    Category(it, "Cat$it", BudgetType.FIXED, null)
                 },
-                budgetWithCalculatedDataAndCategory = emptyMap(),
+                budgetWithCalculatedDataAndCategory = emptyList(),
                 onSaveBudget = {}
             )
         }

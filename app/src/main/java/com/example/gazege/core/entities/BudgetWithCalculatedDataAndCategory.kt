@@ -1,30 +1,30 @@
 package com.example.gazege.core.entities
 
 data class BudgetWithCalculatedDataAndCategory(
-    val budget: Budget,
-    val category: Category,
-    val budgetExpectedTotalFlow: Double,
-    val budgetExpectedRemainingFlow: Double,
-    val budgetExpectedFlowUntilNow: Double,
-    val budgetLeftToPayFromToday: Double,
-    val budgetLeftToPayToday: Double
+    val budget: BudgetWithCalculatedData,
+    val category: Category
 ) {
-    fun toBudgetWithCalculatedData(): BudgetWithCalculatedData = BudgetWithCalculatedData(
-        budget = this.budget,
-        expectedTotalFlow = budgetExpectedTotalFlow,
-        expectedRemainingFlowFromToday = budgetExpectedRemainingFlow,
-        expectedFlowUntilNow = budgetExpectedFlowUntilNow,
-        leftToPayFromToday = budgetLeftToPayFromToday,
-        leftToPayToday = budgetLeftToPayToday
-    )
+    fun toBudgetWithCalculatedData(): BudgetWithCalculatedData = this.budget
 
-    val budgetId get() = budget.id
-    val budgetFrequency get() = budget.frequency
-    val budgetFrequencyType get() = budget.frequencyType
-    val budgetType get() = budget.budgetType
-    val budgetValue get() = budget.value
-    val budgetDescription get() = budget.description
+    val budgetId get() = budget.budget.id
+
+    val budgetValue get() = budget.budget.value
+
+    val budgetFrequency get() = budget.budget.frequency
+
+    val budgetFrequencyType get() = budget.budget.frequencyType
+
+    val budgetType get() = category.budgetType
+
     val categoryName get() = category.name
+
+    val budgetExpectedFlowUntilNow get() = budget.expectedFlowUntilToday
+
+    val budgetExpectedTotalFlow get() = budget.expectedTotalFlow
+
+    val budgetExpectedFlowFromToday get() = budget.expectedTotalFlow - budget.expectedFlowUntilToday
+
+    val budgetDescription get() = budget.budget.description
 
     companion object {
         fun from(
@@ -37,13 +37,8 @@ data class BudgetWithCalculatedDataAndCategory(
                         .mapNotNull {
                             groupedCategories[it.budget.categoryId]?.let { notNullCategory ->
                                 BudgetWithCalculatedDataAndCategory(
-                                    budget = it.budget,
-                                    category = notNullCategory,
-                                    budgetExpectedTotalFlow = it.expectedTotalFlow,
-                                    budgetExpectedRemainingFlow = it.expectedRemainingFlowFromToday,
-                                    budgetExpectedFlowUntilNow = it.expectedFlowUntilNow,
-                                    budgetLeftToPayFromToday = it.leftToPayFromToday,
-                                    budgetLeftToPayToday = it.leftToPayToday
+                                    budget = it,
+                                    category = notNullCategory
                                 )
                             }
                         }

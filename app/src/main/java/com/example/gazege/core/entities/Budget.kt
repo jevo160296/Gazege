@@ -26,7 +26,7 @@ data class Budget(
     val each: Int,
     val frequency: Int,
     val frequencyType: FrequencyType,
-    val budgetType: BudgetType,
+    val budgetType: BudgetType = BudgetType.FIXED,
     val startDate: LocalDate,
     @ColumnInfo(defaultValue = "") val description: String
 ) {
@@ -44,7 +44,6 @@ data class Budget(
             value: Double,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType,
             description: String = ""
         ): Budget = Budget(
             id = id,
@@ -54,7 +53,6 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.DAILY,
             startDate = startDate,
-            budgetType = budgetType,
             description = description
         )
 
@@ -65,7 +63,6 @@ data class Budget(
             each: WeekDays,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType,
             description: String = ""
         ): Budget = Budget(
             id = id,
@@ -75,7 +72,6 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.WEEKLY,
             startDate = startDate,
-            budgetType = budgetType,
             description = description
         )
 
@@ -91,7 +87,6 @@ data class Budget(
             each: AbsoluteMonthDays,
             frequency: Int,
             startDate: LocalDate,
-            budgetType: BudgetType,
             description: String = ""
         ): Budget = Budget(
             id = id,
@@ -101,7 +96,6 @@ data class Budget(
             frequency = frequency,
             frequencyType = FrequencyType.MONTHLY,
             startDate = startDate,
-            budgetType = budgetType,
             description = description
         )
 
@@ -109,7 +103,6 @@ data class Budget(
             id: Int? = null,
             categoryId: Int,
             value: Double,
-            budgetType: BudgetType,
             description: String = ""
         ): Budget = Budget(
             id = id,
@@ -119,7 +112,6 @@ data class Budget(
             each = AbsoluteMonthDays(setOf(1)).toInt(),
             frequency = 1,
             frequencyType = FrequencyType.MONTHLY,
-            budgetType = budgetType,
             description = description
         )
     }

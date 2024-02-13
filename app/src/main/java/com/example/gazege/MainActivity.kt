@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
             if (scheme != "https") {
                 uri?.also {
                     contentResolver.openInputStream(uri)?.also {
-                        mainViewModel.importData(it)
+                        mainViewModel.exportModule.importData(it)
                     }
                 }
             }
@@ -98,14 +98,14 @@ class MainActivity : ComponentActivity() {
         resultLauncherSaveData = registerForActivityResult(CreateBackupDocument()) { uri ->
             uri?.also {
                 contentResolver.openOutputStream(uri)?.let { outputStream ->
-                    mainViewModel.exportData(outputStream)
+                    mainViewModel.exportModule.exportData(outputStream)
                 }
             }
         }
         resultLauncherOpenDocument = registerForActivityResult(OpenDocument()) { uri ->
             uri?.also {
                 contentResolver.openInputStream(uri)?.also {
-                    mainViewModel.importData(it)
+                    mainViewModel.exportModule.importData(it)
                 }
             }
         }

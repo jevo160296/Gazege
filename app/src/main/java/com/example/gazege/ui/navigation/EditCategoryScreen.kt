@@ -28,7 +28,7 @@ fun NavGraphBuilder.screenEditCategory(
         )
     ) { navStack ->
         val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberBudgetAndCategoryWithCalculatedDataMap()
+        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
         val budgetAndCategoryWithCalculatedData by viewModel.rememberBudgetAndCategoryWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
@@ -61,10 +61,10 @@ fun NavGraphBuilder.screenEditCategory(
                     }
                 }
             },
-            onBudgetDeleteRequested = { viewModel.deleteBudget(it.budget) },
+            onBudgetDeleteRequested = { viewModel.deleteBudget(it.budget.budget) },
             onBudgetDetailRequested = {},
             onBudgetEditRequested = { budget ->
-                budget.budget.id?.let {
+                budget.budgetId?.let {
                     onNavigateToEditOneBudgetRequested(
                         it
                     )

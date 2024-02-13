@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.R
+import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.ui.DatabaseSample
@@ -160,11 +161,11 @@ fun CategoryListView(
                         categoryWithCalculatedData.childrenLeftToPay
                     }
 
-            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilNow +
+            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilToday +
                     if (isExpanded) {
                         0.0
                     } else {
-                        categoryWithCalculatedData.childrenExpectedFlowUntilNow
+                        categoryWithCalculatedData.childrenExpectedFlowUntilToday
                     }
 
             val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +
@@ -175,7 +176,9 @@ fun CategoryListView(
                     }
 
             Box {
-                if (aggregatedBudget != null || childrenBudget != null) {
+                if (aggregatedBudget !is BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData ||
+                    childrenBudget != null
+                ) {
                     CategoryAndBudgetViewHolder(
                         categoryName = category.name,
                         leftToPay = leftToPay,

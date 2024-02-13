@@ -138,22 +138,22 @@ interface BudgetDao {
         /**
          * Calculates the amount left to pay for a budget, based on the expected remaining flow and the real total flow.
          *
-         * @param budget The budget to calculate the amount left to pay for.
+         * @param budgetType The budget to calculate the amount left to pay for.
          * @param expectedRemainingFlowToday The expected remaining flow for the budget from tomorrow.
-         * @param expectedFlowUntilNow The expected flow until now for the budget.
+         * @param expectedTotalFlow The expected flow until now for the budget.
          * @param realTotalFlow The real total flow for the budget.
          *
          * @return The amount left to pay for the budget.
          */
         fun calculateLeftToPayFromToday(
-            budget: Budget,
+            budgetType: BudgetType,
             expectedRemainingFlowTomorrow: Double,
             leftToPayToday: Double,
-            expectedFlowUntilNow: Double,
+            expectedTotalFlow: Double,
             realTotalFlow: Double
-        ): Double = when (budget.budgetType) {
-            BudgetType.FIXED -> (expectedFlowUntilNow - realTotalFlow).let { difference ->
-                if (expectedFlowUntilNow > 0) {
+        ): Double = when (budgetType) {
+            BudgetType.FIXED -> (expectedTotalFlow - realTotalFlow).let { difference ->
+                if (expectedTotalFlow > 0) {
                     difference.coerceAtLeast(0.0)
                 } else {
                     difference.coerceAtMost(0.0)
@@ -166,20 +166,20 @@ interface BudgetDao {
         /**
          * Calculates the amount left to pay for a budget today, based on the expected remaining flow and the real total flow.
          *
-         * @param budget The budget to calculate the amount left to pay for.
+         * @param budgetType The budget to calculate the amount left to pay for.
          * @param expectedRemainingFlowTomorrow The expected remaining flow for the budget from tomorrow.
          * @param expectedRemainingFlowToday The expected remaining flow for the budget from today.
          *
          * @return The amount left to pay for the budget.
          */
         fun calculateLeftToPayToday(
-            budget: Budget,
+            budgetType: BudgetType,
             expectedRemainingFlowTomorrow: Double,
             expectedRemainingFlowToday: Double,
             expectedFlowUntilNow: Double,
             realTotalFlowToday: Double,
             realTotalFlow: Double
-        ): Double = when (budget.budgetType) {
+        ): Double = when (budgetType) {
             BudgetType.FIXED -> (expectedFlowUntilNow - realTotalFlow).let { difference ->
                 if (expectedFlowUntilNow > 0) {
                     difference.coerceAtLeast(0.0)
