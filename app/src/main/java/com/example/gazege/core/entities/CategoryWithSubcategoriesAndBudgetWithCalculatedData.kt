@@ -1,8 +1,7 @@
 package com.example.gazege.core.entities
 
+import com.example.gazege.core.dao.BudgetDao
 import com.example.gazege.core.dao.CategoryDao
-import kotlin.math.absoluteValue
-import kotlin.math.withSign
 
 
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
@@ -68,23 +67,23 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
             .sumOf { it.expectedFlowUntilToday + it.childrenExpectedFlowUntilToday }
 
     val leftToPayToday: Double
-        get() {
-            val availableToPayToday =
-                (aggregatedBudget.expectedFlowUntilTomorrow - aggregatedBudget.expectedFlowUntilToday).absoluteValue
-            return (availableToPayToday - category.realTotalFlowToday).coerceAtLeast(0.0)
-                .withSign(aggregatedBudget.expectedTotalFlow)
-        }
+        get() = BudgetDao.calculateLeftToPayToday(
+            budgetType = category.category.budgetType,
+            expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrow,
+            expectedRemainingFlowToday = aggregatedBudget.expectedFlowFromToday,
+            expectedFlowUntilNow = aggregatedBudget.expectedFlowUntilToday,
+            realTotalFlowToday = category.realTotalFlowToday,
+            realTotalFlow = category.realTotalFlow
+        )
 
     val leftToPay: Double
-        get() {
-            val availableToPayToday =
-                (aggregatedBudget.expectedFlowUntilTomorrow - aggregatedBudget.expectedFlowUntilToday).absoluteValue
-            val expectedFlowFromTomorrow = aggregatedBudget.expectedFlowFromTomorrow.absoluteValue
-            return (expectedFlowFromTomorrow + (availableToPayToday - category.realTotalFlowToday).coerceAtLeast(
-                0.0
-            ))
-                .withSign(aggregatedBudget.expectedTotalFlow)
-        }
+        get() = BudgetDao.calculateLeftToPayFromToday(
+            budgetType = category.category.budgetType,
+            expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrow,
+            leftToPayToday = leftToPayToday,
+            expectedFlowUntilNow = aggregatedBudget.expectedFlowUntilToday,
+            realTotalFlow = category.realTotalFlow
+        )
 
     val childrenLeftToPay: Double
         get() = subCategories
