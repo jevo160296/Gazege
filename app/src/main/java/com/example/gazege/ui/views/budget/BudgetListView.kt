@@ -40,7 +40,7 @@ private fun BudgetViewHolder(
     budget: BudgetWithCalculatedDataAndCategory
 ) {
     val overlineText =
-        " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}, type ${budget.budgetType}\n"
+        " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n"
     val headlineText = "${stringResource(id = R.string.Presupuesto)}: ${budget.categoryName}"
     val expectedFlowUntilNowString = stringResource(id = R.string.Flujo_estimado_hasta_hoy)
     val expectedTotalFlowString = stringResource(id = R.string.Flujo_total)

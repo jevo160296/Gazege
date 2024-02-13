@@ -208,7 +208,6 @@ fun writeBudget(outputStream: OutputStream, budget: List<Budget>) =
                         it.each,
                         it.frequency,
                         it.frequencyType.name,
-                        it.budgetType.name,
                         it.startDate,
                         it.description
                     )
@@ -340,7 +339,6 @@ fun readBudgetFromCsv(inputStream: InputStream): List<Budget> =
             val each = record[columnIndex["each"] ?: 0]
             val frequency = record[columnIndex["frequency"] ?: 0]
             val frequencyType = record[columnIndex["frequencyType"] ?: 0]
-            val budgetType = record[columnIndex["budgetType"] ?: 0]
             val startDate = record[columnIndex["startDate"] ?: 0]
             val description = record[columnIndex["description"] ?: 0]
         }
@@ -355,7 +353,6 @@ fun readBudgetFromCsv(inputStream: InputStream): List<Budget> =
                     each = item.each.toIntOrNull() ?: 0,
                     frequency = item.frequency.toIntOrNull() ?: 0,
                     frequencyType = FrequencyType.valueOf(item.frequencyType),
-                    budgetType = BudgetType.valueOf(item.budgetType),
                     startDate = parseDate(item.startDate, formatter),
                     description = item.description
                 )

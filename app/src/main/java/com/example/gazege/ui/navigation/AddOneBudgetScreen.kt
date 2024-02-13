@@ -8,7 +8,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.gazege.MainViewModel
 import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.ui.views.budget.BudgetFormView
 
 fun NavGraphBuilder.screenAddOneBudget(
@@ -43,8 +42,7 @@ fun NavGraphBuilder.screenAddOneBudget(
             BudgetFormView(
                 budget = Budget.fromMonthly(
                     categoryId = fixedCategory.id!!,
-                    value = 0.0,
-                    budgetType = BudgetType.VARIABLE
+                    value = 0.0
                 ),
                 categories = categories,
                 budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,

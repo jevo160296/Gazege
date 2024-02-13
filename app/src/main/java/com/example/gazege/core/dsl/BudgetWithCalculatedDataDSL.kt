@@ -42,8 +42,7 @@ class BudgetWithCalculatedDataScope {
             category.id ?: -1,
             value,
             frequency,
-            startDate,
-            budgetType
+            startDate
         )
             .run {
                 budgets.add(this)
@@ -56,8 +55,7 @@ class BudgetWithCalculatedDataScope {
         ) = Budget.fromMonthly(
             budgetIndex++,
             category.id ?: -1,
-            value,
-            budgetType
+            value
         ).run {
             budgets.add(this)
             BudgetScope(category)
@@ -75,8 +73,7 @@ class BudgetWithCalculatedDataScope {
             value,
             each,
             frequency,
-            startDate,
-            budgetType
+            startDate
         )
             .run {
                 budgets.add(this)

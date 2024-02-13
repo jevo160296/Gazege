@@ -5,7 +5,6 @@ import com.example.gazege.core.dsl.budgetWithCalculatedDataDSL
 import com.example.gazege.core.entities.AbsoluteMonthDays
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetType
-import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.WeekDays
 import com.example.gazege.core.entities.toByteString
 import com.example.gazege.core.entities.toList
@@ -472,7 +471,7 @@ class BudgetCalculationTests {
                 .addIncome(2800000.0, "Salario", startDate)
                 .finish()
         }
-        val expectedBudgetWithCalculatedData = listOf(
+        /*val expectedBudgetWithCalculatedData = listOf(
             BudgetWithCalculatedData(
                 Budget.fromDaily(0, 0, -10000.0, 1, startDate),
                 expectedTotalFlow = -300000.0,
@@ -505,6 +504,6 @@ class BudgetCalculationTests {
                 expectedRemainingFlowFromToday = 0.0,
                 leftToPayToday = -1000.0
             )
-        )
+        )*/
     }
 }

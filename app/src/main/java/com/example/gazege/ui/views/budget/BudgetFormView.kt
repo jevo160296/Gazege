@@ -77,11 +77,6 @@ fun BudgetFormView(
     var weekDaysDays: Set<DayOfWeek> by rememberSaveable(budget) {
         mutableStateOf((budget?.eachClass as? WeekDays)?.days ?: WeekDays.from(0b1111111).days)
     }
-    var budgetType by rememberSaveable(budget) {
-        mutableStateOf(
-            budget?.budgetType ?: BudgetType.VARIABLE
-        )
-    }
     var value by rememberSaveable(budget) { mutableDoubleStateOf(abs(budget?.value ?: 0.0)) }
     var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
@@ -105,7 +100,6 @@ fun BudgetFormView(
                 value = value.withSign(sign),
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType,
                 description = descripcion
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
@@ -115,14 +109,12 @@ fun BudgetFormView(
                 each = weekDays,
                 frequency = frequency,
                 startDate = startDate,
-                budgetType = budgetType,
                 description = descripcion
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = budgetId,
                 categoryId = selectedCategoryIdVal,
                 value = value.withSign(sign),
-                budgetType = budgetType,
                 description = descripcion
             )
         }

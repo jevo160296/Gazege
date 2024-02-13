@@ -218,8 +218,7 @@ private fun getBudgetSample(
                 categoryId = categoryId,
                 value = value,
                 frequency = frequency,
-                startDate = startDate,
-                budgetType = budgetType
+                startDate = startDate
             )
             FrequencyType.WEEKLY -> Budget.fromWeekly(
                 id = it,
@@ -227,14 +226,12 @@ private fun getBudgetSample(
                 value = value,
                 frequency = frequency,
                 startDate = startDate,
-                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1))),
-                budgetType = budgetType
+                each = WeekDays.from(random.nextInt(until = (0b1111111 + 1)))
             )
             FrequencyType.MONTHLY -> Budget.fromMonthly(
                 id = it,
                 categoryId = categoryId,
-                value = value,
-                budgetType = budgetType
+                value = value
             )
         }
     }

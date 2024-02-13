@@ -101,9 +101,9 @@ private fun categoriesSample(
         },
         {
             listOf(
-                Budget.fromMonthly(0, 0, 4000000.0, BudgetType.FIXED),
-                Budget.fromMonthly(1, 2, -600000.0, BudgetType.FIXED),
-                Budget.fromMonthly(2, 4, -50000.0, BudgetType.FIXED)
+                Budget.fromMonthly(0, 0, 4000000.0),
+                Budget.fromMonthly(1, 2, -600000.0),
+                Budget.fromMonthly(2, 4, -50000.0)
             )
         },
         {
@@ -179,9 +179,9 @@ private fun categoriesMultipleBudgetSample(
         },
         {
             listOf(
-                Budget.fromMonthly(0, 0, 1000000.0, BudgetType.FIXED),
-                Budget.fromMonthly(1, 0, 1000000.0, BudgetType.FIXED),
-                Budget.fromMonthly(2, 0, 1000000.0, BudgetType.FIXED)
+                Budget.fromMonthly(0, 0, 1000000.0),
+                Budget.fromMonthly(1, 0, 1000000.0),
+                Budget.fromMonthly(2, 0, 1000000.0)
             )
         },
         {
