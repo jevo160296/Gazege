@@ -323,7 +323,7 @@ fun BudgetPreview2() {
             BudgetFormView(
                 budget = null,
                 categories = (1..10).map {
-                    Category(it, "Cat$it", null)
+                    Category(it, "Cat$it", BudgetType.FIXED, null)
                 },
                 budgetWithCalculatedDataAndCategory = emptyList(),
                 onSaveBudget = {}

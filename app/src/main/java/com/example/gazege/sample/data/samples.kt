@@ -91,12 +91,12 @@ private fun categoriesSample(
         },
         {
             listOf(
-                Category(0, "Ingreso", null),
-                Category(1, "Hogar", null),
-                Category(2, "Renta", 1),
-                Category(3, "Servicios", null),
-                Category(4, "Luz", 3),
-                Category(5, "Agua", 3)
+                Category(0, "Ingreso", BudgetType.FIXED, null),
+                Category(1, "Hogar", BudgetType.FIXED, null),
+                Category(2, "Renta", BudgetType.FIXED, 1),
+                Category(3, "Servicios", BudgetType.FIXED, null),
+                Category(4, "Luz", BudgetType.FIXED, 3),
+                Category(5, "Agua", BudgetType.FIXED, 3)
             )
         },
         {
@@ -169,12 +169,12 @@ private fun categoriesMultipleBudgetSample(
         },
         categorieSample = {
             listOf(
-                Category(0, "Ingreso", null),
-                Category(1, "Hogar", null),
-                Category(2, "Renta", 1),
-                Category(3, "Servicios", null),
-                Category(4, "Luz", 3),
-                Category(5, "Agua", 3)
+                Category(0, "Ingreso", BudgetType.FIXED, null),
+                Category(1, "Hogar", BudgetType.FIXED, null),
+                Category(2, "Renta", BudgetType.FIXED, 1),
+                Category(3, "Servicios", BudgetType.FIXED, null),
+                Category(4, "Luz", BudgetType.FIXED, 3),
+                Category(5, "Agua", BudgetType.FIXED, 3)
             )
         },
         {

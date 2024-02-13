@@ -48,10 +48,11 @@ data class CategoryWithSubCategoriesScope(
     fun category(
         id: Int,
         name: String,
+        budgetType: BudgetType,
         categoryWithSubCategories: CategoryWithSubCategoriesScope.() -> Unit
     ) {
         subCategories.add(
-            Category(id, name, category?.id).run {
+            Category(id, name, budgetType, category?.id).run {
                 CategoryWithSubCategories(
                     this,
                     categories(this) {

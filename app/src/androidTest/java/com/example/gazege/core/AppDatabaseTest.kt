@@ -210,7 +210,7 @@ class AppDatabaseTest {
                 8 -> 6
                 else -> null
             }
-            Category(it, "Category$it", parentId)
+            Category(it, "Category$it", BudgetType.FIXED, parentId)
         }.toTypedArray()
         database.personDao().insertAll(*newPersons.toTypedArray())
         database.accountDao().insertAll(*newAccounts.toTypedArray())

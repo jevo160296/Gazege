@@ -370,7 +370,7 @@ private fun getCategoriesSample(amount: Int): List<Category> {
                 }
             }
             .takeIf { hasParent }
-        Category(it, "Parent category $parentId.$it", parentId)
+        Category(it, "Parent category $parentId.$it", BudgetType.FIXED, parentId)
     }
 }
 

@@ -367,6 +367,10 @@ fun readCategoryFromCsv(inputStream: InputStream): List<Category> =
         Category(
             id = record[columnIndex["id"] ?: 0].toIntOrNull(),
             name = record[columnIndex["name"] ?: 0],
+            budgetType = BudgetType.valueOf(
+                record.elementAtOrElse(
+                    columnIndex["budgetType"] ?: -1
+                ) { "FIXED" }),
             parentId = record[columnIndex["parentId"] ?: 0].toIntOrNull()
         )
     }
