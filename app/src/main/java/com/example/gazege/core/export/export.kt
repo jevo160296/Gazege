@@ -196,7 +196,6 @@ fun writeBudget(outputStream: OutputStream, budget: List<Budget>) =
                     "each",
                     "frequency",
                     "frequencyType",
-                    "budgetType",
                     "startDate",
                     "description"
                 )
