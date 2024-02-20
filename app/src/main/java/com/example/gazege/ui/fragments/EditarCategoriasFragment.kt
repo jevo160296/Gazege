@@ -117,6 +117,7 @@ fun LoadedEditarCategorias(
     onAddCategoryRequested: () -> Unit,
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
+    onExportCategoryRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
@@ -194,6 +195,7 @@ fun LoadedEditarCategorias(
                             sheetState.show()
                         }
                     },
+                    exportCategory = onExportCategoryRequested,
                     onSetBudgetRequested = onSetBudgetRequested
                 )
             }

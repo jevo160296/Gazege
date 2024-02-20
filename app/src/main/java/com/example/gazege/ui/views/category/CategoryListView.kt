@@ -129,7 +129,8 @@ fun CategoryListView(
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
-    delCategory: (category: Category) -> Unit
+    delCategory: (category: Category) -> Unit,
+    exportCategory: (category: Category) -> Unit
 ) {
     val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
     var menuIdExpanded: NodeId? by remember {
@@ -158,6 +159,7 @@ fun CategoryListView(
                 onSetBudgetRequested = onSetBudgetRequested,
                 editCategory = editCategory,
                 delCategory = delCategory,
+                exportCategory = exportCategory,
                 menuIdExpanded = menuIdExpanded,
                 onMenuIdExpandedChanged = { menuIdExpanded = it },
                 node = node,
@@ -171,6 +173,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
     onSetBudgetRequested: (category: Category) -> Unit,
     editCategory: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
+    exportCategory: (category: Category) -> Unit,
     menuIdExpanded: NodeId?,
     onMenuIdExpandedChanged: (NodeId?) -> Unit,
     node: CategoryWithBudgetNode
@@ -268,6 +271,12 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                     delCategory(node.content.category.category)
                 }
             )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Exportar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    exportCategory(node.content.category.category)
+                })
         }
     }
 }
@@ -282,7 +291,8 @@ private fun CategoryListPreview() {
                     categoriesWithCalculatedData = categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
                     editCategory = {},
                     delCategory = {},
-                    onSetBudgetRequested = {}
+                    onSetBudgetRequested = {},
+                    exportCategory = {}
                 )
             }
         }

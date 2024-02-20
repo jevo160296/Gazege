@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.gazege.MainViewModel
+import com.example.gazege.core.entities.Category
 import com.example.gazege.ui.fragments.EmptyEditarCategorias
 import com.example.gazege.ui.fragments.LoadedEditarCategorias
 
@@ -11,7 +12,8 @@ fun NavGraphBuilder.screenEditarCategorias(
     viewModel: MainViewModel,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
-    onNavigateToAddBudget: (Int?) -> Unit
+    onNavigateToAddBudget: (Int?) -> Unit,
+    onExportCategoryRequested: (Category) -> Unit
 ) {
     composable("editCategories") {
 
@@ -21,7 +23,8 @@ fun NavGraphBuilder.screenEditarCategorias(
                 onAddCategoryRequested = onNavigateToAddCategory,
                 onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
                 onDeleteCategoryRequested = { viewModel.deleteCategory(it) },
-                onSetBudgetRequested = { onNavigateToAddBudget(it.id) }
+                onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
+                onExportCategoryRequested = onExportCategoryRequested
             )
 
             is EmptyEditarCategoriasState -> EmptyEditarCategorias(editarCategoriasState)

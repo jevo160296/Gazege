@@ -188,3 +188,10 @@ fun List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>.recursiveFirstOrN
     this.firstOrNull(predicate) ?: this.firstNotNullOfOrNull {
         it.subCategories.recursiveFirstOrNull(predicate)
     }
+
+fun CategoryWithSubcategoriesAndBudgetWithCalculatedData.recursiveFirstOrNull(predicate: (CategoryWithSubcategoriesAndBudgetWithCalculatedData) -> Boolean): CategoryWithSubcategoriesAndBudgetWithCalculatedData? =
+    if (predicate(this)) {
+        this
+    } else {
+        this.subCategories.recursiveFirstOrNull(predicate)
+    }
