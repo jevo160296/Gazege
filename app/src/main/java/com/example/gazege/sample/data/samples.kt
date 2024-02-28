@@ -222,8 +222,8 @@ private fun variableFixedCategorySample(viewModel: MainViewModel) {
         categorieSample = {
             listOf(
                 Category(id = 0, name = "C1", budgetType = BudgetType.FIXED, parentId = null),
-                Category(id = 1, name = "C1.1", budgetType = BudgetType.FIXED, parentId = 0),
-                Category(id = 2, name = "C1.2", budgetType = BudgetType.VARIABLE, parentId = 0),
+                Category(id = 1, name = "Fixed", budgetType = BudgetType.FIXED, parentId = 0),
+                Category(id = 2, name = "Variable", budgetType = BudgetType.VARIABLE, parentId = 0),
             )
         },
         budgetSample = {

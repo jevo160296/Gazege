@@ -80,6 +80,7 @@ import com.example.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.example.gazege.ui.views.transaction.LoadedTransactionPage
 import com.example.gazege.ui.views.transaction.LoadingTransactionPage
 import com.example.gazege.ui.widgets.BooleanFilters
+import com.example.gazege.ui.widgets.DatePicker
 import com.example.gazege.ui.widgets.DoubleFilter
 import com.example.gazege.ui.widgets.EmptyPersonMonthSummaryView
 import com.example.gazege.ui.widgets.Filter
@@ -112,6 +113,7 @@ fun MainFragment(
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
+    today: LocalDate,
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
@@ -136,6 +138,7 @@ fun MainFragment(
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
+    onTodayChangeRequested: (newDate: LocalDate) -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -287,6 +290,10 @@ fun MainFragment(
                                         DropdownMenuItem(
                                             text = { Text(text = "Variable fixed category sample") },
                                             onClick = { onInitDatabaseSample(SampleId.VariableFixedCategorySample) })
+                                        DatePicker(
+                                            value = today,
+                                            onValueChange = onTodayChangeRequested
+                                        )
                                     }
                                 }
                                 IconButton(onClick = {
@@ -710,7 +717,9 @@ private fun DefaultPreview() {
                 valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
                 onValueFilterStateChanged = {},
                 descriptionFilterState = TextFilter(null),
-                onDescriptionFilterStateChanged = {}
+                onDescriptionFilterStateChanged = {},
+                onTodayChangeRequested = {},
+                today = LocalDate.now()
             )
         }
     }

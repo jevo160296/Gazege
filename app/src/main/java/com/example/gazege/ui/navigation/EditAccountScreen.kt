@@ -31,6 +31,7 @@ fun NavGraphBuilder.screenEditAccount(
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val today by viewModel.rememberToday()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -82,7 +83,8 @@ fun NavGraphBuilder.screenEditAccount(
                                     accountId = addedId.toInt(),
                                     amount = valorAjuste,
                                     incomeAccountId = incomeAccountId,
-                                    outcomeAccountId = outcomeAccountId
+                                    outcomeAccountId = outcomeAccountId,
+                                    today = today
                                 )
                             }
                         }

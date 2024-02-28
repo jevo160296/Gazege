@@ -114,17 +114,13 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
 
     val futureForecast: Map<LocalDate, Double> = if (dateRange != null && currentDate != null) {
         val lastPastForecast = pastForecast[currentDate] ?: 0.0
+        val leftToPayYesterday = leftToPayTodaySeries[currentDate] ?: 0.0
         mapOf(currentDate to lastPastForecast).plus(
-            (leftToPayTodaySeries[currentDate] ?: 0.0).let { leftToPayLastDay ->
-                aggregatedBudget.expectedFlowTodaySeries
-                    .filterKeys { (currentDate.plusDays(1)..dateRange.endInclusive).contains(it) }
-                    .toList()
-                    .runningReduce { (_, valueAcc), (localDate, value) ->
-                        localDate to valueAcc + value
-                    }.associate { (localDate, value) ->
-                        localDate to value + leftToPayLastDay
-                    }
-            }
+            aggregatedBudget.expectedFlowTodaySeries
+                .filterKeys { (currentDate.plusDays(1)..dateRange.endInclusive).contains(it) }
+                .toList()
+                .runningReduce { (_, valueAcc), (localDate, value) -> localDate to valueAcc + value }
+                .associate { (localDate, value) -> localDate to value + leftToPayYesterday + lastPastForecast }
         )
     } else {
         emptyMap()

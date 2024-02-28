@@ -490,6 +490,15 @@ class MainViewModel(
             )
         )
 
+    private val today = MutableLiveData(LocalDate.now())
+
+    fun updateToday(newDate: LocalDate) {
+        today.value = newDate
+    }
+
+    @Composable
+    fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+
     @Composable
     fun rememberImportState(): State<ProgressStatusState> = loadingDataState
         .observeAsState(
@@ -561,7 +570,7 @@ class MainViewModel(
         categoriesWithSubCategories.observeAsState(emptyList())
 
     @Composable
-    fun rememberRange() = range.observeAsState(Pair(LocalDate.now(), LocalDate.now()))
+    fun rememberRange() = range.observeAsState(Pair(null, null))
 
     @Composable
     fun rememberTransactionFiltersValue() = transactionFilters
@@ -812,43 +821,68 @@ class MainViewModel(
                 }
             }
 
-    private val initialRange = LocalDate.now().withDayOfMonth(1).let {
-        Pair(it, it.plusMonths(1L).minusDays(1L))
+    private val initialRange = today.map { today ->
+        today.withDayOfMonth(1).let {
+            Pair(it, it.plusMonths(1L).minusDays(1L))
+        }
     }
 
-    private val range: MutableLiveData<Pair<LocalDate?, LocalDate?>> = MutableLiveData(initialRange)
+    private val variableRange = MutableLiveData<Pair<LocalDate?, LocalDate?>?>(null)
+
+    private val range: LiveData<Pair<LocalDate?, LocalDate?>> = initialRange
+        .combine(variableRange) { initialRange, variableRange ->
+            variableRange ?: initialRange
+        }
 
     private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
-        budgetAndCategoryWithTransactions.combine(range) { budgetAndCategoryWithTransactions, range ->
-            val startDate = range.first
-            val endDate = range.second
-            if (startDate != null && endDate != null) {
-                BudgetWithCalculatedData.from(
-                    budgetAndCategoryWithTransactions,
-                    LocalDate.now(),
-                    startDate,
-                    endDate
-                )
-            } else {
-                emptyList()
+        budgetAndCategoryWithTransactions
+            .combine(range) { budgetAndCategoryWithTransactions, range ->
+                object {
+                    val budgetAndCategoryWithTransactions = budgetAndCategoryWithTransactions
+                    val range = range
+                }
             }
-        }
+            .combine(today) { combined, today ->
+                val range = combined.range
+                val budgetAndCategoryWithTransactions = combined.budgetAndCategoryWithTransactions
+                val startDate = range.first
+                val endDate = range.second
+                if (startDate != null && endDate != null) {
+                    BudgetWithCalculatedData.from(
+                        budgetAndCategoryWithTransactions,
+                        today,
+                        startDate,
+                        endDate
+                    )
+                } else {
+                    emptyList()
+                }
+            }
 
     private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
-        categoryWithTransactions.combine(range) { categoryWithTransactions, range ->
-            val startDate = range.first
-            val endDate = range.second
-            if (startDate != null && endDate != null) {
-                CategoryWithCalculatedData.from(
-                    categoryWithTransactions = categoryWithTransactions,
-                    currentDate = LocalDate.now(),
-                    startDate = startDate,
-                    endDate = endDate
-                )
-            } else {
-                emptyList()
+        categoryWithTransactions
+            .combine(range) { categoryWithTransactions, range ->
+                object {
+                    val categoryWithTransactions = categoryWithTransactions
+                    val range = range
+                }
             }
-        }
+            .combine(today) { combined, today ->
+                val range = combined.range
+                val categoryWithTransactions = combined.categoryWithTransactions
+                val startDate = range.first
+                val endDate = range.second
+                if (startDate != null && endDate != null) {
+                    CategoryWithCalculatedData.from(
+                        categoryWithTransactions = categoryWithTransactions,
+                        currentDate = today,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                } else {
+                    emptyList()
+                }
+            }
 
     private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
         budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
@@ -991,7 +1025,7 @@ class MainViewModel(
     private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
 
     private val rangeTransactions = range.switchMap { range ->
-        repository.getTransactions(range?.first, range?.second).asLiveData()
+        repository.getTransactions(range.first, range.second).asLiveData()
     }
     private val transactionAmountRangeValue =
         rangeTransactions.map {
@@ -1138,8 +1172,8 @@ class MainViewModel(
                 combined.run {
                     LoadedPersonSummaryState.from(
                         principalPersonWithAccounts,
-                        range?.first,
-                        range?.second,
+                        range.first,
+                        range.second,
                         allPersons = personWithAccounts,
                         allTransactions = allTransactionAndAccountsAndCategory
                             .map {
@@ -1157,7 +1191,7 @@ class MainViewModel(
             }
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
-        range.value = Pair(startDate, endDate)
+        variableRange.value = Pair(startDate, endDate)
     }
 
     fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
@@ -1205,7 +1239,8 @@ class MainViewModel(
         accountId: Int,
         amount: Double,
         incomeAccountId: Int,
-        outcomeAccountId: Int
+        outcomeAccountId: Int,
+        today: LocalDate
     ) = viewModelScope.launch {
         if (amount != 0.0) {
             val transaccionAjuste = if (amount > 0) {
@@ -1214,7 +1249,7 @@ class MainViewModel(
                     description = "Ajuste",
                     sourceId = incomeAccountId,
                     destinationId = accountId,
-                    date = LocalDate.now(),
+                    date = today,
                     aNombreDe = null,
                     categoryId = null
                 )
@@ -1224,7 +1259,7 @@ class MainViewModel(
                     description = "Ajuste",
                     sourceId = accountId,
                     destinationId = outcomeAccountId,
-                    date = LocalDate.now(),
+                    date = today,
                     aNombreDe = null,
                     categoryId = null
                 )
@@ -1443,8 +1478,8 @@ class MainViewModel(
                             allAccounts = allAccount,
                             allCategories = categories,
                             budget = budget,
-                            startDate = range?.first,
-                            endDate = range?.second,
+                            startDate = range.first,
+                            endDate = range.second,
                             principalPerson = principalPerson,
                             transactionFilters = accountFilterValue,
                             categoriesFilter = accountCategoryFilterValue,
