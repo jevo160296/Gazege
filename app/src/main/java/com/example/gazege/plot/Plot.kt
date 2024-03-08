@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.core.entities.Transaction
@@ -156,7 +158,7 @@ fun Plot(plotData: PlotDataFromTransactions?) {
 }
 
 @Composable
-fun AccountNotNullPlot(
+private fun AccountNotNullPlot(
     data: PlotDataFromTransactions
 ) {
     val chartEntryModel = data.chartEntryModel
@@ -186,7 +188,7 @@ fun AccountNotNullPlot(
 }
 
 @Composable
-fun CategoryNullPlot() {
+private fun CategoryNullPlot() {
     Text("Null plot")
 }
 
@@ -218,6 +220,25 @@ fun CategoryNotNullPlot(
             autoScaleUp = AutoScaleUp.Full,
         )
     }
+}
+
+@Composable
+fun CategoryPlot(
+    pastForecast: Map<LocalDate, Double>,
+    futureForecast: Map<LocalDate, Double>,
+    dateRange: ClosedRange<LocalDate>
+) = if (pastForecast.isEmpty() && futureForecast.isEmpty()) {
+    CategoryNullPlot()
+} else {
+    CategoryNotNullPlot(
+        data = PlotDataFromTimeSeries(listOf(pastForecast, futureForecast), dateRange),
+        lines = listOf(
+            LineChart.LineSpec(lineColor = MaterialTheme.colorScheme.tertiary.toArgb()),
+            LineChart.LineSpec(
+                lineColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f).toArgb()
+            )
+        )
+    )
 }
 
 interface PlotData<T> {

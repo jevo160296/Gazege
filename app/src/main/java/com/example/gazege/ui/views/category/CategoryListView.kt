@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,9 +31,7 @@ import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.plus
-import com.example.gazege.plot.CategoryNotNullPlot
-import com.example.gazege.plot.CategoryNullPlot
-import com.example.gazege.plot.PlotDataFromTimeSeries
+import com.example.gazege.plot.CategoryPlot
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
@@ -46,7 +43,6 @@ import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.treeview.NodeId
 import com.example.gazege.ui.widgets.treeview.TreeScope
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
-import com.patrykandpatrick.vico.core.chart.line.LineChart
 import java.time.LocalDate
 
 @Composable
@@ -58,7 +54,8 @@ private fun CategoryAndBudgetViewHolder(
     completion: Double,
     pastForecast: Map<LocalDate, Double>,
     futureForecast: Map<LocalDate, Double>,
-    dateRange: ClosedRange<LocalDate>
+    dateRange: ClosedRange<LocalDate>,
+    showPlot: Boolean
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
     LargeEmphasis(text = categoryName)
     Row(
@@ -82,18 +79,12 @@ private fun CategoryAndBudgetViewHolder(
 
         }
     }
-    Text(stringResource(id = R.string.Pronostico))
-    if (pastForecast.isEmpty() && futureForecast.isEmpty()) {
-        CategoryNullPlot()
-    } else {
-        CategoryNotNullPlot(
-            data = PlotDataFromTimeSeries(listOf(pastForecast, futureForecast), dateRange),
-            lines = listOf(
-                LineChart.LineSpec(lineColor = MaterialTheme.colorScheme.tertiary.toArgb()),
-                LineChart.LineSpec(
-                    lineColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f).toArgb()
-                )
-            )
+    if (showPlot) {
+        Text(stringResource(id = R.string.Pronostico))
+        CategoryPlot(
+            pastForecast = pastForecast,
+            futureForecast = futureForecast,
+            dateRange = dateRange
         )
     }
     GProgressIndicator(
@@ -116,8 +107,8 @@ private fun EmptyCategoryAndBudgetViewHolder(
         LargeEmphasis(text = category.name)
         Box(
             Modifier
-                .align(Alignment.End)
-                .width(140.dp)
+                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
         ) {
             ButtonField(onClick = onSetBudgetRequested) {
                 Text(stringResource(id = R.string.ConfigurarPresupuesto))
@@ -131,6 +122,7 @@ fun CategoryListView(
     editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
+    showPlot: Boolean,
     exportCategory: (category: Category) -> Unit
 ) {
     val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
@@ -164,6 +156,7 @@ fun CategoryListView(
                 menuIdExpanded = menuIdExpanded,
                 onMenuIdExpandedChanged = { menuIdExpanded = it },
                 node = node,
+                showPlot = showPlot
             )
         }
     }
@@ -177,6 +170,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
     exportCategory: (category: Category) -> Unit,
     menuIdExpanded: NodeId?,
     onMenuIdExpandedChanged: (NodeId?) -> Unit,
+    showPlot: Boolean,
     node: CategoryWithBudgetNode
 ) {
     val categoryWithCalculatedData = node.content
@@ -233,7 +227,8 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 completion = completion,
                 pastForecast = pastForecast,
                 futureForecast = futureForecast,
-                dateRange = dateRange
+                dateRange = dateRange,
+                showPlot = showPlot
             )
         } else {
             EmptyCategoryAndBudgetViewHolder(
@@ -278,7 +273,8 @@ private fun CategoryListPreview() {
                     editCategory = {},
                     delCategory = {},
                     onSetBudgetRequested = {},
-                    exportCategory = {}
+                    exportCategory = {},
+                    showPlot = true
                 )
             }
         }

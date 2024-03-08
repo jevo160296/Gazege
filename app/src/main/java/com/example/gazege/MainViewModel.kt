@@ -452,7 +452,17 @@ class MainViewModel(
         }
     }
 
+    inner class CategoryListStates {
+        private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
+
+        @Composable
+        fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
+
+        fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
+    }
+
     val exportModule = ExportModule()
+    val categoryListStates = CategoryListStates()
 
     fun startActivityToSaveData(
         suggestedName: String

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -114,7 +115,9 @@ fun LoadedEditarCategorias(
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
-    onDeleteCategoryRequested: (Category) -> Unit
+    onDeleteCategoryRequested: (Category) -> Unit,
+    showPlot: Boolean,
+    onShowPlotChanged: (newValue: Boolean) -> Unit
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
         editarCategoriasState.categoriesWithCalculatedData
@@ -179,6 +182,18 @@ fun LoadedEditarCategorias(
                             .weight(1f)
                     )
                 }
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    Switch(
+                        checked = showPlot,
+                        onCheckedChange = onShowPlotChanged
+                    )
+                    Text(stringResource(id = R.string.MostrarGraficos))
+                }
                 CategoryListView(
                     categoriesWithCalculatedData = categoriesWithCalculatedData,
                     editCategory = onEditCategoryRequested,
@@ -189,7 +204,8 @@ fun LoadedEditarCategorias(
                         }
                     },
                     exportCategory = onExportCategoryRequested,
-                    onSetBudgetRequested = onSetBudgetRequested
+                    onSetBudgetRequested = onSetBudgetRequested,
+                    showPlot = showPlot
                 )
             }
         }
