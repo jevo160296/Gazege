@@ -102,22 +102,7 @@ data class BudgetWithCalculatedData(
         ): List<BudgetWithCalculatedData> = budget
             .map {
                 val coercedToday = currentDate.coerceIn(startDate..endDate)
-                val coercedTomorrow = coercedToday.plusDays(1L).coerceIn(startDate..endDate)
-                val expectedFlowUntilNow = BudgetDao.calculateOneBudgetExpectedFlow(
-                    it.budget,
-                    startDate,
-                    coercedToday
-                )
-                val expectedFlowFromTomorrow = BudgetDao.calculateOneBudgetExpectedFlow(
-                    it.budget,
-                    coercedTomorrow,
-                    endDate
-                )
-                val expectedFlowFromToday = BudgetDao.calculateOneBudgetExpectedFlow(
-                    it.budget,
-                    coercedToday,
-                    endDate
-                )
+
                 val dateSeries = (startDate..endDate).let { dateRange ->
                     generateSequence(startDate) { testDate ->
                         if (dateRange.contains(testDate)) {
@@ -162,13 +147,14 @@ data class BudgetWithCalculatedData(
                     )
                 }.toMap()
 
+                val expectedFlowUntilNow = expectedFlowUntilNowSeries[coercedToday] ?: 0.0
+                val expectedFlowFromTomorrow = expectedFlowFromTomorrowSeries[coercedToday] ?: 0.0
+                val expectedFlowFromToday = expectedFlowFromTodaySeries[coercedToday] ?: 0.0
+                val expectedTotalFlow = expectedFlowUntilNowSeries[endDate] ?: 0.0
+
                 BudgetWithCalculatedData(
                     budget = it.budget,
-                    expectedTotalFlow = BudgetDao.calculateOneBudgetExpectedFlow(
-                        it.budget,
-                        startDate,
-                        endDate
-                    ),
+                    expectedTotalFlow = expectedTotalFlow,
                     expectedFlowUntilToday = expectedFlowUntilNow,
                     expectedFlowFromTomorrow = expectedFlowFromTomorrow,
                     expectedFlowFromToday = expectedFlowFromToday,

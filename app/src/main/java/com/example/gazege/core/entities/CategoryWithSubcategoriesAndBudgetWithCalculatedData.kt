@@ -1,8 +1,11 @@
 package com.example.gazege.core.entities
 
-import com.example.gazege.core.dao.BudgetDao
 import com.example.gazege.core.dao.CategoryDao
 import java.time.LocalDate
+import java.util.SortedMap
+import kotlin.math.max
+import kotlin.math.sign
+import kotlin.math.withSign
 
 
 data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
@@ -24,86 +27,74 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
 
     val currentDate = aggregatedBudget.currentDate
 
-    val expectedTotalFlow = aggregatedBudget.expectedTotalFlow
+    val expectedFlowTodaySeries: Map<LocalDate, Double> = aggregatedBudget
+        .expectedFlowTodaySeries
 
-    val childrenExpectedTotalFlow: Double =
-        subCategories.sumOf { it.expectedTotalFlow + it.childrenExpectedTotalFlow }
+    val realTotalFlowTodaySeries: Map<LocalDate, Double> = category
+        .realTotalFlowTodaySeries
+
+    val accumulatedExpectedFlowTodaySeries: Map<LocalDate, Double> = expectedFlowTodaySeries
+        .toSortedMap()
+        .runningReduce { acc, value -> acc + value }
+
+    val accumulatedRealTotalFlowTodaySeries: Map<LocalDate, Double> = realTotalFlowTodaySeries
+        .toSortedMap()
+        .runningReduce { acc, value -> acc + value }
+
+    val forecastedTransactionsTimeSeries: Map<LocalDate, Double> =
+        dateRange
+            ?.let { dateRange ->
+                var acc = 0.0
+                dateRange
+                    .toSequence { it.plusDays(1) }
+                    .associateWith { day ->
+                        val sign = aggregatedBudget.expectedFlowUntilTodaySeries[day]?.sign ?: 0.0
+                        val dVTS = (expectedFlowTodaySeries[day] ?: 0.0) * sign
+                        val tTS = (realTotalFlowTodaySeries[day] ?: 0.0) * sign
+                        val cDVTS = (accumulatedExpectedFlowTodaySeries[day] ?: 0.0) * sign
+                        val cTTS = (accumulatedRealTotalFlowTodaySeries[day] ?: 0.0) * sign
+
+                        val value = when (category.category.budgetType) {
+                            BudgetType.VARIABLE ->
+                                if (day < currentDate) {
+                                    0.0
+                                } else if (day > currentDate) {
+                                    dVTS
+                                } else {
+                                    max(0.0, dVTS - tTS)
+                                }
+
+                            BudgetType.FIXED ->
+                                if (day < currentDate) {
+                                    0.0
+                                } else {
+                                    max(0.0, cDVTS - (cTTS + acc))
+                                }
+                        }
+                        acc += value
+                        value
+                    }
+                    .mapValues { (day, value) ->
+                        value.withSign(aggregatedBudget.expectedFlowUntilTodaySeries[day] ?: 0.0)
+                    }
+            }
+            ?: emptyMap()
 
     val realTotalFlow = category.realTotalFlow
 
     val childrenRealTotalFlow: Double = subCategories
         .sumOf { it.realTotalFlow + it.childrenRealTotalFlow }
 
-    val completion = CategoryDao.calculateCategoryCompleition(
-        realTotalFlow = realTotalFlow,
-        expectedTotalFlow = expectedTotalFlow
-    )
+    val leftToPayTodaySeries: Map<LocalDate, Double> get() = forecastedTransactionsTimeSeries
 
-    val completionWithChildren = CategoryDao.calculateCategoryCompleition(
-        realTotalFlow = realTotalFlow + childrenRealTotalFlow,
-        expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
-    )
-
-    val expectedFlowUntilToday = aggregatedBudget.expectedFlowUntilToday
-
-    val childrenExpectedFlowUntilToday: Double = subCategories
-        .sumOf { it.expectedFlowUntilToday + it.childrenExpectedFlowUntilToday }
-
-    val leftToPayToday: Double = BudgetDao.calculateLeftToPayToday(
-        budgetType = category.category.budgetType,
-        expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrow,
-        expectedRemainingFlowToday = aggregatedBudget.expectedFlowFromToday,
-        expectedFlowUntilNow = aggregatedBudget.expectedFlowUntilToday,
-        realTotalFlowToday = category.realTotalFlowToday,
-        realTotalFlow = category.realTotalFlow
-    )
-
-    val leftToPay: Double = BudgetDao.calculateLeftToPayFromToday(
-        budgetType = category.category.budgetType,
-        expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrow,
-        leftToPayToday = leftToPayToday,
-        expectedTotalFlow = aggregatedBudget.expectedTotalFlow,
-        realTotalFlow = category.realTotalFlow
-    )
-
-    val childrenLeftToPay: Double = subCategories
-        .sumOf {
-            val x = it.leftToPay + it.childrenLeftToPay
-            x
-        }
-
-    val leftToPayTodaySeries: Map<LocalDate, Double> = aggregatedBudget
-        .dateRange
-        ?.toSequence { it.plusDays(1) }
-        ?.associateWith {
-            BudgetDao.calculateLeftToPayToday(
-                budgetType = category.category.budgetType,
-                expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrowSeries[it]
-                    ?: 0.0,
-                expectedRemainingFlowToday = aggregatedBudget.expectedFlowFromTodaySeries[it]
-                    ?: 0.0,
-                expectedFlowUntilNow = aggregatedBudget.expectedFlowUntilTodaySeries[it] ?: 0.0,
-                realTotalFlowToday = category.realTotalFlowToday,
-                realTotalFlow = category.realTotalFlow
-            )
-        } ?: emptyMap()
-
-    val leftToPaySeries: Map<LocalDate, Double> = aggregatedBudget
-        .dateRange
-        ?.toSequence { it.plusDays(1) }
-        ?.associateWith {
-            BudgetDao.calculateLeftToPayFromToday(
-                budgetType = category.category.budgetType,
-                expectedRemainingFlowTomorrow = aggregatedBudget.expectedFlowFromTomorrowSeries[it]
-                    ?: 0.0,
-                leftToPayToday = leftToPayTodaySeries[it] ?: 0.0,
-                expectedTotalFlow = aggregatedBudget.expectedTotalFlow,
-                realTotalFlow = category.realTotalFlowSeries[it] ?: 0.0
-            )
-        } ?: emptyMap()
+    val leftToPaySeries: Map<LocalDate, Double> = forecastedTransactionsTimeSeries
+        .toSortedMap { date1, date2 -> date1.compareTo(date2) * -1 }
+        .runningReduce { acc, value -> acc + value }
+        .toSortedMap()
+        .toMap()
 
     val pastForecast: Map<LocalDate, Double> = if (dateRange != null && currentDate != null) {
-        category.realTotalFlowUntilTodaySeries
+        accumulatedRealTotalFlowTodaySeries
             .filterKeys { (dateRange.start..currentDate).contains(it) }
     } else {
         emptyMap()
@@ -114,13 +105,12 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
 
     val futureForecast: Map<LocalDate, Double> = if (dateRange != null && currentDate != null) {
         val lastPastForecast = pastForecast[currentDate] ?: 0.0
-        val leftToPayYesterday = leftToPayTodaySeries[currentDate] ?: 0.0
         mapOf(currentDate to lastPastForecast).plus(
-            aggregatedBudget.expectedFlowTodaySeries
-                .filterKeys { (currentDate.plusDays(1)..dateRange.endInclusive).contains(it) }
-                .toList()
-                .runningReduce { (_, valueAcc), (localDate, value) -> localDate to valueAcc + value }
-                .associate { (localDate, value) -> localDate to value + leftToPayYesterday + lastPastForecast }
+            forecastedTransactionsTimeSeries
+                .toSortedMap()
+                .runningReduce { acc, value -> acc + value }
+                .filterKeys { it > currentDate }
+                .mapValues { (_, value) -> value + lastPastForecast }
         )
     } else {
         emptyMap()
@@ -137,6 +127,34 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
             .reduceOrNull { acc, closedRange ->
                 acc + closedRange
             }
+
+    val expectedTotalFlow = futureForecast[dateRange?.endInclusive] ?: 0.0
+
+    val childrenExpectedTotalFlow: Double =
+        subCategories.sumOf { it.expectedTotalFlow + it.childrenExpectedTotalFlow }
+
+    val completion = CategoryDao.calculateCategoryCompleition(
+        realTotalFlow = realTotalFlow,
+        expectedTotalFlow = expectedTotalFlow
+    )
+
+    val completionWithChildren = CategoryDao.calculateCategoryCompleition(
+        realTotalFlow = realTotalFlow + childrenRealTotalFlow,
+        expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
+    )
+
+    val leftToPayToday: Double = forecastedTransactionsTimeSeries[currentDate] ?: 0.0
+
+    val leftToPay: Double = forecastedTransactionsTimeSeries.values.sum()
+
+    val childrenLeftToPay: Double = subCategories
+        .sumOf { it.leftToPay + it.childrenLeftToPay }
+
+    fun <K, V> SortedMap<K, V>.runningReduce(operation: (acc: V, value: V) -> V): Map<K, V> =
+        values
+            .runningReduce(operation)
+            .zip(keys)
+            .associate { it.second to it.first }
 
     companion object {
         fun from(

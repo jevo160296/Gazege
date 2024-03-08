@@ -1,8 +1,13 @@
 package com.example.gazege.core.dao
 
-import androidx.room.*
-import com.example.gazege.core.dateBetween
-import com.example.gazege.core.entities.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import com.example.gazege.core.entities.Budget
+import com.example.gazege.core.entities.FrequencyType
+import com.example.gazege.core.entities.WeekDays
 import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -34,19 +39,6 @@ interface BudgetDao {
     suspend fun deleteAll()
 
     companion object {
-        fun calculateOneBudgetRealFlow(
-            budget: BudgetAndCategoryWithTransactions,
-            startDate: LocalDate,
-            endDate: LocalDate
-        ) = budget.let {
-            it.inTransactions
-                .filter { trx -> dateBetween(trx.date, startDate, endDate) }
-                .sumOf { trx -> trx.amount } -
-                    it.outTransactions
-                        .filter { trx -> dateBetween(trx.date, startDate, endDate) }
-                        .sumOf { trx -> trx.amount }
-        }
-
         fun calculateCantRepetitions(
             budget: Budget,
             startDate: LocalDate,
@@ -132,69 +124,6 @@ interface BudgetDao {
                 0
             }
             it.value * cantRepetitions
-        }
-
-
-        /**
-         * Calculates the amount left to pay for a budget, based on the expected remaining flow and the real total flow.
-         *
-         * @param budgetType The budget to calculate the amount left to pay for.
-         * @param expectedRemainingFlowToday The expected remaining flow for the budget from tomorrow.
-         * @param expectedTotalFlow The expected flow until now for the budget.
-         * @param realTotalFlow The real total flow for the budget.
-         *
-         * @return The amount left to pay for the budget.
-         */
-        fun calculateLeftToPayFromToday(
-            budgetType: BudgetType,
-            expectedRemainingFlowTomorrow: Double,
-            leftToPayToday: Double,
-            expectedTotalFlow: Double,
-            realTotalFlow: Double
-        ): Double = when (budgetType) {
-            BudgetType.FIXED -> (expectedTotalFlow - realTotalFlow).let { difference ->
-                if (expectedTotalFlow > 0) {
-                    difference.coerceAtLeast(0.0)
-                } else {
-                    difference.coerceAtMost(0.0)
-                }
-            }
-
-            BudgetType.VARIABLE -> expectedRemainingFlowTomorrow + leftToPayToday
-        }
-
-        /**
-         * Calculates the amount left to pay for a budget today, based on the expected remaining flow and the real total flow.
-         *
-         * @param budgetType The budget to calculate the amount left to pay for.
-         * @param expectedRemainingFlowTomorrow The expected remaining flow for the budget from tomorrow.
-         * @param expectedRemainingFlowToday The expected remaining flow for the budget from today.
-         *
-         * @return The amount left to pay for the budget.
-         */
-        fun calculateLeftToPayToday(
-            budgetType: BudgetType,
-            expectedRemainingFlowTomorrow: Double,
-            expectedRemainingFlowToday: Double,
-            expectedFlowUntilNow: Double,
-            realTotalFlowToday: Double,
-            realTotalFlow: Double
-        ): Double = when (budgetType) {
-            BudgetType.FIXED -> (expectedFlowUntilNow - realTotalFlow).let { difference ->
-                if (expectedFlowUntilNow > 0) {
-                    difference.coerceAtLeast(0.0)
-                } else {
-                    difference.coerceAtMost(0.0)
-                }
-            }
-
-            BudgetType.VARIABLE -> (expectedRemainingFlowToday - expectedRemainingFlowTomorrow - realTotalFlowToday).let { difference ->
-                if (expectedFlowUntilNow > 0) {
-                    difference.coerceAtLeast(0.0)
-                } else {
-                    difference.coerceAtMost(0.0)
-                }
-            }
         }
     }
 }
