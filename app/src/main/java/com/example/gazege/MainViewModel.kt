@@ -154,791 +154,6 @@ class MainViewModel(
         return currentValue
     }
 
-    inner class ExportModule {
-        suspend fun getTransactions() =
-            repository.getTransactions(null, null)
-                .firstOrNull()
-                ?: emptyList()
-
-        suspend fun getPersons() =
-            repository.getPersons()
-                .firstOrNull()
-                ?: emptyList()
-
-        suspend fun getCategories() =
-            repository.getCategories()
-                .firstOrNull()
-                ?: emptyList()
-
-        suspend fun getAccounts() =
-            repository.getAccounts()
-                .firstOrNull()
-                ?: emptyList()
-
-        suspend fun getBudget() =
-            repository.getBudgets()
-                .firstOrNull()
-                ?: emptyList()
-
-        fun exportData(outputStream: OutputStream) {
-            val progressStatus = HistoricalProgressStatus.start(
-                "Exporting data",
-                totalWork = 8.0,
-                defaultIncrement = 1.0
-            ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
-            viewModelScope.safeLaunch(
-                onErrorAction = {
-                    progressStatus.error("Error: ${it.message}")
-                }
-            ) {
-                withContext(Dispatchers.IO) {
-                    progressStatus.incrementProgress("ConvertingPersons")
-                    val persons = getPersons()
-                    val personsOutputStream = ByteArrayOutputStream()
-                    personsOutputStream.use {
-                        writePersons(it, persons)
-                    }
-
-                    progressStatus.incrementProgress("Converting caategories")
-                    val categories = getCategories()
-                    val categoriesOutputStream = ByteArrayOutputStream()
-                    categoriesOutputStream.use {
-                        writeCategories(it, categories)
-                    }
-
-                    progressStatus.incrementProgress("Converting accounts")
-                    val accounts = getAccounts()
-                    val accountsOutputStream = ByteArrayOutputStream()
-                    accountsOutputStream.use {
-                        writeAccounts(it, accounts)
-                    }
-
-                    progressStatus.incrementProgress("Converting budget")
-                    val budget = getBudget()
-                    val budgetOutputStream = ByteArrayOutputStream()
-                    budgetOutputStream.use {
-                        writeBudget(it, budget)
-                    }
-
-                    progressStatus.incrementProgress("Converting transactions")
-                    val transactions = getTransactions()
-                    val transactionsOutputStream = ByteArrayOutputStream()
-                    transactionsOutputStream.use {
-                        writeTransactions(it, transactions)
-                    }
-
-                    progressStatus.incrementProgress("Saving files")
-                    val personsInputStream = ByteArrayInputStream(personsOutputStream.toByteArray())
-                    val categoriesInputStream =
-                        ByteArrayInputStream(categoriesOutputStream.toByteArray())
-                    val budgetInputStream = ByteArrayInputStream(budgetOutputStream.toByteArray())
-                    val accountsInputStream =
-                        ByteArrayInputStream(accountsOutputStream.toByteArray())
-                    val transactionsInputStream =
-                        ByteArrayInputStream(transactionsOutputStream.toByteArray())
-                    progressStatus.incrementProgress("Compressing files")
-                    ZipOutputStream(outputStream)
-                        .use { zipOurpurStream ->
-                            writeZipBackup(
-                                transactionsInputStream,
-                                personsInputStream,
-                                categoriesInputStream,
-                                accountsInputStream,
-                                budgetInputStream,
-                                zipOurpurStream
-                            )
-                        }
-                    progressStatus.finish("Done")
-                }
-            }
-        }
-
-        fun importData(inputStream: InputStream) {
-            val progressStatus = HistoricalProgressStatus.start(
-                "Starting data import...",
-                1.0,
-                0.0
-            ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
-            var transactions: List<Transaction>? = null
-            var categories: List<Category>? = null
-            var persons: List<Person>? = null
-            var budget: List<Budget>? = null
-            var accounts: List<Account>? = null
-
-            viewModelScope.safeLaunch(
-                onErrorAction = {
-                    progressStatus.error("Error: ${it.message}")
-                }
-            ) {
-                withContext(Dispatchers.IO) {
-                    ZipInputStream(inputStream)
-                        .use { zipInputStream ->
-                            generateSequence {
-                                val entry = zipInputStream.nextEntry
-                                entry
-                            }
-                                .map {
-                                    when (it.name) {
-                                        "transacciones.csv" -> {
-                                            progressStatus.incrementProgress("Loading transactions")
-                                            zipInputStream.readBytes()
-                                                .run {
-                                                    inputStream().run {
-                                                        transactions = readTransactionsFromCsv(this)
-                                                    }
-                                                }
-                                            progressStatus.incrementProgress(
-                                                "Transactions loaded",
-                                                0.238
-                                            )
-                                        }
-
-                                        "categorias.csv" -> {
-                                            progressStatus.incrementProgress("Loading categories")
-                                            zipInputStream.readBytes().run {
-                                                inputStream().run {
-                                                    categories = readCategoryFromCsv(this)
-                                                }
-                                            }
-                                            progressStatus.incrementProgress(
-                                                "Categories loaded",
-                                                0.048
-                                            )
-                                        }
-
-                                        "cuentas.csv" -> {
-                                            progressStatus.incrementProgress("Loading accounts")
-                                            zipInputStream.readBytes().run {
-                                                inputStream().run {
-                                                    accounts = readAccountFromCsv(this)
-                                                }
-                                            }
-                                            progressStatus.incrementProgress(
-                                                "Accounts loaded",
-                                                0.119
-                                            )
-                                        }
-
-                                        "presupuesto.csv" -> {
-                                            progressStatus.incrementProgress("Loading budget")
-                                            zipInputStream.readBytes().run {
-                                                inputStream().run {
-                                                    budget = readBudgetFromCsv(this)
-                                                }
-                                            }
-                                            progressStatus.incrementProgress(
-                                                "Budget loaded",
-                                                0.048
-                                            )
-                                        }
-
-                                        "personas.csv" -> {
-                                            progressStatus.incrementProgress("Loading persons")
-                                            zipInputStream.readBytes().run {
-                                                inputStream().run {
-                                                    persons = readPersonsFromCsv(this)
-                                                }
-                                            }
-                                            progressStatus.incrementProgress(
-                                                "Persons loaded",
-                                                0.048
-                                            )
-                                        }
-
-                                        else -> {}
-                                    }
-                                }
-                                .toList()
-                        }
-                    progressStatus.incrementProgress("Checking imported data")
-                    if (transactions == null ||
-                        categories == null ||
-                        persons == null ||
-                        budget == null ||
-                        accounts == null
-                    ) {
-                        throw Exception(
-                            """Error loading data, parsed data:
-                        |transactions: ${transactions?.size}
-                        |categories: ${categories?.size}
-                        |persons: ${persons?.size}
-                        |budget: ${budget?.size}
-                        |accounts: ${accounts?.size}
-                    """.trimMargin()
-                        )
-                    } else {
-                        progressStatus.setCompletedWork("Deleting all data", 0.5)
-                        deleteAll().invokeOnCompletion {
-                            val totalSize = (persons?.size ?: 0) +
-                                    (accounts?.size ?: 0) +
-                                    (categories?.size ?: 0) +
-                                    (budget?.size ?: 0) +
-                                    (transactions?.size ?: 0)
-                            progressStatus.incrementProgress("Inserting values")
-                            persons?.also { persons ->
-                                insertPerson(*persons.toTypedArray()) {}
-                            }
-                            progressStatus.incrementProgress(
-                                "Person inserted",
-                                (persons?.size ?: 0).toDouble() / totalSize
-                            )
-                            accounts?.also { accounts ->
-                                insertAccount(
-                                    *accounts.toTypedArray(),
-                                    onErrorAction = {
-                                    }
-                                ) {}
-                            }
-                            progressStatus.incrementProgress(
-                                "Accounts inserted",
-                                (accounts?.size ?: 0).toDouble() / totalSize
-                            )
-                            categories?.also { categories ->
-                                insertCategory(
-                                    *categories.toTypedArray(),
-                                    onErrorAction = {
-                                    },
-                                    onCompleitionAction = {}
-                                )
-                            }
-                            progressStatus.incrementProgress(
-                                "Categories inserted",
-                                (categories?.size ?: 0).toDouble() / totalSize
-                            )
-                            budget?.also { budget ->
-                                insertBudget(
-                                    *budget.toTypedArray(),
-                                    onCompleitionAction = {},
-                                    onErrorAction = {
-                                    }
-                                )
-                            }
-                            progressStatus.incrementProgress(
-                                "Budget inserted",
-                                (budget?.size ?: 0).toDouble() / totalSize
-                            )
-                            transactions?.also { transactions ->
-                                insertTransaction(*transactions.toTypedArray()) {
-                                }
-                            }
-                            progressStatus.finish("Done")
-                        }
-                    }
-                }
-            }
-        }
-
-        fun exportDetails(
-            outputStream: OutputStream,
-            categoryToExport: CategoryWithSubcategoriesAndBudgetWithCalculatedData
-        ) {
-            val progressStatus = HistoricalProgressStatus.start(
-                "Exporting category...",
-                totalWork = 8.0,
-                defaultIncrement = 1.0
-            ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
-            viewModelScope.safeLaunch(
-                onErrorAction = {
-                    progressStatus.error("Error: ${it.message}")
-                }
-            ) {
-                progressStatus.incrementProgress("outputStream use")
-                outputStream.use {
-                    progressStatus.incrementProgress("writing categories")
-                    writeCategoriesWithCalculatedData(it, listOf(categoryToExport))
-                    progressStatus.incrementProgress("categories writted")
-                }
-                progressStatus.finish("Finished")
-            }
-        }
-    }
-
-    inner class SampleModule {
-        val viewModelScope get() = this@MainViewModel.viewModelScope
-        fun importStatePostValue(importState: ProgressStatusState) =
-            this@MainViewModel.importStatePostValue(importState)
-
-        fun deleteAll() = this@MainViewModel.deleteAll()
-
-        fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
-            this@MainViewModel.insertPerson(*person) { onErrorAction(it) }
-
-        fun insertAccount(
-            vararg account: Account,
-            onErrorAction: (Throwable) -> Unit,
-            onCompleitionAction: (Long) -> Unit
-        ) =
-            this@MainViewModel.insertAccount(
-                *account,
-                onErrorAction = onErrorAction,
-                onCompleitionAction = onCompleitionAction
-            )
-
-        fun insertCategory(
-            vararg category: Category,
-            onCompleitionAction: (Long?) -> Unit,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.insertCategory(
-                *category,
-                onCompleitionAction = onCompleitionAction,
-                onErrorAction = onErrorAction
-            )
-
-        fun updateCategory(
-            vararg newCategory: Category,
-            onCompleitionAction: () -> Unit,
-            onErrorAction: (Throwable) -> Unit,
-        ) =
-            this@MainViewModel.updateCategory(
-                *newCategory,
-                onCompleitionAction = onCompleitionAction,
-                onErrorAction = onErrorAction
-            )
-
-        fun insertTransaction(
-            vararg transaction: Transaction,
-            onErrorAction: (Throwable) -> Unit = {}
-        ) =
-            this@MainViewModel.insertTransaction(
-                *transaction,
-                onErrorAction = onErrorAction
-            )
-
-        fun insertBudget(
-            vararg budget: Budget,
-            onCompleitionAction: () -> Unit,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.insertBudget(
-                *budget,
-                onCompleitionAction = onCompleitionAction,
-                onErrorAction = onErrorAction
-            )
-    }
-
-    inner class ViewModelMain {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-        @Composable
-        fun rememberFilteredTransactionListItemDetails() =
-            filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
-
-        @Composable
-        fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(loadingPersonSummaryState())
-
-        @Composable
-        fun rememberRange() = range.observeAsState(Pair(null, null))
-
-        @Composable
-        fun rememberTransactionFiltersValue() = transactionFilters
-            .observeAsState(
-                booleanFilterOf(
-                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
-                    true
-                )
-            )
-
-        @Composable
-        fun rememberCategoriesFiltersValue() =
-            categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
-
-        @Composable
-        fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
-
-        @Composable
-        fun rememberValueFilterValue() =
-            valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
-
-        @Composable
-        fun rememberDescriptionFilterValue() =
-            descriptionFilterValue.observeAsState(TextFilter(null))
-
-        @Composable
-        fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
-
-        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
-
-        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
-
-        fun deleteTransaction(transaction: Transaction) =
-            this@MainViewModel.deleteTransaction(transaction)
-
-        fun updateRange(startDate: LocalDate?, endDate: LocalDate?) =
-            this@MainViewModel.updateRange(startDate, endDate)
-
-        fun updatePersonFilterValue(newValue: Boolean) =
-            this@MainViewModel.updatePersonFilterValue(newValue)
-
-        fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) =
-            this@MainViewModel.updateTransactionFilters(newValue)
-
-        fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
-            this@MainViewModel.updateCategoriasFiltersValue(newValue)
-
-        fun updateValueFilterValue(newValue: DoubleFilter) =
-            this@MainViewModel.updateValueFilterValue(newValue)
-
-        fun updateDescriptionFilterValue(newValue: TextFilter) =
-            this@MainViewModel.updateDescriptionFilterValue(newValue)
-
-        fun updateToday(newDate: LocalDate) = this@MainViewModel.updateToday(newDate)
-    }
-
-    inner class ViewModelCategoryList {
-        private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
-
-        @Composable
-        fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
-
-        @Composable
-        fun rememberEditarCategoriasState() =
-            editarCategoriasState.observeAsState(nullCategoriasState())
-
-        fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
-
-        fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
-    }
-
-    inner class ViewModelAddAccount {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(initial = emptyList())
-
-        @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
-
-        @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
-
-        @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-        @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-        @Composable
-        fun rememberToday() = today.observeAsState(LocalDate.now())
-
-        fun insertAccount(
-            vararg account: Account,
-            onErrorAction: (Throwable) -> Unit,
-            onCompleitionAction: (Long) -> Unit
-        ) =
-            this@MainViewModel.insertAccount(
-                *account,
-                onErrorAction = onErrorAction,
-                onCompleitionAction = onCompleitionAction
-            )
-
-        fun realizarAjuste(
-            accountId: Int,
-            amount: Double,
-            incomeAccountId: Int,
-            outcomeAccountId: Int,
-            today: LocalDate
-        ) =
-            this@MainViewModel.realizarAjuste(
-                accountId = accountId,
-                amount = amount,
-                incomeAccountId = incomeAccountId,
-                outcomeAccountId = outcomeAccountId,
-                today = today
-            )
-    }
-
-    inner class ViewModelAddPerson {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        fun insertPerson(
-            vararg person: Person,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.insertPerson(
-                *person,
-                onErrorAction = onErrorAction
-            )
-    }
-
-    inner class ViewModelAddTransaction {
-        @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
-
-        @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAccountAndOwnerUserFirst() =
-            accountAndOwnerUserFirst.observeAsState(emptyList())
-
-        fun insertTransaction(
-            vararg transaction: Transaction,
-            onErrorAction: (Throwable) -> Unit = {}
-        ) = this@MainViewModel.insertTransaction(
-            *transaction,
-            onErrorAction = onErrorAction
-        )
-    }
-
-    inner class ViewModelEditAccount {
-        @Composable
-        fun rememberAccountAndOwnerWithTransactionsAndPockets() =
-            accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
-
-        @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
-
-        @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-        @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-        @Composable
-        fun rememberToday() = today.observeAsState(LocalDate.now())
-
-        fun updateAccount(
-            account: Account,
-            onErrorAction: (Throwable) -> Unit,
-            onCompleitionAction: (Long) -> Unit
-        ) =
-            this@MainViewModel.updateAccount(
-                account = account,
-                onErrorAction = onErrorAction,
-                onCompleitionAction = onCompleitionAction
-            )
-
-        fun realizarAjuste(
-            accountId: Int,
-            amount: Double,
-            incomeAccountId: Int,
-            outcomeAccountId: Int,
-            today: LocalDate
-        ) =
-            this@MainViewModel.realizarAjuste(
-                accountId = accountId,
-                amount = amount,
-                incomeAccountId = incomeAccountId,
-                outcomeAccountId = outcomeAccountId,
-                today = today
-            )
-    }
-
-    inner class ViewModelEditPerson {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        fun updatePerson(
-            vararg person: Person,
-            onErrorAction: (Throwable) -> Unit
-        ) = this@MainViewModel.updatePerson(
-            *person,
-            onErrorAction = onErrorAction
-        )
-    }
-
-    inner class ViewModelEditTransaction {
-        @Composable
-        fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
-            allTransactionAndAccountsAndCategory
-                .map { transactionAndAccountAndCategory ->
-                    transactionAndAccountAndCategory
-                        .firstOrNull { it.transaction.id == transactionId }
-                        ?.toTransactionAndAccounts()
-                }
-        }
-            .observeAsState()
-
-        @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-        fun updateTransaction(transaction: Transaction) =
-            this@MainViewModel.updateTransaction(transaction)
-    }
-
-    inner class ViewModelSettings {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberPrincipalPerson() = principalPerson.observeAsState()
-
-        @Composable
-        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
-
-        @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
-
-        @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-        fun updatePerson(
-            vararg person: Person,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.updatePerson(
-                *person,
-                onErrorAction = onErrorAction
-            )
-
-        fun updateAccount(
-            account: Account,
-            onErrorAction: (Throwable) -> Unit,
-            onCompleitionAction: (Long) -> Unit
-        ) =
-            this@MainViewModel.updateAccount(
-                account,
-                onErrorAction = onErrorAction,
-                onCompleitionAction = onCompleitionAction
-            )
-    }
-
-    inner class ViewModelSaldoActualSettings {
-        @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-        @Composable
-        fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(EmptyPersonSummaryState)
-
-        @Composable
-        fun rememberPrincipalPerson() = principalPerson.observeAsState()
-
-        @Composable
-        fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
-            incluirPresupuestoEnSaldoActual.observeAsState(false)
-
-        @Composable
-        fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
-            incluirDeudasEnSaldoActual.observeAsState(false)
-
-        fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
-            this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)
-
-        fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) =
-            this@MainViewModel.settingsIncluirDeudasEnSaldoActualFlow(newValue)
-
-        fun updateAccount(
-            account: Account,
-            onErrorAction: (Throwable) -> Unit,
-            onCompleitionAction: (Long) -> Unit
-        ) =
-            this@MainViewModel.updateAccount(
-                account = account,
-                onErrorAction = onErrorAction,
-                onCompleitionAction = onCompleitionAction
-            )
-    }
-
-    inner class ViewModelAddCategory {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-        fun insertCategory(
-            vararg category: Category,
-            onCompleitionAction: (Long?) -> Unit,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.insertCategory(
-                *category,
-                onCompleitionAction = onCompleitionAction,
-                onErrorAction = onErrorAction
-            )
-    }
-
-    inner class ViewModelEditCategory {
-        @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
-
-        @Composable
-        fun rememberBudgetAndCategoryWithCalculatedData() =
-            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
-
-        @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-        fun updateCategory(
-            vararg newCategory: Category,
-            onCompleitionAction: () -> Unit,
-            onErrorAction: (Throwable) -> Unit
-        ) =
-            this@MainViewModel.updateCategory(
-                *newCategory,
-                onCompleitionAction = onCompleitionAction,
-                onErrorAction = onErrorAction
-            )
-
-        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
-    }
-
-    val exportModule = ExportModule()
-    val sampleModule = SampleModule()
-    val viewModelMain = ViewModelMain()
-    val viewModelCategoryList = ViewModelCategoryList()
-    val viewModelAddAccount = ViewModelAddAccount()
-    val viewModelAddPerson = ViewModelAddPerson()
-    val viewModelAddTransaction = ViewModelAddTransaction()
-    val viewModelEditAccount = ViewModelEditAccount()
-    val viewModelEditPerson = ViewModelEditPerson()
-    val viewModelEditTransaction = ViewModelEditTransaction()
-    val viewModelSettings = ViewModelSettings()
-    val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
-    val viewModelAddCategory = ViewModelAddCategory()
-    val viewModelEditCategory = ViewModelEditCategory()
-
     fun startActivityToSaveData(
         suggestedName: String
     ) =
@@ -1848,7 +1063,777 @@ class MainViewModel(
         }
     }
 
-    inner class AccountDetailScreenState {
+    inner class ExportModule {
+        suspend fun getTransactions() =
+            repository.getTransactions(null, null)
+                .firstOrNull()
+                ?: emptyList()
+
+        suspend fun getPersons() =
+            repository.getPersons()
+                .firstOrNull()
+                ?: emptyList()
+
+        suspend fun getCategories() =
+            repository.getCategories()
+                .firstOrNull()
+                ?: emptyList()
+
+        suspend fun getAccounts() =
+            repository.getAccounts()
+                .firstOrNull()
+                ?: emptyList()
+
+        suspend fun getBudget() =
+            repository.getBudgets()
+                .firstOrNull()
+                ?: emptyList()
+
+        fun exportData(outputStream: OutputStream) {
+            val progressStatus = HistoricalProgressStatus.start(
+                "Exporting data",
+                totalWork = 8.0,
+                defaultIncrement = 1.0
+            ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
+            viewModelScope.safeLaunch(
+                onErrorAction = {
+                    progressStatus.error("Error: ${it.message}")
+                }
+            ) {
+                withContext(Dispatchers.IO) {
+                    progressStatus.incrementProgress("ConvertingPersons")
+                    val persons = getPersons()
+                    val personsOutputStream = ByteArrayOutputStream()
+                    personsOutputStream.use {
+                        writePersons(it, persons)
+                    }
+
+                    progressStatus.incrementProgress("Converting caategories")
+                    val categories = getCategories()
+                    val categoriesOutputStream = ByteArrayOutputStream()
+                    categoriesOutputStream.use {
+                        writeCategories(it, categories)
+                    }
+
+                    progressStatus.incrementProgress("Converting accounts")
+                    val accounts = getAccounts()
+                    val accountsOutputStream = ByteArrayOutputStream()
+                    accountsOutputStream.use {
+                        writeAccounts(it, accounts)
+                    }
+
+                    progressStatus.incrementProgress("Converting budget")
+                    val budget = getBudget()
+                    val budgetOutputStream = ByteArrayOutputStream()
+                    budgetOutputStream.use {
+                        writeBudget(it, budget)
+                    }
+
+                    progressStatus.incrementProgress("Converting transactions")
+                    val transactions = getTransactions()
+                    val transactionsOutputStream = ByteArrayOutputStream()
+                    transactionsOutputStream.use {
+                        writeTransactions(it, transactions)
+                    }
+
+                    progressStatus.incrementProgress("Saving files")
+                    val personsInputStream = ByteArrayInputStream(personsOutputStream.toByteArray())
+                    val categoriesInputStream =
+                        ByteArrayInputStream(categoriesOutputStream.toByteArray())
+                    val budgetInputStream = ByteArrayInputStream(budgetOutputStream.toByteArray())
+                    val accountsInputStream =
+                        ByteArrayInputStream(accountsOutputStream.toByteArray())
+                    val transactionsInputStream =
+                        ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                    progressStatus.incrementProgress("Compressing files")
+                    ZipOutputStream(outputStream)
+                        .use { zipOurpurStream ->
+                            writeZipBackup(
+                                transactionsInputStream,
+                                personsInputStream,
+                                categoriesInputStream,
+                                accountsInputStream,
+                                budgetInputStream,
+                                zipOurpurStream
+                            )
+                        }
+                    progressStatus.finish("Done")
+                }
+            }
+        }
+
+        fun importData(inputStream: InputStream) {
+            val progressStatus = HistoricalProgressStatus.start(
+                "Starting data import...",
+                1.0,
+                0.0
+            ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
+            var transactions: List<Transaction>? = null
+            var categories: List<Category>? = null
+            var persons: List<Person>? = null
+            var budget: List<Budget>? = null
+            var accounts: List<Account>? = null
+
+            viewModelScope.safeLaunch(
+                onErrorAction = {
+                    progressStatus.error("Error: ${it.message}")
+                }
+            ) {
+                withContext(Dispatchers.IO) {
+                    ZipInputStream(inputStream)
+                        .use { zipInputStream ->
+                            generateSequence {
+                                val entry = zipInputStream.nextEntry
+                                entry
+                            }
+                                .map {
+                                    when (it.name) {
+                                        "transacciones.csv" -> {
+                                            progressStatus.incrementProgress("Loading transactions")
+                                            zipInputStream.readBytes()
+                                                .run {
+                                                    inputStream().run {
+                                                        transactions = readTransactionsFromCsv(this)
+                                                    }
+                                                }
+                                            progressStatus.incrementProgress(
+                                                "Transactions loaded",
+                                                0.238
+                                            )
+                                        }
+
+                                        "categorias.csv" -> {
+                                            progressStatus.incrementProgress("Loading categories")
+                                            zipInputStream.readBytes().run {
+                                                inputStream().run {
+                                                    categories = readCategoryFromCsv(this)
+                                                }
+                                            }
+                                            progressStatus.incrementProgress(
+                                                "Categories loaded",
+                                                0.048
+                                            )
+                                        }
+
+                                        "cuentas.csv" -> {
+                                            progressStatus.incrementProgress("Loading accounts")
+                                            zipInputStream.readBytes().run {
+                                                inputStream().run {
+                                                    accounts = readAccountFromCsv(this)
+                                                }
+                                            }
+                                            progressStatus.incrementProgress(
+                                                "Accounts loaded",
+                                                0.119
+                                            )
+                                        }
+
+                                        "presupuesto.csv" -> {
+                                            progressStatus.incrementProgress("Loading budget")
+                                            zipInputStream.readBytes().run {
+                                                inputStream().run {
+                                                    budget = readBudgetFromCsv(this)
+                                                }
+                                            }
+                                            progressStatus.incrementProgress(
+                                                "Budget loaded",
+                                                0.048
+                                            )
+                                        }
+
+                                        "personas.csv" -> {
+                                            progressStatus.incrementProgress("Loading persons")
+                                            zipInputStream.readBytes().run {
+                                                inputStream().run {
+                                                    persons = readPersonsFromCsv(this)
+                                                }
+                                            }
+                                            progressStatus.incrementProgress(
+                                                "Persons loaded",
+                                                0.048
+                                            )
+                                        }
+
+                                        else -> {}
+                                    }
+                                }
+                                .toList()
+                        }
+                    progressStatus.incrementProgress("Checking imported data")
+                    if (transactions == null ||
+                        categories == null ||
+                        persons == null ||
+                        budget == null ||
+                        accounts == null
+                    ) {
+                        throw Exception(
+                            """Error loading data, parsed data:
+                        |transactions: ${transactions?.size}
+                        |categories: ${categories?.size}
+                        |persons: ${persons?.size}
+                        |budget: ${budget?.size}
+                        |accounts: ${accounts?.size}
+                    """.trimMargin()
+                        )
+                    } else {
+                        progressStatus.setCompletedWork("Deleting all data", 0.5)
+                        deleteAll().invokeOnCompletion {
+                            val totalSize = (persons?.size ?: 0) +
+                                    (accounts?.size ?: 0) +
+                                    (categories?.size ?: 0) +
+                                    (budget?.size ?: 0) +
+                                    (transactions?.size ?: 0)
+                            progressStatus.incrementProgress("Inserting values")
+                            persons?.also { persons ->
+                                insertPerson(*persons.toTypedArray()) {}
+                            }
+                            progressStatus.incrementProgress(
+                                "Person inserted",
+                                (persons?.size ?: 0).toDouble() / totalSize
+                            )
+                            accounts?.also { accounts ->
+                                insertAccount(
+                                    *accounts.toTypedArray(),
+                                    onErrorAction = {
+                                    }
+                                ) {}
+                            }
+                            progressStatus.incrementProgress(
+                                "Accounts inserted",
+                                (accounts?.size ?: 0).toDouble() / totalSize
+                            )
+                            categories?.also { categories ->
+                                insertCategory(
+                                    *categories.toTypedArray(),
+                                    onErrorAction = {
+                                    },
+                                    onCompleitionAction = {}
+                                )
+                            }
+                            progressStatus.incrementProgress(
+                                "Categories inserted",
+                                (categories?.size ?: 0).toDouble() / totalSize
+                            )
+                            budget?.also { budget ->
+                                insertBudget(
+                                    *budget.toTypedArray(),
+                                    onCompleitionAction = {},
+                                    onErrorAction = {
+                                    }
+                                )
+                            }
+                            progressStatus.incrementProgress(
+                                "Budget inserted",
+                                (budget?.size ?: 0).toDouble() / totalSize
+                            )
+                            transactions?.also { transactions ->
+                                insertTransaction(*transactions.toTypedArray()) {
+                                }
+                            }
+                            progressStatus.finish("Done")
+                        }
+                    }
+                }
+            }
+        }
+
+        fun exportDetails(
+            outputStream: OutputStream,
+            categoryToExport: CategoryWithSubcategoriesAndBudgetWithCalculatedData
+        ) {
+            val progressStatus = HistoricalProgressStatus.start(
+                "Exporting category...",
+                totalWork = 8.0,
+                defaultIncrement = 1.0
+            ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
+            viewModelScope.safeLaunch(
+                onErrorAction = {
+                    progressStatus.error("Error: ${it.message}")
+                }
+            ) {
+                progressStatus.incrementProgress("outputStream use")
+                outputStream.use {
+                    progressStatus.incrementProgress("writing categories")
+                    writeCategoriesWithCalculatedData(it, listOf(categoryToExport))
+                    progressStatus.incrementProgress("categories writted")
+                }
+                progressStatus.finish("Finished")
+            }
+        }
+    }
+
+    inner class SampleModule {
+        val viewModelScope get() = this@MainViewModel.viewModelScope
+        fun importStatePostValue(importState: ProgressStatusState) =
+            this@MainViewModel.importStatePostValue(importState)
+
+        fun deleteAll() = this@MainViewModel.deleteAll()
+
+        fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
+            this@MainViewModel.insertPerson(*person) { onErrorAction(it) }
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun insertCategory(
+            vararg category: Category,
+            onCompleitionAction: (Long?) -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertCategory(
+                *category,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit,
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) =
+            this@MainViewModel.insertTransaction(
+                *transaction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertBudget(
+            vararg budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertBudget(
+                *budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelMain {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberFilteredTransactionListItemDetails() =
+            filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
+
+        @Composable
+        fun rememberRange() = range.observeAsState(Pair(null, null))
+
+        @Composable
+        fun rememberTransactionFiltersValue() = transactionFilters
+            .observeAsState(
+                booleanFilterOf(
+                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                    true
+                )
+            )
+
+        @Composable
+        fun rememberCategoriesFiltersValue() =
+            categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
+
+        @Composable
+        fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
+
+        @Composable
+        fun rememberValueFilterValue() =
+            valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
+
+        @Composable
+        fun rememberDescriptionFilterValue() =
+            descriptionFilterValue.observeAsState(TextFilter(null))
+
+        @Composable
+        fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+
+        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
+
+        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
+
+        fun updateRange(startDate: LocalDate?, endDate: LocalDate?) =
+            this@MainViewModel.updateRange(startDate, endDate)
+
+        fun updatePersonFilterValue(newValue: Boolean) =
+            this@MainViewModel.updatePersonFilterValue(newValue)
+
+        fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) =
+            this@MainViewModel.updateTransactionFilters(newValue)
+
+        fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
+            this@MainViewModel.updateCategoriasFiltersValue(newValue)
+
+        fun updateValueFilterValue(newValue: DoubleFilter) =
+            this@MainViewModel.updateValueFilterValue(newValue)
+
+        fun updateDescriptionFilterValue(newValue: TextFilter) =
+            this@MainViewModel.updateDescriptionFilterValue(newValue)
+
+        fun updateToday(newDate: LocalDate) = this@MainViewModel.updateToday(newDate)
+    }
+
+    inner class ViewModelCategoryList {
+        private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
+
+        @Composable
+        fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
+
+        @Composable
+        fun rememberEditarCategoriasState() =
+            editarCategoriasState.observeAsState(nullCategoriasState())
+
+        fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
+
+        fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
+    }
+
+    inner class ViewModelAddAccount {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(initial = emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
+    inner class ViewModelAddPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun insertPerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertPerson(
+                *person,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelAddTransaction {
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwnerUserFirst() =
+            accountAndOwnerUserFirst.observeAsState(emptyList())
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) = this@MainViewModel.insertTransaction(
+            *transaction,
+            onErrorAction = onErrorAction
+        )
+    }
+
+    inner class ViewModelEditAccount {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactionsAndPockets() =
+            accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
+    inner class ViewModelEditPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) = this@MainViewModel.updatePerson(
+            *person,
+            onErrorAction = onErrorAction
+        )
+    }
+
+    inner class ViewModelEditTransaction {
+        @Composable
+        fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
+            allTransactionAndAccountsAndCategory
+                .map { transactionAndAccountAndCategory ->
+                    transactionAndAccountAndCategory
+                        .firstOrNull { it.transaction.id == transactionId }
+                        ?.toTransactionAndAccounts()
+                }
+        }
+            .observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateTransaction(transaction: Transaction) =
+            this@MainViewModel.updateTransaction(transaction)
+    }
+
+    inner class ViewModelSettings {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updatePerson(
+                *person,
+                onErrorAction = onErrorAction
+            )
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+    }
+
+    inner class ViewModelSaldoActualSettings {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(EmptyPersonSummaryState)
+
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+        @Composable
+        fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
+            incluirPresupuestoEnSaldoActual.observeAsState(false)
+
+        @Composable
+        fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
+            incluirDeudasEnSaldoActual.observeAsState(false)
+
+        fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)
+
+        fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirDeudasEnSaldoActualFlow(newValue)
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+    }
+
+    inner class ViewModelAddCategory {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun insertCategory(
+            vararg category: Category,
+            onCompleitionAction: (Long?) -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertCategory(
+                *category,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelEditCategory {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudgetAndCategoryWithCalculatedData() =
+            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
+    }
+
+    inner class ViewModelAccountDetail {
         private var accountId: Int? = null
         private val descriptionFilter: MutableLiveData<TextFilter> = MutableLiveData()
         private val accountFilterValue = MutableLiveData(
@@ -2008,6 +1993,18 @@ class MainViewModel(
             return accountDetailData.observeAsState()
         }
 
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoriesWithSubcategories() =
+            categoriesWithSubCategories.observeAsState(emptyList())
+
+        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
+
         private fun updateAccountDetailIdIfDifferent(
             newId: Int?,
             accountFilters: BooleanFilters<String, Nothing>,
@@ -2031,9 +2028,26 @@ class MainViewModel(
         fun updateDescriptionFilter(newValue: TextFilter) {
             descriptionFilter.value = newValue
         }
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
     }
 
-    val accountDetailScreenState = AccountDetailScreenState()
+    val exportModule = ExportModule()
+    val sampleModule = SampleModule()
+    val viewModelMain = ViewModelMain()
+    val viewModelCategoryList = ViewModelCategoryList()
+    val viewModelAddAccount = ViewModelAddAccount()
+    val viewModelAddPerson = ViewModelAddPerson()
+    val viewModelAddTransaction = ViewModelAddTransaction()
+    val viewModelEditAccount = ViewModelEditAccount()
+    val viewModelEditPerson = ViewModelEditPerson()
+    val viewModelEditTransaction = ViewModelEditTransaction()
+    val viewModelSettings = ViewModelSettings()
+    val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
+    val viewModelAddCategory = ViewModelAddCategory()
+    val viewModelEditCategory = ViewModelEditCategory()
+    val viewModelAccountDetail = ViewModelAccountDetail()
 
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(

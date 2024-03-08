@@ -157,7 +157,7 @@ fun MainNavHost(
                 }
             )
             screenAccountDetail(
-                viewModel = mainViewModel,
+                viewModelAccountDetail = mainViewModel.viewModelAccountDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditAccount = navController::navigateToEditAccount,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
