@@ -108,7 +108,7 @@ fun MainNavHost(
                 onNavigateToAddAccount = navController::navigateToAddAccount
             )
             screenSettings(
-                viewModel = mainViewModel,
+                viewModelSettings = mainViewModel.viewModelSettings,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onNavigateToAddPerson = navController::navigateToAddPerson,

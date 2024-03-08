@@ -796,6 +796,43 @@ class MainViewModel(
             this@MainViewModel.updateTransaction(transaction)
     }
 
+    inner class ViewModelSettings {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updatePerson(
+                *person,
+                onErrorAction = onErrorAction
+            )
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -806,6 +843,7 @@ class MainViewModel(
     val viewModelEditAccount = ViewModelEditAccount()
     val viewModelEditPerson = ViewModelEditPerson()
     val viewModelEditTransaction = ViewModelEditTransaction()
+    val viewModelSettings = ViewModelSettings()
 
     fun startActivityToSaveData(
         suggestedName: String
