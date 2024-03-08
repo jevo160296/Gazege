@@ -15,7 +15,7 @@ import java.time.LocalDate
 
 fun LocalDate.toInt() = let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
 fun NavGraphBuilder.screenEditTransaction(
-    viewModel: MainViewModel,
+    viewModelEditTransaction: MainViewModel.ViewModelEditTransaction,
     onNavigateUp: () -> Unit,
     onNavigateToAddAccount: () -> Unit
 ) {
@@ -27,11 +27,13 @@ fun NavGraphBuilder.screenEditTransaction(
     ) { navBackStackEntry ->
         val transactionId = navBackStackEntry.arguments?.getInt("transactionId")
 
-        val selectedTransactionAndAccounts by viewModel.rememberTransactionAndAccounts(transactionId)
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val allPerson by viewModel.rememberAllPerson()
-        val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val selectedTransactionAndAccounts by viewModelEditTransaction.rememberTransactionAndAccounts(
+            transactionId
+        )
+        val accountAndOwnerWithTransactions by viewModelEditTransaction.rememberAccountAndOwnerWithTransactions()
+        val allPerson by viewModelEditTransaction.rememberAllPerson()
+        val categories by viewModelEditTransaction.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModelEditTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
@@ -48,7 +50,7 @@ fun NavGraphBuilder.screenEditTransaction(
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onAccountAddRequested = onNavigateToAddAccount
         ) { editedTransaction, _ ->
-            viewModel.updateTransaction(editedTransaction)
+            viewModelEditTransaction.updateTransaction(editedTransaction)
             onNavigateUp()
         }
     }

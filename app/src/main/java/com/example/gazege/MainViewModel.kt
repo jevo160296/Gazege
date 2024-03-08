@@ -766,6 +766,36 @@ class MainViewModel(
         )
     }
 
+    inner class ViewModelEditTransaction {
+        @Composable
+        fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
+            allTransactionAndAccountsAndCategory
+                .map { transactionAndAccountAndCategory ->
+                    transactionAndAccountAndCategory
+                        .firstOrNull { it.transaction.id == transactionId }
+                        ?.toTransactionAndAccounts()
+                }
+        }
+            .observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateTransaction(transaction: Transaction) =
+            this@MainViewModel.updateTransaction(transaction)
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -775,6 +805,7 @@ class MainViewModel(
     val viewModelAddTransaction = ViewModelAddTransaction()
     val viewModelEditAccount = ViewModelEditAccount()
     val viewModelEditPerson = ViewModelEditPerson()
+    val viewModelEditTransaction = ViewModelEditTransaction()
 
     fun startActivityToSaveData(
         suggestedName: String

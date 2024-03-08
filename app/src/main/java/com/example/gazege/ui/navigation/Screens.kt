@@ -103,7 +103,7 @@ fun MainNavHost(
                 onDataLoaded = onDataLoaded
             )
             screenEditTransaction(
-                viewModel = mainViewModel,
+                viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount
             )
