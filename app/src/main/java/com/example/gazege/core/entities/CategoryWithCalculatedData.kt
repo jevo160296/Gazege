@@ -6,7 +6,10 @@ import java.time.LocalDate
 data class CategoryWithCalculatedData(
     val category: Category,
     val realTotalFlow: Double,
-    val realTotalFlowToday: Double
+    val realTotalFlowToday: Double,
+    val realTotalFlowSeries: Map<LocalDate, Double>,
+    val realTotalFlowTodaySeries: Map<LocalDate, Double>,
+    val realTotalFlowUntilTodaySeries: Map<LocalDate, Double>
 ) {
     val id get() = category.id
     val name get() = category.name
@@ -30,10 +33,39 @@ data class CategoryWithCalculatedData(
                     currentDate,
                     currentDate
                 )
+                val rangeDate = (startDate..endDate).let { dRange ->
+                    generateSequence(dRange.start) { testDate ->
+                        testDate.plusDays(1L).takeIf { nextDate -> dRange.contains(nextDate) }
+                    }
+                }
+                val realTotalFlowSeries = rangeDate.associateWith { testDate ->
+                    CategoryDao.calculateOneCategoryRealFlow(
+                        it,
+                        startDate,
+                        testDate
+                    )
+                }
+                val realTotalFlowTodaySeries = rangeDate.associateWith { testDate ->
+                    CategoryDao.calculateOneCategoryRealFlow(
+                        it,
+                        testDate,
+                        testDate
+                    )
+                }
+                val realTotalFlowUntilTodaySeries = rangeDate.associateWith { testDate ->
+                    CategoryDao.calculateOneCategoryRealFlow(
+                        it,
+                        startDate,
+                        testDate
+                    )
+                }
                 CategoryWithCalculatedData(
-                    it.category,
-                    realTotalFlow,
-                    realTotalFlowToday
+                    category = it.category,
+                    realTotalFlow = realTotalFlow,
+                    realTotalFlowToday = realTotalFlowToday,
+                    realTotalFlowSeries = realTotalFlowSeries,
+                    realTotalFlowTodaySeries = realTotalFlowTodaySeries,
+                    realTotalFlowUntilTodaySeries = realTotalFlowUntilTodaySeries
                 )
             }
     }

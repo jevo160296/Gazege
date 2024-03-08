@@ -6,9 +6,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
@@ -46,6 +48,7 @@ import com.example.gazege.core.export.readTransactionsFromCsv
 import com.example.gazege.core.export.writeAccounts
 import com.example.gazege.core.export.writeBudget
 import com.example.gazege.core.export.writeCategories
+import com.example.gazege.core.export.writeCategoriesWithCalculatedData
 import com.example.gazege.core.export.writePersons
 import com.example.gazege.core.export.writeTransactions
 import com.example.gazege.core.export.writeZipBackup
@@ -101,6 +104,24 @@ fun CoroutineScope.safeLaunch(
     }
 }
 
+fun <T> LiveData<T>.observeOnce(observer: (T) -> Unit) {
+    observeForever(object : Observer<T> {
+        override fun onChanged(value: T) {
+            removeObserver(this)
+            observer(value)
+        }
+    })
+}
+
+fun <T> LiveData<T>.observeOnce(owner: LifecycleOwner, observer: (T) -> Unit) {
+    observe(owner, object : Observer<T> {
+        override fun onChanged(value: T) {
+            removeObserver(this)
+            observer(value)
+        }
+    })
+}
+
 fun categoriesMergeBooleanFilter(
     categories: List<CategoryWithSubCategories>,
     booleanFilters: BooleanFilters<Int?, Pair<String, Int>>
@@ -113,11 +134,17 @@ fun categoriesMergeBooleanFilter(
         )
     }
 
+data class DetailsExport(
+    val suggestedFileName: String,
+    val categoryId: Int
+)
+
 class MainViewModel(
     private val repository: AppRepository,
     private val settings: Settings,
     private val resultLauncherSaveData: ActivityResultLauncher<String>,
-    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>,
+    private val resultLauncherExportDetails: ActivityResultLauncher<String>
 ) :
     ViewModel() {
     fun appInitialized(): Boolean {
@@ -399,6 +426,30 @@ class MainViewModel(
                 }
             }
         }
+
+        fun exportDetails(
+            outputStream: OutputStream,
+            categoryToExport: CategoryWithSubcategoriesAndBudgetWithCalculatedData
+        ) {
+            val progressStatus = HistoricalProgressStatus.start(
+                "Exporting category...",
+                totalWork = 8.0,
+                defaultIncrement = 1.0
+            ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
+            viewModelScope.safeLaunch(
+                onErrorAction = {
+                    progressStatus.error("Error: ${it.message}")
+                }
+            ) {
+                progressStatus.incrementProgress("outputStream use")
+                outputStream.use {
+                    progressStatus.incrementProgress("writing categories")
+                    writeCategoriesWithCalculatedData(it, listOf(categoryToExport))
+                    progressStatus.incrementProgress("categories writted")
+                }
+                progressStatus.finish("Finished")
+            }
+        }
     }
 
     val exportModule = ExportModule()
@@ -407,6 +458,14 @@ class MainViewModel(
         suggestedName: String
     ) =
         resultLauncherSaveData.launch(suggestedName)
+
+    fun startActivityToExportDetails(
+        suggestedName: String,
+        categoryId: Int
+    ) {
+        settingsCategoryIdToExportFlow(categoryId)
+        resultLauncherExportDetails.launch(suggestedName)
+    }
 
     fun startActivityToLoadData() =
         resultLauncherOpenDocument.launch(arrayOf("*/*"))
@@ -660,6 +719,8 @@ class MainViewModel(
         settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
     private val incluirDeudasEnSaldoActual =
         settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
+    val categoryIdToExportFlow =
+        settings.getCategoryIdToExportFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
@@ -804,7 +865,7 @@ class MainViewModel(
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
         }
 
-    private val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+    val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
         budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
             object {
                 val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
@@ -1254,6 +1315,10 @@ class MainViewModel(
         settings.setIncluirDeudasEnSaldoActualFlow(newValue)
     }
 
+    fun settingsCategoryIdToExportFlow(newValue: Int) = viewModelScope.launch {
+        settings.setCategoryIdToExportFlow(newValue)
+    }
+
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {
             null
@@ -1555,7 +1620,8 @@ class MainViewModelFactory(
     private val repository: AppRepository,
     private val settings: Settings,
     private val resultLauncherSaveTransaction: ActivityResultLauncher<String>,
-    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
+    private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>,
+    private val resultLauncherExportDetails: ActivityResultLauncher<String>
 ) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1565,7 +1631,8 @@ class MainViewModelFactory(
                 repository,
                 settings,
                 resultLauncherSaveTransaction,
-                resultLauncherOpenDocument
+                resultLauncherOpenDocument,
+                resultLauncherExportDetails
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

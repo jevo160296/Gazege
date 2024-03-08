@@ -1,5 +1,6 @@
 package com.example.gazege.ui.views.category
 
+import android.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.DropdownMenu
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +31,10 @@ import com.example.gazege.R
 import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.example.gazege.core.entities.plus
+import com.example.gazege.plot.CategoryNotNullPlot
+import com.example.gazege.plot.CategoryNullPlot
+import com.example.gazege.plot.PlotDataFromTimeSeries
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
@@ -39,7 +44,10 @@ import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.GProgressIndicator
 import com.example.gazege.ui.widgets.LargeEmphasis
 import com.example.gazege.ui.widgets.treeview.NodeId
+import com.example.gazege.ui.widgets.treeview.TreeScope
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
+import com.patrykandpatrick.vico.core.chart.line.LineChart
+import java.time.LocalDate
 
 @Composable
 private fun CategoryAndBudgetViewHolder(
@@ -48,7 +56,10 @@ private fun CategoryAndBudgetViewHolder(
     expectedFlowUntilNow: Double,
     expectedTotalFlow: Double,
     realTotalFlow: Double,
-    completion: Double
+    completion: Double,
+    pastForecast: Map<LocalDate, Double>,
+    futureForecast: Map<LocalDate, Double>,
+    dateRange: ClosedRange<LocalDate>
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
     LargeEmphasis(text = categoryName)
     Row(
@@ -71,6 +82,18 @@ private fun CategoryAndBudgetViewHolder(
             Text(doubleToMoneyString(expectedTotalFlow))
             Text(doubleToMoneyString(realTotalFlow))
         }
+    }
+    Text(stringResource(id = R.string.Pronostico))
+    if (pastForecast.isEmpty() && futureForecast.isEmpty()) {
+        CategoryNullPlot()
+    } else {
+        CategoryNotNullPlot(
+            data = PlotDataFromTimeSeries(listOf(pastForecast, futureForecast), dateRange),
+            lines = listOf(
+                LineChart.LineSpec(lineColor = Color.BLUE),
+                LineChart.LineSpec(lineColor = Color.GRAY)
+            )
+        )
     }
     GProgressIndicator(
         completion,
@@ -131,86 +154,120 @@ fun CategoryListView(
             onItemLongPressed = { menuIdExpanded = node.id() },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
-            val categoryWithCalculatedData = node.content
-            val category = node.content.category
-            val aggregatedBudget = node.content.aggregatedBudget
-            val isExpanded = scope.isExpanded(node)
-            val childrenBudget =
-                if (isExpanded) {
-                    null
-                } else {
-                    node.content.childrenAggregatedBudget
-                }
-            val realFlow = categoryWithCalculatedData.realTotalFlow +
-                    if (isExpanded) {
-                        0.0
-                    } else {
-                        categoryWithCalculatedData.childrenRealTotalFlow
-                    }
-            val completion =
-                if (isExpanded) {
-                    categoryWithCalculatedData.completion
-                } else {
-                    categoryWithCalculatedData.completionWithChildren
-                }
+            scope.ClickableCategoriesViewHolder(
+                onSetBudgetRequested = onSetBudgetRequested,
+                editCategory = editCategory,
+                delCategory = delCategory,
+                menuIdExpanded = menuIdExpanded,
+                onMenuIdExpandedChanged = { menuIdExpanded = it },
+                node = node,
+            )
+        }
+    }
+}
 
-            val leftToPay = categoryWithCalculatedData.leftToPay +
-                    if (isExpanded) {
-                        0.0
-                    } else {
-                        categoryWithCalculatedData.childrenLeftToPay
-                    }
-
-            val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilToday +
-                    if (isExpanded) {
-                        0.0
-                    } else {
-                        categoryWithCalculatedData.childrenExpectedFlowUntilToday
-                    }
-
-            val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +
-                    if (isExpanded) {
-                        0.0
-                    } else {
-                        categoryWithCalculatedData.childrenExpectedTotalFlow
-                    }
-
-            Box {
-                if (aggregatedBudget !is BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData ||
-                    childrenBudget != null
-                ) {
-                    CategoryAndBudgetViewHolder(
-                        categoryName = category.name,
-                        leftToPay = leftToPay,
-                        expectedFlowUntilNow = expectedFlowUntilNow,
-                        expectedTotalFlow = expectedTotalFlow,
-                        realTotalFlow = realFlow,
-                        completion = completion
-                    )
-                } else {
-                    EmptyCategoryAndBudgetViewHolder(
-                        node.content.category.category,
-                        onSetBudgetRequested = { onSetBudgetRequested(category.category) })
-                }
-                DropdownMenu(
-                    expanded = menuIdExpanded == node.id(),
-                    onDismissRequest = { menuIdExpanded = null }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.Editar)) },
-                        onClick = {
-                            menuIdExpanded = null
-                            editCategory(node.content.category.category)
-                        })
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.Eliminar)) },
-                        onClick = {
-                            menuIdExpanded = null
-                            delCategory(node.content.category.category)
-                        }
-                    )
-                }
+@Composable
+fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWithBudgetNode>.ClickableCategoriesViewHolder(
+    onSetBudgetRequested: (category: Category) -> Unit,
+    editCategory: (category: Category) -> Unit,
+    delCategory: (category: Category) -> Unit,
+    menuIdExpanded: NodeId?,
+    onMenuIdExpandedChanged: (NodeId?) -> Unit,
+    node: CategoryWithBudgetNode
+) {
+    val categoryWithCalculatedData = node.content
+    val category = node.content.category
+    val aggregatedBudget = node.content.aggregatedBudget
+    val isExpanded = this.isExpanded(node)
+    val childrenBudget =
+        if (isExpanded) {
+            null
+        } else {
+            node.content.childrenAggregatedBudget
+        }
+    val realFlow = categoryWithCalculatedData.realTotalFlow +
+            if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenRealTotalFlow
             }
+    val completion =
+        if (isExpanded) {
+            categoryWithCalculatedData.completion
+        } else {
+            categoryWithCalculatedData.completionWithChildren
+        }
+
+    val leftToPay = categoryWithCalculatedData.leftToPay +
+            if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenLeftToPay
+            }
+
+    val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilToday +
+            if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenExpectedFlowUntilToday
+            }
+
+    val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +
+            if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenExpectedTotalFlow
+            }
+
+    val pastForecast = categoryWithCalculatedData.pastForecast +
+            (categoryWithCalculatedData.childrenPastForecast.takeUnless { isExpanded }
+                ?: emptyMap())
+
+    val futureForecast = categoryWithCalculatedData.futureForecast +
+            (categoryWithCalculatedData.childrenFutureForecast.takeUnless { isExpanded }
+                ?: emptyMap())
+
+    val dateRange = categoryWithCalculatedData.dateRange +
+            (categoryWithCalculatedData.childrenDateRange.takeUnless { isExpanded })
+
+    Box {
+        if (dateRange != null &&
+            (aggregatedBudget !is BudgetWithCalculatedData.ZeroAggregatedBudgetWithCalculatedData ||
+                    childrenBudget != null)
+        ) {
+            CategoryAndBudgetViewHolder(
+                categoryName = category.name,
+                leftToPay = leftToPay,
+                expectedFlowUntilNow = expectedFlowUntilNow,
+                expectedTotalFlow = expectedTotalFlow,
+                realTotalFlow = realFlow,
+                completion = completion,
+                pastForecast = pastForecast,
+                futureForecast = futureForecast,
+                dateRange = dateRange
+            )
+        } else {
+            EmptyCategoryAndBudgetViewHolder(
+                node.content.category.category,
+                onSetBudgetRequested = { onSetBudgetRequested(category.category) })
+        }
+        DropdownMenu(
+            expanded = menuIdExpanded == node.id(),
+            onDismissRequest = { onMenuIdExpandedChanged(null) }
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Editar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    editCategory(node.content.category.category)
+                })
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Eliminar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    delCategory(node.content.category.category)
+                }
+            )
         }
     }
 }

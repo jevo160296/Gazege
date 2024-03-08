@@ -2,6 +2,7 @@ package com.example.gazege.ui
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.math.absoluteValue
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.round
@@ -71,14 +72,15 @@ private val NOTATIONS = mapOf(
 )
 
 fun floatToShortText(number: Float, decimals: Int): String {
-    if (number == 0.0f) {
+    val absNumber = number.absoluteValue
+    if (absNumber == 0.0f) {
         return "0"
     }
-    val iniSize = truncate(log10(number)).toInt()
-    val iniCantWhole = round(number / 10f.pow(iniSize), decimals)
+    val iniSize = truncate(log10(absNumber)).toInt()
+    val iniCantWhole = round(absNumber / 10f.pow(iniSize), decimals)
 
     val (preSize, preCantWhole) = if (iniCantWhole < 1.0f) {
-        iniSize - 1 to round(number / 10f.pow(iniSize - 1), decimals)
+        iniSize - 1 to round(absNumber / 10f.pow(iniSize - 1), decimals)
     } else {
         iniSize to iniCantWhole
     }
@@ -90,15 +92,20 @@ fun floatToShortText(number: Float, decimals: Int): String {
         } else {
             val difference = notation.second
 
-            preSize + difference to round(number / 10f.pow(preSize + difference), decimals)
+            preSize + difference to round(absNumber / 10f.pow(preSize + difference), decimals)
         }
 
+    val prefix = if (number < 0f) {
+        "-"
+    } else {
+        ""
+    }
     val suffix = if (size in NOTATIONS) {
         NOTATIONS[size]!!.first
     } else {
         "e$size"
     }
-    return "${
+    return "$prefix${
         if (decimals == 0) {
             cantWhole.toInt()
         } else {
@@ -106,6 +113,12 @@ fun floatToShortText(number: Float, decimals: Int): String {
         }
     }$suffix"
 }
+
+fun doubleToShortText(number: Double, decimals: Int): String =
+    floatToShortText(number.toFloat(), decimals)
+
+fun doubleToShortMoneyText(number: Double, decimals: Int): String =
+    "$${doubleToShortText(number, decimals)}"
 
 enum class DateFormat {
     YEARMONTHNAME,

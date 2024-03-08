@@ -38,6 +38,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.compose.rememberNavController
 import com.example.gazege.core.AppDatabase
 import com.example.gazege.core.AppRepository
+import com.example.gazege.core.entities.recursiveFirstOrNull
 import com.example.gazege.core.export.CreateBackupDocument
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.fragments.IconVisibility
@@ -70,12 +71,15 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>
 
+    private lateinit var resultLauncherExportDetails: ActivityResultLauncher<String>
+
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModelFactory(
             repository,
             settings,
             resultLauncherSaveData,
-            resultLauncherOpenDocument
+            resultLauncherOpenDocument,
+            resultLauncherExportDetails
         )
     }
 
@@ -106,6 +110,25 @@ class MainActivity : ComponentActivity() {
             uri?.also {
                 contentResolver.openInputStream(uri)?.also {
                     mainViewModel.exportModule.importData(it)
+                }
+            }
+        }
+        resultLauncherExportDetails = registerForActivityResult(CreateBackupDocument()) { uri ->
+            mainViewModel.categoryIdToExportFlow.observeOnce(this) { categoryId ->
+                mainViewModel.settingsCategoryIdToExportFlow(-1)
+                mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData.observeOnce(this) { categories ->
+                    categories
+                        .recursiveFirstOrNull { it.category.category.id == categoryId }
+                        ?.let { categoryToExport ->
+                            uri?.let {
+                                contentResolver.openOutputStream(uri)?.let { outputStream ->
+                                    mainViewModel.exportModule.exportDetails(
+                                        outputStream,
+                                        categoryToExport
+                                    )
+                                }
+                            }
+                        }
                 }
             }
         }

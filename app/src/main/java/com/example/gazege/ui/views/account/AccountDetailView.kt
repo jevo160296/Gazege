@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,7 +52,8 @@ import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.core.entities.TransactionListItemDetails
-import com.example.gazege.core.firstDayOfMonth
+import com.example.gazege.plot.Plot
+import com.example.gazege.plot.PlotDataFromTransactions
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.doubleToMoneyString
@@ -77,19 +77,10 @@ import com.example.gazege.ui.widgets.OUTCOME_FILTER
 import com.example.gazege.ui.widgets.TRANSFER_FILTER
 import com.example.gazege.ui.widgets.TextFilter
 import com.example.gazege.ui.widgets.booleanFilterOf
-import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.line.lineChart
-import com.patrykandpatrick.vico.core.axis.AxisPosition
-import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
-import com.patrykandpatrick.vico.core.entry.ChartEntry
-import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.Period
 
-data class AccountDetailData constructor(
+data class AccountDetailData(
     val account: AccountAndOwner,
     val total: Double,
     val childrenTotal: Double,
@@ -105,9 +96,11 @@ data class AccountDetailData constructor(
 ) {
     val allTransactionsListItemDetails: List<TransactionListItemDetails> = allTransactions
 
-    val expensesPlotData: PlotData = PlotData(outTransactions)
-    val incomePlotData: PlotData = PlotData(inTransactions)
-    val flowPlotData: PlotData = PlotData(
+    val expensesPlotDataFromTransactions: PlotDataFromTransactions =
+        PlotDataFromTransactions(outTransactions)
+    val incomePlotDataFromTransactions: PlotDataFromTransactions =
+        PlotDataFromTransactions(inTransactions)
+    val flowPlotDataFromTransactions: PlotDataFromTransactions = PlotDataFromTransactions(
         listOf(
             *inTransactions.toTypedArray(),
             *outTransactions
@@ -190,117 +183,6 @@ data class AccountDetailData constructor(
                     }
             )
         }
-    }
-}
-
-data class PlotData(
-    val transactionsListItemDetails: List<TransactionListItemDetails>
-) {
-    private val transactions = transactionsListItemDetails.map { it.transaction }
-    private val maxDate = transactions.maxOfOrNull { it.date }
-    private val minDate = transactions.minOfOrNull { it.date }
-    private val monthSpan = if (maxDate != null && minDate != null) {
-        Period.between(minDate, maxDate).toTotalMonths()
-    } else {
-        null
-    }
-    private val groupedTransactions = listOf(
-        *transactions.toTypedArray(),
-        *if (minDate != null && maxDate != null) {
-            generateSequence(
-                seedFunction = {
-                    Transaction(
-                        null,
-                        0.0,
-                        "",
-                        -1,
-                        -1,
-                        null,
-                        minDate,
-                        null
-                    )
-                },
-                nextFunction = { trx ->
-                    val newDate = trx.date.plusDays(1)
-                    if (newDate <= maxDate) {
-                        Transaction(
-                            null,
-                            0.0,
-                            "",
-                            -1,
-                            -1,
-                            null,
-                            newDate,
-                            null
-                        )
-                    } else {
-                        null
-                    }
-                }
-            ).toList().toTypedArray()
-        } else {
-            arrayOf()
-        })
-        .groupBy {
-            if (monthSpan != null && monthSpan > 1) {
-                firstDayOfMonth(it.date)
-            } else {
-                it.date
-            }
-        }
-        .map { it.key to it.value.sumOf { trx -> trx.amount } }
-        .let { listOf(*it.toTypedArray()) }
-        .sortedBy { it.first }
-        .mapIndexed { index, (date, y) ->
-            Entry(date, index.toFloat(), y.toFloat())
-        }
-    val chartEntryModel = ChartEntryModelProducer(groupedTransactions).getModel()
-}
-
-class Entry(
-    val date: LocalDate,
-    override val x: Float,
-    override val y: Float
-) : ChartEntry {
-    override fun withY(y: Float): ChartEntry = Entry(date, x, y)
-}
-
-@Composable
-fun Plot(plotData: PlotData?) {
-    if (plotData == null) {
-        MediumHeadline("Null")
-    } else {
-        NotNullPlot(plotData)
-    }
-}
-
-@Composable
-fun NotNullPlot(
-    data: PlotData
-) {
-    val chartEntryModel = data.chartEntryModel
-    val horizontalAxisValueFormatter =
-        AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
-            (chartValues.chartEntryModel.entries.first().getOrNull(value.toInt()) as? Entry)
-                ?.date
-                ?.run { "$dayOfMonth/$monthValue" }
-                .orEmpty()
-        }
-    val verticalAxisValueFormatter = AxisValueFormatter<AxisPosition.Vertical.Start> { value, _ ->
-        doubleToMoneyString(value.toDouble())
-    }
-    Box(
-        Modifier
-            .height(130.dp)
-            .fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Chart(
-            chart = lineChart(),
-            model = chartEntryModel,
-            bottomAxis = bottomAxis(valueFormatter = horizontalAxisValueFormatter),
-            startAxis = startAxis(valueFormatter = verticalAxisValueFormatter)
-        )
     }
 }
 
@@ -509,13 +391,13 @@ private fun NotNullAccountDetail(
                     LargeEmphasis(text = stringResource(id = R.string.Gastos))
                 }
                 item(contentType = "plot") {
-                    Plot(data.expensesPlotData)
+                    Plot(data.expensesPlotDataFromTransactions)
                 }
                 item(contentType = "plotTitle") {
                     LargeEmphasis(text = stringResource(id = R.string.Ingresos))
                 }
                 item(contentType = "plot") {
-                    Plot(data.incomePlotData)
+                    Plot(data.incomePlotDataFromTransactions)
                 }
                 item(contentType = "plotTitle") {
                     LargeEmphasis(
@@ -526,7 +408,7 @@ private fun NotNullAccountDetail(
                     )
                 }
                 item(contentType = "plot") {
-                    Plot(data.flowPlotData)
+                    Plot(data.flowPlotDataFromTransactions)
                 }
             }
             stickyHeader(contentType = "transactionsTitle") {
