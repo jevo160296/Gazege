@@ -2033,6 +2033,89 @@ class MainViewModel(
             this@MainViewModel.deleteTransaction(transaction)
     }
 
+    inner class ViewModelPersonDetail {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
+
+        @Composable
+        fun rememberPeopleTransactionListItemDetails(
+            otherPersonId: Int?,
+            justPendingTransactions: Boolean,
+            debt: Double
+        ) = remember(otherPersonId, justPendingTransactions, debt) {
+            allTransactions
+                .combine(allAccount) { allTransactions, allAccount ->
+                    val personAccountsIds = allAccount
+                        .filter { it.ownerId == otherPersonId }
+                        .map { it.id }
+                        .toSet()
+                    object {
+                        val transactions = allTransactions
+                            .filter {
+                                it.aNombreDe == otherPersonId ||
+                                        it.sourceId in personAccountsIds ||
+                                        it.destinationId in personAccountsIds
+                            }
+                            .sortedByDescending { it.date }
+                        val accounts = allAccount
+                    }
+                }
+                .combine(categories) { combined, categories ->
+                    object {
+                        val transactions = combined.transactions
+                        val accounts = combined.accounts
+                        val categories = categories
+                    }
+                }
+                .combine(principalPerson) { combined, principalPerson ->
+                    object {
+                        val transactions = combined.transactions
+                        val categories = combined.categories
+                        val accounts = combined.accounts
+                        val principalPersonId = principalPerson?.id
+                    }.run {
+                        val allTransactions = TransactionListItemDetails.from(
+                            transactions,
+                            categories,
+                            accounts,
+                            principalPersonId
+                        )
+                        if (justPendingTransactions) {
+                            var cumSum = 0.0
+                            val sortedTransactions = allTransactions
+                                .sortedByDescending { it.transaction.id }
+                                .sortedByDescending { it.transaction.date }
+                            val filteredTransactions = sortedTransactions
+                                .takeWhile {
+                                    val sign = when (it.transactionType) {
+                                        TransactionType.INCOME -> -1.0
+                                        TransactionType.OUTCOME -> 1.0
+                                        else -> 0.0
+                                    }
+                                    val condition = cumSum != debt
+                                    cumSum += it.transaction.amount * sign
+                                    condition
+                                }
+                                .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
+                            filteredTransactions
+                        } else {
+                            allTransactions
+                        }
+                    }
+                }
+        }
+            .observeAsState()
+
+        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -2048,6 +2131,7 @@ class MainViewModel(
     val viewModelAddCategory = ViewModelAddCategory()
     val viewModelEditCategory = ViewModelEditCategory()
     val viewModelAccountDetail = ViewModelAccountDetail()
+    val viewModelPersonDetail = ViewModelPersonDetail()
 
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(

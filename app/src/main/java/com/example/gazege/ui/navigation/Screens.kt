@@ -164,7 +164,7 @@ fun MainNavHost(
                 onNavigateToAddTransaction = navController::navigateToAddTransaction
             )
             screenPersonDetail(
-                viewModel = mainViewModel,
+                viewModelPersonDetail = mainViewModel.viewModelPersonDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
                 onNavigateToEditPerson = navController::navigateToEditPerson
