@@ -166,13 +166,15 @@ fun writeCategories(outputStream: OutputStream, categories: List<Category>) =
                 printRecord(
                     "id",
                     "name",
-                    "parentId"
+                    "parentId",
+                    "budgetType"
                 )
                 items.forEach {
                     printRecord(
                         it.id,
                         it.name,
                         it.parentId,
+                        it.budgetType
                     )
                 }
             }
@@ -199,7 +201,13 @@ fun writeCategoriesWithCalculatedData(
                     "expectedFlowFromTodaySeries",
                     "expectedFlowFromTomorrowSeries",
                     "expectedFlowTodaySeries",
-                    "expectedFlowUntilTodaySeries"
+                    "expectedFlowUntilTodaySeries",
+                    "dailyValueTimeSeries",
+                    "transactionsTimeSeries",
+                    "accumulatedDailyValueTimeSeries",
+                    "accumulatedTransactionsTimeSeries",
+                    "forecastedTransactionsTimeSeries",
+                    "currentDate"
                 )
                 items.forEach { category ->
                     val dates = category.dateRange?.toSequence { it.plusDays(1) }
@@ -219,6 +227,13 @@ fun writeCategoriesWithCalculatedData(
                     val expectedFlowTodaySeries = category.aggregatedBudget.expectedFlowTodaySeries
                     val expectedFlowUntilTodaySeries =
                         category.aggregatedBudget.expectedFlowUntilTodaySeries
+                    val dailyValueTimeSeries = category.dailyValueTimeSeries
+                    val transactionsTimeSeries = category.transactionsTimeSeries
+                    val accumulatedDailyValueTimeSeries = category.accumulatedDailyValueTimeSeries
+                    val accumulatedTransactionsTimeSeries =
+                        category.accumulatedTransactionsTimeSeries
+                    val forecastedTransactionsTimeSeries = category.forecastedTransactionsTimeSeries
+
                     dates?.forEach { today ->
                         printRecord(
                             categoryName,
@@ -233,7 +248,13 @@ fun writeCategoriesWithCalculatedData(
                             expectedFlowFromTodaySeries[today],
                             expectedFlowFromTomorrowSeries[today],
                             expectedFlowTodaySeries[today],
-                            expectedFlowUntilTodaySeries[today]
+                            expectedFlowUntilTodaySeries[today],
+                            dailyValueTimeSeries[today],
+                            transactionsTimeSeries[today],
+                            accumulatedDailyValueTimeSeries[today],
+                            accumulatedTransactionsTimeSeries[today],
+                            forecastedTransactionsTimeSeries[today],
+                            category.currentDate
                         )
                     }
                 }
