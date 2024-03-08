@@ -114,10 +114,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         resultLauncherExportDetails = registerForActivityResult(CreateBackupDocument()) { uri ->
-            mainViewModel.categoryIdToExportFlow.observe(this) { categoryId ->
-                mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData.observe(this) { categories ->
+            mainViewModel.categoryIdToExportFlow.observeOnce(this) { categoryId ->
+                mainViewModel.settingsCategoryIdToExportFlow(-1)
+                mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData.observeOnce(this) { categories ->
                     categories
-                        ?.recursiveFirstOrNull { it.category.category.id == categoryId }
+                        .recursiveFirstOrNull { it.category.category.id == categoryId }
                         ?.let { categoryToExport ->
                             uri?.let {
                                 contentResolver.openOutputStream(uri)?.let { outputStream ->

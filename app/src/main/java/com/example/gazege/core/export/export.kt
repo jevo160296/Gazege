@@ -227,11 +227,12 @@ fun writeCategoriesWithCalculatedData(
                     val expectedFlowTodaySeries = category.aggregatedBudget.expectedFlowTodaySeries
                     val expectedFlowUntilTodaySeries =
                         category.aggregatedBudget.expectedFlowUntilTodaySeries
-                    val dailyValueTimeSeries = category.dailyValueTimeSeries
-                    val transactionsTimeSeries = category.transactionsTimeSeries
-                    val accumulatedDailyValueTimeSeries = category.accumulatedDailyValueTimeSeries
+                    val dailyValueTimeSeries = category.expectedFlowTodaySeries
+                    val transactionsTimeSeries = category.realTotalFlowTodaySeries
+                    val accumulatedDailyValueTimeSeries =
+                        category.accumulatedExpectedFlowTodaySeries
                     val accumulatedTransactionsTimeSeries =
-                        category.accumulatedTransactionsTimeSeries
+                        category.accumulatedRealTotalFlowTodaySeries
                     val forecastedTransactionsTimeSeries = category.forecastedTransactionsTimeSeries
 
                     dates?.forEach { today ->

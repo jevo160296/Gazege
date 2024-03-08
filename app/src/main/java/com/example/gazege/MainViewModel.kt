@@ -6,6 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -105,6 +106,15 @@ fun CoroutineScope.safeLaunch(
 
 fun <T> LiveData<T>.observeOnce(observer: (T) -> Unit) {
     observeForever(object : Observer<T> {
+        override fun onChanged(value: T) {
+            removeObserver(this)
+            observer(value)
+        }
+    })
+}
+
+fun <T> LiveData<T>.observeOnce(owner: LifecycleOwner, observer: (T) -> Unit) {
+    observe(owner, object : Observer<T> {
         override fun onChanged(value: T) {
             removeObserver(this)
             observer(value)
