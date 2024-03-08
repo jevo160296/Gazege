@@ -1,6 +1,5 @@
 package com.example.gazege.ui.views.category
 
-import android.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -89,8 +89,10 @@ private fun CategoryAndBudgetViewHolder(
         CategoryNotNullPlot(
             data = PlotDataFromTimeSeries(listOf(pastForecast, futureForecast), dateRange),
             lines = listOf(
-                LineChart.LineSpec(lineColor = Color.BLUE),
-                LineChart.LineSpec(lineColor = Color.GRAY)
+                LineChart.LineSpec(lineColor = MaterialTheme.colorScheme.tertiary.toArgb()),
+                LineChart.LineSpec(
+                    lineColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f).toArgb()
+                )
             )
         )
     }
