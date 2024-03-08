@@ -1,13 +1,21 @@
 package com.example.gazege.core.export
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import com.example.gazege.DetailsExport
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.core.entities.Category
+import com.example.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.example.gazege.core.entities.FrequencyType
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
+import com.example.gazege.core.entities.toSequence
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import java.io.BufferedInputStream
@@ -23,6 +31,20 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class CreateBackupDocument : CreateDocument("application/gazip")
+
+open class CreateDetailsBackupDocument : ActivityResultContract<DetailsExport, Uri?>() {
+    private val mimeType: String = "application/gazip"
+    override fun createIntent(context: Context, input: DetailsExport): Intent {
+        return Intent(Intent.ACTION_CREATE_DOCUMENT)
+            .setType(mimeType)
+            .putExtra(Intent.EXTRA_TITLE, input.suggestedFileName)
+            .putExtra(Intent.EXTRA_UID, input.categoryId)
+    }
+
+    final override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
+    }
+}
 
 private fun getCSVFormat() = CSVFormat.EXCEL
 
@@ -144,14 +166,98 @@ fun writeCategories(outputStream: OutputStream, categories: List<Category>) =
                 printRecord(
                     "id",
                     "name",
-                    "parentId"
+                    "parentId",
+                    "budgetType"
                 )
                 items.forEach {
                     printRecord(
                         it.id,
                         it.name,
                         it.parentId,
+                        it.budgetType
                     )
+                }
+            }
+    }
+
+fun writeCategoriesWithCalculatedData(
+    outputStream: OutputStream,
+    categories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
+) =
+    writeCsv(outputStream, categories) { items ->
+        getCSVFormat()
+            .print(this)
+            .apply {
+                printRecord(
+                    "Category name",
+                    "Date",
+                    "pastForecast",
+                    "futureForecast",
+                    "Left to pay",
+                    "Left to pay today",
+                    "realTotalFlowSeries",
+                    "realTotalFlowTodaySeries",
+                    "realTotalFlowUntilTodaySeries",
+                    "expectedFlowFromTodaySeries",
+                    "expectedFlowFromTomorrowSeries",
+                    "expectedFlowTodaySeries",
+                    "expectedFlowUntilTodaySeries",
+                    "dailyValueTimeSeries",
+                    "transactionsTimeSeries",
+                    "accumulatedDailyValueTimeSeries",
+                    "accumulatedTransactionsTimeSeries",
+                    "forecastedTransactionsTimeSeries",
+                    "currentDate"
+                )
+                items.forEach { category ->
+                    val dates = category.dateRange?.toSequence { it.plusDays(1) }
+                    val categoryName = category.category.name
+                    val pastForecast = category.pastForecast
+                    val futureForecast = category.futureForecast
+                    val leftToPaySeries = category.leftToPaySeries
+                    val leftToPayTodaySeries = category.leftToPayTodaySeries
+                    val realTotalFlowSeries = category.category.realTotalFlowSeries
+                    val realTotalFlowTodaySeries = category.category.realTotalFlowTodaySeries
+                    val realTotalFlowUntilTodaySeries =
+                        category.category.realTotalFlowUntilTodaySeries
+                    val expectedFlowFromTodaySeries =
+                        category.aggregatedBudget.expectedFlowFromTodaySeries
+                    val expectedFlowFromTomorrowSeries =
+                        category.aggregatedBudget.expectedFlowFromTomorrowSeries
+                    val expectedFlowTodaySeries = category.aggregatedBudget.expectedFlowTodaySeries
+                    val expectedFlowUntilTodaySeries =
+                        category.aggregatedBudget.expectedFlowUntilTodaySeries
+                    val dailyValueTimeSeries = category.expectedFlowTodaySeries
+                    val transactionsTimeSeries = category.realTotalFlowTodaySeries
+                    val accumulatedDailyValueTimeSeries =
+                        category.accumulatedExpectedFlowTodaySeries
+                    val accumulatedTransactionsTimeSeries =
+                        category.accumulatedRealTotalFlowTodaySeries
+                    val forecastedTransactionsTimeSeries = category.forecastedTransactionsTimeSeries
+
+                    dates?.forEach { today ->
+                        printRecord(
+                            categoryName,
+                            today,
+                            pastForecast[today],
+                            futureForecast[today],
+                            leftToPaySeries[today],
+                            leftToPayTodaySeries[today],
+                            realTotalFlowSeries[today],
+                            realTotalFlowTodaySeries[today],
+                            realTotalFlowUntilTodaySeries[today],
+                            expectedFlowFromTodaySeries[today],
+                            expectedFlowFromTomorrowSeries[today],
+                            expectedFlowTodaySeries[today],
+                            expectedFlowUntilTodaySeries[today],
+                            dailyValueTimeSeries[today],
+                            transactionsTimeSeries[today],
+                            accumulatedDailyValueTimeSeries[today],
+                            accumulatedTransactionsTimeSeries[today],
+                            forecastedTransactionsTimeSeries[today],
+                            category.currentDate
+                        )
+                    }
                 }
             }
     }

@@ -93,4 +93,6 @@
     <string name="No_category">No category</string>
     <string name="Agregar_presupuesto">Add budget</string>
     <string name="Presupuesto_vacio">Empty budget</string>
+    <string name="Pronostico">Forecast</string>
+    <string name="Exportar">Export</string>
 </resources>

@@ -19,7 +19,8 @@ enum class SampleId {
     BigSample,
     SmallSample,
     CategoriesSample,
-    CategoriesMultipleBudgetSample
+    CategoriesMultipleBudgetSample,
+    VariableFixedCategorySample
 }
 
 fun sample(sampleId: SampleId, viewModel: MainViewModel) {
@@ -28,6 +29,7 @@ fun sample(sampleId: SampleId, viewModel: MainViewModel) {
         SampleId.SmallSample -> smallSample(viewModel)
         SampleId.CategoriesSample -> categoriesSample(viewModel)
         SampleId.CategoriesMultipleBudgetSample -> categoriesMultipleBudgetSample(viewModel)
+        SampleId.VariableFixedCategorySample -> variableFixedCategorySample(viewModel)
     }
 }
 
@@ -201,6 +203,39 @@ private fun categoriesMultipleBudgetSample(
     )
 }
 
+private fun variableFixedCategorySample(viewModel: MainViewModel) {
+    buildSample(
+        viewModel,
+        personSample = {
+            listOf(
+                Person(id = 0, name = "Principal", importance = 0),
+                Person(id = 1, name = "__SPECIAL__")
+            )
+        },
+        accountSample = {
+            listOf(
+                Account(id = 0, name = "Bank", ownerId = 0),
+                Account(id = 1, name = "__INCOME__", ownerId = 1, isIncome = true),
+                Account(id = 2, name = "__OUTCOME__", ownerId = 1, isOutcome = true)
+            )
+        },
+        categorieSample = {
+            listOf(
+                Category(id = 0, name = "C1", budgetType = BudgetType.FIXED, parentId = null),
+                Category(id = 1, name = "Fixed", budgetType = BudgetType.FIXED, parentId = 0),
+                Category(id = 2, name = "Variable", budgetType = BudgetType.VARIABLE, parentId = 0),
+            )
+        },
+        budgetSample = {
+            listOf(
+                Budget.fromDaily(id = 0, 1, 1000.0, 3, LocalDate.of(2023, 1, 1)),
+                Budget.fromDaily(1, 2, 2000.0, 4, LocalDate.of(2023, 1, 1))
+            )
+        },
+        transactionSample = { emptyList() }
+    )
+}
+
 private fun buildSample(
     viewModel: MainViewModel,
     personSample: () -> List<Person>,
@@ -224,7 +259,8 @@ private fun buildSample(
         )
     }
     viewModel.viewModelScope.launch(Dispatchers.Default) {
-        viewModel.insertPerson(*personSample().toTypedArray()) {}
+        viewModel.deleteAll().join()
+        viewModel.insertPerson(*personSample().toTypedArray()) {}.join()
         progressStatus.incrementProgress(
             "Inserting account... ${
                 doubleToPercentageString(
@@ -234,7 +270,7 @@ private fun buildSample(
         )
         viewModel.insertAccount(
             *accountSample().toTypedArray(),
-            onErrorAction = {}) {}
+            onErrorAction = {}) {}.join()
         progressStatus.incrementProgress(
             "Inserting categories... ${
                 doubleToPercentageString(
@@ -243,11 +279,11 @@ private fun buildSample(
             }"
         )
         viewModel.insertCategory(*categorieSample().map { it.copy(parentId = null) }
-            .toTypedArray(), onErrorAction = {}, onCompleitionAction = {})
+            .toTypedArray(), onErrorAction = {}, onCompleitionAction = {}).join()
         viewModel.updateCategory(
             *categorieSample().toTypedArray(),
             onErrorAction = {},
-            onCompleitionAction = {})
+            onCompleitionAction = {}).join()
         progressStatus.incrementProgress(
             "Inserting Transactions... ${
                 doubleToPercentageString(
@@ -255,7 +291,7 @@ private fun buildSample(
                 )
             }"
         )
-        viewModel.insertTransaction(*transactionSample().toTypedArray()) {}
+        viewModel.insertTransaction(*transactionSample().toTypedArray()) {}.join()
         progressStatus.incrementProgress(
             "Inserting budget... ${
                 doubleToPercentageString(
@@ -266,7 +302,7 @@ private fun buildSample(
         viewModel.insertBudget(
             *budgetSample().toTypedArray(),
             onCompleitionAction = {},
-            onErrorAction = {})
+            onErrorAction = {}).join()
         progressStatus.finish("Finish inserting data 100%")
     }
 }

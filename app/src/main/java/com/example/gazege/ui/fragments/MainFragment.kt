@@ -1,12 +1,47 @@
 package com.example.gazege.ui.fragments
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -17,7 +52,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gazege.NavPosition
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Account
+import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import com.example.gazege.sample.data.SampleId
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
@@ -34,14 +72,25 @@ import com.example.gazege.ui.templates.DynamicAddEntityFAB
 import com.example.gazege.ui.theme.AppMode
 import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
-import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.AddTransactionAction
 import com.example.gazege.ui.views.account.LoadedAccountPage
 import com.example.gazege.ui.views.account.LoadingAccountPage
 import com.example.gazege.ui.views.person.LoadedPersonPage
 import com.example.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.example.gazege.ui.views.transaction.LoadedTransactionPage
 import com.example.gazege.ui.views.transaction.LoadingTransactionPage
-import com.example.gazege.ui.widgets.*
+import com.example.gazege.ui.widgets.BooleanFilters
+import com.example.gazege.ui.widgets.DatePicker
+import com.example.gazege.ui.widgets.DoubleFilter
+import com.example.gazege.ui.widgets.EmptyPersonMonthSummaryView
+import com.example.gazege.ui.widgets.Filter
+import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
+import com.example.gazege.ui.widgets.LoadedPersonMonthSummaryView
+import com.example.gazege.ui.widgets.MediumHeadline
+import com.example.gazege.ui.widgets.ModalSheetContent
+import com.example.gazege.ui.widgets.ModalSheetLayout
+import com.example.gazege.ui.widgets.TextFilter
+import com.example.gazege.ui.widgets.booleanFilterOf
 import com.example.gazege.ui.widgets.treeview.TreeState
 import com.example.gazege.ui.widgets.treeview.rememberTreeState
 import kotlinx.coroutines.CoroutineScope
@@ -64,6 +113,7 @@ fun MainFragment(
     sheetState: SheetState,
     drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
+    today: LocalDate,
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
@@ -88,6 +138,7 @@ fun MainFragment(
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
+    onTodayChangeRequested: (newDate: LocalDate) -> Unit,
     showVertical: Boolean
 ) {
     val transactionState = rememberLazyListState()
@@ -236,6 +287,13 @@ fun MainFragment(
                                         DropdownMenuItem(
                                             text = { Text(text = "Category with miultiple budget sample") },
                                             onClick = { onInitDatabaseSample(SampleId.CategoriesMultipleBudgetSample) })
+                                        DropdownMenuItem(
+                                            text = { Text(text = "Variable fixed category sample") },
+                                            onClick = { onInitDatabaseSample(SampleId.VariableFixedCategorySample) })
+                                        DatePicker(
+                                            value = today,
+                                            onValueChange = onTodayChangeRequested
+                                        )
                                     }
                                 }
                                 IconButton(onClick = {
@@ -659,7 +717,9 @@ private fun DefaultPreview() {
                 valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
                 onValueFilterStateChanged = {},
                 descriptionFilterState = TextFilter(null),
-                onDescriptionFilterStateChanged = {}
+                onDescriptionFilterStateChanged = {},
+                onTodayChangeRequested = {},
+                today = LocalDate.now()
             )
         }
     }

@@ -131,6 +131,14 @@ fun MainNavHost(
                     } else {
                         navController.navigateToAddOneBudget()
                     }
+                },
+                onExportCategoryRequested = {
+                    val categoryName = it.name
+                    val categoryId = it.id ?: 0
+                    mainViewModel.startActivityToExportDetails(
+                        "CategoryDetails $categoryName.csv",
+                        categoryId
+                    )
                 }
             )
             screenAddCategory(

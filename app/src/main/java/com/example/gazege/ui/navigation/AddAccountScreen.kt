@@ -24,6 +24,7 @@ fun NavGraphBuilder.screenAddAccount(
         val incomeAccount by viewModel.rememberIncomeAccount()
         val outcomeAccount by viewModel.rememberOutcomeAccount()
         val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
+        val today by viewModel.rememberToday()
 
         val coroutineScope = rememberCoroutineScope()
         AccountFormFragment(
@@ -52,7 +53,8 @@ fun NavGraphBuilder.screenAddAccount(
                                     accountId = addedId.toInt(),
                                     amount = valorAjuste,
                                     incomeAccountId = incomeAccountId,
-                                    outcomeAccountId = outcomeAccountId
+                                    outcomeAccountId = outcomeAccountId,
+                                    today = today
                                 )
                             }
                         }).invokeOnCompletion {
