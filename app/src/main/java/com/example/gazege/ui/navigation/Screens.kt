@@ -179,7 +179,7 @@ fun MainNavHost(
                 viewModelAddOneBudget = mainViewModel.viewModelAddOneBudget,
                 onNavigateUp = navController::navigateUp
             )
-            screenOneBudgetDetail(viewModel = mainViewModel)
+            screenOneBudgetDetail(viewModelOneBudgetDetail = mainViewModel.viewModelOneBudgetDetail)
             screenEditOneBudget(
                 viewModel = mainViewModel,
                 onNavigateUp = navController::navigateUp

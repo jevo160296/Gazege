@@ -2150,6 +2150,12 @@ class MainViewModel(
             )
     }
 
+    inner class ViewModelOneBudgetDetail {
+        @Composable
+        fun rememberBudgetAndCategoryWithTransactions() =
+            budgetAndCategoryWithTransactions.observeAsState(emptyList())
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -2168,6 +2174,7 @@ class MainViewModel(
     val viewModelPersonDetail = ViewModelPersonDetail()
     val viewModelEditBudget = ViewModelEditBudget()
     val viewModelAddOneBudget = ViewModelAddOneBudget()
+    val viewModelOneBudgetDetail = ViewModelOneBudgetDetail()
 
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(
