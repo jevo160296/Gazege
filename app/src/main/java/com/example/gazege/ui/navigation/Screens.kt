@@ -121,7 +121,7 @@ fun MainNavHost(
                     mainViewModel.startActivityToLoadData()
                 }
             )
-            screenSaldoActualSettings(viewModel = mainViewModel)
+            screenSaldoActualSettings(viewModelSaldoActualSettings = mainViewModel.viewModelSaldoActualSettings)
             screenEditarCategorias(
                 viewModelCategoryList = mainViewModel.viewModelCategoryList,
                 onNavigateToAddCategory = navController::navigateToAddCategory,

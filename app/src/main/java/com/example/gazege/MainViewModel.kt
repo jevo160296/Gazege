@@ -54,6 +54,7 @@ import com.example.gazege.core.export.writeTransactions
 import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
+import com.example.gazege.ui.navigation.EmptyPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
@@ -833,6 +834,44 @@ class MainViewModel(
             )
     }
 
+    inner class ViewModelSaldoActualSettings {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(EmptyPersonSummaryState)
+
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+        @Composable
+        fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
+            incluirPresupuestoEnSaldoActual.observeAsState(false)
+
+        @Composable
+        fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
+            incluirDeudasEnSaldoActual.observeAsState(false)
+
+        fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)
+
+        fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirDeudasEnSaldoActualFlow(newValue)
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -844,6 +883,7 @@ class MainViewModel(
     val viewModelEditPerson = ViewModelEditPerson()
     val viewModelEditTransaction = ViewModelEditTransaction()
     val viewModelSettings = ViewModelSettings()
+    val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
 
     fun startActivityToSaveData(
         suggestedName: String

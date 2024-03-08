@@ -13,14 +13,14 @@ import com.example.gazege.ui.fragments.SaldoActualSettings
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenSaldoActualSettings(
-    viewModel: MainViewModel
+    viewModelSaldoActualSettings: MainViewModel.ViewModelSaldoActualSettings
 ) {
     composable("saldoActualSettings") {
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val personSummaryState by viewModel.rememberPersonSummaryState()
-        val principalPerson by viewModel.rememberPrincipalPerson()
-        val incluirPresupuestoEnSaldoActual by viewModel.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
-        val incluirDeudasEnSaldoActual by viewModel.rememberSettingsIncluirDeudasEnSaldoActualFlow()
+        val accountAndOwnerWithTransactions by viewModelSaldoActualSettings.rememberAccountAndOwnerWithTransactions()
+        val personSummaryState by viewModelSaldoActualSettings.rememberPersonSummaryState()
+        val principalPerson by viewModelSaldoActualSettings.rememberPrincipalPerson()
+        val incluirPresupuestoEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
+        val incluirDeudasEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirDeudasEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
 
         var saving: Int by remember { mutableIntStateOf(0) }
@@ -30,12 +30,12 @@ fun NavGraphBuilder.screenSaldoActualSettings(
             saving = saving,
             incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
             incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
-            onIncluirPresupuestoEnSaldoActualChanged = viewModel::settingsIncluirPresupuestoEnSaldoActualFlow,
-            onIncluirDeudasEnSaldoActualChanged = viewModel::settingsIncluirDeudasEnSaldoActualFlow
+            onIncluirPresupuestoEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirPresupuestoEnSaldoActualFlow,
+            onIncluirDeudasEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirDeudasEnSaldoActualFlow
         ) { account, nuevoEstado ->
             saving += 1
             coroutineScope.launch {
-                viewModel.updateAccount(
+                viewModelSaldoActualSettings.updateAccount(
                     account = account.copy(includedInTotal = nuevoEstado),
                     onErrorAction = {},
                     onCompleitionAction = {}).join()
