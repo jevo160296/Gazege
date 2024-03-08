@@ -10,7 +10,7 @@ import com.example.gazege.MainViewModel
 import com.example.gazege.ui.views.budget.BudgetFormView
 
 fun NavGraphBuilder.screenEditOneBudget(
-    viewModel: MainViewModel,
+    viewModel: MainViewModel.ViewModelEditOneBudget,
     onNavigateUp: () -> Unit
 ) {
     composable(

@@ -181,7 +181,7 @@ fun MainNavHost(
             )
             screenOneBudgetDetail(viewModelOneBudgetDetail = mainViewModel.viewModelOneBudgetDetail)
             screenEditOneBudget(
-                viewModel = mainViewModel,
+                viewModel = mainViewModel.viewModelEditOneBudget,
                 onNavigateUp = navController::navigateUp
             )
         }
