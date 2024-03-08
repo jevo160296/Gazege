@@ -8,13 +8,13 @@ import com.example.gazege.MainViewModel
 import com.example.gazege.ui.fragments.EditBudgetFragment
 
 fun NavGraphBuilder.screenEditBudget(
-    viewModel: MainViewModel,
+    viewModelEditBudget: MainViewModel.ViewModelEditBudget,
     onNavigateToAddOneBudget: () -> Unit,
     onNavigateToOneBudgetDetail: (budgetId: Int) -> Unit,
     onNavigateToOneBudgetEdit: (budgetId: Int) -> Unit
 ) {
     composable("editarBudget") {
-        val budget by viewModel.rememberBudgetAndCategoryWithCalculatedData()
+        val budget by viewModelEditBudget.rememberBudgetAndCategoryWithCalculatedData()
         EditBudgetFragment(
             budget = budget,
             onAddOneBudgetRequested = onNavigateToAddOneBudget,
@@ -22,7 +22,7 @@ fun NavGraphBuilder.screenEditBudget(
             onDeleteBudgetRequested = { id ->
                 budget
                     .firstOrNull { it.budgetId == id }
-                    ?.let { viewModel.deleteBudget(it.budget.budget) }
+                    ?.let { viewModelEditBudget.deleteBudget(it.budget.budget) }
             },
             onEditBudgetRequested = onNavigateToOneBudgetEdit
         )

@@ -2116,6 +2116,40 @@ class MainViewModel(
             this@MainViewModel.deleteTransaction(transaction)
     }
 
+    inner class ViewModelEditBudget {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudgetAndCategoryWithCalculatedData() =
+            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
+    }
+
+    inner class ViewModelAddOneBudget {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun insertBudget(
+            vararg budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertBudget(
+                *budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction,
+            )
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -2132,6 +2166,8 @@ class MainViewModel(
     val viewModelEditCategory = ViewModelEditCategory()
     val viewModelAccountDetail = ViewModelAccountDetail()
     val viewModelPersonDetail = ViewModelPersonDetail()
+    val viewModelEditBudget = ViewModelEditBudget()
+    val viewModelAddOneBudget = ViewModelAddOneBudget()
 
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(

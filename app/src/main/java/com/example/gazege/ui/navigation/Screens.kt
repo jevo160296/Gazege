@@ -170,13 +170,13 @@ fun MainNavHost(
                 onNavigateToEditPerson = navController::navigateToEditPerson
             )
             screenEditBudget(
-                viewModel = mainViewModel,
+                viewModelEditBudget = mainViewModel.viewModelEditBudget,
                 onNavigateToOneBudgetDetail = navController::navigateToOneBudgetDetail,
                 onNavigateToAddOneBudget = navController::navigateToAddOneBudget,
                 onNavigateToOneBudgetEdit = navController::navigateToEditOneBudget
             )
             screenAddOneBudget(
-                viewModel = mainViewModel,
+                viewModelAddOneBudget = mainViewModel.viewModelAddOneBudget,
                 onNavigateUp = navController::navigateUp
             )
             screenOneBudgetDetail(viewModel = mainViewModel)

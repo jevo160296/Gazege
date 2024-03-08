@@ -11,7 +11,7 @@ import com.example.gazege.core.entities.Budget
 import com.example.gazege.ui.views.budget.BudgetFormView
 
 fun NavGraphBuilder.screenAddOneBudget(
-    viewModel: MainViewModel,
+    viewModelAddOneBudget: MainViewModel.ViewModelAddOneBudget,
     onNavigateUp: () -> Unit
 ) {
     composable("addOneBudget?categoryId={categoryId}",
@@ -23,8 +23,8 @@ fun NavGraphBuilder.screenAddOneBudget(
         )
     ) { navStack ->
         val categoryId = navStack.arguments?.getInt("categoryId")
-        val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val categories by viewModelAddOneBudget.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModelAddOneBudget.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
         val fixedCategory = categories.firstOrNull { it.id == categoryId }
         if (fixedCategory == null) {
             BudgetFormView(
@@ -32,7 +32,7 @@ fun NavGraphBuilder.screenAddOneBudget(
                 categories = categories,
                 budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
                 onSaveBudget = {
-                    viewModel.insertBudget(
+                    viewModelAddOneBudget.insertBudget(
                         it,
                         onCompleitionAction = { onNavigateUp() },
                         onErrorAction = {})
@@ -47,7 +47,7 @@ fun NavGraphBuilder.screenAddOneBudget(
                 categories = categories,
                 budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
                 onSaveBudget = {
-                    viewModel.insertBudget(
+                    viewModelAddOneBudget.insertBudget(
                         it,
                         onCompleitionAction = { onNavigateUp() },
                         onErrorAction = {})
