@@ -147,7 +147,7 @@ fun MainNavHost(
                 onNavigateUp = navController::navigateUp
             )
             screenEditCategory(
-                viewModel = mainViewModel,
+                viewModelEditCategory = mainViewModel.viewModelEditCategory,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditOneBudgetRequested = navController::navigateToEditOneBudget,
                 onNavigateToAddOneBudgetRequested = {

@@ -895,6 +895,35 @@ class MainViewModel(
             )
     }
 
+    inner class ViewModelEditCategory {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudgetAndCategoryWithCalculatedData() =
+            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -908,6 +937,7 @@ class MainViewModel(
     val viewModelSettings = ViewModelSettings()
     val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
     val viewModelAddCategory = ViewModelAddCategory()
+    val viewModelEditCategory = ViewModelEditCategory()
 
     fun startActivityToSaveData(
         suggestedName: String
