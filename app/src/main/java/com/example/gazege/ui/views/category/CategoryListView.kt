@@ -53,7 +53,6 @@ import java.time.LocalDate
 private fun CategoryAndBudgetViewHolder(
     categoryName: String,
     leftToPay: Double,
-    expectedFlowUntilNow: Double,
     expectedTotalFlow: Double,
     realTotalFlow: Double,
     completion: Double,
@@ -71,16 +70,16 @@ private fun CategoryAndBudgetViewHolder(
     ) {
         Column {
             Text(stringResource(id = R.string.Falta_pagar_recibir))
-            Text(stringResource(id = R.string.Flujo_estimado_hasta_hoy))
-            Text(stringResource(id = R.string.Flujo_total))
             Text(stringResource(id = R.string.Flujo_real))
+            Text(stringResource(id = R.string.Flujo_total))
+
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
         Column {
             Text(doubleToMoneyString(leftToPay))
-            Text(doubleToMoneyString(expectedFlowUntilNow))
-            Text(doubleToMoneyString(expectedTotalFlow))
             Text(doubleToMoneyString(realTotalFlow))
+            Text(doubleToMoneyString(expectedTotalFlow))
+
         }
     }
     Text(stringResource(id = R.string.Pronostico))
@@ -208,20 +207,6 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 categoryWithCalculatedData.childrenLeftToPay
             }
 
-    val expectedFlowUntilNow = categoryWithCalculatedData.expectedFlowUntilToday +
-            if (isExpanded) {
-                0.0
-            } else {
-                categoryWithCalculatedData.childrenExpectedFlowUntilToday
-            }
-
-    val expectedTotalFlow = categoryWithCalculatedData.expectedTotalFlow +
-            if (isExpanded) {
-                0.0
-            } else {
-                categoryWithCalculatedData.childrenExpectedTotalFlow
-            }
-
     val pastForecast = categoryWithCalculatedData.pastForecast +
             (categoryWithCalculatedData.childrenPastForecast.takeUnless { isExpanded }
                 ?: emptyMap())
@@ -241,8 +226,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
             CategoryAndBudgetViewHolder(
                 categoryName = category.name,
                 leftToPay = leftToPay,
-                expectedFlowUntilNow = expectedFlowUntilNow,
-                expectedTotalFlow = expectedTotalFlow,
+                expectedTotalFlow = realFlow + leftToPay,
                 realTotalFlow = realFlow,
                 completion = completion,
                 pastForecast = pastForecast,
