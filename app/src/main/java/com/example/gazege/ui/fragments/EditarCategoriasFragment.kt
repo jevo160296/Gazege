@@ -34,8 +34,7 @@ import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.navigation.EmptyEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
-import com.example.gazege.ui.widgets.DataViewProgressBar
-import com.example.gazege.ui.widgets.DataViewWithTrailingComposable
+import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.ModalSheetLayout
@@ -78,25 +77,22 @@ fun EmptyEditarCategorias(
                         .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
                         .height(IntrinsicSize.Min)
                 ) {
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Ingreso),
-                        value = doubleToMoneyString(editarCategoriasState.expectedTotalIncome),
-                        modifier = Modifier.weight(1f),
-                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalIncomeProgress) }
+                    DataView(
+                        title = stringResource(id = R.string.Falta_pagar_recibir),
+                        value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                        modifier = Modifier.weight(1f)
                     )
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Gasto),
-                        value = doubleToMoneyString(editarCategoriasState.expectedTotalOutcome),
+                    DataView(
+                        title = stringResource(id = R.string.Flujo_real),
+                        value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
                         modifier = Modifier.weight(1f),
-                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalOutcomeProgress) }
                     )
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Neto),
-                        value = doubleToMoneyString(editarCategoriasState.expectedNetValue),
+                    DataView(
+                        title = stringResource(id = R.string.Flujo_total),
+                        value = doubleToMoneyString(editarCategoriasState.netFlow),
                         modifier = Modifier
                             .fillMaxHeight()
-                            .weight(1f),
-                        trailingComposable = {}
+                            .weight(1f)
                     )
                 }
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -165,25 +161,22 @@ fun LoadedEditarCategorias(
                         .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
                         .height(IntrinsicSize.Min)
                 ) {
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Ingreso),
-                        value = doubleToMoneyString(editarCategoriasState.expectedTotalIncome),
-                        modifier = Modifier.weight(1f),
-                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalIncomeProgress) }
+                    DataView(
+                        title = stringResource(id = R.string.Falta_pagar_recibir),
+                        value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                        modifier = Modifier.weight(1f)
                     )
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Gasto),
-                        value = doubleToMoneyString(editarCategoriasState.expectedTotalOutcome),
+                    DataView(
+                        title = stringResource(id = R.string.Flujo_real),
+                        value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
                         modifier = Modifier.weight(1f),
-                        trailingComposable = { DataViewProgressBar(progress = editarCategoriasState.totalOutcomeProgress) }
                     )
-                    DataViewWithTrailingComposable(
-                        title = stringResource(id = R.string.Neto),
-                        value = doubleToMoneyString(editarCategoriasState.expectedNetValue),
+                    DataView(
+                        title = stringResource(id = R.string.Flujo_total),
+                        value = doubleToMoneyString(editarCategoriasState.netFlow),
                         modifier = Modifier
                             .fillMaxHeight()
-                            .weight(1f),
-                        trailingComposable = {}
+                            .weight(1f)
                     )
                 }
                 CategoryListView(
