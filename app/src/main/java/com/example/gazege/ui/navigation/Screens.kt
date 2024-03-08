@@ -143,7 +143,7 @@ fun MainNavHost(
                 }
             )
             screenAddCategory(
-                viewModel = mainViewModel,
+                viewModelAddCategory = mainViewModel.viewModelAddCategory,
                 onNavigateUp = navController::navigateUp
             )
             screenEditCategory(

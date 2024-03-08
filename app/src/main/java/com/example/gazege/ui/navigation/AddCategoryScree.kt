@@ -11,12 +11,12 @@ import com.example.gazege.ui.views.category.CategoryForm
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenAddCategory(
-    viewModel: MainViewModel,
+    viewModelAddCategory: MainViewModel.ViewModelAddCategory,
     onNavigateUp: () -> Unit
 ) {
     composable("addCategory") {
-        val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val categories by viewModelAddCategory.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModelAddCategory.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -25,7 +25,7 @@ fun NavGraphBuilder.screenAddCategory(
             categories,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onCategorySave = { category, snackbar ->
-                viewModel.insertCategory(
+                viewModelAddCategory.insertCategory(
                     category,
                     onCompleitionAction = { onNavigateUp() }
                 ) { error ->
