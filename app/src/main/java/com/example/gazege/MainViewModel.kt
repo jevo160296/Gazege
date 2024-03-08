@@ -753,6 +753,19 @@ class MainViewModel(
             )
     }
 
+    inner class ViewModelEditPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) = this@MainViewModel.updatePerson(
+            *person,
+            onErrorAction = onErrorAction
+        )
+    }
+
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
     val viewModelMain = ViewModelMain()
@@ -761,6 +774,7 @@ class MainViewModel(
     val viewModelAddPerson = ViewModelAddPerson()
     val viewModelAddTransaction = ViewModelAddTransaction()
     val viewModelEditAccount = ViewModelEditAccount()
+    val viewModelEditPerson = ViewModelEditPerson()
 
     fun startActivityToSaveData(
         suggestedName: String

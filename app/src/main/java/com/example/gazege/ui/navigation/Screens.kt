@@ -93,7 +93,7 @@ fun MainNavHost(
                 onNavigateUp = navController::navigateUp
             )
             screenEditPerson(
-                viewModel = mainViewModel,
+                viewModelEditPerson = mainViewModel.viewModelEditPerson,
                 onNavigateUp = navController::navigateUp
             )
             screenAddTransaction(
