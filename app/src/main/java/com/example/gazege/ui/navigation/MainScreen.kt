@@ -25,7 +25,8 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.screenMain(
-    viewModel: MainViewModel,
+    viewModelMain: MainViewModel.ViewModelMain,
+    sampleModule: MainViewModel.SampleModule,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToEditPerson: (Int?) -> Unit,
     onNavigateToPersonDetail: (Int?) -> Unit,
@@ -41,17 +42,17 @@ fun NavGraphBuilder.screenMain(
     onDataLoaded: () -> Unit
 ) {
     composable("main") {
-        val allPerson by viewModel.rememberAllPerson()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
-        val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
-        val range by viewModel.rememberRange()
-        val transactionFilters by viewModel.rememberTransactionFiltersValue()
-        val categoriesFiltersValue by viewModel.rememberCategoriesFiltersValue()
-        val personFilterValue by viewModel.rememberPersonFilterValue()
-        val valueFilterState by viewModel.rememberValueFilterValue()
-        val descriptionFilterState by viewModel.rememberDescriptionFilterValue()
-        val today by viewModel.rememberToday()
+        val allPerson by viewModelMain.rememberAllPerson()
+        val accountAndOwnerWithTransactions by viewModelMain.rememberAccountAndOwnerWithTransactions()
+        val filteredTransactionListItemDetails by viewModelMain.rememberFilteredTransactionListItemDetails()
+        val principalPersonSummaryState by viewModelMain.rememberPersonSummaryState()
+        val range by viewModelMain.rememberRange()
+        val transactionFilters by viewModelMain.rememberTransactionFiltersValue()
+        val categoriesFiltersValue by viewModelMain.rememberCategoriesFiltersValue()
+        val personFilterValue by viewModelMain.rememberPersonFilterValue()
+        val valueFilterState by viewModelMain.rememberValueFilterValue()
+        val descriptionFilterState by viewModelMain.rememberDescriptionFilterValue()
+        val today by viewModelMain.rememberToday()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
@@ -79,9 +80,9 @@ fun NavGraphBuilder.screenMain(
                 personFilterValue = personFilterValue,
                 sheetState = sheetState,
                 snackbarHostState = snackbarHostState,
-                delPerson = viewModel::deletePerson,
-                delAccount = viewModel::deleteAccount,
-                delTransaction = viewModel::deleteTransaction,
+                delPerson = viewModelMain::deletePerson,
+                delAccount = viewModelMain::deleteAccount,
+                delTransaction = viewModelMain::deleteTransaction,
                 onAddPersonRequested = onNavigateToAddPerson,
                 onEditPersonRequested = { onNavigateToEditPerson(it.id) },
                 onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
@@ -106,35 +107,35 @@ fun NavGraphBuilder.screenMain(
                 onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
                 onNavStatusChanged = { navPosition = it },
                 onRangeChanged = { startDate, endDate ->
-                    viewModel.updateRange(
+                    viewModelMain.updateRange(
                         startDate,
                         endDate
                     )
                 },
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
-                onPersonFilterValueChanged = viewModel::updatePersonFilterValue,
+                onPersonFilterValueChanged = viewModelMain::updatePersonFilterValue,
                 showVertical = showVertical,
                 principalPersonSummaryState = principalPersonSummaryState,
                 drawerState = drawerState,
                 onOpenCategoriesRequested = onNavigateToCategories,
                 onOpenBudgetRequested = onNavigateToBudget,
                 transactionFilters = transactionFilters,
-                onTransactionFiltersChanged = viewModel::updateTransactionFilters,
+                onTransactionFiltersChanged = viewModelMain::updateTransactionFilters,
                 categoriesFilter = categoriesFiltersValue,
-                onCategoriesFilterChanged = viewModel::updateCategoriasFiltersValue,
+                onCategoriesFilterChanged = viewModelMain::updateCategoriasFiltersValue,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
-                        sample(it, viewModel)
+                        sample(it, sampleModule)
                     }
                 } else {
                     {}
                 },
                 valueFilterState = valueFilterState,
-                onValueFilterStateChanged = viewModel::updateValueFilterValue,
+                onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
                 descriptionFilterState = descriptionFilterState,
-                onDescriptionFilterStateChanged = viewModel::updateDescriptionFilterValue,
-                onTodayChangeRequested = viewModel::updateToday,
+                onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
+                onTodayChangeRequested = viewModelMain::updateToday,
                 today = today
             )
         }

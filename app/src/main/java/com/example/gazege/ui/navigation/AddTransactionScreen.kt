@@ -18,7 +18,7 @@ import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenAddTransaction(
-    viewModel: MainViewModel,
+    viewModelAddTransaction: MainViewModel.ViewModelAddTransaction,
     onNavigateUp: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
     onDataLoaded: () -> Unit
@@ -43,12 +43,12 @@ fun NavGraphBuilder.screenAddTransaction(
             }
         )
     ) { navBackStackEntry ->
-        val incomeAccount by viewModel.rememberIncomeAccount()
-        val outcomeAccount by viewModel.rememberOutcomeAccount()
-        val allPerson by viewModel.rememberAllPerson()
-        val allAccount by viewModel.rememberAllAccount()
-        val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val incomeAccount by viewModelAddTransaction.rememberIncomeAccount()
+        val outcomeAccount by viewModelAddTransaction.rememberOutcomeAccount()
+        val allPerson by viewModelAddTransaction.rememberAllPerson()
+        val allAccount by viewModelAddTransaction.rememberAllAccount()
+        val categories by viewModelAddTransaction.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModelAddTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
 
         LaunchedEffect(key1 = allPerson.isNotEmpty()) {
             if (allPerson.isNotEmpty()) {
@@ -77,9 +77,9 @@ fun NavGraphBuilder.screenAddTransaction(
         val initialDestinationAccount: Account? = initialSourceDestinationAccount.second
         val orderedAccounts =
             if (transactionAction == AddTransactionAction.ADD_TRANSFER) {
-                viewModel.rememberAccountAndOwner().value
+                viewModelAddTransaction.rememberAccountAndOwner().value
             } else {
-                viewModel.rememberAccountAndOwnerUserFirst().value
+                viewModelAddTransaction.rememberAccountAndOwnerUserFirst().value
             }
         TransactionFormFragment(
             contentPadding = PaddingValues(8.dp),
@@ -97,7 +97,7 @@ fun NavGraphBuilder.screenAddTransaction(
             fixedDestinationAccount = initialDestinationAccount,
             onAccountAddRequested = onNavigateToAddAccount
         ) { newTransaction, addAnotherTransaction ->
-            viewModel.insertTransaction(newTransaction)
+            viewModelAddTransaction.insertTransaction(newTransaction)
             if (!addAnotherTransaction) {
                 onNavigateUp()
             }

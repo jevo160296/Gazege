@@ -60,7 +60,8 @@ fun MainNavHost(
                 }
         ) {
             screenMain(
-                viewModel = mainViewModel,
+                viewModelMain = mainViewModel.viewModelMain,
+                sampleModule = mainViewModel.sampleModule,
                 onNavigateToEditPerson = navController::navigateToEditPerson,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
                 onNavigateToEditAccount = navController::navigateToEditAccount,
@@ -76,19 +77,19 @@ fun MainNavHost(
                 onDataLoaded = onDataLoaded
             )
             screenAddAccount(
-                viewModel = mainViewModel,
+                viewModelAddAccount = mainViewModel.viewModelAddAccount,
                 onNavigateToAddPerson = navController::navigateToAddPerson,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToSettings = navController::navigateToSettings
             )
             screenEditAccount(
-                viewModel = mainViewModel,
+                viewModelEditAccount = mainViewModel.viewModelEditAccount,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToSettings = navController::navigateToSettings,
                 onNavigateToAddPerson = navController::navigateToAddPerson
             )
             screenAddPerson(
-                viewModel = mainViewModel,
+                viewModelAddPerson = mainViewModel.viewModelAddPerson,
                 onNavigateUp = navController::navigateUp
             )
             screenEditPerson(
@@ -96,7 +97,7 @@ fun MainNavHost(
                 onNavigateUp = navController::navigateUp
             )
             screenAddTransaction(
-                viewModel = mainViewModel,
+                viewModelAddTransaction = mainViewModel.viewModelAddTransaction,
                 onNavigateUp = { navController.navigateUpOrClose(backstackSize) { onCloseApp() } },
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onDataLoaded = onDataLoaded

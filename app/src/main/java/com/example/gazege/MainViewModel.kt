@@ -452,6 +452,144 @@ class MainViewModel(
         }
     }
 
+    inner class SampleModule {
+        val viewModelScope get() = this@MainViewModel.viewModelScope
+        fun importStatePostValue(importState: ProgressStatusState) =
+            this@MainViewModel.importStatePostValue(importState)
+
+        fun deleteAll() = this@MainViewModel.deleteAll()
+
+        fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
+            this@MainViewModel.insertPerson(*person) { onErrorAction(it) }
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun insertCategory(
+            vararg category: Category,
+            onCompleitionAction: (Long?) -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertCategory(
+                *category,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit,
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) =
+            this@MainViewModel.insertTransaction(
+                *transaction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertBudget(
+            vararg budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertBudget(
+                *budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelMain {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberFilteredTransactionListItemDetails() =
+            filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
+
+        @Composable
+        fun rememberRange() = range.observeAsState(Pair(null, null))
+
+        @Composable
+        fun rememberTransactionFiltersValue() = transactionFilters
+            .observeAsState(
+                booleanFilterOf(
+                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                    true
+                )
+            )
+
+        @Composable
+        fun rememberCategoriesFiltersValue() =
+            categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
+
+        @Composable
+        fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
+
+        @Composable
+        fun rememberValueFilterValue() =
+            valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
+
+        @Composable
+        fun rememberDescriptionFilterValue() =
+            descriptionFilterValue.observeAsState(TextFilter(null))
+
+        @Composable
+        fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+
+        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
+
+        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
+
+        fun updateRange(startDate: LocalDate?, endDate: LocalDate?) =
+            this@MainViewModel.updateRange(startDate, endDate)
+
+        fun updatePersonFilterValue(newValue: Boolean) =
+            this@MainViewModel.updatePersonFilterValue(newValue)
+
+        fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) =
+            this@MainViewModel.updateTransactionFilters(newValue)
+
+        fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
+            this@MainViewModel.updateCategoriasFiltersValue(newValue)
+
+        fun updateValueFilterValue(newValue: DoubleFilter) =
+            this@MainViewModel.updateValueFilterValue(newValue)
+
+        fun updateDescriptionFilterValue(newValue: TextFilter) =
+            this@MainViewModel.updateDescriptionFilterValue(newValue)
+
+        fun updateToday(newDate: LocalDate) = this@MainViewModel.updateToday(newDate)
+    }
+
     inner class ViewModelCategoryList {
         private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
 
@@ -467,8 +605,162 @@ class MainViewModel(
         fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
     }
 
+    inner class ViewModelAddAccount {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(initial = emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
+    inner class ViewModelAddPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun insertPerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertPerson(
+                *person,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelAddTransaction {
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwnerUserFirst() =
+            accountAndOwnerUserFirst.observeAsState(emptyList())
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) = this@MainViewModel.insertTransaction(
+            *transaction,
+            onErrorAction = onErrorAction
+        )
+    }
+
+    inner class ViewModelEditAccount {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactionsAndPockets() =
+            accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
     val exportModule = ExportModule()
+    val sampleModule = SampleModule()
+    val viewModelMain = ViewModelMain()
     val viewModelCategoryList = ViewModelCategoryList()
+    val viewModelAddAccount = ViewModelAddAccount()
+    val viewModelAddPerson = ViewModelAddPerson()
+    val viewModelAddTransaction = ViewModelAddTransaction()
+    val viewModelEditAccount = ViewModelEditAccount()
 
     fun startActivityToSaveData(
         suggestedName: String
@@ -523,9 +815,6 @@ class MainViewModel(
     }
 
     @Composable
-    fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
-
-    @Composable
     fun rememberImportState(): State<ProgressStatusState> = loadingDataState
         .observeAsState(
             ProgressStatusState(
@@ -537,10 +826,14 @@ class MainViewModel(
         )
 
     @Composable
-    fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+    fun rememberAllAccount() = allAccount.observeAsState(emptyList())
 
     @Composable
-    fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+    fun rememberAccountAndOwnerWithTransactions() =
+        accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+    @Composable
+    fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
     @Composable
     fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
@@ -549,10 +842,6 @@ class MainViewModel(
     @Composable
     fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
         incluirDeudasEnSaldoActual.observeAsState(false)
-
-    @Composable
-    fun rememberPersonSummaryState() =
-        personSummaryState.observeAsState(loadingPersonSummaryState())
 
     @Composable
     fun rememberCategories() = categories.observeAsState(emptyList())
@@ -565,16 +854,16 @@ class MainViewModel(
         budgetAndCategoryWithTransactions.observeAsState(emptyList())
 
     @Composable
+    fun rememberPersonSummaryState() =
+        personSummaryState.observeAsState(loadingPersonSummaryState())
+
+    @Composable
     fun rememberBudgetAndCategoryWithCalculatedData() =
         budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
 
     @Composable
     fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
         categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-    @Composable
-    fun rememberAccountAndOwnerWithTransactions() =
-        accountAndOwnerWithTransactions.observeAsState(emptyList())
 
     @Composable
     fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
@@ -592,33 +881,6 @@ class MainViewModel(
         categoriesWithSubCategories.observeAsState(emptyList())
 
     @Composable
-    fun rememberRange() = range.observeAsState(Pair(null, null))
-
-    @Composable
-    fun rememberTransactionFiltersValue() = transactionFilters
-        .observeAsState(
-            booleanFilterOf(
-                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
-                true
-            )
-        )
-
-    @Composable
-    fun rememberCategoriesFiltersValue() =
-        categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
-
-    @Composable
-    fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
-
-    @Composable
-    fun rememberValueFilterValue() =
-        valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
-
-    @Composable
-    fun rememberDescriptionFilterValue() =
-        descriptionFilterValue.observeAsState(TextFilter(null))
-
-    @Composable
     fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
     @Composable
@@ -626,10 +888,6 @@ class MainViewModel(
 
     @Composable
     fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-    @Composable
-    fun rememberFilteredTransactionListItemDetails() =
-        filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
 
     @Composable
     fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {

@@ -12,11 +12,11 @@ import com.example.gazege.ui.fragments.PersonFormFragment
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenAddPerson(
-    viewModel: MainViewModel,
+    viewModelAddPerson: MainViewModel.ViewModelAddPerson,
     onNavigateUp: () -> Unit
 ) {
     composable("addPerson") {
-        val allPerson by viewModel.rememberAllPerson()
+        val allPerson by viewModelAddPerson.rememberAllPerson()
 
         val coroutineScope = rememberCoroutineScope()
         PersonFormFragment(
@@ -27,7 +27,7 @@ fun NavGraphBuilder.screenAddPerson(
                     allPerson.map { persona -> persona.name }
                 val sePuedeAgregar = person.name !in namesList
                 if (sePuedeAgregar) {
-                    viewModel.insertPerson(person, onErrorAction = {
+                    viewModelAddPerson.insertPerson(person, onErrorAction = {
                         coroutineScope.launch {
                             snackBarHostSate.showSnackbar("Error agregando a la persona: $it")
                         }
