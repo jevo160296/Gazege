@@ -122,7 +122,7 @@ fun MainNavHost(
             )
             screenSaldoActualSettings(viewModel = mainViewModel)
             screenEditarCategorias(
-                viewModel = mainViewModel,
+                viewModelCategoryList = mainViewModel.viewModelCategoryList,
                 onNavigateToAddCategory = navController::navigateToAddCategory,
                 onNavigateToEditCategory = navController::navigateToEditCategory,
                 onNavigateToAddBudget = {

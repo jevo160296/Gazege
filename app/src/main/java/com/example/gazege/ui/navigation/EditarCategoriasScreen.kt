@@ -10,25 +10,26 @@ import com.example.gazege.ui.fragments.EmptyEditarCategorias
 import com.example.gazege.ui.fragments.LoadedEditarCategorias
 
 fun NavGraphBuilder.screenEditarCategorias(
-    viewModel: MainViewModel,
+    viewModelCategoryList: MainViewModel.ViewModelCategoryList,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
     onExportCategoryRequested: (Category) -> Unit
 ) {
     composable("editCategories") {
-        val showPlot by viewModel.categoryListStates.rememberShowPlot()
+        val showPlot by viewModelCategoryList.rememberShowPlot()
 
-        when (val editarCategoriasState = viewModel.rememberEditarCategoriasState().value) {
+        when (val editarCategoriasState =
+            viewModelCategoryList.rememberEditarCategoriasState().value) {
             is LoadedEditarCategoriasState -> LoadedEditarCategorias(
                 editarCategoriasState,
                 onAddCategoryRequested = onNavigateToAddCategory,
                 onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
-                onDeleteCategoryRequested = { viewModel.deleteCategory(it) },
+                onDeleteCategoryRequested = { viewModelCategoryList.deleteCategory(it) },
                 onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
                 onExportCategoryRequested = onExportCategoryRequested,
                 showPlot = showPlot,
-                onShowPlotChanged = viewModel.categoryListStates::updateShowPlot
+                onShowPlotChanged = viewModelCategoryList::updateShowPlot
             )
 
             is EmptyEditarCategoriasState -> EmptyEditarCategorias(editarCategoriasState)

@@ -452,17 +452,23 @@ class MainViewModel(
         }
     }
 
-    inner class CategoryListStates {
+    inner class ViewModelCategoryList {
         private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
 
         @Composable
         fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
 
+        @Composable
+        fun rememberEditarCategoriasState() =
+            editarCategoriasState.observeAsState(nullCategoriasState())
+
         fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
+
+        fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
     }
 
     val exportModule = ExportModule()
-    val categoryListStates = CategoryListStates()
+    val viewModelCategoryList = ViewModelCategoryList()
 
     fun startActivityToSaveData(
         suggestedName: String
@@ -565,10 +571,6 @@ class MainViewModel(
     @Composable
     fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
         categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
-
-    @Composable
-    fun rememberEditarCategoriasState() =
-        editarCategoriasState.observeAsState(nullCategoriasState())
 
     @Composable
     fun rememberAccountAndOwnerWithTransactions() =
