@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,11 +60,16 @@ fun LoadedTransactionPage(
     delTransaction: (Transaction) -> Unit,
     editTransaction: (Transaction) -> Unit,
     state: LazyListState,
-    onTitleSetted: (String) -> Unit
+    nestedScrollConnection: NestedScrollConnection? = null,
+    onTitleSetted: (String) -> Unit,
+    onZeroElementsChanged: (Boolean) -> Unit,
 ) {
+    onZeroElementsChanged(transactionList.isEmpty())
     onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
         LoadedTransactionRecyclerView(
+            modifier = nestedScrollConnection?.let { Modifier.nestedScroll(nestedScrollConnection) }
+                ?: Modifier,
             transactionList = transactionList,
             editTransaction = { transactionAndAccounts ->
                 editTransaction(transactionAndAccounts.transaction)
@@ -323,7 +330,8 @@ private fun PreviewTransactionPage() {
                 state = LazyListState(),
                 editTransaction = {},
                 delTransaction = {},
-                onTitleSetted = {}
+                onTitleSetted = {},
+                onZeroElementsChanged = {}
             )
         }
     }

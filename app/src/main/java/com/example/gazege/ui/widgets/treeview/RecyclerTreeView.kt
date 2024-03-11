@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 
 @Composable
 fun <N, C : Node<N, C>> RecyclerTreeView(
+    modifier: Modifier = Modifier,
     nodes: List<C>,
     groupSelector: (C) -> String? = { null },
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
@@ -45,6 +46,7 @@ fun <N, C : Node<N, C>> RecyclerTreeView(
         groupViewHolder = groupViewHolder
     )
     LazyColumn(
+        modifier = modifier,
         state = treeState.listState,
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
     ) {

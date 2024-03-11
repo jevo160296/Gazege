@@ -1,5 +1,6 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +38,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -160,6 +165,35 @@ fun MainFragment(
         .let { categoryTemplate ->
             { categoryName: String -> categoryTemplate.format(categoryName) }
         }
+
+    var listIsEmpty: Boolean? by rememberSaveable { mutableStateOf(null) }
+    var isScrolledDown by rememberSaveable { mutableStateOf(true) }
+
+    val onZeroElementsChanged = { isEmpty: Boolean ->
+        listIsEmpty = isEmpty
+        if (isEmpty) {
+            isScrolledDown = true
+        }
+    }
+
+    val isVisible by remember {
+        derivedStateOf {
+            isScrolledDown || listIsEmpty ?: true
+        }
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -1) {
+                    isScrolledDown = false
+                } else if (available.y > 50) {
+                    isScrolledDown = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
 
 
     val yesLabel = stringResource(id = R.string.Si)
@@ -366,7 +400,10 @@ fun MainFragment(
             onNavigateToEditCategory = onNavigateToEditCategory,
             onNavigateToAddBudget = onNavigateToAddBudget,
             onExportCategoryRequested = onExportCategoryRequested,
-            showVertical = showVertical
+            showVertical = showVertical,
+            isVisible = isVisible,
+            nestedScrollConnection = nestedScrollConnection,
+            onZeroElementsChanged = onZeroElementsChanged
         )
     }
 }
@@ -412,6 +449,9 @@ private fun MainFragmentResponsiveContent(
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
+    onZeroElementsChanged: (Boolean) -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
+    isVisible: Boolean,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -490,7 +530,10 @@ private fun MainFragmentResponsiveContent(
                 onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
                 onExportCategoryRequested = onExportCategoryRequested,
                 showType = showType,
-                onShowTypeChanged = onShowTypeChanged
+                onShowTypeChanged = onShowTypeChanged,
+                nestedScrollConnection = nestedScrollConnection,
+                isVisible = isVisible,
+                onZeroElementsChanged = onZeroElementsChanged
             )
 
             is EmptyEditarCategoriasState -> EmptyEditarCategorias(
@@ -511,7 +554,9 @@ private fun MainFragmentResponsiveContent(
                             state = transactionState,
                             delTransaction = delTransaction,
                             editTransaction = onEditTransactionRequested,
-                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) }
+                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+                            nestedScrollConnection = nestedScrollConnection,
+                            onZeroElementsChanged = onZeroElementsChanged
                         )
                     }
 
@@ -539,7 +584,9 @@ private fun MainFragmentResponsiveContent(
                     editAccount = onEditAccountRequested,
                     startDate = null,
                     endDate = null,
-                    detailAccount = onAccountDetailRequested
+                    detailAccount = onAccountDetailRequested,
+                    nestedScrollConnection = nestedScrollConnection,
+                    onZeroElementsChanged = onZeroElementsChanged
                 ) { newTitle -> onTitleChanged(newTitle) }
             }
 
@@ -573,7 +620,9 @@ private fun MainFragmentResponsiveContent(
                         editPerson = onEditPersonRequested,
                         onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
                         detailPerson = onPersonDetailRequested,
-                        principalPersonSummaryState = it
+                        principalPersonSummaryState = it,
+                        nestedScrollConnection = nestedScrollConnection,
+                        onZeroElementsChanged = onZeroElementsChanged
                     )
                 }
 
@@ -624,8 +673,12 @@ private fun MainFragmentResponsiveContent(
 
     if (showVertical) {
         Column(Modifier.padding(layoutPaddingValues)) {
-            filter()
-            personMonthSummaryView()
+            AnimatedVisibility(visible = isVisible) {
+                Column {
+                    filter()
+                    personMonthSummaryView()
+                }
+            }
             navigationView()
         }
     } else {

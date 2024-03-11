@@ -23,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -134,6 +136,7 @@ private fun EmptyCategoryAndBudgetViewHolder(
 @Composable
 fun CategoryListView(
     paddingValues: PaddingValues,
+    nestedScrollConnection: NestedScrollConnection,
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
@@ -146,6 +149,7 @@ fun CategoryListView(
         mutableStateOf(null)
     }
     SimpleTreeList(
+        modifier = Modifier.nestedScroll(nestedScrollConnection),
         contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding) * 2,
         nodes = nodes,
@@ -290,7 +294,8 @@ private fun CategoryListPreview() {
                     delCategory = {},
                     onSetBudgetRequested = {},
                     exportCategory = {},
-                    showType = EditarCategoriasShowType.EXPANDED
+                    showType = EditarCategoriasShowType.EXPANDED,
+                    nestedScrollConnection = object : NestedScrollConnection {}
                 )
             }
         }

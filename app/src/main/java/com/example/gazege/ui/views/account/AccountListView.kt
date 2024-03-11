@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
@@ -108,6 +110,7 @@ data class AccountAndOwnerWithTransactionsNode(
 
 @Composable
 private fun AccountClickableTreeView(
+    modifier: Modifier = Modifier,
     accountList: List<AccountAndOwnerWithTransactions>,
     delAccount: ((AccountAndOwnerWithTransactions) -> Unit)?,
     editAccount: ((AccountAndOwnerWithTransactions) -> Unit)?,
@@ -133,6 +136,7 @@ private fun AccountClickableTreeView(
             )
         }
     SimpleTreeList(
+        modifier = modifier,
         state = treeState,
         contentPadding = itemHolderPaddingValues,
         nodes = nodes
@@ -237,6 +241,7 @@ fun LoadedAccountPage(
     detailAccount: (Account) -> Unit,
     startDate: LocalDate?,
     endDate: LocalDate?,
+    nestedScrollConnection: NestedScrollConnection? = null,
     viewHolder: @Composable (AccountAndOwnerWithTransactionsNode) -> Unit = {
         DefaultAccountViewHolder(
             account = it.content,
@@ -246,11 +251,15 @@ fun LoadedAccountPage(
             isExpanded = it.expanded(treeState.expandedItems)
         )
     },
+    onZeroElementsChanged: (Boolean) -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
+    onZeroElementsChanged(accountList.isEmpty())
     onTitleSetted(stringResource(id = R.string.cuentas))
     Column(modifier = modifier) {
         AccountClickableTreeView(
+            modifier = nestedScrollConnection?.let { Modifier.nestedScroll(nestedScrollConnection) }
+                ?: Modifier,
             accountList = accountList,
             delAccount = if (delAccount != null) {
                 { delAccount(it.account) }
@@ -400,7 +409,8 @@ private fun PreviewPage() {
                 delAccount = {},
                 startDate = null,
                 endDate = null,
-                detailAccount = {}
+                detailAccount = {},
+                onZeroElementsChanged = {}
             ) {}
         }
     }

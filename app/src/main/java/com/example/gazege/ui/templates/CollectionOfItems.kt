@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -62,12 +62,14 @@ fun <T> GroupedLazyList(
 
 @Composable
 fun <N, C : Node<N, C>> SimpleTreeList(
+    modifier: Modifier = Modifier,
     state: TreeState,
     contentPadding: PaddingValues,
     nodes: List<C>,
     itemSpacing: Dp = dimensionResource(id = R.dimen.DefaultPadding),
     nodeViewHolder: @Composable (node: C, scope: TreeScope<N, C>) -> Unit
 ) = RecyclerTreeView(
+    modifier = modifier,
     nodes = nodes,
     treeState = state,
     itemHolderPaddingValues = contentPadding,
@@ -85,7 +87,7 @@ fun <T> LazyListScope.dividedItems(
         if (it.mod(2) == 0) {
             itemViewHolder(items[it / 2])
         } else if (it < count - 1) {
-            Divider()
+            HorizontalDivider()
         }
     }
 }
@@ -102,7 +104,7 @@ fun <T> LazyListScope.itemsGrouped(
         stickyHeader {
             Column(Modifier.fillMaxWidth()) {
                 groupViewHolder(group)
-                Divider(thickness = Dp.Hairline)
+                HorizontalDivider(thickness = Dp.Hairline)
             }
         }
         dividedItems(items = indexItems) { item -> viewHolder(item) }
