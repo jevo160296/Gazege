@@ -2,10 +2,8 @@ package com.example.gazege.ui.navigation
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +21,6 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
-@OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.screenMain(
     viewModelMain: MainViewModel.ViewModelMain,
     sampleModule: MainViewModel.SampleModule,
@@ -57,7 +54,6 @@ fun NavGraphBuilder.screenMain(
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
         }
-        val sheetState = rememberModalBottomSheetState()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackbarHostState = SnackbarHostState()
 
@@ -75,11 +71,16 @@ fun NavGraphBuilder.screenMain(
                 allPerson = allPerson,
                 accountList = accountAndOwnerWithTransactions,
                 filteredTransactionList = filteredTransactionListItemDetails,
+                principalPersonSummaryState = principalPersonSummaryState,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,
-                sheetState = sheetState,
+                transactionFilters = transactionFilters,
+                categoriesFilter = categoriesFiltersValue,
+                valueFilterState = valueFilterState,
+                drawerState = drawerState,
                 snackbarHostState = snackbarHostState,
+                today = today,
                 delPerson = viewModelMain::deletePerson,
                 delAccount = viewModelMain::deleteAccount,
                 delTransaction = viewModelMain::deleteTransaction,
@@ -115,15 +116,13 @@ fun NavGraphBuilder.screenMain(
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
                 onPersonFilterValueChanged = viewModelMain::updatePersonFilterValue,
-                showVertical = showVertical,
-                principalPersonSummaryState = principalPersonSummaryState,
-                drawerState = drawerState,
                 onOpenCategoriesRequested = onNavigateToCategories,
                 onOpenBudgetRequested = onNavigateToBudget,
-                transactionFilters = transactionFilters,
                 onTransactionFiltersChanged = viewModelMain::updateTransactionFilters,
-                categoriesFilter = categoriesFiltersValue,
                 onCategoriesFilterChanged = viewModelMain::updateCategoriasFiltersValue,
+                descriptionFilterState = descriptionFilterState,
+                onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
+                onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
                         sample(it, sampleModule)
@@ -131,12 +130,8 @@ fun NavGraphBuilder.screenMain(
                 } else {
                     {}
                 },
-                valueFilterState = valueFilterState,
-                onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
-                descriptionFilterState = descriptionFilterState,
-                onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
                 onTodayChangeRequested = viewModelMain::updateToday,
-                today = today
+                showVertical = showVertical
             )
         }
     }
