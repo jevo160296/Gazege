@@ -13,16 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -121,93 +120,86 @@ fun LoadedEditarCategorias(
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
         editarCategoriasState.categoriesWithCalculatedData
-    var categoryClicked: Category? by remember {
-        mutableStateOf(null)
-    }
-    val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    ModalSheetLayout(
-        modalSheetMsg = stringResource(id = R.string.confirma_la_eliminacion_de).format(
-            categoryClicked?.name
-        ),
-        onModalSheetMsgChanged = {},
-        action = {
-            val item = categoryClicked
-            if (item != null) {
-                onDeleteCategoryRequested(item)
+    val snackbarHostState = SnackbarHostState()
+    val actionLabel = stringResource(id = R.string.Si)
+    val template = stringResource(id = R.string.confirma_la_eliminacion_de)
+    val confirmationMessageBuilder = { categoryName: String -> template.format(categoryName) }
+
+    Scaffold(
+        floatingActionButton = {
+            FAB(onClick = onAddCategoryRequested) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                    contentDescription = "Save"
+                )
             }
         },
-        onActionChanged = {},
-        sheetState = sheetState
+        topBar = {
+            TopAppBar(
+                title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) {
-        Scaffold(
-            floatingActionButton = {
-                FAB(onClick = onAddCategoryRequested) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                        contentDescription = "Save"
-                    )
-                }
-            },
-            topBar = {
-                TopAppBar(
-                    title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
+        Column(modifier = Modifier.padding(it)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                modifier = Modifier
+                    .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
+                    .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                    .height(IntrinsicSize.Min)
+            ) {
+                DataView(
+                    title = stringResource(id = R.string.Falta_pagar_recibir),
+                    value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                    modifier = Modifier.weight(1f)
                 )
-            },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
-        ) {
-            Column(modifier = Modifier.padding(it)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                DataView(
+                    title = stringResource(id = R.string.Flujo_real),
+                    value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                    modifier = Modifier.weight(1f),
+                )
+                DataView(
+                    title = stringResource(id = R.string.Flujo_total),
+                    value = doubleToMoneyString(editarCategoriasState.netFlow),
                     modifier = Modifier
-                        .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
-                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-                        .height(IntrinsicSize.Min)
-                ) {
-                    DataView(
-                        title = stringResource(id = R.string.Falta_pagar_recibir),
-                        value = doubleToMoneyString(editarCategoriasState.leftToPay),
-                        modifier = Modifier.weight(1f)
-                    )
-                    DataView(
-                        title = stringResource(id = R.string.Flujo_real),
-                        value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                        modifier = Modifier.weight(1f),
-                    )
-                    DataView(
-                        title = stringResource(id = R.string.Flujo_total),
-                        value = doubleToMoneyString(editarCategoriasState.netFlow),
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(1f)
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-                ) {
-                    Switch(
-                        checked = showPlot,
-                        onCheckedChange = onShowPlotChanged
-                    )
-                    Text(stringResource(id = R.string.MostrarGraficos))
-                }
-                CategoryListView(
-                    categoriesWithCalculatedData = categoriesWithCalculatedData,
-                    editCategory = onEditCategoryRequested,
-                    delCategory = {
-                        scope.launch {
-                            categoryClicked = it
-                            sheetState.show()
-                        }
-                    },
-                    exportCategory = onExportCategoryRequested,
-                    onSetBudgetRequested = onSetBudgetRequested,
-                    showPlot = showPlot
+                        .fillMaxHeight()
+                        .weight(1f)
                 )
             }
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = showPlot,
+                    onCheckedChange = onShowPlotChanged
+                )
+                Text(stringResource(id = R.string.MostrarGraficos))
+            }
+            CategoryListView(
+                categoriesWithCalculatedData = categoriesWithCalculatedData,
+                editCategory = onEditCategoryRequested,
+                delCategory = {
+                    scope.launch {
+                        val response = snackbarHostState.showSnackbar(
+                            message = confirmationMessageBuilder(it.name),
+                            actionLabel = actionLabel,
+                            withDismissAction = true
+                        )
+                        if (response == SnackbarResult.ActionPerformed) {
+                            onDeleteCategoryRequested(it)
+                        }
+                    }
+                },
+                exportCategory = onExportCategoryRequested,
+                onSetBudgetRequested = onSetBudgetRequested,
+                showPlot = showPlot
+            )
         }
     }
 }
