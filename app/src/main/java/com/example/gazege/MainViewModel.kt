@@ -54,11 +54,12 @@ import com.example.gazege.core.export.writeTransactions
 import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
 import com.example.gazege.ui.navigation.EditarCategoriasState
-import com.example.gazege.ui.navigation.EmptyPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingTransactionsDetailsState
+import com.example.gazege.ui.navigation.PersonSummaryState
+import com.example.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.progressStatus.HistoricalProgressStatus
@@ -214,6 +215,31 @@ class MainViewModel(
     ) = MediatorLiveData<X>()
         .apply {
             val update = {
+                if (this@combine.isInitialized && otherSource.isInitialized) {
+                    if (this@combine.value is A && otherSource.value is B) {
+                        val a = this@combine.value as A
+                        val b = otherSource.value as B
+                        viewModelScope.launch {
+                            withContext(Dispatchers.Default) {
+                                postValue(merger(a, b))
+                            }
+                        }
+                    }
+                }
+            }
+            addSource(this@combine) { update() }
+            addSource(otherSource) { update() }
+        }
+        .distinctUntilChanged()
+
+    private inline fun <reified A, reified B, reified X, reified Y : X> LiveData<A>.combine(
+        otherSource: LiveData<B>,
+        crossinline whileUpdating: () -> Y,
+        crossinline merger: suspend (A, B) -> Y
+    ) = MediatorLiveData<X>()
+        .apply {
+            val update = {
+                postValue(whileUpdating())
                 if (this@combine.isInitialized && otherSource.isInitialized) {
                     if (this@combine.value is A && otherSource.value is B) {
                         val a = this@combine.value as A
@@ -636,7 +662,9 @@ class MainViewModel(
                 }
             }
 
-    private val personSummaryState: LiveData<LoadedPersonSummaryState> =
+    private var cachedPersonSummaryState: PersonSummaryState = loadingPersonSummaryState()
+
+    private val personSummaryState: LiveData<PersonSummaryState> =
         principalPersonWithAccounts
             .combine(range) { principalPersonWithAccounts, range ->
                 object {
@@ -681,9 +709,12 @@ class MainViewModel(
                     val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
                 }
             }
-            .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+            .combine(
+                incluirDeudasEnSaldoActual,
+                whileUpdating = { cachedPersonSummaryState }
+            ) { combined, incluirDeudasEnSaldoActual ->
                 combined.run {
-                    LoadedPersonSummaryState.from(
+                    val summaryState = LoadedPersonSummaryState.from(
                         principalPersonWithAccounts,
                         range.first,
                         range.second,
@@ -700,6 +731,8 @@ class MainViewModel(
                         includeBudget = incluirPresupuestoEnSaldoActual,
                         includeDebts = incluirDeudasEnSaldoActual
                     )
+                    cachedPersonSummaryState = ReloadingPersonSummaryState.from(summaryState)
+                    summaryState
                 }
             }
 
@@ -1591,7 +1624,7 @@ class MainViewModel(
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(EmptyPersonSummaryState)
+            personSummaryState.observeAsState(loadingPersonSummaryState())
 
         @Composable
         fun rememberPrincipalPerson() = principalPerson.observeAsState()

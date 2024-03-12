@@ -61,10 +61,10 @@ import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
 import com.example.gazege.ui.navigation.EmptyPersonSummaryState
 import com.example.gazege.ui.navigation.FullPersonSummaryState
-import com.example.gazege.ui.navigation.LoadedPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingPersonSummaryState
 import com.example.gazege.ui.navigation.PersonSummaryState
+import com.example.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.example.gazege.ui.navigation.TransactionDetailsState
 import com.example.gazege.ui.navigation.loadingTransactionDetailsState
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
@@ -439,7 +439,18 @@ private fun MainFragmentResponsiveContent(
     val personMonthSummaryView = @Composable {
         Crossfade(targetState = principalPersonSummaryState, label = "CrossFadePerson") {
             when (it) {
-                is LoadedPersonSummaryState -> {
+                is ReloadingPersonSummaryState -> {
+                    EmptyPersonMonthSummaryView(
+                        modifier = Modifier.fillMaxWidth(),
+                        saldoActual = it.saldoActual,
+                        ingresos = it.ingresos,
+                        egresos = it.egresos,
+                        flujo = it.flujo,
+                        onSaldoActualClick = onSaldoActualClick
+                    )
+                }
+
+                is FullPersonSummaryState -> {
                     LoadedPersonMonthSummaryView(
                         modifier = Modifier.fillMaxWidth(),
                         saldoActual = it.saldoActual,
