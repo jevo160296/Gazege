@@ -53,6 +53,7 @@ import com.example.gazege.core.export.writePersons
 import com.example.gazege.core.export.writeTransactions
 import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
+import com.example.gazege.ui.fragments.EditarCategoriasShowType
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
@@ -1375,16 +1376,18 @@ class MainViewModel(
     }
 
     inner class ViewModelCategoryList {
-        private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
+        private val _showPlot: MutableLiveData<EditarCategoriasShowType> =
+            MutableLiveData(EditarCategoriasShowType.COMPACT)
 
         @Composable
-        fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
+        fun rememberShowType() =
+            _showPlot.observeAsState(initial = EditarCategoriasShowType.COMPACT)
 
         @Composable
         fun rememberEditarCategoriasState() =
             editarCategoriasState.observeAsState(nullCategoriasState())
 
-        fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
+        fun updateShowType(newValue: EditarCategoriasShowType) = _showPlot.postValue(newValue)
 
         fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
     }

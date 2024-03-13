@@ -131,12 +131,12 @@ fun MainFragment(
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
-    onShowPlotChanged: (Boolean) -> Unit,
+    onShowTypeChanged: (EditarCategoriasShowType) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     onTodayChangeRequested: (newDate: LocalDate) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
     showVertical: Boolean,
-    showPlot: Boolean,
+    showType: EditarCategoriasShowType,
     categoriasState: EditarCategoriasState
 ) {
     val transactionState = rememberLazyListState()
@@ -359,9 +359,9 @@ fun MainFragment(
             onValueFilterStateChanged = onValueFilterStateChanged,
             descriptionFilterState = descriptionFilterState,
             onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
-            showPlot = showPlot,
+            showType = showType,
             categoriasState = categoriasState,
-            onShowPlotChanged = onShowPlotChanged,
+            onShowTypeChanged = onShowTypeChanged,
             onNavigateToEditCategory = onNavigateToEditCategory,
             onNavigateToAddBudget = onNavigateToAddBudget,
             onExportCategoryRequested = onExportCategoryRequested,
@@ -405,9 +405,9 @@ private fun MainFragmentResponsiveContent(
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
-    showPlot: Boolean,
+    showType: EditarCategoriasShowType,
     categoriasState: EditarCategoriasState,
-    onShowPlotChanged: (Boolean) -> Unit,
+    onShowTypeChanged: (EditarCategoriasShowType) -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
@@ -488,8 +488,8 @@ private fun MainFragmentResponsiveContent(
                 onDeleteCategoryRequested = { delCategory(it) },
                 onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
                 onExportCategoryRequested = onExportCategoryRequested,
-                showPlot = showPlot,
-                onShowPlotChanged = onShowPlotChanged,
+                showType = showType,
+                onShowTypeChanged = onShowTypeChanged
             )
 
             is EmptyEditarCategoriasState -> EmptyEditarCategorias(
@@ -743,12 +743,12 @@ private fun DefaultPreview() {
                 descriptionFilterState = TextFilter(null),
                 onDescriptionFilterStateChanged = {},
                 onValueFilterStateChanged = {},
-                onShowPlotChanged = {},
+                onShowTypeChanged = {},
                 onInitDatabaseSample = {},
                 onTodayChangeRequested = {},
                 onExportCategoryRequested = {},
                 showVertical = true,
-                showPlot = false,
+                showType = EditarCategoriasShowType.COMPACT,
                 categoriasState = EmptyEditarCategoriasState
             )
         }

@@ -1,5 +1,6 @@
 package com.example.gazege.ui.views.category
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import com.example.gazege.core.entities.plus
 import com.example.gazege.plot.CategoryPlot
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.doubleToMoneyString
+import com.example.gazege.ui.fragments.EditarCategoriasShowType
 import com.example.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.example.gazege.ui.templates.SimpleTreeList
 import com.example.gazege.ui.theme.GazegeTheme
@@ -50,13 +52,26 @@ private fun CategoryAndBudgetViewHolder(
     categoryName: String,
     leftToPay: Double,
     expectedTotalFlow: Double,
+    availableToday: Double,
     realTotalFlow: Double,
     completion: Double,
     pastForecast: Map<LocalDate, Double>,
     futureForecast: Map<LocalDate, Double>,
     dateRange: ClosedRange<LocalDate>,
-    showPlot: Boolean
+    showType: EditarCategoriasShowType
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
+    val dynamicVisibilityTemplate = @Composable { isVisible: Boolean ->
+        @Composable { content: @Composable () -> Unit ->
+            AnimatedVisibility(visible = isVisible) {
+                content()
+            }
+        }
+    }
+    val expandedVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED)
+    val graphicalVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.GRAPHICAL)
+
     LargeEmphasis(text = categoryName)
     Row(
         modifier = Modifier
@@ -66,26 +81,28 @@ private fun CategoryAndBudgetViewHolder(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(stringResource(id = R.string.Falta_pagar_recibir))
-            Text(stringResource(id = R.string.Flujo_real))
-            Text(stringResource(id = R.string.Flujo_total))
-
+            expandedVisibility { Text(stringResource(id = R.string.Falta_pagar_recibir)) }
+            expandedVisibility { Text(stringResource(id = R.string.Flujo_real)) }
+            expandedVisibility { Text(stringResource(id = R.string.Flujo_total)) }
+            Text(stringResource(id = R.string.Disponible_hoy))
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
         Column {
-            Text(doubleToMoneyString(leftToPay))
-            Text(doubleToMoneyString(realTotalFlow))
-            Text(doubleToMoneyString(expectedTotalFlow))
-
+            expandedVisibility { Text(doubleToMoneyString(leftToPay)) }
+            expandedVisibility { Text(doubleToMoneyString(realTotalFlow)) }
+            expandedVisibility { Text(doubleToMoneyString(expectedTotalFlow)) }
+            Text(doubleToMoneyString(availableToday))
         }
     }
-    if (showPlot) {
-        Text(stringResource(id = R.string.Pronostico))
-        CategoryPlot(
-            pastForecast = pastForecast,
-            futureForecast = futureForecast,
-            dateRange = dateRange
-        )
+    AnimatedVisibility(visible = showType >= EditarCategoriasShowType.GRAPHICAL) {
+        graphicalVisibility { Text(stringResource(id = R.string.Pronostico)) }
+        graphicalVisibility {
+            CategoryPlot(
+                pastForecast = pastForecast,
+                futureForecast = futureForecast,
+                dateRange = dateRange
+            )
+        }
     }
     GProgressIndicator(
         completion,
@@ -118,11 +135,12 @@ private fun EmptyCategoryAndBudgetViewHolder(
 
 @Composable
 fun CategoryListView(
+    paddingValues: PaddingValues,
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
-    showPlot: Boolean,
+    showType: EditarCategoriasShowType,
     exportCategory: (category: Category) -> Unit
 ) {
     val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
@@ -130,9 +148,7 @@ fun CategoryListView(
         mutableStateOf(null)
     }
     SimpleTreeList(
-        contentPadding = PaddingValues(
-            bottom = dimensionResource(id = R.dimen.FABDefaultSpace)
-        ),
+        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding) * 2,
         nodes = nodes,
         state = rememberTreeState()
@@ -154,7 +170,7 @@ fun CategoryListView(
                 menuIdExpanded = menuIdExpanded,
                 onMenuIdExpandedChanged = { menuIdExpanded = it },
                 node = node,
-                showPlot = showPlot
+                showType = showType
             )
         }
     }
@@ -168,7 +184,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
     exportCategory: (category: Category) -> Unit,
     menuIdExpanded: NodeId?,
     onMenuIdExpandedChanged: (NodeId?) -> Unit,
-    showPlot: Boolean,
+    showType: EditarCategoriasShowType,
     node: CategoryWithBudgetNode
 ) {
     val categoryWithCalculatedData = node.content
@@ -201,6 +217,8 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 categoryWithCalculatedData.childrenLeftToPay
             }
 
+    val availableToday = categoryWithCalculatedData.leftToPayToday
+
     val pastForecast = categoryWithCalculatedData.pastForecast +
             (categoryWithCalculatedData.childrenPastForecast.takeUnless { isExpanded }
                 ?: emptyMap())
@@ -222,11 +240,12 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 leftToPay = leftToPay,
                 expectedTotalFlow = realFlow + leftToPay,
                 realTotalFlow = realFlow,
+                availableToday = availableToday,
                 completion = completion,
                 pastForecast = pastForecast,
                 futureForecast = futureForecast,
                 dateRange = dateRange,
-                showPlot = showPlot
+                showType = showType
             )
         } else {
             EmptyCategoryAndBudgetViewHolder(
@@ -267,12 +286,13 @@ private fun CategoryListPreview() {
         GazegeTheme {
             Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                 CategoryListView(
+                    paddingValues = PaddingValues(),
                     categoriesWithCalculatedData = categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
                     editCategory = {},
                     delCategory = {},
                     onSetBudgetRequested = {},
                     exportCategory = {},
-                    showPlot = true
+                    showType = EditarCategoriasShowType.EXPANDED
                 )
             }
         }

@@ -6,19 +6,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
@@ -79,8 +84,8 @@ fun LoadedEditarCategorias(
     onSetBudgetRequested: (Category) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit,
-    showPlot: Boolean,
-    onShowPlotChanged: (newValue: Boolean) -> Unit
+    showType: EditarCategoriasShowType,
+    onShowTypeChanged: (newValue: EditarCategoriasShowType) -> Unit
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
         editarCategoriasState.categoriesWithCalculatedData
@@ -89,8 +94,14 @@ fun LoadedEditarCategorias(
     val actionLabel = stringResource(id = R.string.Si)
     val template = stringResource(id = R.string.confirma_la_eliminacion_de)
     val confirmationMessageBuilder = { categoryName: String -> template.format(categoryName) }
+    val layoutDirection = LocalLayoutDirection.current
 
-    Column(modifier = Modifier.padding(paddingValues)) {
+    Column(
+        modifier = Modifier.padding(
+            start = paddingValues.calculateStartPadding(layoutDirection),
+            end = paddingValues.calculateEndPadding(layoutDirection)
+        )
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
             modifier = Modifier
@@ -116,14 +127,33 @@ fun LoadedEditarCategorias(
             )
         }
         Row(
+            modifier = Modifier.align(Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            Switch(
-                checked = showPlot,
-                onCheckedChange = onShowPlotChanged
+            horizontalArrangement = Arrangement.spacedBy(
+                dimensionResource(id = R.dimen.DefaultPadding),
+                alignment = Alignment.End
             )
-            Text(stringResource(id = R.string.MostrarGraficos))
+        ) {
+            IconButton(
+                onClick = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.show_graphical),
+                    contentDescription = ""
+                )
+            }
+            IconButton(onClick = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.show_expanded),
+                    contentDescription = ""
+                )
+            }
+            IconButton(onClick = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.show_compact),
+                    contentDescription = ""
+                )
+            }
         }
         CategoryListView(
             categoriesWithCalculatedData = categoriesWithCalculatedData,
@@ -142,7 +172,12 @@ fun LoadedEditarCategorias(
             },
             exportCategory = onExportCategoryRequested,
             onSetBudgetRequested = onSetBudgetRequested,
-            showPlot = showPlot
+            paddingValues = paddingValues,
+            showType = showType
         )
     }
+}
+
+enum class EditarCategoriasShowType {
+    COMPACT, EXPANDED, GRAPHICAL
 }

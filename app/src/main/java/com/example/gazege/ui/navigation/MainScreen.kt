@@ -125,7 +125,7 @@ fun NavGraphBuilder.screenMain(
                 descriptionFilterState = descriptionFilterState,
                 onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
                 onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
-                onShowPlotChanged = viewModelCategoryList::updateShowPlot,
+                onShowTypeChanged = viewModelCategoryList::updateShowType,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
                         sample(it, sampleModule)
@@ -136,7 +136,7 @@ fun NavGraphBuilder.screenMain(
                 onTodayChangeRequested = viewModelMain::updateToday,
                 onExportCategoryRequested = onExportCategoryRequested,
                 showVertical = showVertical,
-                showPlot = viewModelCategoryList.rememberShowPlot().value,
+                showType = viewModelCategoryList.rememberShowType().value,
                 categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value
             )
         }
