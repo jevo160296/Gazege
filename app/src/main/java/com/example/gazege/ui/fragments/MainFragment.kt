@@ -179,13 +179,12 @@ fun MainFragment(
         floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    selected = navPosition == NavPosition.CATEGORIAS,
-                    onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
+                NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
+                    onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
                     icon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.categorias),
-                            contentDescription = "Categorías"
+                            painter = painterResource(id = R.drawable.transaccion),
+                            contentDescription = "Transactions"
                         )
                     })
                 NavigationBarItem(
@@ -198,15 +197,17 @@ fun MainFragment(
                             ), contentDescription = "Accounts"
                         )
                     })
-                NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
-                    onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
+                NavigationBarItem(
+                    selected = navPosition == NavPosition.CATEGORIAS,
+                    onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
                     icon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.transaccion),
-                            contentDescription = "Transactions"
+                            painter = painterResource(id = R.drawable.categorias),
+                            contentDescription = "Categorías"
                         )
                     })
-                NavigationBarItem(selected = navPosition == NavPosition.PERSONS,
+                NavigationBarItem(
+                    selected = navPosition == NavPosition.PERSONS,
                     onClick = { onNavStatusChanged(NavPosition.PERSONS) },
                     icon = {
                         Icon(
