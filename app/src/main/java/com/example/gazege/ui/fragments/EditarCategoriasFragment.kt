@@ -12,8 +12,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -134,21 +136,31 @@ fun LoadedEditarCategorias(
                 alignment = Alignment.End
             )
         ) {
-            IconButton(
-                onClick = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) }
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.GRAPHICAL,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.show_graphical),
                     contentDescription = ""
                 )
             }
-            IconButton(onClick = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) }) {
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.EXPANDED,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.show_expanded),
                     contentDescription = ""
                 )
             }
-            IconButton(onClick = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) }) {
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.COMPACT,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.show_compact),
                     contentDescription = ""
