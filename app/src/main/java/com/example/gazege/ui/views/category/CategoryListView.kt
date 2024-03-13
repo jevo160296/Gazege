@@ -94,15 +94,13 @@ private fun CategoryAndBudgetViewHolder(
             Text(doubleToMoneyString(availableToday))
         }
     }
-    AnimatedVisibility(visible = showType >= EditarCategoriasShowType.GRAPHICAL) {
-        graphicalVisibility { Text(stringResource(id = R.string.Pronostico)) }
-        graphicalVisibility {
-            CategoryPlot(
-                pastForecast = pastForecast,
-                futureForecast = futureForecast,
-                dateRange = dateRange
-            )
-        }
+    graphicalVisibility { Text(stringResource(id = R.string.Pronostico)) }
+    graphicalVisibility {
+        CategoryPlot(
+            pastForecast = pastForecast,
+            futureForecast = futureForecast,
+            dateRange = dateRange
+        )
     }
     GProgressIndicator(
         completion,
