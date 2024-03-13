@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -37,7 +38,7 @@ import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.GazegeSegmentedButton
 import com.example.gazege.ui.widgets.SegmentedButtonItem
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsFragment(
     personList: List<Person>,
@@ -52,6 +53,7 @@ fun SettingsFragment(
     onAddCategoryRequested: () -> Unit,
     onAddBudgetRequested: () -> Unit,
     onNavigateUpRequested: () -> Unit,
+    onNavigateToBudget: () -> Unit,
     onExportDataRequested: () -> Unit,
     onImportDataRequested: () -> Unit
 ) {
@@ -110,6 +112,18 @@ fun SettingsFragment(
                 0 -> onImportDataRequested()
                 1 -> onExportDataRequested()
             }
+        }
+        ButtonField(
+            onClick = onNavigateToBudget
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.presupuesto),
+                contentDescription = stringResource(
+                    id = R.string.Presupuesto
+                )
+            )
+            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
+            Text(stringResource(id = R.string.Presupuesto))
         }
         FlowRow(
             Modifier.fillMaxWidth(),

@@ -14,6 +14,7 @@ fun NavGraphBuilder.screenSettings(
     onNavigateToAddAccount: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToAddBudget: () -> Unit,
+    onNavigateToBudget: () -> Unit,
     onExportDataRequested: () -> Unit,
     onImportDataRequested: () -> Unit
 ) {
@@ -75,6 +76,7 @@ fun NavGraphBuilder.screenSettings(
             onAddBudgetRequested = onNavigateToAddBudget,
             onAddCategoryRequested = onNavigateToAddCategory,
             onExportDataRequested = onExportDataRequested,
+            onNavigateToBudget = onNavigateToBudget,
             onImportDataRequested = onImportDataRequested
         )
     }

@@ -13,28 +13,21 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -111,7 +104,6 @@ fun MainFragment(
     transactionFilters: BooleanFilters<String, Nothing>,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     valueFilterState: DoubleFilter,
-    drawerState: DrawerState,
     snackbarHostState: SnackbarHostState,
     today: LocalDate,
     delPerson: (Person) -> Unit,
@@ -134,7 +126,6 @@ fun MainFragment(
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
     onPersonFilterValueChanged: (Boolean) -> Unit,
-    onOpenBudgetRequested: () -> Unit,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
@@ -173,245 +164,209 @@ fun MainFragment(
 
     val yesLabel = stringResource(id = R.string.Si)
 
-
-    ModalNavigationDrawer(
-        drawerContent = {
-            ModalDrawerSheet(
-                windowInsets = dimensionResource(id = R.dimen.DefaultPadding)
-                    .let {
-                        WindowInsets(it, it + 24.dp, it, it)
-                    }
-            ) {
-                NavigationDrawerItem(
-                    label = { Text(stringResource(id = R.string.Presupuesto)) },
+    Scaffold(
+        floatingActionButton = {
+            DynamicAddEntityFAB(
+                fabExpanded = fabExpanded,
+                onFabExpandedChanged = { fabExpanded = it },
+                navPosition = navPosition,
+                onAddPersonRequested = onAddPersonRequested,
+                onAddAccountRequested = onAddAccountRequested,
+                onAddTransactionRequested = onAddTransactionRequested,
+                onAddCategoryRequested = onNavigateToAddCategory
+            )
+        },
+        floatingActionButtonPosition = FabPosition.End,
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = navPosition == NavPosition.CATEGORIAS,
+                    onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
                     icon = {
                         Icon(
-                            painter = painterResource(R.drawable.presupuesto),
-                            contentDescription = "Presupuesto"
+                            painter = painterResource(id = R.drawable.categorias),
+                            contentDescription = "Categorías"
                         )
-                    },
-                    selected = false,
-                    onClick = onOpenBudgetRequested
-                )
+                    })
+                NavigationBarItem(
+                    selected = navPosition == NavPosition.CUENTAS,
+                    onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(
+                                id = R.drawable.ic_baseline_account_balance_wallet_24
+                            ), contentDescription = "Accounts"
+                        )
+                    })
+                NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
+                    onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.transaccion),
+                            contentDescription = "Transactions"
+                        )
+                    })
+                NavigationBarItem(selected = navPosition == NavPosition.PERSONS,
+                    onClick = { onNavStatusChanged(NavPosition.PERSONS) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_person_24),
+                            contentDescription = "Persons"
+                        )
+                    })
             }
         },
-        drawerState = drawerState
-    ) {
-        Scaffold(
-            floatingActionButton = {
-                DynamicAddEntityFAB(
-                    fabExpanded = fabExpanded,
-                    onFabExpandedChanged = { fabExpanded = it },
-                    navPosition = navPosition,
-                    onAddPersonRequested = onAddPersonRequested,
-                    onAddAccountRequested = onAddAccountRequested,
-                    onAddTransactionRequested = onAddTransactionRequested,
-                    onAddCategoryRequested = onNavigateToAddCategory
-                )
-            },
-            floatingActionButtonPosition = FabPosition.End,
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = navPosition == NavPosition.CATEGORIAS,
-                        onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.categorias),
-                                contentDescription = "Categorías"
-                            )
-                        })
-                    NavigationBarItem(
-                        selected = navPosition == NavPosition.CUENTAS,
-                        onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.ic_baseline_account_balance_wallet_24
-                                ), contentDescription = "Accounts"
-                            )
-                        })
-                    NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
-                        onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_home_24),
-                                contentDescription = "Transactions"
-                            )
-                        })
-                    NavigationBarItem(selected = navPosition == NavPosition.PERSONS,
-                        onClick = { onNavStatusChanged(NavPosition.PERSONS) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_person_24),
-                                contentDescription = "Persons"
-                            )
-                        })
-                }
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
-            },
-            topBar = {
-                TopAppBar(
-                    title = { MediumHeadline(text = title) },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.menu),
-                                contentDescription = "Open menu"
-                            )
-                        }
-                    },
-                    actions = {
-                        val uriHandler = LocalUriHandler.current
-                        if (GazegeTheme.appMode == AppMode.DEBUG) {
-                            Box(Modifier.wrapContentSize(Alignment.TopStart)) {
-                                IconButton(
-                                    onClick = { debugMenuExpanded = true }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_baseline_add_24),
-                                        contentDescription = "Add sample data"
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = debugMenuExpanded,
-                                    onDismissRequest = { debugMenuExpanded = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text(text = "Small") },
-                                        onClick = { onInitDatabaseSample(SampleId.SmallSample) })
-                                    DropdownMenuItem(
-                                        text = { Text(text = "Big") },
-                                        onClick = { onInitDatabaseSample(SampleId.BigSample) })
-                                    DropdownMenuItem(
-                                        text = { Text(text = "Category sample") },
-                                        onClick = { onInitDatabaseSample(SampleId.CategoriesSample) })
-                                    DropdownMenuItem(
-                                        text = { Text(text = "Category with miultiple budget sample") },
-                                        onClick = { onInitDatabaseSample(SampleId.CategoriesMultipleBudgetSample) })
-                                    DropdownMenuItem(
-                                        text = { Text(text = "Variable fixed category sample") },
-                                        onClick = { onInitDatabaseSample(SampleId.VariableFixedCategorySample) })
-                                    DatePicker(
-                                        value = today,
-                                        onValueChange = onTodayChangeRequested
-                                    )
-                                }
-                            }
-                            IconButton(onClick = {
-                                uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
-                            }) {
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        topBar = {
+            TopAppBar(
+                title = { MediumHeadline(text = title) },
+                actions = {
+                    val uriHandler = LocalUriHandler.current
+                    if (GazegeTheme.appMode == AppMode.DEBUG) {
+                        Box(Modifier.wrapContentSize(Alignment.TopStart)) {
+                            IconButton(
+                                onClick = { debugMenuExpanded = true }
+                            ) {
                                 Icon(
-                                    painter = painterResource(
-                                        id = R.drawable.bug_report
-                                    ), contentDescription = "Report bug"
+                                    painter = painterResource(R.drawable.ic_baseline_add_24),
+                                    contentDescription = "Add sample data"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = debugMenuExpanded,
+                                onDismissRequest = { debugMenuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(text = "Small") },
+                                    onClick = { onInitDatabaseSample(SampleId.SmallSample) })
+                                DropdownMenuItem(
+                                    text = { Text(text = "Big") },
+                                    onClick = { onInitDatabaseSample(SampleId.BigSample) })
+                                DropdownMenuItem(
+                                    text = { Text(text = "Category sample") },
+                                    onClick = { onInitDatabaseSample(SampleId.CategoriesSample) })
+                                DropdownMenuItem(
+                                    text = { Text(text = "Category with miultiple budget sample") },
+                                    onClick = { onInitDatabaseSample(SampleId.CategoriesMultipleBudgetSample) })
+                                DropdownMenuItem(
+                                    text = { Text(text = "Variable fixed category sample") },
+                                    onClick = { onInitDatabaseSample(SampleId.VariableFixedCategorySample) })
+                                DatePicker(
+                                    value = today,
+                                    onValueChange = onTodayChangeRequested
                                 )
                             }
                         }
-                        IconButton(onClick = onSettingsClicked) {
+                        IconButton(onClick = {
+                            uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
+                        }) {
                             Icon(
                                 painter = painterResource(
-                                    id = R.drawable.baseline_settings_24
-                                ), contentDescription = "Settings"
+                                    id = R.drawable.bug_report
+                                ), contentDescription = "Report bug"
                             )
                         }
                     }
-                )
-            },
-            contentWindowInsets = WindowInsets.statusBars
-        ) {
-            MainFragmentResponsiveContent(
-                it,
-                allPerson = allPerson,
-                accountList = accountList,
-                filteredTransactionList = filteredTransactionList,
-                principalPersonSummaryState = principalPersonSummaryState,
-                personFilterValue = personFilterValue,
-                delPerson = {
-                    scope.launch {
-                        val response = snackbarHostState.showSnackbar(
-                            message = personaMessageBuilder(it.name),
-                            actionLabel = "Yes",
-                            withDismissAction = true
+                    IconButton(onClick = onSettingsClicked) {
+                        Icon(
+                            painter = painterResource(
+                                id = R.drawable.baseline_settings_24
+                            ), contentDescription = "Settings"
                         )
-                        if (response == SnackbarResult.ActionPerformed) {
-                            delPerson(it)
-                        }
                     }
-                },
-                delAccount = {
-                    scope.launch {
-                        val response = snackbarHostState.showSnackbar(
-                            message = accountMessageBuilder(it.name),
-                            actionLabel = "Yes",
-                            withDismissAction = true
-                        )
-                        if (response == SnackbarResult.ActionPerformed) {
-                            delAccount(it)
-                        }
-                    }
-                },
-                delTransaction = {
-                    scope.launch {
-                        val response = snackbarHostState.showSnackbar(
-                            message = transactionMessageBuilder(),
-                            actionLabel = "Yes",
-                            withDismissAction = true
-                        )
-                        if (response == SnackbarResult.ActionPerformed) {
-                            delTransaction(it)
-                        }
-                    }
-                },
-                delCategory = {
-                    scope.launch {
-                        val response = snackbarHostState.showSnackbar(
-                            message = categoryMessageBuilder(it.name),
-                            actionLabel = yesLabel,
-                            withDismissAction = true
-                        )
-                        if (response == SnackbarResult.ActionPerformed) {
-                            delCategory(it)
-                        }
-                    }
-                },
-                onEditPersonRequested = onEditPersonRequested,
-                onPersonDetailRequested = onPersonDetailRequested,
-                onEditAccountRequested = onEditAccountRequested,
-                onAccountDetailRequested = onAccountDetailRequested,
-                onEditTransactionRequested = onEditTransactionRequested,
-                onRangeChanged = onRangeChanged,
-                onSaldoActualClick = onSaldoActualClick,
-                onPersonFilterValueChanged = onPersonFilterValueChanged,
-                transactionState = transactionState,
-                accountState = accountState,
-                personState = personState,
-                navPosition = navPosition,
-                range = range,
-                onTitleChanged = { newTitle -> title = newTitle },
-                onSettingsClicked = onSettingsClicked,
-                transactionFilters = transactionFilters,
-                onTransactionFiltersChanged = onTransactionFiltersChanged,
-                categoriesFilter = categoriesFilter,
-                onCategoriesFilterChanged = onCategoriesFilterChanged,
-                valueFilterState = valueFilterState,
-                onValueFilterStateChanged = onValueFilterStateChanged,
-                descriptionFilterState = descriptionFilterState,
-                onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
-                showPlot = showPlot,
-                categoriasState = categoriasState,
-                onShowPlotChanged = onShowPlotChanged,
-                onNavigateToEditCategory = onNavigateToEditCategory,
-                onNavigateToAddBudget = onNavigateToAddBudget,
-                onExportCategoryRequested = onExportCategoryRequested,
-                showVertical = showVertical
+                }
             )
-        }
-    }
-    LaunchedEffect(key1 = Unit) {
-        drawerState.close()
+        },
+        contentWindowInsets = WindowInsets.statusBars
+    ) {
+        MainFragmentResponsiveContent(
+            it,
+            allPerson = allPerson,
+            accountList = accountList,
+            filteredTransactionList = filteredTransactionList,
+            principalPersonSummaryState = principalPersonSummaryState,
+            personFilterValue = personFilterValue,
+            delPerson = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = personaMessageBuilder(it.name),
+                        actionLabel = "Yes",
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delPerson(it)
+                    }
+                }
+            },
+            delAccount = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = accountMessageBuilder(it.name),
+                        actionLabel = "Yes",
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delAccount(it)
+                    }
+                }
+            },
+            delTransaction = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = transactionMessageBuilder(),
+                        actionLabel = "Yes",
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delTransaction(it)
+                    }
+                }
+            },
+            delCategory = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = categoryMessageBuilder(it.name),
+                        actionLabel = yesLabel,
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delCategory(it)
+                    }
+                }
+            },
+            onEditPersonRequested = onEditPersonRequested,
+            onPersonDetailRequested = onPersonDetailRequested,
+            onEditAccountRequested = onEditAccountRequested,
+            onAccountDetailRequested = onAccountDetailRequested,
+            onEditTransactionRequested = onEditTransactionRequested,
+            onRangeChanged = onRangeChanged,
+            onSaldoActualClick = onSaldoActualClick,
+            onPersonFilterValueChanged = onPersonFilterValueChanged,
+            transactionState = transactionState,
+            accountState = accountState,
+            personState = personState,
+            navPosition = navPosition,
+            range = range,
+            onTitleChanged = { newTitle -> title = newTitle },
+            onSettingsClicked = onSettingsClicked,
+            transactionFilters = transactionFilters,
+            onTransactionFiltersChanged = onTransactionFiltersChanged,
+            categoriesFilter = categoriesFilter,
+            onCategoriesFilterChanged = onCategoriesFilterChanged,
+            valueFilterState = valueFilterState,
+            onValueFilterStateChanged = onValueFilterStateChanged,
+            descriptionFilterState = descriptionFilterState,
+            onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
+            showPlot = showPlot,
+            categoriasState = categoriasState,
+            onShowPlotChanged = onShowPlotChanged,
+            onNavigateToEditCategory = onNavigateToEditCategory,
+            onNavigateToAddBudget = onNavigateToAddBudget,
+            onExportCategoryRequested = onExportCategoryRequested,
+            showVertical = showVertical
+        )
     }
 }
 
@@ -719,7 +674,6 @@ private fun DefaultPreview() {
                 transactionFilters = booleanFilterOf(emptyList()),
                 categoriesFilter = booleanFilterOf(emptyList()),
                 valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-                drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
                 snackbarHostState = snackbarHostState,
                 today = LocalDate.now(),
                 delPerson = {
@@ -784,7 +738,6 @@ private fun DefaultPreview() {
                 },
                 onSaldoActualClick = {},
                 onPersonFilterValueChanged = {},
-                onOpenBudgetRequested = {},
                 onTransactionFiltersChanged = {},
                 onCategoriesFilterChanged = {},
                 descriptionFilterState = TextFilter(null),

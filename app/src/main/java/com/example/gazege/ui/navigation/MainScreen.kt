@@ -1,9 +1,7 @@
 package com.example.gazege.ui.navigation
 
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +34,6 @@ fun NavGraphBuilder.screenMain(
     onNavigateToEditTransaction: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
-    onNavigateToBudget: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
@@ -59,7 +56,6 @@ fun NavGraphBuilder.screenMain(
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
         }
-        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackbarHostState = SnackbarHostState()
 
         val dataLoaded = filteredTransactionListItemDetails is LoadedTransactionDetailsState
@@ -83,7 +79,6 @@ fun NavGraphBuilder.screenMain(
                 transactionFilters = transactionFilters,
                 categoriesFilter = categoriesFiltersValue,
                 valueFilterState = valueFilterState,
-                drawerState = drawerState,
                 snackbarHostState = snackbarHostState,
                 today = today,
                 delPerson = viewModelMain::deletePerson,
@@ -125,7 +120,6 @@ fun NavGraphBuilder.screenMain(
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
                 onPersonFilterValueChanged = viewModelMain::updatePersonFilterValue,
-                onOpenBudgetRequested = onNavigateToBudget,
                 onTransactionFiltersChanged = viewModelMain::updateTransactionFilters,
                 onCategoriesFilterChanged = viewModelMain::updateCategoriasFiltersValue,
                 descriptionFilterState = descriptionFilterState,
