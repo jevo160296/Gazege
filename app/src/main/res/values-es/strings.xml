@@ -95,4 +95,6 @@
     <string name="Presupuesto_vacio">Presupuesto vacío</string>
     <string name="Pronostico">Pronóstico</string>
     <string name="Exportar">Exportar</string>
+    <string name="Nueva_categoria">Nueva categoría</string>
+    <string name="Disponible_hoy">Disponible hoy</string>
 </resources>

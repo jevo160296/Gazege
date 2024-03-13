@@ -13,18 +13,18 @@ import com.example.gazege.ui.fragments.AccountFormFragment
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenAddAccount(
-    viewModel: MainViewModel,
+    viewModelAddAccount: MainViewModel.ViewModelAddAccount,
     onNavigateToAddPerson: () -> Unit,
     onNavigateUp: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     composable("addAccount") {
-        val allPerson by viewModel.rememberAllPerson()
-        val allAccount by viewModel.rememberAllAccount()
-        val incomeAccount by viewModel.rememberIncomeAccount()
-        val outcomeAccount by viewModel.rememberOutcomeAccount()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val today by viewModel.rememberToday()
+        val allPerson by viewModelAddAccount.rememberAllPerson()
+        val allAccount by viewModelAddAccount.rememberAllAccount()
+        val incomeAccount by viewModelAddAccount.rememberIncomeAccount()
+        val outcomeAccount by viewModelAddAccount.rememberOutcomeAccount()
+        val accountAndOwnerWithTransactions by viewModelAddAccount.rememberAccountAndOwnerWithTransactions()
+        val today by viewModelAddAccount.rememberToday()
 
         val coroutineScope = rememberCoroutineScope()
         AccountFormFragment(
@@ -39,7 +39,7 @@ fun NavGraphBuilder.screenAddAccount(
                 val accountOwnerId = Pair(account.name, account.ownerId)
                 val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                 if (sePuedeAgregar) {
-                    viewModel.insertAccount(
+                    viewModelAddAccount.insertAccount(
                         account,
                         onErrorAction = {
                             coroutineScope.launch {
@@ -49,7 +49,7 @@ fun NavGraphBuilder.screenAddAccount(
                         onCompleitionAction = { addedId ->
                             if (incomeAccountId != null && outcomeAccountId != null) {
                                 val valorAjuste = newBalance
-                                viewModel.realizarAjuste(
+                                viewModelAddAccount.realizarAjuste(
                                     accountId = addedId.toInt(),
                                     amount = valorAjuste,
                                     incomeAccountId = incomeAccountId,

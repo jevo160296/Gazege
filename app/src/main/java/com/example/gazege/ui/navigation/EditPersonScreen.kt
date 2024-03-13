@@ -14,14 +14,14 @@ import com.example.gazege.ui.fragments.PersonFormFragment
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenEditPerson(
-    viewModel: MainViewModel,
+    viewModelEditPerson: MainViewModel.ViewModelEditPerson,
     onNavigateUp: () -> Unit
 ) {
     composable(
         "editPerson/{personId}",
         arguments = listOf(navArgument("personId") { type = NavType.IntType })
     ) { navBack ->
-        val allPerson by viewModel.rememberAllPerson()
+        val allPerson by viewModelEditPerson.rememberAllPerson()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -36,7 +36,7 @@ fun NavGraphBuilder.screenEditPerson(
                     allPerson.map { persona -> persona.name }
                 val sePuedeEditar = person.name !in namesList
                 if (sePuedeEditar) {
-                    viewModel.updatePerson(person, onErrorAction = {
+                    viewModelEditPerson.updatePerson(person, onErrorAction = {
                         coroutineScope.launch {
                             snackBarHostSate.showSnackbar("Error editando persona $it")
                         }

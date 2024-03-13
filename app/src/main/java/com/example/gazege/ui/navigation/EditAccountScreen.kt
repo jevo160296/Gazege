@@ -16,7 +16,7 @@ import com.example.gazege.ui.fragments.AccountFormFragment
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenEditAccount(
-    viewModel: MainViewModel,
+    viewModelEditAccount: MainViewModel.ViewModelEditAccount,
     onNavigateUp: () -> Unit,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToSettings: () -> Unit
@@ -25,13 +25,13 @@ fun NavGraphBuilder.screenEditAccount(
         "editAccount/{accountId}",
         arguments = listOf(navArgument("accountId") { type = NavType.IntType })
     ) { navStack ->
-        val accountAndOwnerWithTransactionsAndPockets by viewModel.rememberAccountAndOwnerWithTransactionsAndPockets()
-        val allPerson by viewModel.rememberAllPerson()
-        val allAccount by viewModel.rememberAllAccount()
-        val incomeAccount by viewModel.rememberIncomeAccount()
-        val outcomeAccount by viewModel.rememberOutcomeAccount()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val today by viewModel.rememberToday()
+        val accountAndOwnerWithTransactionsAndPockets by viewModelEditAccount.rememberAccountAndOwnerWithTransactionsAndPockets()
+        val allPerson by viewModelEditAccount.rememberAllPerson()
+        val allAccount by viewModelEditAccount.rememberAllAccount()
+        val incomeAccount by viewModelEditAccount.rememberIncomeAccount()
+        val outcomeAccount by viewModelEditAccount.rememberOutcomeAccount()
+        val accountAndOwnerWithTransactions by viewModelEditAccount.rememberAccountAndOwnerWithTransactions()
+        val today by viewModelEditAccount.rememberToday()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -67,7 +67,7 @@ fun NavGraphBuilder.screenEditAccount(
                 val accountOwnerId = Pair(account.name, account.ownerId)
                 val sePuedeAgregar = accountOwnerId !in accountOwnerIdList
                 if (sePuedeAgregar) {
-                    viewModel.updateAccount(
+                    viewModelEditAccount.updateAccount(
                         account,
                         onErrorAction = {
                             coroutineScope.launch {
@@ -79,7 +79,7 @@ fun NavGraphBuilder.screenEditAccount(
                                 val valorAjuste =
                                     newBalance - (selectedAccountAndOwnerBalance
                                         ?: 0.0)
-                                viewModel.realizarAjuste(
+                                viewModelEditAccount.realizarAjuste(
                                     accountId = addedId.toInt(),
                                     amount = valorAjuste,
                                     incomeAccountId = incomeAccountId,

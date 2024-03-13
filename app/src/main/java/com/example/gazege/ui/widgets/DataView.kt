@@ -70,8 +70,10 @@ fun DataView(
 @Composable
 fun LoadingDataView(
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    title: String? = null,
     bigTitle: Boolean = false,
+    value: String? = null,
+    enabled: Boolean = true,
     colors: CardColors = CardDefaults.cardColors(),
     onClick: () -> Unit = {}
 ) {
@@ -103,8 +105,8 @@ fun LoadingDataView(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceAround
             ) {
-                Text("")
-                SmallEmphasis("")
+                Text(value ?: "")
+                SmallEmphasis(title ?: "")
             }
         } else {
             Row(
@@ -112,8 +114,8 @@ fun LoadingDataView(
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                MediumHeadline(text = "")
-                MediumHeadline(text = "")
+                MediumHeadline(text = title ?: "")
+                MediumHeadline(text = value ?: "")
             }
         }
     }
@@ -240,6 +242,10 @@ fun LoadedPersonMonthSummaryView(
 @Composable
 fun EmptyPersonMonthSummaryView(
     modifier: Modifier,
+    saldoActual: Double? = null,
+    ingresos: Double? = null,
+    egresos: Double? = null,
+    flujo: Double? = null,
     onSaldoActualClick: () -> Unit
 ) {
     val enabledColors = CardDefaults.cardColors(
@@ -260,7 +266,9 @@ fun EmptyPersonMonthSummaryView(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             LoadingDataView(
+                title = saldoActual?.let { stringResource(R.string.Saldo_actual) },
                 bigTitle = true,
+                value = saldoActual?.let { doubleToMoneyString(saldoActual) },
                 modifier = Modifier.weight(1f),
                 colors = enabledColors,
                 onClick = onSaldoActualClick
@@ -272,16 +280,22 @@ fun EmptyPersonMonthSummaryView(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             LoadingDataView(
+                title = ingresos?.let { stringResource(R.string.Ingresos) },
+                modifier = Modifier.weight(1f),
+                value = ingresos?.let { doubleToMoneyString(ingresos) },
+                enabled = false,
+                colors = disabledColors
+            )
+            LoadingDataView(
+                title = egresos?.let { stringResource(id = R.string.Gastos) },
+                value = egresos?.let { doubleToMoneyString(egresos) },
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors
             )
             LoadingDataView(
-                modifier = Modifier.weight(1f),
-                enabled = false,
-                colors = disabledColors
-            )
-            LoadingDataView(
+                title = flujo?.let { stringResource(R.string.Flujo) },
+                value = flujo?.let { doubleToMoneyString(flujo) },
                 modifier = Modifier.weight(1f),
                 enabled = false,
                 colors = disabledColors

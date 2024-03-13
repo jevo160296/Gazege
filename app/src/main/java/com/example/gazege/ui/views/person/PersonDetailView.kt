@@ -10,18 +10,27 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.MainViewModel
 import com.example.gazege.R
-import com.example.gazege.core.entities.*
+import com.example.gazege.core.entities.Person
+import com.example.gazege.core.entities.Transaction
 import com.example.gazege.ui.doubleToMoneyString
 import com.example.gazege.ui.personaDeleitionConfirmationBuilder
 import com.example.gazege.ui.transactionDeleitionConfirmationBuilder
-import com.example.gazege.ui.views.*
+import com.example.gazege.ui.views.BottomSheetController
+import com.example.gazege.ui.views.EntityDetail
+import com.example.gazege.ui.views.PersonAction
+import com.example.gazege.ui.views.TransactionAction
 import com.example.gazege.ui.views.transaction.LoadedTransactionPage
 import com.example.gazege.ui.widgets.MediumHeadline
 import com.example.gazege.ui.widgets.SmallBody
@@ -31,7 +40,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PersonDetail(
     person: Person,
-    viewModel: MainViewModel,
+    viewModelPersonDetail: MainViewModel.ViewModelPersonDetail,
     deuda: Double,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
@@ -42,7 +51,7 @@ fun PersonDetail(
     var justPendingTransactions: Boolean by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
-    val transactionListItemDetails by viewModel.rememberPeopleTransactionListItemDetails(
+    val transactionListItemDetails by viewModelPersonDetail.rememberPeopleTransactionListItemDetails(
         person.id,
         justPendingTransactions,
         deuda

@@ -1,6 +1,5 @@
 package com.example.gazege.sample.data
 
-import androidx.lifecycle.viewModelScope
 import com.example.gazege.MainViewModel
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.Budget
@@ -23,22 +22,22 @@ enum class SampleId {
     VariableFixedCategorySample
 }
 
-fun sample(sampleId: SampleId, viewModel: MainViewModel) {
+fun sample(sampleId: SampleId, sampleModule: MainViewModel.SampleModule) {
     when (sampleId) {
-        SampleId.BigSample -> bigSample(viewModel)
-        SampleId.SmallSample -> smallSample(viewModel)
-        SampleId.CategoriesSample -> categoriesSample(viewModel)
-        SampleId.CategoriesMultipleBudgetSample -> categoriesMultipleBudgetSample(viewModel)
-        SampleId.VariableFixedCategorySample -> variableFixedCategorySample(viewModel)
+        SampleId.BigSample -> bigSample(sampleModule)
+        SampleId.SmallSample -> smallSample(sampleModule)
+        SampleId.CategoriesSample -> categoriesSample(sampleModule)
+        SampleId.CategoriesMultipleBudgetSample -> categoriesMultipleBudgetSample(sampleModule)
+        SampleId.VariableFixedCategorySample -> variableFixedCategorySample(sampleModule)
     }
 }
 
 private fun bigSample(
-    viewModel: MainViewModel
+    sampleModule: MainViewModel.SampleModule
 ) {
     databaseSample {
         buildSample(
-            viewModel,
+            sampleModule,
             { personSample },
             { accountSample },
             { categorieSample },
@@ -48,7 +47,7 @@ private fun bigSample(
 }
 
 private fun smallSample(
-    viewModel: MainViewModel
+    sampleModule: MainViewModel.SampleModule
 ) {
     databaseSample(
         categoriesAmount = 0,
@@ -57,7 +56,7 @@ private fun smallSample(
         principalPersonAccountAmount = 5
     ) {
         buildSample(
-            viewModel,
+            sampleModule,
             { personSample },
             { accountSample },
             { categorieSample },
@@ -68,12 +67,12 @@ private fun smallSample(
 }
 
 private fun categoriesSample(
-    viewModel: MainViewModel
+    sampleModule: MainViewModel.SampleModule
 ) {
     val today = LocalDate.now()
     val startOfMonth = today.withDayOfMonth(1)
     buildSample(
-        viewModel,
+        sampleModule,
         {
             listOf(
                 Person(0, "Pedro", 0),
@@ -146,12 +145,12 @@ private fun categoriesSample(
 }
 
 private fun categoriesMultipleBudgetSample(
-    viewModel: MainViewModel
+    sampleModule: MainViewModel.SampleModule
 ) {
     val today = LocalDate.now()
     val startOfMonth = today.withDayOfMonth(1)
     buildSample(
-        viewModel,
+        sampleModule,
         personSample = {
             listOf(
                 Person(0, "Pedro", 0),
@@ -203,9 +202,9 @@ private fun categoriesMultipleBudgetSample(
     )
 }
 
-private fun variableFixedCategorySample(viewModel: MainViewModel) {
+private fun variableFixedCategorySample(sampleModule: MainViewModel.SampleModule) {
     buildSample(
-        viewModel,
+        sampleModule,
         personSample = {
             listOf(
                 Person(id = 0, name = "Principal", importance = 0),
@@ -237,7 +236,7 @@ private fun variableFixedCategorySample(viewModel: MainViewModel) {
 }
 
 private fun buildSample(
-    viewModel: MainViewModel,
+    sampleModule: MainViewModel.SampleModule,
     personSample: () -> List<Person>,
     accountSample: () -> List<Account>,
     categorieSample: () -> List<Category>,
@@ -249,7 +248,7 @@ private fun buildSample(
         5.0,
         1.0
     ) {
-        viewModel.importStatePostValue(
+        sampleModule.importStatePostValue(
             MainViewModel.ProgressStatusState(
                 it.message,
                 it.progress,
@@ -258,9 +257,9 @@ private fun buildSample(
             )
         )
     }
-    viewModel.viewModelScope.launch(Dispatchers.Default) {
-        viewModel.deleteAll().join()
-        viewModel.insertPerson(*personSample().toTypedArray()) {}.join()
+    sampleModule.viewModelScope.launch(Dispatchers.Default) {
+        sampleModule.deleteAll().join()
+        sampleModule.insertPerson(*personSample().toTypedArray()) {}.join()
         progressStatus.incrementProgress(
             "Inserting account... ${
                 doubleToPercentageString(
@@ -268,7 +267,7 @@ private fun buildSample(
                 )
             }"
         )
-        viewModel.insertAccount(
+        sampleModule.insertAccount(
             *accountSample().toTypedArray(),
             onErrorAction = {}) {}.join()
         progressStatus.incrementProgress(
@@ -278,9 +277,9 @@ private fun buildSample(
                 )
             }"
         )
-        viewModel.insertCategory(*categorieSample().map { it.copy(parentId = null) }
+        sampleModule.insertCategory(*categorieSample().map { it.copy(parentId = null) }
             .toTypedArray(), onErrorAction = {}, onCompleitionAction = {}).join()
-        viewModel.updateCategory(
+        sampleModule.updateCategory(
             *categorieSample().toTypedArray(),
             onErrorAction = {},
             onCompleitionAction = {}).join()
@@ -291,7 +290,7 @@ private fun buildSample(
                 )
             }"
         )
-        viewModel.insertTransaction(*transactionSample().toTypedArray()) {}.join()
+        sampleModule.insertTransaction(*transactionSample().toTypedArray()) {}.join()
         progressStatus.incrementProgress(
             "Inserting budget... ${
                 doubleToPercentageString(
@@ -299,7 +298,7 @@ private fun buildSample(
                 )
             }"
         )
-        viewModel.insertBudget(
+        sampleModule.insertBudget(
             *budgetSample().toTypedArray(),
             onCompleitionAction = {},
             onErrorAction = {}).join()

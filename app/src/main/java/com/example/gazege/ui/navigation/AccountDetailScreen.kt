@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenAccountDetail(
-    viewModel: MainViewModel,
+    viewModelAccountDetail: MainViewModel.ViewModelAccountDetail,
     onNavigateUp: () -> Unit,
     onNavigateToEditAccount: (Int?) -> Unit,
     onNavigateToAddTransaction: (LocalDate, AddTransactionAction, Account) -> Unit,
@@ -39,18 +39,18 @@ fun NavGraphBuilder.screenAccountDetail(
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
 
-        var accountFilterValue by viewModel.accountDetailScreenState.rememberAccountFilterValue(
+        var accountFilterValue by viewModelAccountDetail.rememberAccountFilterValue(
             accountId = accountId
         )
-        val categories by viewModel.rememberCategoriesWithSubcategories()
-        var categoriesFilter by viewModel.accountDetailScreenState.rememberCategoriesFilter(
+        val categories by viewModelAccountDetail.rememberCategoriesWithSubcategories()
+        var categoriesFilter by viewModelAccountDetail.rememberCategoriesFilter(
             accountId = accountId,
             categories = categories
         )
-        val descriptionFilter by viewModel.accountDetailScreenState.rememberDescriptionFilter(
+        val descriptionFilter by viewModelAccountDetail.rememberDescriptionFilter(
             accountId = accountId
         )
-        val data by viewModel.accountDetailScreenState.rememberAccountDetailData(
+        val data by viewModelAccountDetail.rememberAccountDetailData(
             accountId,
             accountFilterValue,
             categoriesFilter,
@@ -58,7 +58,7 @@ fun NavGraphBuilder.screenAccountDetail(
         )
         var fabExpanded by remember { mutableStateOf(false) }
 
-        val accountAndOwner by viewModel.rememberAccountAndOwner()
+        val accountAndOwner by viewModelAccountDetail.rememberAccountAndOwner()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -76,7 +76,7 @@ fun NavGraphBuilder.screenAccountDetail(
                         AccountAction.EDIT -> onNavigateToEditAccount(accountId)
                         AccountAction.DELETE -> {
                             onNavigateUp()
-                            viewModel.deleteAccount(actionAccount)
+                            viewModelAccountDetail.deleteAccount(actionAccount)
                         }
                     }
                 },
@@ -84,7 +84,7 @@ fun NavGraphBuilder.screenAccountDetail(
                     val transactionId = transaction.id
                     when (action) {
                         TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
-                        TransactionAction.DELETE -> viewModel.deleteTransaction(
+                        TransactionAction.DELETE -> viewModelAccountDetail.deleteTransaction(
                             transaction
                         )
                     }
@@ -113,7 +113,7 @@ fun NavGraphBuilder.screenAccountDetail(
                     categoriesFilter = it
                 },
                 descriptionFilterState = descriptionFilter,
-                onDescriptionFilterStateChanged = viewModel.accountDetailScreenState::updateDescriptionFilter
+                onDescriptionFilterStateChanged = viewModelAccountDetail::updateDescriptionFilter
             )
         } else {
             Text("Cuenta vacía")

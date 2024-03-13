@@ -8,21 +8,22 @@ import com.example.gazege.MainViewModel
 import com.example.gazege.ui.fragments.SettingsFragment
 
 fun NavGraphBuilder.screenSettings(
-    viewModel: MainViewModel,
+    viewModelSettings: MainViewModel.ViewModelSettings,
     onNavigateUp: () -> Unit,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToAddBudget: () -> Unit,
+    onNavigateToBudget: () -> Unit,
     onExportDataRequested: () -> Unit,
     onImportDataRequested: () -> Unit
 ) {
     composable("settings") {
-        val allPerson by viewModel.rememberAllPerson()
-        val principalPerson by viewModel.rememberPrincipalPerson()
-        val accountAndOwner by viewModel.rememberAccountAndOwner()
-        val incomeAccount by viewModel.rememberIncomeAccount()
-        val outcomeAccount by viewModel.rememberOutcomeAccount()
+        val allPerson by viewModelSettings.rememberAllPerson()
+        val principalPerson by viewModelSettings.rememberPrincipalPerson()
+        val accountAndOwner by viewModelSettings.rememberAccountAndOwner()
+        val incomeAccount by viewModelSettings.rememberIncomeAccount()
+        val outcomeAccount by viewModelSettings.rememberOutcomeAccount()
 
         SettingsFragment(
             personList = allPerson,
@@ -30,11 +31,11 @@ fun NavGraphBuilder.screenSettings(
             onPrincipalPersonChanged = {
                 val notNullPrincipalPerson = principalPerson
                 if (notNullPrincipalPerson != null) {
-                    viewModel.updatePerson(
+                    viewModelSettings.updatePerson(
                         notNullPrincipalPerson.copy(importance = null)
                     ) {}
                 }
-                viewModel.updatePerson(it.copy(importance = 1)) {}
+                viewModelSettings.updatePerson(it.copy(importance = 1)) {}
             },
             onNavigateUpRequested = onNavigateUp,
             onAddPersonRequested = onNavigateToAddPerson,
@@ -46,26 +47,26 @@ fun NavGraphBuilder.screenSettings(
                 val castedIncomeAccount = incomeAccount
                 val castedOutcomeAccount = outcomeAccount
                 if (castedIncomeAccount != null) {
-                    viewModel.updateAccount(
+                    viewModelSettings.updateAccount(
                         castedIncomeAccount.copy(
                             isIncome = false
                         ), onCompleitionAction = {}, onErrorAction = {})
                 }
                 if (castedOutcomeAccount != null) {
-                    viewModel.updateAccount(
+                    viewModelSettings.updateAccount(
                         castedOutcomeAccount.copy(
                             isOutcome = false
                         ), onCompleitionAction = {}, onErrorAction = {})
                 }
                 if (newIncome != null) {
-                    viewModel.updateAccount(
+                    viewModelSettings.updateAccount(
                         newIncome.copy(
                             isIncome = true,
                             isOutcome = false
                         ), onErrorAction = {}, onCompleitionAction = {})
                 }
                 if (newOutcome != null) {
-                    viewModel.updateAccount(
+                    viewModelSettings.updateAccount(
                         newOutcome.copy(
                             isIncome = false,
                             isOutcome = true
@@ -75,6 +76,7 @@ fun NavGraphBuilder.screenSettings(
             onAddBudgetRequested = onNavigateToAddBudget,
             onAddCategoryRequested = onNavigateToAddCategory,
             onExportDataRequested = onExportDataRequested,
+            onNavigateToBudget = onNavigateToBudget,
             onImportDataRequested = onImportDataRequested
         )
     }

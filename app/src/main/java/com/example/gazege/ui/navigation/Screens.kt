@@ -60,69 +60,19 @@ fun MainNavHost(
                 }
         ) {
             screenMain(
-                viewModel = mainViewModel,
-                onNavigateToEditPerson = navController::navigateToEditPerson,
-                onNavigateToEditTransaction = navController::navigateToEditTransaction,
-                onNavigateToEditAccount = navController::navigateToEditAccount,
+                viewModelMain = mainViewModel.viewModelMain,
+                viewModelCategoryList = mainViewModel.viewModelCategoryList,
+                sampleModule = mainViewModel.sampleModule,
                 onNavigateToAddPerson = navController::navigateToAddPerson,
+                onNavigateToEditPerson = navController::navigateToEditPerson,
+                onNavigateToPersonDetail = navController::navigateToPersonDetail,
                 onNavigateToAddAccount = navController::navigateToAddAccount,
-                onNavigateToSettings = navController::navigateToSettings,
+                onNavigateToEditAccount = navController::navigateToEditAccount,
                 onNavigateToAccountDetail = navController::navigateToAccountDetail,
                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
-                onNavigateToPersonDetail = navController::navigateToPersonDetail,
-                onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
-                onNavigateToCategories = navController::navigateToEditarCategorias,
-                onNavigateToBudget = navController::navigateToEditBudget,
-                onDataLoaded = onDataLoaded
-            )
-            screenAddAccount(
-                viewModel = mainViewModel,
-                onNavigateToAddPerson = navController::navigateToAddPerson,
-                onNavigateUp = navController::navigateUp,
-                onNavigateToSettings = navController::navigateToSettings
-            )
-            screenEditAccount(
-                viewModel = mainViewModel,
-                onNavigateUp = navController::navigateUp,
+                onNavigateToEditTransaction = navController::navigateToEditTransaction,
                 onNavigateToSettings = navController::navigateToSettings,
-                onNavigateToAddPerson = navController::navigateToAddPerson
-            )
-            screenAddPerson(
-                viewModel = mainViewModel,
-                onNavigateUp = navController::navigateUp
-            )
-            screenEditPerson(
-                viewModel = mainViewModel,
-                onNavigateUp = navController::navigateUp
-            )
-            screenAddTransaction(
-                viewModel = mainViewModel,
-                onNavigateUp = { navController.navigateUpOrClose(backstackSize) { onCloseApp() } },
-                onNavigateToAddAccount = navController::navigateToAddAccount,
-                onDataLoaded = onDataLoaded
-            )
-            screenEditTransaction(
-                viewModel = mainViewModel,
-                onNavigateUp = navController::navigateUp,
-                onNavigateToAddAccount = navController::navigateToAddAccount
-            )
-            screenSettings(
-                viewModel = mainViewModel,
-                onNavigateUp = navController::navigateUp,
-                onNavigateToAddAccount = navController::navigateToAddAccount,
-                onNavigateToAddPerson = navController::navigateToAddPerson,
-                onNavigateToAddBudget = navController::navigateToAddOneBudget,
-                onNavigateToAddCategory = navController::navigateToAddCategory,
-                onExportDataRequested = {
-                    mainViewModel.startActivityToSaveData("backup.gazip")
-                },
-                onImportDataRequested = {
-                    mainViewModel.startActivityToLoadData()
-                }
-            )
-            screenSaldoActualSettings(viewModel = mainViewModel)
-            screenEditarCategorias(
-                viewModel = mainViewModel,
+                onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
                 onNavigateToAddCategory = navController::navigateToAddCategory,
                 onNavigateToEditCategory = navController::navigateToEditCategory,
                 onNavigateToAddBudget = {
@@ -139,14 +89,62 @@ fun MainNavHost(
                         "CategoryDetails $categoryName.csv",
                         categoryId
                     )
+                },
+                onDataLoaded = onDataLoaded
+            )
+            screenAddAccount(
+                viewModelAddAccount = mainViewModel.viewModelAddAccount,
+                onNavigateToAddPerson = navController::navigateToAddPerson,
+                onNavigateUp = navController::navigateUp,
+                onNavigateToSettings = navController::navigateToSettings
+            )
+            screenEditAccount(
+                viewModelEditAccount = mainViewModel.viewModelEditAccount,
+                onNavigateUp = navController::navigateUp,
+                onNavigateToSettings = navController::navigateToSettings,
+                onNavigateToAddPerson = navController::navigateToAddPerson
+            )
+            screenAddPerson(
+                viewModelAddPerson = mainViewModel.viewModelAddPerson,
+                onNavigateUp = navController::navigateUp
+            )
+            screenEditPerson(
+                viewModelEditPerson = mainViewModel.viewModelEditPerson,
+                onNavigateUp = navController::navigateUp
+            )
+            screenAddTransaction(
+                viewModelAddTransaction = mainViewModel.viewModelAddTransaction,
+                onNavigateUp = { navController.navigateUpOrClose(backstackSize) { onCloseApp() } },
+                onNavigateToAddAccount = navController::navigateToAddAccount,
+                onDataLoaded = onDataLoaded
+            )
+            screenEditTransaction(
+                viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
+                onNavigateUp = navController::navigateUp,
+                onNavigateToAddAccount = navController::navigateToAddAccount
+            )
+            screenSettings(
+                viewModelSettings = mainViewModel.viewModelSettings,
+                onNavigateUp = navController::navigateUp,
+                onNavigateToAddAccount = navController::navigateToAddAccount,
+                onNavigateToAddPerson = navController::navigateToAddPerson,
+                onNavigateToAddBudget = navController::navigateToAddOneBudget,
+                onNavigateToAddCategory = navController::navigateToAddCategory,
+                onNavigateToBudget = navController::navigateToEditBudget,
+                onExportDataRequested = {
+                    mainViewModel.startActivityToSaveData("backup.gazip")
+                },
+                onImportDataRequested = {
+                    mainViewModel.startActivityToLoadData()
                 }
             )
+            screenSaldoActualSettings(viewModelSaldoActualSettings = mainViewModel.viewModelSaldoActualSettings)
             screenAddCategory(
-                viewModel = mainViewModel,
+                viewModelAddCategory = mainViewModel.viewModelAddCategory,
                 onNavigateUp = navController::navigateUp
             )
             screenEditCategory(
-                viewModel = mainViewModel,
+                viewModelEditCategory = mainViewModel.viewModelEditCategory,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditOneBudgetRequested = navController::navigateToEditOneBudget,
                 onNavigateToAddOneBudgetRequested = {
@@ -156,31 +154,31 @@ fun MainNavHost(
                 }
             )
             screenAccountDetail(
-                viewModel = mainViewModel,
+                viewModelAccountDetail = mainViewModel.viewModelAccountDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditAccount = navController::navigateToEditAccount,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
                 onNavigateToAddTransaction = navController::navigateToAddTransaction
             )
             screenPersonDetail(
-                viewModel = mainViewModel,
+                viewModelPersonDetail = mainViewModel.viewModelPersonDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
                 onNavigateToEditPerson = navController::navigateToEditPerson
             )
             screenEditBudget(
-                viewModel = mainViewModel,
+                viewModelEditBudget = mainViewModel.viewModelEditBudget,
                 onNavigateToOneBudgetDetail = navController::navigateToOneBudgetDetail,
                 onNavigateToAddOneBudget = navController::navigateToAddOneBudget,
                 onNavigateToOneBudgetEdit = navController::navigateToEditOneBudget
             )
             screenAddOneBudget(
-                viewModel = mainViewModel,
+                viewModelAddOneBudget = mainViewModel.viewModelAddOneBudget,
                 onNavigateUp = navController::navigateUp
             )
-            screenOneBudgetDetail(viewModel = mainViewModel)
+            screenOneBudgetDetail(viewModelOneBudgetDetail = mainViewModel.viewModelOneBudgetDetail)
             screenEditOneBudget(
-                viewModel = mainViewModel,
+                viewModel = mainViewModel.viewModelEditOneBudget,
                 onNavigateUp = navController::navigateUp
             )
         }

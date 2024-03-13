@@ -53,11 +53,14 @@ import com.example.gazege.core.export.writePersons
 import com.example.gazege.core.export.writeTransactions
 import com.example.gazege.core.export.writeZipBackup
 import com.example.gazege.ui.Settings
+import com.example.gazege.ui.fragments.EditarCategoriasShowType
 import com.example.gazege.ui.navigation.EditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedPersonSummaryState
 import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingTransactionsDetailsState
+import com.example.gazege.ui.navigation.PersonSummaryState
+import com.example.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.example.gazege.ui.navigation.loadingPersonSummaryState
 import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.progressStatus.HistoricalProgressStatus
@@ -89,7 +92,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.collections.set
 
 enum class NavPosition {
-    PERSONS, CUENTAS, TRANSACCIONES
+    PERSONS, CUENTAS, TRANSACCIONES, CATEGORIAS
 }
 
 fun CoroutineScope.safeLaunch(
@@ -102,15 +105,6 @@ fun CoroutineScope.safeLaunch(
     return this.launch(coroutineExceptionHandler) {
         launchBody.invoke()
     }
-}
-
-fun <T> LiveData<T>.observeOnce(observer: (T) -> Unit) {
-    observeForever(object : Observer<T> {
-        override fun onChanged(value: T) {
-            removeObserver(this)
-            observer(value)
-        }
-    })
 }
 
 fun <T> LiveData<T>.observeOnce(owner: LifecycleOwner, observer: (T) -> Unit) {
@@ -153,28 +147,819 @@ class MainViewModel(
         return currentValue
     }
 
+    fun startActivityToSaveData(
+        suggestedName: String
+    ) =
+        resultLauncherSaveData.launch(suggestedName)
+
+    fun startActivityToExportDetails(
+        suggestedName: String,
+        categoryId: Int
+    ) {
+        settingsCategoryIdToExportFlow(categoryId)
+        resultLauncherExportDetails.launch(suggestedName)
+    }
+
+    fun startActivityToLoadData() =
+        resultLauncherOpenDocument.launch(arrayOf("*/*"))
+
+    enum class Type {
+        IMPORT,
+        EXPORT
+    }
+
+    private fun IProgressStatus.toState(type: Type) = ProgressStatusState(
+        message = this.message,
+        progress = this.progress,
+        status = this.status,
+        type = type
+    )
+
+    data class ProgressStatusState(
+        override var message: String,
+        override val progress: Double,
+        override var status: Status,
+        val type: Type
+    ) : IProgressStatus(message, status)
+
+
+    private val loadingDataState: MutableLiveData<ProgressStatusState> =
+        MutableLiveData(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
+
+    private val today = MutableLiveData(LocalDate.now())
+
+    fun updateToday(newDate: LocalDate) {
+        today.value = newDate
+    }
+
+    @Composable
+    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
+        .observeAsState(
+            ProgressStatusState(
+                "Not started",
+                0.0,
+                Status.NOT_STARTED,
+                Type.IMPORT,
+            )
+        )
+
+    private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
+        otherSource: LiveData<B>,
+        crossinline merger: suspend (A, B) -> X
+    ) = MediatorLiveData<X>()
+        .apply {
+            val update = {
+                if (this@combine.isInitialized && otherSource.isInitialized) {
+                    if (this@combine.value is A && otherSource.value is B) {
+                        val a = this@combine.value as A
+                        val b = otherSource.value as B
+                        viewModelScope.launch {
+                            withContext(Dispatchers.Default) {
+                                postValue(merger(a, b))
+                            }
+                        }
+                    }
+                }
+            }
+            addSource(this@combine) { update() }
+            addSource(otherSource) { update() }
+        }
+        .distinctUntilChanged()
+
+    private inline fun <reified A, reified B, reified X, reified Y : X> LiveData<A>.combine(
+        otherSource: LiveData<B>,
+        crossinline whileUpdating: () -> Y,
+        crossinline merger: suspend (A, B) -> Y
+    ) = MediatorLiveData<X>()
+        .apply {
+            val update = {
+                postValue(whileUpdating())
+                if (this@combine.isInitialized && otherSource.isInitialized) {
+                    if (this@combine.value is A && otherSource.value is B) {
+                        val a = this@combine.value as A
+                        val b = otherSource.value as B
+                        viewModelScope.launch {
+                            withContext(Dispatchers.Default) {
+                                postValue(merger(a, b))
+                            }
+                        }
+                    }
+                }
+            }
+            addSource(this@combine) { update() }
+            addSource(otherSource) { update() }
+        }
+        .distinctUntilChanged()
+
+    private var appInitialized = false
+    private val incluirPresupuestoEnSaldoActual =
+        settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
+    private val incluirDeudasEnSaldoActual =
+        settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
+    val categoryIdToExportFlow =
+        settings.getCategoryIdToExportFlow().asLiveData()
+    private val allPerson = repository.getPersons().asLiveData()
+    private val allAccount = repository.getAccounts().asLiveData()
+    private val allTransactions = repository.getTransactions(null, null).asLiveData()
+    private val categories = repository.getCategories().asLiveData()
+    private val budget = repository.getBudgets().asLiveData()
+    private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
+
+    private val accountAndOwner: LiveData<List<AccountAndOwner>> =
+        allAccount.combine(allPerson) { allAccount, allPerson ->
+            AccountAndOwner.from(
+                allAccount,
+                allPerson
+            )
+        }
+
+    private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
+        allAccount
+            .combine(allPerson) { allAccount, allPerson ->
+                object {
+                    val allAccount = allAccount
+                    val allPerson = allPerson
+                }
+            }
+            .combine(allTransactions) { combined, allTransactions ->
+                combined.run {
+                    AccountAndOwnerWithTransactions.from(
+                        allAccount,
+                        allPerson,
+                        allTransactions
+                    )
+                }
+            }
+
+    private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
+        accountAndOwner.map { it.sortedByDescending { acc -> acc.owner.importance } }
+    private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
+        accountAndOwnerWithTransactions.map { lista ->
+            lista.map { item ->
+                AccountAndOwnerWithTransactionsAndPockets.from(
+                    item,
+                    lista
+                )
+            }
+        }
+    private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
+        allPerson.combine(accountAndOwnerWithTransactionsAndPockets) { allPerson, accountAndOwnerWithTransactionsAndPockets ->
+            PersonWithAccounts.from(allPerson, accountAndOwnerWithTransactionsAndPockets)
+        }
+    private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
+        .map { CategoryWithSubCategories.from(it) }
+
+    private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
+        budget
+            .combine(categories) { budget, categories ->
+                object {
+                    val budget = budget
+                    val categories = categories
+                }
+            }
+            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+                object {
+                    val budget = combined.budget
+                    val categories = combined.categories
+                    val accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                combined.run {
+                    if (principalPerson == null) {
+                        emptyList()
+                    } else {
+                        BudgetAndCategoryWithTransactions.from(
+                            budget = budget,
+                            category = categories,
+                            person = principalPerson,
+                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                        )
+                    }
+                }
+            }
+
+    private val categoryWithTransactions: LiveData<List<CategoryWithTransactions>> =
+        categories
+            .combine(principalPerson) { categories, principalPerson ->
+                object {
+                    val categories = categories
+                    val principalPerson = principalPerson
+                }
+            }
+            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+                if (combined.principalPerson != null) {
+                    CategoryWithTransactions.from(
+                        category = combined.categories,
+                        person = combined.principalPerson,
+                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+
+    private val initialRange = today.map { today ->
+        today.withDayOfMonth(1).let {
+            Pair(it, it.plusMonths(1L).minusDays(1L))
+        }
+    }
+
+    private val variableRange = MutableLiveData<Pair<LocalDate?, LocalDate?>?>(null)
+
+    private val range: LiveData<Pair<LocalDate?, LocalDate?>> = initialRange
+        .combine(variableRange) { initialRange, variableRange ->
+            variableRange ?: initialRange
+        }
+
+    private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
+        budgetAndCategoryWithTransactions
+            .combine(range) { budgetAndCategoryWithTransactions, range ->
+                object {
+                    val budgetAndCategoryWithTransactions = budgetAndCategoryWithTransactions
+                    val range = range
+                }
+            }
+            .combine(today) { combined, today ->
+                val range = combined.range
+                val budgetAndCategoryWithTransactions = combined.budgetAndCategoryWithTransactions
+                val startDate = range.first
+                val endDate = range.second
+                if (startDate != null && endDate != null) {
+                    BudgetWithCalculatedData.from(
+                        budgetAndCategoryWithTransactions,
+                        today,
+                        startDate,
+                        endDate
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+
+    private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
+        categoryWithTransactions
+            .combine(range) { categoryWithTransactions, range ->
+                object {
+                    val categoryWithTransactions = categoryWithTransactions
+                    val range = range
+                }
+            }
+            .combine(today) { combined, today ->
+                val range = combined.range
+                val categoryWithTransactions = combined.categoryWithTransactions
+                val startDate = range.first
+                val endDate = range.second
+                if (startDate != null && endDate != null) {
+                    CategoryWithCalculatedData.from(
+                        categoryWithTransactions = categoryWithTransactions,
+                        currentDate = today,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+
+    private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
+        budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
+            BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
+        }
+
+    val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
+            object {
+                val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                val categoriesWithSubcategories = categoriesWithSubcategories
+            }
+        }.combine(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
+            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                budgetWithCalculatedDataAndCategory = combined.budgetWithCalculatedDataAndCategory,
+                categoriesWithSubcategories = combined.categoriesWithSubcategories,
+                categoriesWithCalculatedData = categoryWithCalculatedData.associateBy {
+                    it.category.id ?: 0
+                }
+            )
+        }
+
+    private val editarCategoriasState: LiveData<EditarCategoriasState> =
+        budgetWithCalculatedDataAndCategory
+            .combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
+                object {
+                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                    val categoriesWithSubCategories = categoriesWithSubCategories
+                }
+            }
+            .combine(categoryWithCalculatedData)
+            { combined, categoryWithCalculatedData ->
+                val categoryWithCalculatedDataMap =
+                    categoryWithCalculatedData.associateBy { it.category.id ?: 0 }
+                LoadedEditarCategoriasState.from(
+                    CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                        combined.budgetWithCalculatedDataAndCategory,
+                        combined.categoriesWithSubCategories,
+                        categoryWithCalculatedDataMap
+                    )
+                )
+            }
+
+    private val transactionFilters: MutableLiveData<BooleanFilters<String, Nothing>> =
+        MutableLiveData(
+            booleanFilterOf(
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                true
+            )
+        )
+
+    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int?, Pair<String, Int>>> =
+        MediatorLiveData(booleanFilterOf<Int?, Pair<String, Int>>(emptyList(), defaultValue = true))
+            .apply {
+                addSource(categoriesWithSubCategories) { categories ->
+                    viewModelScope.launch {
+                        withContext(Dispatchers.Default) {
+                            val orderedCategories = categories
+                                .sortedBy { it.category.name }
+                                .flattenWithLevel(0)
+                            val updatedValue = if (isInitialized) {
+                                val oldValue = value!!
+                                val updatedValue = categoriesMergeBooleanFilter(
+                                    categories, oldValue
+                                )
+                                updatedValue
+                                    .copy(
+                                        values = updatedValue
+                                            .let {
+                                                it.values.toMutableMap().apply {
+                                                    this[null] = oldValue.values.getOrDefault(
+                                                        null,
+                                                        updatedValue.defaultValue
+                                                    )
+                                                }
+                                            },
+                                        metadata = updatedValue
+                                            .let {
+                                                it.metadata.toMutableMap().apply {
+                                                    this[null] = "" to 0
+                                                }
+                                            }
+                                    )
+                            } else {
+                                booleanFilterOf(
+                                    filterNames = orderedCategories.map { it.first.id },
+                                    metadata = orderedCategories.associate {
+                                        (it.first.id) to (it.first.name to it.second)
+                                    }
+                                )
+                                    .let {
+                                        it.copy(
+                                            values = it.values.plus(null to true),
+                                            metadata = it.metadata.plus(null to ("" to 0))
+                                        )
+                                    }
+                            }
+                            postValue(updatedValue)
+                        }
+                    }
+                }
+            }
+
+    private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    fun updateImportStateStatus(newState: Status) {
+        loadingDataState.value = loadingDataState.value?.copy(status = newState)
+    }
+
+    fun importStatePostValue(importState: ProgressStatusState) {
+        loadingDataState.postValue(importState.toState(importState.type))
+    }
+
+    fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) {
+        transactionFilters.value = newValue
+    }
+
+    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) {
+        categoriesFiltersValue.value = newValue
+    }
+
+    fun updatePersonFilterValue(newValue: Boolean) {
+        personFilterValue.value = newValue
+    }
+
+    fun updateValueFilterValue(newValue: DoubleFilter) {
+        valueFilterValue.value = newValue
+    }
+
+    fun updateDescriptionFilterValue(newValue: TextFilter) {
+        descriptionFilterValue.value = newValue
+    }
+
+    private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
+    private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
+
+    private val rangeTransactions = range.switchMap { range ->
+        repository.getTransactions(range.first, range.second).asLiveData()
+    }
+    private val transactionAmountRangeValue =
+        rangeTransactions.map {
+            val amountList = it.map { transaction -> transaction.amount }.distinct()
+            val max = (amountList.maxOrNull() ?: 0.0).toFloat()
+            val min = (amountList.minOrNull() ?: 0.0).toFloat()
+            min..max
+        }
+    private val valueFilterValue: MutableLiveData<DoubleFilter> =
+        MediatorLiveData<DoubleFilter>()
+            .apply {
+                addSource(transactionAmountRangeValue) {
+                    val oldValue = value?.value
+                    value = DoubleFilter(
+                        value = oldValue,
+                        range = it
+                    )
+                }
+            }
+    private val descriptionFilterValue: MutableLiveData<TextFilter> =
+        MutableLiveData(TextFilter(null))
+    private val accountDetailId = MutableLiveData<Int?>(null)
+    private val accountDetail = accountAndOwnerWithTransactionsAndPockets
+        .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
+            accountAndOwnerWithTransactionsAndPockets.firstOrNull {
+                it.accountAndOwnerWithTransactions.account.id == accountDetailId
+            }
+        }
+    private val principalPersonWithAccounts =
+        personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
+    private val filteredTransactionListitemDetails: LiveData<LoadedTransactionDetailsState> =
+        rangeTransactions
+            .combine(categories) { rangeTransactions, categories ->
+                object {
+                    val rangeTransactions = rangeTransactions
+                    val categories = categories
+                }
+            }
+            .combine(allAccount) { combined, allAccount ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = allAccount
+                }
+            }
+            .combine(principalPerson) { combined, principalPerson ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = combined.allAccount
+                }.run {
+                    TransactionListItemDetails.from(
+                        rangeTransactions,
+                        categories,
+                        allAccount,
+                        principalPerson?.id
+                    )
+                }
+            }
+            .combine(transactionFilters) { filteredTransactions, filtersValue ->
+                filteredTransactions
+                    .applyIncomeFilter(filtersValue[INCOME_FILTER])
+                    .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
+                    .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+            }
+            .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
+                filteredTransactions.applyCategoriesFilter(filtersValue)
+            }
+            .combine(valueFilterValue) { filteredTransactions, valueFilterValue ->
+                valueFilterValue?.let {
+                    filteredTransactions.applyValueFilter(valueFilterValue)
+                } ?: filteredTransactions
+            }
+            .combine(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
+                LoadedTransactionDetailsState(
+                    filteredTransactions.applyDescriptionFilter(descriptionFilterValue)
+                )
+            }
+
+    private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+        allTransactions
+            .combine(allAccount) { allTransactions, allAccount ->
+                object {
+                    val allTransactions = allTransactions
+                    val allAccount = allAccount
+                }
+            }
+            .combine(categories) { combined, categories ->
+                combined.run {
+                    TransactionAndAccountsAndCategory.from(
+                        allTransactions,
+                        allAccount,
+                        categories
+                    )
+                }
+            }
+
+    private var cachedPersonSummaryState: PersonSummaryState = loadingPersonSummaryState()
+
+    private val personSummaryState: LiveData<PersonSummaryState> =
+        principalPersonWithAccounts
+            .combine(range) { principalPersonWithAccounts, range ->
+                object {
+                    val principalPersonWithAccounts = principalPersonWithAccounts
+                    val range = range
+                }
+            }
+            .combine(personWithAccounts) { combined, personWithAccounts ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = personWithAccounts
+                }
+            }
+            .combine(allTransactionAndAccountsAndCategory) { combined, allTransactionAndAccountsAndCategory ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory = allTransactionAndAccountsAndCategory
+                }
+            }
+            .combine(categoryWithSubcategoriesAndBudgetWithCalculatedData) { combined, budgetWithCalculatedDataAndCategory ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
+                }
+            }
+            .combine(incluirPresupuestoEnSaldoActual) { combined, incluirPresupuestoEnSaldoActual ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory =
+                        combined.budgetWithCalculatedDataAndCategory
+                    val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
+                }
+            }
+            .combine(
+                incluirDeudasEnSaldoActual,
+                whileUpdating = { cachedPersonSummaryState }
+            ) { combined, incluirDeudasEnSaldoActual ->
+                combined.run {
+                    val summaryState = LoadedPersonSummaryState.from(
+                        principalPersonWithAccounts,
+                        range.first,
+                        range.second,
+                        allPersons = personWithAccounts,
+                        allTransactions = allTransactionAndAccountsAndCategory
+                            .map {
+                                TransactionAndAccounts(
+                                    it.transaction,
+                                    it.sourceAccount,
+                                    it.destinationAccount
+                                )
+                            },
+                        budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
+                        includeBudget = incluirPresupuestoEnSaldoActual,
+                        includeDebts = incluirDeudasEnSaldoActual
+                    )
+                    cachedPersonSummaryState = ReloadingPersonSummaryState.from(summaryState)
+                    summaryState
+                }
+            }
+
+    fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
+        variableRange.value = Pair(startDate, endDate)
+    }
+
+    fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.insertPerson(*person)
+        }
+
+    fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.updatePerson(*person)
+        }
+
+    fun deletePerson(person: Person) = viewModelScope.launch {
+        repository.deletePerson(person)
+    }
+
+    fun insertAccount(
+        vararg account: Account,
+        onErrorAction: (Throwable) -> Unit,
+        onCompleitionAction: (Long) -> Unit
+    ): Job =
+        viewModelScope.safeLaunch(onErrorAction) {
+            val addedIds = repository.insertAccount(*account)
+            onCompleitionAction(addedIds.first())
+        }
+
+    fun updateAccount(
+        account: Account,
+        onErrorAction: (Throwable) -> Unit,
+        onCompleitionAction: (Long) -> Unit
+    ) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            repository.updateAccount(account)
+            val id = account.id
+            if (id != null) {
+                onCompleitionAction(id.toLong())
+            }
+        }
+
+    fun deleteAccount(account: Account) = viewModelScope.launch {
+        repository.deleteAccount(account)
+    }
+
+    fun realizarAjuste(
+        accountId: Int,
+        amount: Double,
+        incomeAccountId: Int,
+        outcomeAccountId: Int,
+        today: LocalDate
+    ) = viewModelScope.launch {
+        if (amount != 0.0) {
+            val transaccionAjuste = if (amount > 0) {
+                Transaction(
+                    amount = amount,
+                    description = "Ajuste",
+                    sourceId = incomeAccountId,
+                    destinationId = accountId,
+                    date = today,
+                    aNombreDe = null,
+                    categoryId = null
+                )
+            } else {
+                Transaction(
+                    amount = -amount,
+                    description = "Ajuste",
+                    sourceId = accountId,
+                    destinationId = outcomeAccountId,
+                    date = today,
+                    aNombreDe = null,
+                    categoryId = null
+                )
+            }
+            repository.insertTransaction(transaccionAjuste)
+        }
+    }
+
+    fun insertTransaction(
+        vararg transaction: Transaction,
+        onErrorAction: (Throwable) -> Unit = {}
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertTransaction(*transaction)
+    }
+
+    fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
+        repository.updateTransaction(transaction)
+    }
+
+    fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
+        repository.deleteTransaction(transaction)
+    }
+
+    fun insertCategory(
+        vararg category: Category,
+        onCompleitionAction: (Long?) -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) =
+        viewModelScope.safeLaunch(onErrorAction) {
+            val ids = repository.insertCategory(*category)
+            onCompleitionAction(ids.firstOrNull())
+        }
+
+    fun deleteCategory(category: Category) = viewModelScope.launch {
+        repository.deleteCategory(category)
+    }
+
+    fun updateCategory(
+        vararg newCategory: Category,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit,
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.updateCategory(*newCategory)
+        onCompleitionAction()
+    }
+
+    fun insertBudget(
+        vararg budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertBudget(*budget)
+        onCompleitionAction()
+    }
+
+    fun updateBudget(
+        budget: Budget,
+        onCompleitionAction: () -> Unit,
+        onErrorAction: (Throwable) -> Unit
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.updateBudget(budget)
+        onCompleitionAction()
+    }
+
+    fun deleteBudget(budget: Budget) = viewModelScope.launch {
+        repository.deleteBudget(budget)
+    }
+
+    fun deleteAll() = viewModelScope.launch {
+        repository.deleteAllData()
+    }
+
+    fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
+    }
+
+    fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setIncluirDeudasEnSaldoActualFlow(newValue)
+    }
+
+    fun settingsCategoryIdToExportFlow(newValue: Int) = viewModelScope.launch {
+        settings.setCategoryIdToExportFlow(newValue)
+    }
+
+    private fun getPrincipalPerson(personList: List<Person>): Person? {
+        return if (personList.isEmpty()) {
+            null
+        } else {
+            personList
+                .filter { it.importance != null }
+                .sortedBy { it.id }
+                .sortedBy { it.importance }
+                .firstOrNull()
+        }
+    }
+
+    private fun getPrincipalPersonWithAccounts(personWithAccountsList: List<PersonWithAccounts>):
+            PersonWithAccounts? {
+        return if (personWithAccountsList.isEmpty()) {
+            null
+        } else {
+            personWithAccountsList
+                .filter { it.person.importance != null }
+                .sortedBy { it.person.id }
+                .sortedBy { it.person.importance }
+                .firstOrNull()
+        }
+    }
+
+    private fun getIncomeAccount(accountList: List<Account>): Account? {
+        return if (accountList.isEmpty()) {
+            null
+        } else {
+            accountList
+                .filter { it.isIncome }
+                .sortedBy { it.id }
+                .firstOrNull()
+        }
+    }
+
+    private fun getOutcomeAccount(accountList: List<Account>): Account? {
+        return if (accountList.isEmpty()) {
+            null
+        } else {
+            accountList
+                .filter { it.isOutcome }
+                .sortedBy { it.id }
+                .firstOrNull()
+        }
+    }
+
     inner class ExportModule {
-        suspend fun getTransactions() =
+        private suspend fun getTransactions() =
             repository.getTransactions(null, null)
                 .firstOrNull()
                 ?: emptyList()
 
-        suspend fun getPersons() =
+        private suspend fun getPersons() =
             repository.getPersons()
                 .firstOrNull()
                 ?: emptyList()
 
-        suspend fun getCategories() =
+        private suspend fun getCategories() =
             repository.getCategories()
                 .firstOrNull()
                 ?: emptyList()
 
-        suspend fun getAccounts() =
+        private suspend fun getAccounts() =
             repository.getAccounts()
                 .firstOrNull()
                 ?: emptyList()
 
-        suspend fun getBudget() =
+        private suspend fun getBudget() =
             repository.getBudgets()
                 .firstOrNull()
                 ?: emptyList()
@@ -452,966 +1237,480 @@ class MainViewModel(
         }
     }
 
-    inner class CategoryListStates {
-        private val _showPlot: MutableLiveData<Boolean> = MutableLiveData(false)
+    inner class SampleModule {
+        val viewModelScope get() = this@MainViewModel.viewModelScope
+        fun importStatePostValue(importState: ProgressStatusState) =
+            this@MainViewModel.importStatePostValue(importState)
+
+        fun deleteAll() = this@MainViewModel.deleteAll()
+
+        fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
+            this@MainViewModel.insertPerson(*person) { onErrorAction(it) }
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun insertCategory(
+            vararg category: Category,
+            onCompleitionAction: (Long?) -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertCategory(
+                *category,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit,
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) =
+            this@MainViewModel.insertTransaction(
+                *transaction,
+                onErrorAction = onErrorAction
+            )
+
+        fun insertBudget(
+            vararg budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertBudget(
+                *budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelMain {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
         @Composable
-        fun rememberShowPlot() = _showPlot.observeAsState(initial = false)
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
 
-        fun updateShowPlot(newValue: Boolean) = _showPlot.postValue(newValue)
-    }
+        @Composable
+        fun rememberFilteredTransactionListItemDetails() =
+            filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
 
-    val exportModule = ExportModule()
-    val categoryListStates = CategoryListStates()
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
 
-    fun startActivityToSaveData(
-        suggestedName: String
-    ) =
-        resultLauncherSaveData.launch(suggestedName)
+        @Composable
+        fun rememberRange() = range.observeAsState(Pair(null, null))
 
-    fun startActivityToExportDetails(
-        suggestedName: String,
-        categoryId: Int
-    ) {
-        settingsCategoryIdToExportFlow(categoryId)
-        resultLauncherExportDetails.launch(suggestedName)
-    }
-
-    fun startActivityToLoadData() =
-        resultLauncherOpenDocument.launch(arrayOf("*/*"))
-
-    enum class Type {
-        IMPORT,
-        EXPORT
-    }
-
-    private fun IProgressStatus.toState(type: Type) = ProgressStatusState(
-        message = this.message,
-        progress = this.progress,
-        status = this.status,
-        type = type
-    )
-
-    data class ProgressStatusState(
-        override var message: String,
-        override val progress: Double,
-        override var status: Status,
-        val type: Type
-    ) : IProgressStatus(message, status)
-
-
-    private val loadingDataState: MutableLiveData<ProgressStatusState> =
-        MutableLiveData(
-            ProgressStatusState(
-                "Not started",
-                0.0,
-                Status.NOT_STARTED,
-                Type.IMPORT,
+        @Composable
+        fun rememberTransactionFiltersValue() = transactionFilters
+            .observeAsState(
+                booleanFilterOf(
+                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                    true
+                )
             )
+
+        @Composable
+        fun rememberCategoriesFiltersValue() =
+            categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
+
+        @Composable
+        fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
+
+        @Composable
+        fun rememberValueFilterValue() =
+            valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
+
+        @Composable
+        fun rememberDescriptionFilterValue() =
+            descriptionFilterValue.observeAsState(TextFilter(null))
+
+        @Composable
+        fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+
+        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
+
+        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
+
+        fun updateRange(startDate: LocalDate?, endDate: LocalDate?) =
+            this@MainViewModel.updateRange(startDate, endDate)
+
+        fun updatePersonFilterValue(newValue: Boolean) =
+            this@MainViewModel.updatePersonFilterValue(newValue)
+
+        fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) =
+            this@MainViewModel.updateTransactionFilters(newValue)
+
+        fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
+            this@MainViewModel.updateCategoriasFiltersValue(newValue)
+
+        fun updateValueFilterValue(newValue: DoubleFilter) =
+            this@MainViewModel.updateValueFilterValue(newValue)
+
+        fun updateDescriptionFilterValue(newValue: TextFilter) =
+            this@MainViewModel.updateDescriptionFilterValue(newValue)
+
+        fun updateToday(newDate: LocalDate) = this@MainViewModel.updateToday(newDate)
+    }
+
+    inner class ViewModelCategoryList {
+        private val _showPlot: MutableLiveData<EditarCategoriasShowType> =
+            MutableLiveData(EditarCategoriasShowType.COMPACT)
+
+        @Composable
+        fun rememberShowType() =
+            _showPlot.observeAsState(initial = EditarCategoriasShowType.COMPACT)
+
+        @Composable
+        fun rememberEditarCategoriasState() =
+            editarCategoriasState.observeAsState(nullCategoriasState())
+
+        fun updateShowType(newValue: EditarCategoriasShowType) = _showPlot.postValue(newValue)
+
+        fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
+    }
+
+    inner class ViewModelAddAccount {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(initial = emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun insertAccount(
+            vararg account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.insertAccount(
+                *account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
+            )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
+    inner class ViewModelAddPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun insertPerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertPerson(
+                *person,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    inner class ViewModelAddTransaction {
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwnerUserFirst() =
+            accountAndOwnerUserFirst.observeAsState(emptyList())
+
+        fun insertTransaction(
+            vararg transaction: Transaction,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) = this@MainViewModel.insertTransaction(
+            *transaction,
+            onErrorAction = onErrorAction
         )
-
-    private val today = MutableLiveData(LocalDate.now())
-
-    fun updateToday(newDate: LocalDate) {
-        today.value = newDate
     }
 
-    @Composable
-    fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+    inner class ViewModelEditAccount {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactionsAndPockets() =
+            accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
 
-    @Composable
-    fun rememberImportState(): State<ProgressStatusState> = loadingDataState
-        .observeAsState(
-            ProgressStatusState(
-                "Not started",
-                0.0,
-                Status.NOT_STARTED,
-                Type.IMPORT,
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
+
+        @Composable
+        fun rememberToday() = today.observeAsState(LocalDate.now())
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
             )
+
+        fun realizarAjuste(
+            accountId: Int,
+            amount: Double,
+            incomeAccountId: Int,
+            outcomeAccountId: Int,
+            today: LocalDate
+        ) =
+            this@MainViewModel.realizarAjuste(
+                accountId = accountId,
+                amount = amount,
+                incomeAccountId = incomeAccountId,
+                outcomeAccountId = outcomeAccountId,
+                today = today
+            )
+    }
+
+    inner class ViewModelEditPerson {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) = this@MainViewModel.updatePerson(
+            *person,
+            onErrorAction = onErrorAction
         )
+    }
 
-    @Composable
-    fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+    inner class ViewModelEditTransaction {
+        @Composable
+        fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
+            allTransactionAndAccountsAndCategory
+                .map { transactionAndAccountAndCategory ->
+                    transactionAndAccountAndCategory
+                        .firstOrNull { it.transaction.id == transactionId }
+                        ?.toTransactionAndAccounts()
+                }
+        }
+            .observeAsState()
 
-    @Composable
-    fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
 
-    @Composable
-    fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
-        incluirPresupuestoEnSaldoActual.observeAsState(false)
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
-    @Composable
-    fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
-        incluirDeudasEnSaldoActual.observeAsState(false)
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
 
-    @Composable
-    fun rememberPersonSummaryState() =
-        personSummaryState.observeAsState(loadingPersonSummaryState())
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
 
-    @Composable
-    fun rememberCategories() = categories.observeAsState(emptyList())
+        fun updateTransaction(transaction: Transaction) =
+            this@MainViewModel.updateTransaction(transaction)
+    }
 
-    @Composable
-    fun rememberBudget() = budget.observeAsState(emptyList())
+    inner class ViewModelSettings {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
-    @Composable
-    fun rememberBudgetAndCategoryWithTransactions() =
-        budgetAndCategoryWithTransactions.observeAsState(emptyList())
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
-    @Composable
-    fun rememberBudgetAndCategoryWithCalculatedData() =
-        budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
 
-    @Composable
-    fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-        categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
 
-    @Composable
-    fun rememberEditarCategoriasState() =
-        editarCategoriasState.observeAsState(nullCategoriasState())
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
 
-    @Composable
-    fun rememberAccountAndOwnerWithTransactions() =
-        accountAndOwnerWithTransactions.observeAsState(emptyList())
-
-    @Composable
-    fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
-
-    @Composable
-    fun rememberAccountAndOwnerUserFirst() =
-        accountAndOwnerUserFirst.observeAsState(emptyList())
-
-    @Composable
-    fun rememberAccountAndOwnerWithTransactionsAndPockets() =
-        accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
-
-    @Composable
-    fun rememberCategoriesWithSubcategories() =
-        categoriesWithSubCategories.observeAsState(emptyList())
-
-    @Composable
-    fun rememberRange() = range.observeAsState(Pair(null, null))
-
-    @Composable
-    fun rememberTransactionFiltersValue() = transactionFilters
-        .observeAsState(
-            booleanFilterOf(
-                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
-                true
+        fun updatePerson(
+            vararg person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updatePerson(
+                *person,
+                onErrorAction = onErrorAction
             )
-        )
 
-    @Composable
-    fun rememberCategoriesFiltersValue() =
-        categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
-
-    @Composable
-    fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
-
-    @Composable
-    fun rememberValueFilterValue() =
-        valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
-
-    @Composable
-    fun rememberDescriptionFilterValue() =
-        descriptionFilterValue.observeAsState(TextFilter(null))
-
-    @Composable
-    fun rememberPrincipalPerson() = principalPerson.observeAsState()
-
-    @Composable
-    fun rememberIncomeAccount() = incomeAccount.observeAsState()
-
-    @Composable
-    fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
-
-    @Composable
-    fun rememberFilteredTransactionListItemDetails() =
-        filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
-
-    @Composable
-    fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
-        allTransactionAndAccountsAndCategory
-            .map { transactionAndAccountAndCategory ->
-                transactionAndAccountAndCategory
-                    .firstOrNull { it.transaction.id == transactionId }
-                    ?.toTransactionAndAccounts()
-            }
-    }
-        .observeAsState()
-
-    @Composable
-    fun rememberPeopleTransactionListItemDetails(
-        otherPersonId: Int?,
-        justPendingTransactions: Boolean,
-        debt: Double
-    ) = remember(otherPersonId, justPendingTransactions, debt) {
-        allTransactions
-            .combine(allAccount) { allTransactions, allAccount ->
-                val personAccountsIds = allAccount
-                    .filter { it.ownerId == otherPersonId }
-                    .map { it.id }
-                    .toSet()
-                object {
-                    val transactions = allTransactions
-                        .filter {
-                            it.aNombreDe == otherPersonId ||
-                                    it.sourceId in personAccountsIds ||
-                                    it.destinationId in personAccountsIds
-                        }
-                        .sortedByDescending { it.date }
-                    val accounts = allAccount
-                }
-            }
-            .combine(categories) { combined, categories ->
-                object {
-                    val transactions = combined.transactions
-                    val accounts = combined.accounts
-                    val categories = categories
-                }
-            }
-            .combine(principalPerson) { combined, principalPerson ->
-                object {
-                    val transactions = combined.transactions
-                    val categories = combined.categories
-                    val accounts = combined.accounts
-                    val principalPersonId = principalPerson?.id
-                }.run {
-                    val allTransactions = TransactionListItemDetails.from(
-                        transactions,
-                        categories,
-                        accounts,
-                        principalPersonId
-                    )
-                    if (justPendingTransactions) {
-                        var cumSum = 0.0
-                        val sortedTransactions = allTransactions
-                            .sortedByDescending { it.transaction.id }
-                            .sortedByDescending { it.transaction.date }
-                        val filteredTransactions = sortedTransactions
-                            .takeWhile {
-                                val sign = when (it.transactionType) {
-                                    TransactionType.INCOME -> -1.0
-                                    TransactionType.OUTCOME -> 1.0
-                                    else -> 0.0
-                                }
-                                val condition = cumSum != debt
-                                cumSum += it.transaction.amount * sign
-                                condition
-                            }
-                            .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
-                        filteredTransactions
-                    } else {
-                        allTransactions
-                    }
-                }
-            }
-    }
-        .observeAsState()
-
-
-    private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
-        otherSource: LiveData<B>,
-        crossinline merger: suspend (A, B) -> X
-    ) = MediatorLiveData<X>()
-        .apply {
-            val update = {
-                if (this@combine.isInitialized && otherSource.isInitialized) {
-                    if (this@combine.value is A && otherSource.value is B) {
-                        val a = this@combine.value as A
-                        val b = otherSource.value as B
-                        viewModelScope.launch {
-                            withContext(Dispatchers.Default) {
-                                postValue(merger(a, b))
-                            }
-                        }
-                    }
-                }
-            }
-            addSource(this@combine) { update() }
-            addSource(otherSource) { update() }
-        }
-        .distinctUntilChanged()
-
-    private var appInitialized = false
-    private val incluirPresupuestoEnSaldoActual =
-        settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
-    private val incluirDeudasEnSaldoActual =
-        settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
-    val categoryIdToExportFlow =
-        settings.getCategoryIdToExportFlow().asLiveData()
-    private val allPerson = repository.getPersons().asLiveData()
-    private val allAccount = repository.getAccounts().asLiveData()
-    private val allTransactions = repository.getTransactions(null, null).asLiveData()
-    private val categories = repository.getCategories().asLiveData()
-    private val budget = repository.getBudgets().asLiveData()
-    private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
-
-    private val accountAndOwner: LiveData<List<AccountAndOwner>> =
-        allAccount.combine(allPerson) { allAccount, allPerson ->
-            AccountAndOwner.from(
-                allAccount,
-                allPerson
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
             )
-        }
-
-    private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
-        allAccount
-            .combine(allPerson) { allAccount, allPerson ->
-                object {
-                    val allAccount = allAccount
-                    val allPerson = allPerson
-                }
-            }
-            .combine(allTransactions) { combined, allTransactions ->
-                combined.run {
-                    AccountAndOwnerWithTransactions.from(
-                        allAccount,
-                        allPerson,
-                        allTransactions
-                    )
-                }
-            }
-
-    private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
-        accountAndOwner.map { it.sortedByDescending { acc -> acc.owner.importance } }
-    private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
-        accountAndOwnerWithTransactions.map { lista ->
-            lista.map { item ->
-                AccountAndOwnerWithTransactionsAndPockets.from(
-                    item,
-                    lista
-                )
-            }
-        }
-    private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
-        allPerson.combine(accountAndOwnerWithTransactionsAndPockets) { allPerson, accountAndOwnerWithTransactionsAndPockets ->
-            PersonWithAccounts.from(allPerson, accountAndOwnerWithTransactionsAndPockets)
-        }
-    private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
-        .map { CategoryWithSubCategories.from(it) }
-
-    private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
-        budget
-            .combine(categories) { budget, categories ->
-                object {
-                    val budget = budget
-                    val categories = categories
-                }
-            }
-            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
-                object {
-                    val budget = combined.budget
-                    val categories = combined.categories
-                    val accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                }
-            }
-            .combine(principalPerson) { combined, principalPerson ->
-                combined.run {
-                    if (principalPerson == null) {
-                        emptyList()
-                    } else {
-                        BudgetAndCategoryWithTransactions.from(
-                            budget = budget,
-                            category = categories,
-                            person = principalPerson,
-                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                        )
-                    }
-                }
-            }
-
-    private val categoryWithTransactions: LiveData<List<CategoryWithTransactions>> =
-        categories
-            .combine(principalPerson) { categories, principalPerson ->
-                object {
-                    val categories = categories
-                    val principalPerson = principalPerson
-                }
-            }
-            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
-                if (combined.principalPerson != null) {
-                    CategoryWithTransactions.from(
-                        category = combined.categories,
-                        person = combined.principalPerson,
-                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                    )
-                } else {
-                    emptyList()
-                }
-            }
-
-    private val initialRange = today.map { today ->
-        today.withDayOfMonth(1).let {
-            Pair(it, it.plusMonths(1L).minusDays(1L))
-        }
     }
 
-    private val variableRange = MutableLiveData<Pair<LocalDate?, LocalDate?>?>(null)
+    inner class ViewModelSaldoActualSettings {
+        @Composable
+        fun rememberAccountAndOwnerWithTransactions() =
+            accountAndOwnerWithTransactions.observeAsState(emptyList())
 
-    private val range: LiveData<Pair<LocalDate?, LocalDate?>> = initialRange
-        .combine(variableRange) { initialRange, variableRange ->
-            variableRange ?: initialRange
-        }
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
 
-    private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
-        budgetAndCategoryWithTransactions
-            .combine(range) { budgetAndCategoryWithTransactions, range ->
-                object {
-                    val budgetAndCategoryWithTransactions = budgetAndCategoryWithTransactions
-                    val range = range
-                }
-            }
-            .combine(today) { combined, today ->
-                val range = combined.range
-                val budgetAndCategoryWithTransactions = combined.budgetAndCategoryWithTransactions
-                val startDate = range.first
-                val endDate = range.second
-                if (startDate != null && endDate != null) {
-                    BudgetWithCalculatedData.from(
-                        budgetAndCategoryWithTransactions,
-                        today,
-                        startDate,
-                        endDate
-                    )
-                } else {
-                    emptyList()
-                }
-            }
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
 
-    private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
-        categoryWithTransactions
-            .combine(range) { categoryWithTransactions, range ->
-                object {
-                    val categoryWithTransactions = categoryWithTransactions
-                    val range = range
-                }
-            }
-            .combine(today) { combined, today ->
-                val range = combined.range
-                val categoryWithTransactions = combined.categoryWithTransactions
-                val startDate = range.first
-                val endDate = range.second
-                if (startDate != null && endDate != null) {
-                    CategoryWithCalculatedData.from(
-                        categoryWithTransactions = categoryWithTransactions,
-                        currentDate = today,
-                        startDate = startDate,
-                        endDate = endDate
-                    )
-                } else {
-                    emptyList()
-                }
-            }
+        @Composable
+        fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
+            incluirPresupuestoEnSaldoActual.observeAsState(false)
 
-    private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
-        budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
-            BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
-        }
+        @Composable
+        fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
+            incluirDeudasEnSaldoActual.observeAsState(false)
 
-    val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
-        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
-            object {
-                val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
-                val categoriesWithSubcategories = categoriesWithSubcategories
-            }
-        }.combine(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
-            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                budgetWithCalculatedDataAndCategory = combined.budgetWithCalculatedDataAndCategory,
-                categoriesWithSubcategories = combined.categoriesWithSubcategories,
-                categoriesWithCalculatedData = categoryWithCalculatedData.associateBy {
-                    it.category.id ?: 0
-                }
+        fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)
+
+        fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) =
+            this@MainViewModel.settingsIncluirDeudasEnSaldoActualFlow(newValue)
+
+        fun updateAccount(
+            account: Account,
+            onErrorAction: (Throwable) -> Unit,
+            onCompleitionAction: (Long) -> Unit
+        ) =
+            this@MainViewModel.updateAccount(
+                account = account,
+                onErrorAction = onErrorAction,
+                onCompleitionAction = onCompleitionAction
             )
-        }
+    }
 
-    private val budgetWithCalculatedDataAndCategoryMap: LiveData<Map<Category, BudgetWithCalculatedDataAndCategory>> =
-        budgetWithCalculatedDataAndCategory.map {
-            it.associateBy { value -> value.category }
-        }
+    inner class ViewModelAddCategory {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
 
-    private val editarCategoriasState: LiveData<EditarCategoriasState> =
-        budgetWithCalculatedDataAndCategory
-            .combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
-                object {
-                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
-                    val categoriesWithSubCategories = categoriesWithSubCategories
-                }
-            }
-            .combine(categoryWithCalculatedData)
-            { combined, categoryWithCalculatedData ->
-                val categoryWithCalculatedDataMap =
-                    categoryWithCalculatedData.associateBy { it.category.id ?: 0 }
-                LoadedEditarCategoriasState.from(
-                    CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                        combined.budgetWithCalculatedDataAndCategory,
-                        combined.categoriesWithSubCategories,
-                        categoryWithCalculatedDataMap
-                    )
-                )
-            }
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
 
-    private val transactionFilters: MutableLiveData<BooleanFilters<String, Nothing>> =
-        MutableLiveData(
-            booleanFilterOf(
-                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
-                true
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun insertCategory(
+            vararg category: Category,
+            onCompleitionAction: (Long?) -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertCategory(
+                *category,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
             )
-        )
-
-    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int?, Pair<String, Int>>> =
-        MediatorLiveData(booleanFilterOf<Int?, Pair<String, Int>>(emptyList(), defaultValue = true))
-            .apply {
-                addSource(categoriesWithSubCategories) { categories ->
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            val orderedCategories = categories
-                                .sortedBy { it.category.name }
-                                .flattenWithLevel(0)
-                            val updatedValue = if (isInitialized) {
-                                val oldValue = value!!
-                                val updatedValue = categoriesMergeBooleanFilter(
-                                    categories, oldValue
-                                )
-                                updatedValue
-                                    .copy(
-                                        values = updatedValue
-                                            .let {
-                                                it.values.toMutableMap().apply {
-                                                    this[null] = oldValue.values.getOrDefault(
-                                                        null,
-                                                        updatedValue.defaultValue
-                                                    )
-                                                }
-                                            },
-                                        metadata = updatedValue
-                                            .let {
-                                                it.metadata.toMutableMap().apply {
-                                                    this[null] = "" to 0
-                                                }
-                                            }
-                                    )
-                            } else {
-                                booleanFilterOf(
-                                    filterNames = orderedCategories.map { it.first.id },
-                                    metadata = orderedCategories.associate {
-                                        (it.first.id) to (it.first.name to it.second)
-                                    }
-                                )
-                                    .let {
-                                        it.copy(
-                                            values = it.values.plus(null to true),
-                                            metadata = it.metadata.plus(null to ("" to 0))
-                                        )
-                                    }
-                            }
-                            postValue(updatedValue)
-                        }
-                    }
-                }
-            }
-
-    private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
-
-    fun updateImportStateStatus(newState: Status) {
-        loadingDataState.value = loadingDataState.value?.copy(status = newState)
     }
 
-    fun importStatePostValue(importState: ProgressStatusState) {
-        loadingDataState.postValue(importState.toState(importState.type))
+    inner class ViewModelEditCategory {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudgetAndCategoryWithCalculatedData() =
+            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateCategory(
+            vararg newCategory: Category,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updateCategory(
+                *newCategory,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+
+        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
     }
 
-    fun updateTransactionFilters(newValue: BooleanFilters<String, Nothing>) {
-        transactionFilters.value = newValue
-    }
-
-    fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) {
-        categoriesFiltersValue.value = newValue
-    }
-
-    fun updatePersonFilterValue(newValue: Boolean) {
-        personFilterValue.value = newValue
-    }
-
-    fun updateValueFilterValue(newValue: DoubleFilter) {
-        valueFilterValue.value = newValue
-    }
-
-    fun updateDescriptionFilterValue(newValue: TextFilter) {
-        descriptionFilterValue.value = newValue
-    }
-
-    private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
-    private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
-
-    private val rangeTransactions = range.switchMap { range ->
-        repository.getTransactions(range.first, range.second).asLiveData()
-    }
-    private val transactionAmountRangeValue =
-        rangeTransactions.map {
-            val amountList = it.map { transaction -> transaction.amount }.distinct()
-            val max = (amountList.maxOrNull() ?: 0.0).toFloat()
-            val min = (amountList.minOrNull() ?: 0.0).toFloat()
-            min..max
-        }
-    private val valueFilterValue: MutableLiveData<DoubleFilter> =
-        MediatorLiveData<DoubleFilter>()
-            .apply {
-                addSource(transactionAmountRangeValue) {
-                    val oldValue = value?.value
-                    value = DoubleFilter(
-                        value = oldValue,
-                        range = it
-                    )
-                }
-            }
-    private val descriptionFilterValue: MutableLiveData<TextFilter> =
-        MutableLiveData(TextFilter(null))
-    private val accountDetailId = MutableLiveData<Int?>(null)
-    private val accountDetail = accountAndOwnerWithTransactionsAndPockets
-        .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
-            accountAndOwnerWithTransactionsAndPockets.firstOrNull {
-                it.accountAndOwnerWithTransactions.account.id == accountDetailId
-            }
-        }
-    private val principalPersonWithAccounts =
-        personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
-    private val filteredTransactionListitemDetails: LiveData<LoadedTransactionDetailsState> =
-        rangeTransactions
-            .combine(categories) { rangeTransactions, categories ->
-                object {
-                    val rangeTransactions = rangeTransactions
-                    val categories = categories
-                }
-            }
-            .combine(allAccount) { combined, allAccount ->
-                object {
-                    val rangeTransactions = combined.rangeTransactions
-                    val categories = combined.categories
-                    val allAccount = allAccount
-                }
-            }
-            .combine(principalPerson) { combined, principalPerson ->
-                object {
-                    val rangeTransactions = combined.rangeTransactions
-                    val categories = combined.categories
-                    val allAccount = combined.allAccount
-                }.run {
-                    TransactionListItemDetails.from(
-                        rangeTransactions,
-                        categories,
-                        allAccount,
-                        principalPerson?.id
-                    )
-                }
-            }
-            .combine(transactionFilters) { filteredTransactions, filtersValue ->
-                filteredTransactions
-                    .applyIncomeFilter(filtersValue[INCOME_FILTER])
-                    .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
-                    .applyTransferFilter(filtersValue[TRANSFER_FILTER])
-            }
-            .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
-                filteredTransactions.applyCategoriesFilter(filtersValue)
-            }
-            .combine(valueFilterValue) { filteredTransactions, valueFilterValue ->
-                valueFilterValue?.let {
-                    filteredTransactions.applyValueFilter(valueFilterValue)
-                } ?: filteredTransactions
-            }
-            .combine(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
-                LoadedTransactionDetailsState(
-                    filteredTransactions.applyDescriptionFilter(descriptionFilterValue)
-                )
-            }
-
-    private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
-        allTransactions
-            .combine(allAccount) { allTransactions, allAccount ->
-                object {
-                    val allTransactions = allTransactions
-                    val allAccount = allAccount
-                }
-            }
-            .combine(categories) { combined, categories ->
-                combined.run {
-                    TransactionAndAccountsAndCategory.from(
-                        allTransactions,
-                        allAccount,
-                        categories
-                    )
-                }
-            }
-
-    private val personSummaryState: LiveData<LoadedPersonSummaryState> =
-        principalPersonWithAccounts
-            .combine(range) { principalPersonWithAccounts, range ->
-                object {
-                    val principalPersonWithAccounts = principalPersonWithAccounts
-                    val range = range
-                }
-            }
-            .combine(personWithAccounts) { combined, personWithAccounts ->
-                object {
-                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
-                    val range = combined.range
-                    val personWithAccounts = personWithAccounts
-                }
-            }
-            .combine(allTransactionAndAccountsAndCategory) { combined, allTransactionAndAccountsAndCategory ->
-                object {
-                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
-                    val range = combined.range
-                    val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory = allTransactionAndAccountsAndCategory
-                }
-            }
-            .combine(categoryWithSubcategoriesAndBudgetWithCalculatedData) { combined, budgetWithCalculatedDataAndCategory ->
-                object {
-                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
-                    val range = combined.range
-                    val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory =
-                        combined.allTransactionAndAccountsAndCategory
-                    val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
-                }
-            }
-            .combine(incluirPresupuestoEnSaldoActual) { combined, incluirPresupuestoEnSaldoActual ->
-                object {
-                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
-                    val range = combined.range
-                    val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory =
-                        combined.allTransactionAndAccountsAndCategory
-                    val budgetWithCalculatedDataAndCategory =
-                        combined.budgetWithCalculatedDataAndCategory
-                    val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
-                }
-            }
-            .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
-                combined.run {
-                    LoadedPersonSummaryState.from(
-                        principalPersonWithAccounts,
-                        range.first,
-                        range.second,
-                        allPersons = personWithAccounts,
-                        allTransactions = allTransactionAndAccountsAndCategory
-                            .map {
-                                TransactionAndAccounts(
-                                    it.transaction,
-                                    it.sourceAccount,
-                                    it.destinationAccount
-                                )
-                            },
-                        budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
-                        includeBudget = incluirPresupuestoEnSaldoActual,
-                        includeDebts = incluirDeudasEnSaldoActual
-                    )
-                }
-            }
-
-    fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
-        variableRange.value = Pair(startDate, endDate)
-    }
-
-    fun insertPerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
-        viewModelScope.safeLaunch(onErrorAction) {
-            repository.insertPerson(*person)
-        }
-
-    fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
-        viewModelScope.safeLaunch(onErrorAction) {
-            repository.updatePerson(*person)
-        }
-
-    fun deletePerson(person: Person) = viewModelScope.launch {
-        repository.deletePerson(person)
-    }
-
-    fun insertAccount(
-        vararg account: Account,
-        onErrorAction: (Throwable) -> Unit,
-        onCompleitionAction: (Long) -> Unit
-    ): Job =
-        viewModelScope.safeLaunch(onErrorAction) {
-            val addedIds = repository.insertAccount(*account)
-            onCompleitionAction(addedIds.first())
-        }
-
-    fun updateAccount(
-        account: Account,
-        onErrorAction: (Throwable) -> Unit,
-        onCompleitionAction: (Long) -> Unit
-    ) =
-        viewModelScope.safeLaunch(onErrorAction) {
-            repository.updateAccount(account)
-            val id = account.id
-            if (id != null) {
-                onCompleitionAction(id.toLong())
-            }
-        }
-
-    fun deleteAccount(account: Account) = viewModelScope.launch {
-        repository.deleteAccount(account)
-    }
-
-    fun realizarAjuste(
-        accountId: Int,
-        amount: Double,
-        incomeAccountId: Int,
-        outcomeAccountId: Int,
-        today: LocalDate
-    ) = viewModelScope.launch {
-        if (amount != 0.0) {
-            val transaccionAjuste = if (amount > 0) {
-                Transaction(
-                    amount = amount,
-                    description = "Ajuste",
-                    sourceId = incomeAccountId,
-                    destinationId = accountId,
-                    date = today,
-                    aNombreDe = null,
-                    categoryId = null
-                )
-            } else {
-                Transaction(
-                    amount = -amount,
-                    description = "Ajuste",
-                    sourceId = accountId,
-                    destinationId = outcomeAccountId,
-                    date = today,
-                    aNombreDe = null,
-                    categoryId = null
-                )
-            }
-            repository.insertTransaction(transaccionAjuste)
-        }
-    }
-
-    fun insertTransaction(
-        vararg transaction: Transaction,
-        onErrorAction: (Throwable) -> Unit = {}
-    ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.insertTransaction(*transaction)
-    }
-
-    fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
-        repository.updateTransaction(transaction)
-    }
-
-    fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
-        repository.deleteTransaction(transaction)
-    }
-
-    fun insertCategory(
-        vararg category: Category,
-        onCompleitionAction: (Long?) -> Unit,
-        onErrorAction: (Throwable) -> Unit
-    ) =
-        viewModelScope.safeLaunch(onErrorAction) {
-            val ids = repository.insertCategory(*category)
-            onCompleitionAction(ids.firstOrNull())
-        }
-
-    fun deleteCategory(category: Category) = viewModelScope.launch {
-        repository.deleteCategory(category)
-    }
-
-    fun updateCategory(
-        vararg newCategory: Category,
-        onCompleitionAction: () -> Unit,
-        onErrorAction: (Throwable) -> Unit,
-    ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.updateCategory(*newCategory)
-        onCompleitionAction()
-    }
-
-    fun insertBudget(
-        vararg budget: Budget,
-        onCompleitionAction: () -> Unit,
-        onErrorAction: (Throwable) -> Unit
-    ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.insertBudget(*budget)
-        onCompleitionAction()
-    }
-
-    fun updateBudget(
-        budget: Budget,
-        onCompleitionAction: () -> Unit,
-        onErrorAction: (Throwable) -> Unit
-    ) = viewModelScope.safeLaunch(onErrorAction) {
-        repository.updateBudget(budget)
-        onCompleitionAction()
-    }
-
-    fun deleteBudget(budget: Budget) = viewModelScope.launch {
-        repository.deleteBudget(budget)
-    }
-
-    fun deleteAll() = viewModelScope.launch {
-        repository.deleteAllData()
-    }
-
-    fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
-        settings.setIncluirPresupuestoEnSaldoActualFlow(newValue)
-    }
-
-    fun settingsIncluirDeudasEnSaldoActualFlow(newValue: Boolean) = viewModelScope.launch {
-        settings.setIncluirDeudasEnSaldoActualFlow(newValue)
-    }
-
-    fun settingsCategoryIdToExportFlow(newValue: Int) = viewModelScope.launch {
-        settings.setCategoryIdToExportFlow(newValue)
-    }
-
-    private fun getPrincipalPerson(personList: List<Person>): Person? {
-        return if (personList.isEmpty()) {
-            null
-        } else {
-            personList
-                .filter { it.importance != null }
-                .sortedBy { it.id }
-                .sortedBy { it.importance }
-                .firstOrNull()
-        }
-    }
-
-    private fun getPrincipalPersonWithAccounts(personWithAccountsList: List<PersonWithAccounts>):
-            PersonWithAccounts? {
-        return if (personWithAccountsList.isEmpty()) {
-            null
-        } else {
-            personWithAccountsList
-                .filter { it.person.importance != null }
-                .sortedBy { it.person.id }
-                .sortedBy { it.person.importance }
-                .firstOrNull()
-        }
-    }
-
-    private fun getIncomeAccount(accountList: List<Account>): Account? {
-        return if (accountList.isEmpty()) {
-            null
-        } else {
-            accountList
-                .filter { it.isIncome }
-                .sortedBy { it.id }
-                .firstOrNull()
-        }
-    }
-
-    private fun getOutcomeAccount(accountList: List<Account>): Account? {
-        return if (accountList.isEmpty()) {
-            null
-        } else {
-            accountList
-                .filter { it.isOutcome }
-                .sortedBy { it.id }
-                .firstOrNull()
-        }
-    }
-
-    inner class AccountDetailScreenState {
+    inner class ViewModelAccountDetail {
         private var accountId: Int? = null
         private val descriptionFilter: MutableLiveData<TextFilter> = MutableLiveData()
         private val accountFilterValue = MutableLiveData(
@@ -1571,6 +1870,18 @@ class MainViewModel(
             return accountDetailData.observeAsState()
         }
 
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoriesWithSubcategories() =
+            categoriesWithSubCategories.observeAsState(emptyList())
+
+        fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
+
         private fun updateAccountDetailIdIfDifferent(
             newId: Int?,
             accountFilters: BooleanFilters<String, Nothing>,
@@ -1594,9 +1905,180 @@ class MainViewModel(
         fun updateDescriptionFilter(newValue: TextFilter) {
             descriptionFilter.value = newValue
         }
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
     }
 
-    val accountDetailScreenState = AccountDetailScreenState()
+    inner class ViewModelPersonDetail {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberPersonSummaryState() =
+            personSummaryState.observeAsState(loadingPersonSummaryState())
+
+        @Composable
+        fun rememberPeopleTransactionListItemDetails(
+            otherPersonId: Int?,
+            justPendingTransactions: Boolean,
+            debt: Double
+        ) = remember(otherPersonId, justPendingTransactions, debt) {
+            allTransactions
+                .combine(allAccount) { allTransactions, allAccount ->
+                    val personAccountsIds = allAccount
+                        .filter { it.ownerId == otherPersonId }
+                        .map { it.id }
+                        .toSet()
+                    object {
+                        val transactions = allTransactions
+                            .filter {
+                                it.aNombreDe == otherPersonId ||
+                                        it.sourceId in personAccountsIds ||
+                                        it.destinationId in personAccountsIds
+                            }
+                            .sortedByDescending { it.date }
+                        val accounts = allAccount
+                    }
+                }
+                .combine(categories) { combined, categories ->
+                    object {
+                        val transactions = combined.transactions
+                        val accounts = combined.accounts
+                        val categories = categories
+                    }
+                }
+                .combine(principalPerson) { combined, principalPerson ->
+                    object {
+                        val transactions = combined.transactions
+                        val categories = combined.categories
+                        val accounts = combined.accounts
+                        val principalPersonId = principalPerson?.id
+                    }.run {
+                        val allTransactions = TransactionListItemDetails.from(
+                            transactions,
+                            categories,
+                            accounts,
+                            principalPersonId
+                        )
+                        if (justPendingTransactions) {
+                            var cumSum = 0.0
+                            val sortedTransactions = allTransactions
+                                .sortedByDescending { it.transaction.id }
+                                .sortedByDescending { it.transaction.date }
+                            val filteredTransactions = sortedTransactions
+                                .takeWhile {
+                                    val sign = when (it.transactionType) {
+                                        TransactionType.INCOME -> -1.0
+                                        TransactionType.OUTCOME -> 1.0
+                                        else -> 0.0
+                                    }
+                                    val condition = cumSum != debt
+                                    cumSum += it.transaction.amount * sign
+                                    condition
+                                }
+                                .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
+                            filteredTransactions
+                        } else {
+                            allTransactions
+                        }
+                    }
+                }
+        }
+            .observeAsState()
+
+        fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
+
+        fun deleteTransaction(transaction: Transaction) =
+            this@MainViewModel.deleteTransaction(transaction)
+    }
+
+    inner class ViewModelEditBudget {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudgetAndCategoryWithCalculatedData() =
+            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+
+        fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
+    }
+
+    inner class ViewModelAddOneBudget {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun insertBudget(
+            vararg budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.insertBudget(
+                *budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction,
+            )
+    }
+
+    inner class ViewModelOneBudgetDetail {
+        @Composable
+        fun rememberBudgetAndCategoryWithTransactions() =
+            budgetAndCategoryWithTransactions.observeAsState(emptyList())
+    }
+
+    inner class ViewModelEditOneBudget {
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategories() = categories.observeAsState(emptyList())
+
+        @Composable
+        fun rememberBudget() = budget.observeAsState(emptyList())
+
+        @Composable
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+
+        fun updateBudget(
+            budget: Budget,
+            onCompleitionAction: () -> Unit,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updateBudget(
+                budget = budget,
+                onCompleitionAction = onCompleitionAction,
+                onErrorAction = onErrorAction
+            )
+    }
+
+    val exportModule = ExportModule()
+    val sampleModule = SampleModule()
+    val viewModelMain = ViewModelMain()
+    val viewModelCategoryList = ViewModelCategoryList()
+    val viewModelAddAccount = ViewModelAddAccount()
+    val viewModelAddPerson = ViewModelAddPerson()
+    val viewModelAddTransaction = ViewModelAddTransaction()
+    val viewModelEditAccount = ViewModelEditAccount()
+    val viewModelEditPerson = ViewModelEditPerson()
+    val viewModelEditTransaction = ViewModelEditTransaction()
+    val viewModelSettings = ViewModelSettings()
+    val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
+    val viewModelAddCategory = ViewModelAddCategory()
+    val viewModelEditCategory = ViewModelEditCategory()
+    val viewModelAccountDetail = ViewModelAccountDetail()
+    val viewModelPersonDetail = ViewModelPersonDetail()
+    val viewModelEditBudget = ViewModelEditBudget()
+    val viewModelAddOneBudget = ViewModelAddOneBudget()
+    val viewModelOneBudgetDetail = ViewModelOneBudgetDetail()
+    val viewModelEditOneBudget = ViewModelEditOneBudget()
 
     companion object {
         suspend fun List<TransactionListItemDetails>.applyIncomeFilter(

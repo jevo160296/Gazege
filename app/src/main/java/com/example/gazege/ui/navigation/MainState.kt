@@ -69,6 +69,30 @@ interface LoadedPersonSummaryState : PersonSummaryState {
     }
 }
 
+data class ReloadingPersonSummaryState(
+    override val saldoActual: Double,
+    override val ingresos: Double,
+    override val egresos: Double,
+    override val deudasFlujo: Map<Person, Double>,
+    override val deudasTotal: Double,
+    override val presupuestoTotal: Double
+) : LoadedPersonSummaryState {
+    companion object {
+        fun from(
+            loadedPersonSummaryState: LoadedPersonSummaryState
+        ) = loadedPersonSummaryState.run {
+            ReloadingPersonSummaryState(
+                saldoActual = saldoActual,
+                ingresos = ingresos,
+                egresos = egresos,
+                deudasFlujo = deudasFlujo,
+                deudasTotal = deudasTotal,
+                presupuestoTotal = presupuestoTotal
+            )
+        }
+    }
+}
+
 data class FullPersonSummaryState(
     val person: Person,
     override val saldoActual: Double,

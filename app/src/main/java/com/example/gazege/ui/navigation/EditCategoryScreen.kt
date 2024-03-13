@@ -14,7 +14,7 @@ import com.example.gazege.ui.views.category.CategoryForm
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenEditCategory(
-    viewModel: MainViewModel,
+    viewModelEditCategory: MainViewModel.ViewModelEditCategory,
     onNavigateUp: () -> Unit,
     onNavigateToEditOneBudgetRequested: (Int) -> Unit,
     onNavigateToAddOneBudgetRequested: (Category) -> Unit
@@ -27,9 +27,9 @@ fun NavGraphBuilder.screenEditCategory(
             }
         )
     ) { navStack ->
-        val categories by viewModel.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModel.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
-        val budgetAndCategoryWithCalculatedData by viewModel.rememberBudgetAndCategoryWithCalculatedData()
+        val categories by viewModelEditCategory.rememberCategories()
+        val budgetWithCalculatedDataAndCategory by viewModelEditCategory.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val budgetAndCategoryWithCalculatedData by viewModelEditCategory.rememberBudgetAndCategoryWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -43,7 +43,7 @@ fun NavGraphBuilder.screenEditCategory(
             categories,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onCategorySave = { newCategory, state ->
-                viewModel.updateCategory(
+                viewModelEditCategory.updateCategory(
                     newCategory,
                     onCompleitionAction = onNavigateUp
                 ) { error ->
@@ -61,7 +61,7 @@ fun NavGraphBuilder.screenEditCategory(
                     }
                 }
             },
-            onBudgetDeleteRequested = { viewModel.deleteBudget(it.budget.budget) },
+            onBudgetDeleteRequested = { viewModelEditCategory.deleteBudget(it.budget.budget) },
             onBudgetDetailRequested = {},
             onBudgetEditRequested = { budget ->
                 budget.budgetId?.let {

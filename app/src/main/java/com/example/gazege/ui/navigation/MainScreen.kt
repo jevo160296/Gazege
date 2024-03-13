@@ -1,11 +1,7 @@
 package com.example.gazege.ui.navigation
 
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +12,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
+import com.example.gazege.core.entities.Category
 import com.example.gazege.sample.data.sample
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.theme.AppMode
@@ -23,9 +20,10 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.views.AddTransactionAction
 import java.time.LocalDate
 
-@OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.screenMain(
-    viewModel: MainViewModel,
+    viewModelMain: MainViewModel.ViewModelMain,
+    viewModelCategoryList: MainViewModel.ViewModelCategoryList,
+    sampleModule: MainViewModel.SampleModule,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToEditPerson: (Int?) -> Unit,
     onNavigateToPersonDetail: (Int?) -> Unit,
@@ -36,28 +34,28 @@ fun NavGraphBuilder.screenMain(
     onNavigateToEditTransaction: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
-    onNavigateToCategories: () -> Unit,
-    onNavigateToBudget: () -> Unit,
+    onNavigateToAddCategory: () -> Unit,
+    onNavigateToEditCategory: (Int?) -> Unit,
+    onNavigateToAddBudget: (Int?) -> Unit,
+    onExportCategoryRequested: (Category) -> Unit,
     onDataLoaded: () -> Unit
 ) {
     composable("main") {
-        val allPerson by viewModel.rememberAllPerson()
-        val accountAndOwnerWithTransactions by viewModel.rememberAccountAndOwnerWithTransactions()
-        val filteredTransactionListItemDetails by viewModel.rememberFilteredTransactionListItemDetails()
-        val principalPersonSummaryState by viewModel.rememberPersonSummaryState()
-        val range by viewModel.rememberRange()
-        val transactionFilters by viewModel.rememberTransactionFiltersValue()
-        val categoriesFiltersValue by viewModel.rememberCategoriesFiltersValue()
-        val personFilterValue by viewModel.rememberPersonFilterValue()
-        val valueFilterState by viewModel.rememberValueFilterValue()
-        val descriptionFilterState by viewModel.rememberDescriptionFilterValue()
-        val today by viewModel.rememberToday()
+        val allPerson by viewModelMain.rememberAllPerson()
+        val accountAndOwnerWithTransactions by viewModelMain.rememberAccountAndOwnerWithTransactions()
+        val filteredTransactionListItemDetails by viewModelMain.rememberFilteredTransactionListItemDetails()
+        val principalPersonSummaryState by viewModelMain.rememberPersonSummaryState()
+        val range by viewModelMain.rememberRange()
+        val transactionFilters by viewModelMain.rememberTransactionFiltersValue()
+        val categoriesFiltersValue by viewModelMain.rememberCategoriesFiltersValue()
+        val personFilterValue by viewModelMain.rememberPersonFilterValue()
+        val valueFilterState by viewModelMain.rememberValueFilterValue()
+        val descriptionFilterState by viewModelMain.rememberDescriptionFilterValue()
+        val today by viewModelMain.rememberToday()
 
         var navPosition: NavPosition by rememberSaveable {
             mutableStateOf(NavPosition.TRANSACCIONES)
         }
-        val sheetState = rememberModalBottomSheetState()
-        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackbarHostState = SnackbarHostState()
 
         val dataLoaded = filteredTransactionListItemDetails is LoadedTransactionDetailsState
@@ -74,14 +72,19 @@ fun NavGraphBuilder.screenMain(
                 allPerson = allPerson,
                 accountList = accountAndOwnerWithTransactions,
                 filteredTransactionList = filteredTransactionListItemDetails,
+                principalPersonSummaryState = principalPersonSummaryState,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,
-                sheetState = sheetState,
+                transactionFilters = transactionFilters,
+                categoriesFilter = categoriesFiltersValue,
+                valueFilterState = valueFilterState,
                 snackbarHostState = snackbarHostState,
-                delPerson = viewModel::deletePerson,
-                delAccount = viewModel::deleteAccount,
-                delTransaction = viewModel::deleteTransaction,
+                today = today,
+                delPerson = viewModelMain::deletePerson,
+                delAccount = viewModelMain::deleteAccount,
+                delTransaction = viewModelMain::deleteTransaction,
+                delCategory = viewModelCategoryList::deleteCategory,
                 onAddPersonRequested = onNavigateToAddPerson,
                 onEditPersonRequested = { onNavigateToEditPerson(it.id) },
                 onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
@@ -104,38 +107,37 @@ fun NavGraphBuilder.screenMain(
                     onNavigateToAddTransaction(date, it)
                 },
                 onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
+                onNavigateToAddCategory = onNavigateToAddCategory,
+                onNavigateToEditCategory = onNavigateToEditCategory,
+                onNavigateToAddBudget = onNavigateToAddBudget,
                 onNavStatusChanged = { navPosition = it },
                 onRangeChanged = { startDate, endDate ->
-                    viewModel.updateRange(
+                    viewModelMain.updateRange(
                         startDate,
                         endDate
                     )
                 },
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
-                onPersonFilterValueChanged = viewModel::updatePersonFilterValue,
-                showVertical = showVertical,
-                principalPersonSummaryState = principalPersonSummaryState,
-                drawerState = drawerState,
-                onOpenCategoriesRequested = onNavigateToCategories,
-                onOpenBudgetRequested = onNavigateToBudget,
-                transactionFilters = transactionFilters,
-                onTransactionFiltersChanged = viewModel::updateTransactionFilters,
-                categoriesFilter = categoriesFiltersValue,
-                onCategoriesFilterChanged = viewModel::updateCategoriasFiltersValue,
+                onPersonFilterValueChanged = viewModelMain::updatePersonFilterValue,
+                onTransactionFiltersChanged = viewModelMain::updateTransactionFilters,
+                onCategoriesFilterChanged = viewModelMain::updateCategoriasFiltersValue,
+                descriptionFilterState = descriptionFilterState,
+                onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
+                onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
+                onShowTypeChanged = viewModelCategoryList::updateShowType,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
-                        sample(it, viewModel)
+                        sample(it, sampleModule)
                     }
                 } else {
                     {}
                 },
-                valueFilterState = valueFilterState,
-                onValueFilterStateChanged = viewModel::updateValueFilterValue,
-                descriptionFilterState = descriptionFilterState,
-                onDescriptionFilterStateChanged = viewModel::updateDescriptionFilterValue,
-                onTodayChangeRequested = viewModel::updateToday,
-                today = today
+                onTodayChangeRequested = viewModelMain::updateToday,
+                onExportCategoryRequested = onExportCategoryRequested,
+                showVertical = showVertical,
+                showType = viewModelCategoryList.rememberShowType().value,
+                categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value
             )
         }
     }

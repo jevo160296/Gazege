@@ -22,7 +22,7 @@ import com.example.gazege.ui.views.person.PersonDetail
 import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 
 fun NavGraphBuilder.screenPersonDetail(
-    viewModel: MainViewModel,
+    viewModelPersonDetail: MainViewModel.ViewModelPersonDetail,
     onNavigateUp: () -> Unit,
     onNavigateToEditPerson: (Int?) -> Unit,
     onNavigateToEditTransaction: (Int?) -> Unit
@@ -35,8 +35,8 @@ fun NavGraphBuilder.screenPersonDetail(
             }
         )
     ) { navStack ->
-        val allPerson by viewModel.rememberAllPerson()
-        val personSummaryState = viewModel.rememberPersonSummaryState().value
+        val allPerson by viewModelPersonDetail.rememberAllPerson()
+        val personSummaryState = viewModelPersonDetail.rememberPersonSummaryState().value
 
         val personId = navStack.arguments?.getInt("personId")
         val person = allPerson.firstOrNull { it.id == personId }
@@ -51,16 +51,18 @@ fun NavGraphBuilder.screenPersonDetail(
                                 PersonAction.EDIT -> onNavigateToEditPerson(personId)
                                 PersonAction.DELETE -> {
                                     onNavigateUp()
-                                    viewModel.deletePerson(person)
+                                    viewModelPersonDetail.deletePerson(person)
                                 }
                             }
                         },
-                        viewModel = viewModel,
+                        viewModelPersonDetail = viewModelPersonDetail,
                         onTransactionAction = { transaction, action ->
                             val transactionId = transaction.id
                             when (action) {
                                 TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
-                                TransactionAction.DELETE -> viewModel.deleteTransaction(transaction)
+                                TransactionAction.DELETE -> viewModelPersonDetail.deleteTransaction(
+                                    transaction
+                                )
                             }
                         },
                         deuda = deuda

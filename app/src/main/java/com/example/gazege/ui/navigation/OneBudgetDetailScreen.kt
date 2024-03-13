@@ -11,7 +11,7 @@ import com.example.gazege.ui.views.budget.BudgetDetailView
 import com.example.gazege.ui.views.budget.EmptyBudgetDetailView
 
 fun NavGraphBuilder.screenOneBudgetDetail(
-    viewModel: MainViewModel
+    viewModelOneBudgetDetail: MainViewModel.ViewModelOneBudgetDetail
 ) {
     composable(
         "oneBudgetDetail/{budgetId}",
@@ -22,7 +22,7 @@ fun NavGraphBuilder.screenOneBudgetDetail(
         )
     ) { navStack ->
         val budgetId = navStack.arguments?.getInt("budgetId")
-        val budgetAndCategoryWithTransactions by viewModel.rememberBudgetAndCategoryWithTransactions()
+        val budgetAndCategoryWithTransactions by viewModelOneBudgetDetail.rememberBudgetAndCategoryWithTransactions()
         val selectedBudget = budgetAndCategoryWithTransactions
             .firstOrNull { it.budgetId == budgetId }
         if (selectedBudget != null) {
