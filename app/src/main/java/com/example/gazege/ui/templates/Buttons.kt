@@ -28,24 +28,29 @@ fun DynamicAddEntityFAB(
     navPosition: NavPosition,
     onAddPersonRequested: () -> Unit,
     onAddAccountRequested: () -> Unit,
-    onAddTransactionRequested: (AddTransactionAction) -> Unit
+    onAddTransactionRequested: (AddTransactionAction) -> Unit,
+    onAddCategoryRequested: () -> Unit
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (fabExpanded) {
             45f
         } else {
             0f
-        }
+        },
+        label = "rotation"
     )
     val nuevaTransaccionString = stringResource(id = R.string.Nueva_transaccion)
     val nuevaCuentaStrirng = stringResource(id = R.string.Nueva_cuenta)
     val nuevaPersonaString = stringResource(id = R.string.Nueva_persona)
+    val nuevaCategoriaString = stringResource(id = R.string.Nueva_categoria)
+
     val text by rememberSaveable(navPosition) {
         mutableStateOf(
             when (navPosition) {
                 NavPosition.PERSONS -> nuevaPersonaString
                 NavPosition.CUENTAS -> nuevaCuentaStrirng
                 NavPosition.TRANSACCIONES -> nuevaTransaccionString
+                NavPosition.CATEGORIAS -> nuevaCategoriaString
             }
         )
     }
@@ -59,6 +64,7 @@ fun DynamicAddEntityFAB(
                 NavPosition.PERSONS -> onAddPersonRequested()
                 NavPosition.CUENTAS -> onAddAccountRequested()
                 NavPosition.TRANSACCIONES -> onFabExpandedChanged(true)
+                NavPosition.CATEGORIAS -> onAddCategoryRequested()
             }
         },
         onDismissRequest = { onFabExpandedChanged(false) },

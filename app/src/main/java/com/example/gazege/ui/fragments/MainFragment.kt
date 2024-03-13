@@ -53,13 +53,17 @@ import com.example.gazege.NavPosition
 import com.example.gazege.R
 import com.example.gazege.core.entities.Account
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.example.gazege.core.entities.Category
 import com.example.gazege.core.entities.Person
 import com.example.gazege.core.entities.Transaction
 import com.example.gazege.sample.data.SampleId
 import com.example.gazege.ui.DatabaseSample
 import com.example.gazege.ui.accountDeleitionConfirmationBuilder
+import com.example.gazege.ui.navigation.EditarCategoriasState
+import com.example.gazege.ui.navigation.EmptyEditarCategoriasState
 import com.example.gazege.ui.navigation.EmptyPersonSummaryState
 import com.example.gazege.ui.navigation.FullPersonSummaryState
+import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.example.gazege.ui.navigation.LoadingPersonSummaryState
 import com.example.gazege.ui.navigation.PersonSummaryState
@@ -113,6 +117,7 @@ fun MainFragment(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delCategory: (Category) -> Unit,
     onAddPersonRequested: () -> Unit,
     onEditPersonRequested: (Person) -> Unit,
     onPersonDetailRequested: (Person) -> Unit,
@@ -121,21 +126,27 @@ fun MainFragment(
     onAccountDetailRequested: (Account) -> Unit,
     onAddTransactionRequested: (action: AddTransactionAction) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
+    onNavigateToAddCategory: () -> Unit,
+    onNavigateToEditCategory: (Int?) -> Unit,
+    onNavigateToAddBudget: (Int?) -> Unit,
     onNavStatusChanged: (NavPosition) -> Unit,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     onSettingsClicked: () -> Unit,
     onSaldoActualClick: () -> Unit,
     onPersonFilterValueChanged: (Boolean) -> Unit,
-    onOpenCategoriesRequested: () -> Unit,
     onOpenBudgetRequested: () -> Unit,
     onTransactionFiltersChanged: (newValue: BooleanFilters<String, Nothing>) -> Unit,
     onCategoriesFilterChanged: (newValue: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
+    onShowPlotChanged: (Boolean) -> Unit,
     onInitDatabaseSample: (sampleId: SampleId) -> Unit,
     onTodayChangeRequested: (newDate: LocalDate) -> Unit,
-    showVertical: Boolean
+    onExportCategoryRequested: (Category) -> Unit,
+    showVertical: Boolean,
+    showPlot: Boolean,
+    categoriasState: EditarCategoriasState
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
@@ -154,6 +165,14 @@ fun MainFragment(
     val transactionMessageBuilder = transactionDeleitionConfirmationBuilder()
     val accountMessageBuilder = accountDeleitionConfirmationBuilder()
     val personaMessageBuilder = personaDeleitionConfirmationBuilder()
+    val categoryMessageBuilder = stringResource(id = R.string.confirma_la_eliminacion_de)
+        .let { categoryTemplate ->
+            { categoryName: String -> categoryTemplate.format(categoryName) }
+        }
+
+
+    val yesLabel = stringResource(id = R.string.Si)
+
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -163,17 +182,6 @@ fun MainFragment(
                         WindowInsets(it, it + 24.dp, it, it)
                     }
             ) {
-                NavigationDrawerItem(
-                    label = { Text(stringResource(id = R.string.Categorias)) },
-                    icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.categorias),
-                            contentDescription = "Categorías"
-                        )
-                    },
-                    selected = false,
-                    onClick = onOpenCategoriesRequested
-                )
                 NavigationDrawerItem(
                     label = { Text(stringResource(id = R.string.Presupuesto)) },
                     icon = {
@@ -197,12 +205,22 @@ fun MainFragment(
                     navPosition = navPosition,
                     onAddPersonRequested = onAddPersonRequested,
                     onAddAccountRequested = onAddAccountRequested,
-                    onAddTransactionRequested = onAddTransactionRequested
+                    onAddTransactionRequested = onAddTransactionRequested,
+                    onAddCategoryRequested = onNavigateToAddCategory
                 )
             },
             floatingActionButtonPosition = FabPosition.End,
             bottomBar = {
                 NavigationBar {
+                    NavigationBarItem(
+                        selected = navPosition == NavPosition.CATEGORIAS,
+                        onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.categorias),
+                                contentDescription = "Categorías"
+                            )
+                        })
                     NavigationBarItem(
                         selected = navPosition == NavPosition.CUENTAS,
                         onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
@@ -347,6 +365,18 @@ fun MainFragment(
                         }
                     }
                 },
+                delCategory = {
+                    scope.launch {
+                        val response = snackbarHostState.showSnackbar(
+                            message = categoryMessageBuilder(it.name),
+                            actionLabel = yesLabel,
+                            withDismissAction = true
+                        )
+                        if (response == SnackbarResult.ActionPerformed) {
+                            delCategory(it)
+                        }
+                    }
+                },
                 onEditPersonRequested = onEditPersonRequested,
                 onPersonDetailRequested = onPersonDetailRequested,
                 onEditAccountRequested = onEditAccountRequested,
@@ -370,6 +400,12 @@ fun MainFragment(
                 onValueFilterStateChanged = onValueFilterStateChanged,
                 descriptionFilterState = descriptionFilterState,
                 onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
+                showPlot = showPlot,
+                categoriasState = categoriasState,
+                onShowPlotChanged = onShowPlotChanged,
+                onNavigateToEditCategory = onNavigateToEditCategory,
+                onNavigateToAddBudget = onNavigateToAddBudget,
+                onExportCategoryRequested = onExportCategoryRequested,
                 showVertical = showVertical
             )
         }
@@ -390,6 +426,7 @@ private fun MainFragmentResponsiveContent(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delCategory: (Category) -> Unit,
     onEditPersonRequested: (Person) -> Unit,
     onPersonDetailRequested: (Person) -> Unit,
     onEditAccountRequested: (Account) -> Unit,
@@ -413,6 +450,12 @@ private fun MainFragmentResponsiveContent(
     onValueFilterStateChanged: (DoubleFilter) -> Unit,
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
+    showPlot: Boolean,
+    categoriasState: EditarCategoriasState,
+    onShowPlotChanged: (Boolean) -> Unit,
+    onNavigateToEditCategory: (Int?) -> Unit,
+    onNavigateToAddBudget: (Int?) -> Unit,
+    onExportCategoryRequested: (Category) -> Unit,
     showVertical: Boolean
 ) {
     val paddingValues = PaddingValues(
@@ -477,6 +520,27 @@ private fun MainFragmentResponsiveContent(
                     )
                 }
             }
+        }
+    }
+
+    val categoriasPage = @Composable {
+        onTitleChanged(stringResource(id = R.string.Categorias))
+        when (categoriasState) {
+            is LoadedEditarCategoriasState -> LoadedEditarCategorias(
+                editarCategoriasState = categoriasState,
+                paddingValues = paddingValues,
+                onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
+                onDeleteCategoryRequested = { delCategory(it) },
+                onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
+                onExportCategoryRequested = onExportCategoryRequested,
+                showPlot = showPlot,
+                onShowPlotChanged = onShowPlotChanged,
+            )
+
+            is EmptyEditarCategoriasState -> EmptyEditarCategorias(
+                editarCategoriasState = categoriasState,
+                paddingValues = paddingValues
+            )
         }
     }
 
@@ -583,6 +647,10 @@ private fun MainFragmentResponsiveContent(
     val navigationView = @Composable {
         Crossfade(targetState = navPosition, label = "navigationView") {
             when (it) {
+                NavPosition.CATEGORIAS -> {
+                    categoriasPage()
+                }
+
                 NavPosition.TRANSACCIONES -> {
                     transactionPage()
                 }
@@ -669,6 +737,7 @@ private fun DefaultPreview() {
                         snackbarHostState.showSnackbar("Del transaction ${it.amount}")
                     }
                 },
+                delCategory = {},
                 onAddPersonRequested = {
                     scope.launch {
                         snackbarHostState.showSnackbar("Add person requested.")
@@ -701,6 +770,9 @@ private fun DefaultPreview() {
                         snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
                     }
                 },
+                onNavigateToAddCategory = {},
+                onNavigateToEditCategory = {},
+                onNavigateToAddBudget = {},
                 onNavStatusChanged = {
                     navPosition = it
                 },
@@ -712,16 +784,19 @@ private fun DefaultPreview() {
                 },
                 onSaldoActualClick = {},
                 onPersonFilterValueChanged = {},
-                onOpenCategoriesRequested = {},
                 onOpenBudgetRequested = {},
                 onTransactionFiltersChanged = {},
                 onCategoriesFilterChanged = {},
                 descriptionFilterState = TextFilter(null),
                 onDescriptionFilterStateChanged = {},
                 onValueFilterStateChanged = {},
+                onShowPlotChanged = {},
                 onInitDatabaseSample = {},
                 onTodayChangeRequested = {},
-                showVertical = true
+                onExportCategoryRequested = {},
+                showVertical = true,
+                showPlot = false,
+                categoriasState = EmptyEditarCategoriasState
             )
         }
     }

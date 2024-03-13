@@ -91,7 +91,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.collections.set
 
 enum class NavPosition {
-    PERSONS, CUENTAS, TRANSACCIONES
+    PERSONS, CUENTAS, TRANSACCIONES, CATEGORIAS
 }
 
 fun CoroutineScope.safeLaunch(

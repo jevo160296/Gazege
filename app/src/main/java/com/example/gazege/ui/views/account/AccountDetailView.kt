@@ -307,6 +307,7 @@ private fun NotNullAccountDetail(
                     navPosition = NavPosition.TRANSACCIONES,
                     onAddPersonRequested = { },
                     onAddAccountRequested = { },
+                    onAddCategoryRequested = { },
                     onAddTransactionRequested = onAddTransactionRequested
                 )
             }

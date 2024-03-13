@@ -4,28 +4,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.gazege.R
 import com.example.gazege.core.entities.Category
@@ -36,81 +29,52 @@ import com.example.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.example.gazege.ui.views.category.CategoryListView
 import com.example.gazege.ui.widgets.DataView
 import com.example.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
-import com.example.gazege.ui.widgets.MediumHeadline
-import com.example.gazege.ui.widgets.ModalSheetLayout
-import com.example.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmptyEditarCategorias(
+    paddingValues: PaddingValues,
     editarCategoriasState: EmptyEditarCategoriasState
 ) {
-    ModalSheetLayout(
-        modalSheetMsg = "",
-        onModalSheetMsgChanged = {},
-        action = {},
-        onActionChanged = {},
-        sheetState = rememberModalBottomSheetState()
-    ) {
-        Scaffold(
-            floatingActionButton = {
-                FAB(onClick = {}) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                        contentDescription = "Save"
-                    )
-                }
-            },
-            topBar = {
-                TopAppBar(
-                    title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
-                )
-            },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    Column(modifier = Modifier.padding(paddingValues)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            modifier = Modifier
+                .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
+                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                .height(IntrinsicSize.Min)
         ) {
-            Column(modifier = Modifier.padding(it)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-                    modifier = Modifier
-                        .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
-                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-                        .height(IntrinsicSize.Min)
-                ) {
-                    DataView(
-                        title = stringResource(id = R.string.Falta_pagar_recibir),
-                        value = doubleToMoneyString(editarCategoriasState.leftToPay),
-                        modifier = Modifier.weight(1f)
-                    )
-                    DataView(
-                        title = stringResource(id = R.string.Flujo_real),
-                        value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                        modifier = Modifier.weight(1f),
-                    )
-                    DataView(
-                        title = stringResource(id = R.string.Flujo_total),
-                        value = doubleToMoneyString(editarCategoriasState.netFlow),
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(1f)
-                    )
-                }
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column {
-                        GIndefiniteCircularProgressIndicator()
-                        Text(stringResource(id = R.string.Cargando))
-                    }
-                }
+            DataView(
+                title = stringResource(id = R.string.Falta_pagar_recibir),
+                value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                modifier = Modifier.weight(1f)
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_real),
+                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                modifier = Modifier.weight(1f),
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_total),
+                value = doubleToMoneyString(editarCategoriasState.netFlow),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f)
+            )
+        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column {
+                GIndefiniteCircularProgressIndicator()
+                Text(stringResource(id = R.string.Cargando))
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadedEditarCategorias(
+    paddingValues: PaddingValues,
     editarCategoriasState: LoadedEditarCategoriasState,
-    onAddCategoryRequested: () -> Unit,
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
@@ -126,80 +90,59 @@ fun LoadedEditarCategorias(
     val template = stringResource(id = R.string.confirma_la_eliminacion_de)
     val confirmationMessageBuilder = { categoryName: String -> template.format(categoryName) }
 
-    Scaffold(
-        floatingActionButton = {
-            FAB(onClick = onAddCategoryRequested) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
-                    contentDescription = "Save"
-                )
-            }
-        },
-        topBar = {
-            TopAppBar(
-                title = { MediumHeadline(text = stringResource(id = R.string.Categorias)) }
+    Column(modifier = Modifier.padding(paddingValues)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            modifier = Modifier
+                .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
+                .height(IntrinsicSize.Min)
+        ) {
+            DataView(
+                title = stringResource(id = R.string.Falta_pagar_recibir),
+                value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                modifier = Modifier.weight(1f)
             )
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) {
-        Column(modifier = Modifier.padding(it)) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            DataView(
+                title = stringResource(id = R.string.Flujo_real),
+                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                modifier = Modifier.weight(1f),
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_total),
+                value = doubleToMoneyString(editarCategoriasState.netFlow),
                 modifier = Modifier
-                    .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
-                    .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-                    .height(IntrinsicSize.Min)
-            ) {
-                DataView(
-                    title = stringResource(id = R.string.Falta_pagar_recibir),
-                    value = doubleToMoneyString(editarCategoriasState.leftToPay),
-                    modifier = Modifier.weight(1f)
-                )
-                DataView(
-                    title = stringResource(id = R.string.Flujo_real),
-                    value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                    modifier = Modifier.weight(1f),
-                )
-                DataView(
-                    title = stringResource(id = R.string.Flujo_total),
-                    value = doubleToMoneyString(editarCategoriasState.netFlow),
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f)
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-            ) {
-                Switch(
-                    checked = showPlot,
-                    onCheckedChange = onShowPlotChanged
-                )
-                Text(stringResource(id = R.string.MostrarGraficos))
-            }
-            CategoryListView(
-                categoriesWithCalculatedData = categoriesWithCalculatedData,
-                editCategory = onEditCategoryRequested,
-                delCategory = {
-                    scope.launch {
-                        val response = snackbarHostState.showSnackbar(
-                            message = confirmationMessageBuilder(it.name),
-                            actionLabel = actionLabel,
-                            withDismissAction = true
-                        )
-                        if (response == SnackbarResult.ActionPerformed) {
-                            onDeleteCategoryRequested(it)
-                        }
-                    }
-                },
-                exportCategory = onExportCategoryRequested,
-                onSetBudgetRequested = onSetBudgetRequested,
-                showPlot = showPlot
+                    .fillMaxHeight()
+                    .weight(1f)
             )
         }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
+            Switch(
+                checked = showPlot,
+                onCheckedChange = onShowPlotChanged
+            )
+            Text(stringResource(id = R.string.MostrarGraficos))
+        }
+        CategoryListView(
+            categoriesWithCalculatedData = categoriesWithCalculatedData,
+            editCategory = onEditCategoryRequested,
+            delCategory = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = confirmationMessageBuilder(it.name),
+                        actionLabel = actionLabel,
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        onDeleteCategoryRequested(it)
+                    }
+                }
+            },
+            exportCategory = onExportCategoryRequested,
+            onSetBudgetRequested = onSetBudgetRequested,
+            showPlot = showPlot
+        )
     }
 }

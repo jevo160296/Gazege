@@ -131,9 +131,7 @@ fun CategoryListView(
     }
     SimpleTreeList(
         contentPadding = PaddingValues(
-            bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
-            start = dimensionResource(id = R.dimen.DefaultPadding),
-            end = dimensionResource(id = R.dimen.DefaultPadding)
+            bottom = dimensionResource(id = R.dimen.FABDefaultSpace)
         ),
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding) * 2,
         nodes = nodes,

@@ -61,6 +61,7 @@ fun MainNavHost(
         ) {
             screenMain(
                 viewModelMain = mainViewModel.viewModelMain,
+                viewModelCategoryList = mainViewModel.viewModelCategoryList,
                 sampleModule = mainViewModel.sampleModule,
                 onNavigateToEditPerson = navController::navigateToEditPerson,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
@@ -72,8 +73,24 @@ fun MainNavHost(
                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
                 onNavigateToPersonDetail = navController::navigateToPersonDetail,
                 onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
-                onNavigateToCategories = navController::navigateToEditarCategorias,
                 onNavigateToBudget = navController::navigateToEditBudget,
+                onNavigateToAddCategory = navController::navigateToAddCategory,
+                onNavigateToEditCategory = navController::navigateToEditCategory,
+                onNavigateToAddBudget = {
+                    if (it != null) {
+                        navController.navigateToAddOneBudget(it)
+                    } else {
+                        navController.navigateToAddOneBudget()
+                    }
+                },
+                onExportCategoryRequested = {
+                    val categoryName = it.name
+                    val categoryId = it.id ?: 0
+                    mainViewModel.startActivityToExportDetails(
+                        "CategoryDetails $categoryName.csv",
+                        categoryId
+                    )
+                },
                 onDataLoaded = onDataLoaded
             )
             screenAddAccount(
@@ -122,26 +139,6 @@ fun MainNavHost(
                 }
             )
             screenSaldoActualSettings(viewModelSaldoActualSettings = mainViewModel.viewModelSaldoActualSettings)
-            screenEditarCategorias(
-                viewModelCategoryList = mainViewModel.viewModelCategoryList,
-                onNavigateToAddCategory = navController::navigateToAddCategory,
-                onNavigateToEditCategory = navController::navigateToEditCategory,
-                onNavigateToAddBudget = {
-                    if (it != null) {
-                        navController.navigateToAddOneBudget(it)
-                    } else {
-                        navController.navigateToAddOneBudget()
-                    }
-                },
-                onExportCategoryRequested = {
-                    val categoryName = it.name
-                    val categoryId = it.id ?: 0
-                    mainViewModel.startActivityToExportDetails(
-                        "CategoryDetails $categoryName.csv",
-                        categoryId
-                    )
-                }
-            )
             screenAddCategory(
                 viewModelAddCategory = mainViewModel.viewModelAddCategory,
                 onNavigateUp = navController::navigateUp

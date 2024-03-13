@@ -14,6 +14,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
+import com.example.gazege.core.entities.Category
 import com.example.gazege.sample.data.sample
 import com.example.gazege.ui.fragments.MainFragment
 import com.example.gazege.ui.theme.AppMode
@@ -23,6 +24,7 @@ import java.time.LocalDate
 
 fun NavGraphBuilder.screenMain(
     viewModelMain: MainViewModel.ViewModelMain,
+    viewModelCategoryList: MainViewModel.ViewModelCategoryList,
     sampleModule: MainViewModel.SampleModule,
     onNavigateToAddPerson: () -> Unit,
     onNavigateToEditPerson: (Int?) -> Unit,
@@ -34,8 +36,11 @@ fun NavGraphBuilder.screenMain(
     onNavigateToEditTransaction: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
-    onNavigateToCategories: () -> Unit,
     onNavigateToBudget: () -> Unit,
+    onNavigateToAddCategory: () -> Unit,
+    onNavigateToEditCategory: (Int?) -> Unit,
+    onNavigateToAddBudget: (Int?) -> Unit,
+    onExportCategoryRequested: (Category) -> Unit,
     onDataLoaded: () -> Unit
 ) {
     composable("main") {
@@ -84,6 +89,7 @@ fun NavGraphBuilder.screenMain(
                 delPerson = viewModelMain::deletePerson,
                 delAccount = viewModelMain::deleteAccount,
                 delTransaction = viewModelMain::deleteTransaction,
+                delCategory = viewModelCategoryList::deleteCategory,
                 onAddPersonRequested = onNavigateToAddPerson,
                 onEditPersonRequested = { onNavigateToEditPerson(it.id) },
                 onPersonDetailRequested = { onNavigateToPersonDetail(it.id) },
@@ -106,6 +112,9 @@ fun NavGraphBuilder.screenMain(
                     onNavigateToAddTransaction(date, it)
                 },
                 onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
+                onNavigateToAddCategory = onNavigateToAddCategory,
+                onNavigateToEditCategory = onNavigateToEditCategory,
+                onNavigateToAddBudget = onNavigateToAddBudget,
                 onNavStatusChanged = { navPosition = it },
                 onRangeChanged = { startDate, endDate ->
                     viewModelMain.updateRange(
@@ -116,13 +125,13 @@ fun NavGraphBuilder.screenMain(
                 onSettingsClicked = onNavigateToSettings,
                 onSaldoActualClick = onNavigateToSaldoActualSettings,
                 onPersonFilterValueChanged = viewModelMain::updatePersonFilterValue,
-                onOpenCategoriesRequested = onNavigateToCategories,
                 onOpenBudgetRequested = onNavigateToBudget,
                 onTransactionFiltersChanged = viewModelMain::updateTransactionFilters,
                 onCategoriesFilterChanged = viewModelMain::updateCategoriasFiltersValue,
                 descriptionFilterState = descriptionFilterState,
                 onDescriptionFilterStateChanged = viewModelMain::updateDescriptionFilterValue,
                 onValueFilterStateChanged = viewModelMain::updateValueFilterValue,
+                onShowPlotChanged = viewModelCategoryList::updateShowPlot,
                 onInitDatabaseSample = if (GazegeTheme.appMode == AppMode.DEBUG) {
                     {
                         sample(it, sampleModule)
@@ -131,7 +140,10 @@ fun NavGraphBuilder.screenMain(
                     {}
                 },
                 onTodayChangeRequested = viewModelMain::updateToday,
-                showVertical = showVertical
+                onExportCategoryRequested = onExportCategoryRequested,
+                showVertical = showVertical,
+                showPlot = viewModelCategoryList.rememberShowPlot().value,
+                categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value
             )
         }
     }

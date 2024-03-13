@@ -95,4 +95,5 @@
     <string name="Presupuesto_vacio">Empty budget</string>
     <string name="Pronostico">Forecast</string>
     <string name="Exportar">Export</string>
+    <string name="Nueva_categoria">New category</string>
 </resources>
