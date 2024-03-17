@@ -28,7 +28,9 @@ data class CategoryWithSubCategories(
                         parent,
                         from(
                             allCategories,
-                            allCategories.filter { child -> child.parentId == parent.id }
+                            allCategories
+                                .filter { child -> child.parentId != child.id }
+                                .filter { child -> child.parentId == parent.id }
                         )
                     )
                 }
@@ -36,7 +38,7 @@ data class CategoryWithSubCategories(
 
         fun from(allCategories: List<Category>) = from(
             allCategories,
-            allCategories.filter { it.parentId == null }
+            allCategories.filter { it.parentId == null || it.parentId == it.id }
         )
     }
 }

@@ -1,6 +1,5 @@
 package com.example.gazege.ui.widgets
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,8 +17,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.compositeOver
@@ -40,6 +53,9 @@ import com.example.gazege.ui.theme.GazegeTheme
 import com.example.gazege.ui.widgets.menu.DropdownMenu
 import com.example.gazege.ui.widgets.sliders.GRangeSlider
 import java.time.LocalDate
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 import kotlin.math.min
 
 @OptIn(
@@ -645,12 +661,14 @@ private fun FilterPreview() {
             )
         )
     }
+    var valueFilterState by remember { mutableStateOf(DoubleFilter(0f..100f, 0f..100f)) }
     GazegeTheme {
-        Box(
+        Column(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            contentAlignment = Alignment.Center
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Filter(
                 startDate = LocalDate.of(2022, 1, 1),
@@ -666,11 +684,12 @@ private fun FilterPreview() {
                 onTransactionFiltersChanged = { filters = it },
                 categoriesFilter = categoriesFilter,
                 onCategoriesFilterChanged = { categoriesFilter = it },
-                valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-                onValueFilterStateChanged = {},
+                valueFilterState = valueFilterState,
+                onValueFilterStateChanged = { valueFilterState = it },
                 descriptionFilterState = descriptionFilter,
                 onDescriptionFilterStateChanged = { descriptionFilter = it }
             )
+            Text("UI: ${valueFilterState.value}")
         }
     }
 }

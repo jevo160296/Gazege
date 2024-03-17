@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -131,8 +133,11 @@ fun LoadedPersonPage(
     editPerson: (Person) -> Unit,
     detailPerson: (Person) -> Unit,
     state: LazyListState,
+    nestedScrollConnection: NestedScrollConnection? = null,
+    onZeroElementsChanged: (Boolean) -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
+    onZeroElementsChanged(allPerson.isEmpty())
     onTitleSetted(stringResource(id = R.string.personas))
     Column(modifier = modifier) {
         LoadedPersonRecyclerView(
@@ -142,7 +147,9 @@ fun LoadedPersonPage(
             editPerson = { editPerson(it) },
             detailPerson = { detailPerson(it) },
             itemHolderPaddingValues = itemHolderPaddingValues,
-            state = state
+            state = state,
+            modifier = nestedScrollConnection?.let { Modifier.nestedScroll(nestedScrollConnection) }
+                ?: Modifier
         )
     }
 }
@@ -190,7 +197,8 @@ private fun PreviewPersonPage() {
                 onTitleSetted = {},
                 itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
                 detailPerson = {},
-                principalPersonSummaryState = personSummaryStateSample
+                principalPersonSummaryState = personSummaryStateSample,
+                onZeroElementsChanged = {}
             )
         }
     }
