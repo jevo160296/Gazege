@@ -48,8 +48,8 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertPerson(vararg person: Person) {
-        personDao.insertAll(*person)
+    suspend fun insertPerson(vararg person: Person): List<Long> {
+        return personDao.insertAll(*person)
     }
 
     @WorkerThread

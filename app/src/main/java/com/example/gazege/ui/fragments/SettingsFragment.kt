@@ -1,5 +1,6 @@
 package com.example.gazege.ui.fragments
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -47,6 +48,7 @@ fun SettingsFragment(
     accountList: List<AccountAndOwner>,
     incomeAccount: Account?,
     outcomeAccount: Account?,
+    showOnBoardingNextRestart: Boolean?,
     onIncomeOutcomeAccountChanged: (Account?, Account?) -> Unit,
     onAddAccountRequested: () -> Unit,
     onAddPersonRequested: () -> Unit,
@@ -55,8 +57,11 @@ fun SettingsFragment(
     onNavigateUpRequested: () -> Unit,
     onNavigateToBudget: () -> Unit,
     onExportDataRequested: () -> Unit,
+    onShowOnBoardingNextRestart: (value: Boolean) -> Unit,
     onImportDataRequested: () -> Unit
 ) {
+    val showOnBoardingEnabled = showOnBoardingNextRestart != null && !showOnBoardingNextRestart
+
     var principalPersonExpanded by rememberSaveable {
         mutableStateOf(false)
     }
@@ -219,5 +224,22 @@ fun SettingsFragment(
             onClearSelectionClicked = { outcomeIdSelected = null },
             onAccountAddRequested = onAddAccountRequested
         )
+        ButtonField(
+            onClick = { onShowOnBoardingNextRestart(true) },
+            enabled = showOnBoardingEnabled
+        ) {
+            AnimatedVisibility(visible = !showOnBoardingEnabled) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_round_check_24),
+                    contentDescription = stringResource(
+                        id = R.string.showOnboardingNextRestart
+                    )
+                )
+            }
+            AnimatedVisibility(visible = !showOnBoardingEnabled) {
+                Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
+            }
+            Text(stringResource(id = R.string.showOnboardingNextRestart))
+        }
     }
 }

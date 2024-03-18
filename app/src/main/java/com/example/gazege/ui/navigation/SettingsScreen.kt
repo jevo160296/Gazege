@@ -24,6 +24,7 @@ fun NavGraphBuilder.screenSettings(
         val accountAndOwner by viewModelSettings.rememberAccountAndOwner()
         val incomeAccount by viewModelSettings.rememberIncomeAccount()
         val outcomeAccount by viewModelSettings.rememberOutcomeAccount()
+        val showOnBoarding by viewModelSettings.rememberShowOnBoarding()
 
         SettingsFragment(
             personList = allPerson,
@@ -42,6 +43,7 @@ fun NavGraphBuilder.screenSettings(
             accountList = accountAndOwner,
             incomeAccount = incomeAccount,
             outcomeAccount = outcomeAccount,
+            showOnBoardingNextRestart = showOnBoarding,
             onAddAccountRequested = onNavigateToAddAccount,
             onIncomeOutcomeAccountChanged = { newIncome, newOutcome ->
                 val castedIncomeAccount = incomeAccount
@@ -77,7 +79,8 @@ fun NavGraphBuilder.screenSettings(
             onAddCategoryRequested = onNavigateToAddCategory,
             onExportDataRequested = onExportDataRequested,
             onNavigateToBudget = onNavigateToBudget,
-            onImportDataRequested = onImportDataRequested
+            onImportDataRequested = onImportDataRequested,
+            onShowOnBoardingNextRestart = viewModelSettings::setShowOnBoarding
         )
     }
 }

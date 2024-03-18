@@ -97,4 +97,11 @@
     <string name="Exportar">Export</string>
     <string name="Nueva_categoria">New category</string>
     <string name="Disponible_hoy">Available today</string>
+    <string name="showOnboardingNextRestart">Show on boarding on next restart.</string>
+    <string name="OnBoarding">Onboarding</string>
+    <string name="onboardingMessage1">Let\'s start setting all up.</string>
+    <string name="whats_your_name">What is your name?</string>
+    <string name="on_boarding_add_account_message">Add some accounts where the money will be saved, such as Wallet, Bank account, Credit card, etc.</string>
+    <string name="on_boarding_add_category_message">Add some categories that will be used to create budget and organize income and outcome.</string>
+    <string name="on_boarding_add_person_message">Would you like to keep track of when you lend money to someone or when someone lends money to you? You can register the people you can lend to or borrow from here.</string>
 </resources>
