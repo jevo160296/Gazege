@@ -16,6 +16,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 val INCLUIR_PRESUPUESTO_EN_SALDO_ACTUAL_FLOW = booleanPreferencesKey("incluir_presupuesto")
 val INCLUIR_DEUDAS_EN_SALDO_ACTUAL_FLOW = booleanPreferencesKey("incluir_deudas")
 val CATEGORY_ID_TO_EXPORT = intPreferencesKey("category_id_to_export")
+val SHOW_ON_BOARDING = booleanPreferencesKey("show_on_boarding")
 
 data class Settings(
     val context: Context
@@ -35,6 +36,11 @@ data class Settings(
             preferences[CATEGORY_ID_TO_EXPORT] ?: -1
         }
 
+    fun getShowOnBoardingFlow(): Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[SHOW_ON_BOARDING] ?: false
+        }
+
     suspend fun setIncluirPresupuestoEnSaldoActualFlow(valor: Boolean) {
         context.dataStore.edit { settings ->
             settings[INCLUIR_PRESUPUESTO_EN_SALDO_ACTUAL_FLOW] = valor
@@ -50,6 +56,12 @@ data class Settings(
     suspend fun setCategoryIdToExportFlow(valor: Int) {
         context.dataStore.edit { settings ->
             settings[CATEGORY_ID_TO_EXPORT] = valor
+        }
+    }
+
+    suspend fun setShowOnBoarding(valor: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[SHOW_ON_BOARDING] = valor
         }
     }
 }

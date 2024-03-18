@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.navOptions
 import com.example.gazege.MainViewModel
 import com.example.gazege.NavPosition
 import com.example.gazege.core.entities.Category
@@ -141,4 +143,13 @@ fun NavGraphBuilder.screenMain(
             )
         }
     }
+}
+
+fun NavController.navigateoToMain() {
+    navigate(
+        "main",
+        navOptions = navOptions {
+            popUpTo(this@navigateoToMain.graph.id) { inclusive = true }
+        }
+    )
 }

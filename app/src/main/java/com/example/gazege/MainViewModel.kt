@@ -4,8 +4,10 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -25,6 +27,7 @@ import com.example.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.example.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.example.gazege.core.entities.Budget
 import com.example.gazege.core.entities.BudgetAndCategoryWithTransactions
+import com.example.gazege.core.entities.BudgetType
 import com.example.gazege.core.entities.BudgetWithCalculatedData
 import com.example.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.example.gazege.core.entities.Category
@@ -66,6 +69,7 @@ import com.example.gazege.ui.navigation.nullCategoriasState
 import com.example.gazege.ui.progressStatus.HistoricalProgressStatus
 import com.example.gazege.ui.progressStatus.IProgressStatus
 import com.example.gazege.ui.progressStatus.Status
+import com.example.gazege.ui.savers.listStringSaver
 import com.example.gazege.ui.views.account.AccountDetailData
 import com.example.gazege.ui.widgets.BooleanFilters
 import com.example.gazege.ui.widgets.DoubleFilter
@@ -162,6 +166,9 @@ class MainViewModel(
 
     fun startActivityToLoadData() =
         resultLauncherOpenDocument.launch(arrayOf("*/*"))
+
+    fun setShowOnBoarding(value: Boolean) =
+        viewModelScope.launch { settings.setShowOnBoarding(value) }
 
     enum class Type {
         IMPORT,
@@ -265,6 +272,7 @@ class MainViewModel(
         settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
     val categoryIdToExportFlow =
         settings.getCategoryIdToExportFlow().asLiveData()
+    val showOnBoarding = settings.getShowOnBoardingFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
     private val allTransactions = repository.getTransactions(null, null).asLiveData()
@@ -745,6 +753,8 @@ class MainViewModel(
         viewModelScope.safeLaunch(onErrorAction) {
             repository.insertPerson(*person)
         }
+
+    suspend fun insertPerson(person: Person): List<Long> = repository.insertPerson(person)
 
     fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {
@@ -1301,6 +1311,225 @@ class MainViewModel(
             )
     }
 
+    inner class ViewModelInitial {
+        @Composable
+        fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
+
+        @Composable
+        fun rememberPrincipalPersonId() = principalPerson
+            .map { it?.id }
+            .observeAsState(-1)
+
+        @Composable
+        fun rememberPrincipalAccounts(principalPersonId: Int?) = remember(principalPersonId) {
+            allAccount
+                .map { it.filter { account -> account.ownerId == principalPersonId } }
+        }
+            .observeAsState()
+
+        fun setShowOnBoarding(value: Boolean) = this@MainViewModel.setShowOnBoarding(value)
+    }
+
+    inner class ViewModelOnBoarding {
+        @Composable
+        fun rememberMainPersonName(currentPersonName: String?) =
+            rememberSaveable(currentPersonName) { mutableStateOf(currentPersonName) }
+
+        @Composable
+        fun rememberSelfAccountNames(selfAccounts: List<String>) = rememberSaveable(
+            selfAccounts,
+            saver = listStringSaver
+        ) { mutableStateListOf(*selfAccounts.toTypedArray()) }
+
+        @Composable
+        fun rememberCategoriesNames(currentCategories: List<String>) = rememberSaveable(
+            currentCategories,
+            saver = listStringSaver
+        ) {
+            mutableStateListOf(*currentCategories.toTypedArray())
+        }
+
+        @Composable
+        fun rememberNewPersonNames(nonPrincipalPersons: List<String>) = rememberSaveable(
+            nonPrincipalPersons,
+            saver = listStringSaver
+        ) {
+            mutableStateListOf(*nonPrincipalPersons.toTypedArray())
+        }
+
+        @Composable
+        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+
+        @Composable
+        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+
+        @Composable
+        fun rememberAllPerson() = allPerson.observeAsState()
+
+        @Composable
+        fun rememberAllAccounts() = allAccount.observeAsState()
+
+        @Composable
+        fun rememberAllCategories() = categories.observeAsState()
+
+        @Composable
+        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+
+        fun onBoardingFinished(
+            allPerson: List<Person>,
+            allAccounts: List<Account>,
+            allCategories: List<Category>,
+            incomeAccount: Account?,
+            outcomeAccount: Account?,
+            mainPersonName: String,
+            selfAccountsNames: List<String>,
+            categoryNames: List<String>,
+            personNames: List<String>
+        ) = viewModelScope.launch {
+            val principalPersonId = createPrincipalPerson(mainPersonName, allPerson)
+            if (principalPersonId != null) {
+                createAccounts(selfAccountsNames, principalPersonId, allAccounts)
+            }
+            createCategories(categories = categoryNames, allCategories)
+            createPerson(
+                personNames = personNames,
+                allPerson = allPerson
+                    .map { it.name }
+                    .plus(mainPersonName))
+            createIncomeOutcomeAccounts(
+                allPersonNames = allPerson
+                    .map { it.name }
+                    .plus(mainPersonName)
+                    .toSet(),
+                currentIncomeAccount = incomeAccount,
+                currentOutComeAccount = outcomeAccount
+            )
+        }
+
+        private suspend fun createPrincipalPerson(
+            personName: String,
+            allPerson: List<Person>
+        ): Int? {
+            val currentPrincipalPerson = getPrincipalPerson(allPerson)
+            var personToAdd: Int? = currentPrincipalPerson?.id
+            if (currentPrincipalPerson?.name != personName) {
+                if (currentPrincipalPerson != null) {
+                    updatePerson(currentPrincipalPerson.copy(importance = null)) {}
+                }
+                val newPrincipalPerson = allPerson.firstOrNull { it.name == personName }
+                personToAdd = if (newPrincipalPerson == null) {
+                    insertPerson(Person(name = personName, importance = 1)).firstOrNull()?.toInt()
+                        ?: -1
+                } else {
+                    updatePerson(newPrincipalPerson.copy(importance = 1)) {}
+                    newPrincipalPerson.id
+                }
+            }
+            return personToAdd
+        }
+
+        private fun createAccounts(
+            accounts: List<String>,
+            principalPersonId: Int,
+            allAccounts: List<Account>
+        ) {
+            val allAccountsNames = allAccounts.map { it.name }.toMutableSet()
+            accounts.forEach { accountName ->
+                if (accountName !in allAccountsNames) {
+                    allAccountsNames.add(accountName)
+                    insertAccount(
+                        Account(name = accountName, ownerId = principalPersonId),
+                        onErrorAction = {},
+                        onCompleitionAction = {}
+                    )
+                }
+            }
+        }
+
+        private fun createCategories(
+            categories: List<String>,
+            allCategories: List<Category>
+        ) {
+            val allCategoriesNames = allCategories.map { it.name }.toMutableSet()
+            categories.forEach { categoryName ->
+                if (categoryName !in allCategoriesNames) {
+                    allCategoriesNames.add(categoryName)
+                    insertCategory(
+                        Category(
+                            name = categoryName,
+                            budgetType = BudgetType.FIXED,
+                            parentId = null
+                        ),
+                        onCompleitionAction = {},
+                        onErrorAction = {}
+                    )
+                }
+            }
+        }
+
+        private suspend fun createPerson(
+            personNames: List<String>,
+            allPerson: List<String>
+        ) {
+            val allPersonNames = allPerson.toMutableSet()
+            personNames.forEach { personName ->
+                if (personName !in allPersonNames) {
+                    allPersonNames.add(personName)
+                    val personId = insertPerson(Person(name = personName)).firstOrNull()
+                    if (personId != null) {
+                        insertAccount(
+                            Account(name = personName, ownerId = personId.toInt()),
+                            onCompleitionAction = {},
+                            onErrorAction = {}
+                        )
+                    }
+                }
+            }
+        }
+
+        private suspend fun createIncomeOutcomeAccounts(
+            allPersonNames: Set<String>,
+            currentIncomeAccount: Account?,
+            currentOutComeAccount: Account?
+        ) {
+            if (currentIncomeAccount == null || currentOutComeAccount == null) {
+                var especialPersonName = "__ESPECIAL__"
+                var index = 0
+                while (especialPersonName in allPersonNames) {
+                    especialPersonName = "__ESPECIAL__ $index"
+                    index += 1
+                }
+                val especialPersonId = insertPerson(Person(name = especialPersonName)).firstOrNull()
+                especialPersonId?.let {
+                    if (currentIncomeAccount == null) {
+                        insertAccount(
+                            Account(
+                                name = "__INCOME__",
+                                ownerId = especialPersonId.toInt(),
+                                isIncome = true
+                            ),
+                            onCompleitionAction = {},
+                            onErrorAction = {}
+                        )
+                    }
+                    if (currentOutComeAccount == null) {
+                        insertAccount(
+                            Account(
+                                name = "__OUTCOME__",
+                                ownerId = especialPersonId.toInt(),
+                                isOutcome = true
+                            ),
+                            onCompleitionAction = {},
+                            onErrorAction = {}
+                        )
+                    }
+                }
+            }
+        }
+
+        fun onShowOnBoardingChanged(value: Boolean) = setShowOnBoarding(value)
+    }
+
     inner class ViewModelMain {
         @Composable
         fun rememberAllPerson() = allPerson.observeAsState(emptyList())
@@ -1599,6 +1828,9 @@ class MainViewModel(
         @Composable
         fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
 
+        @Composable
+        fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
+
         fun updatePerson(
             vararg person: Person,
             onErrorAction: (Throwable) -> Unit
@@ -1618,6 +1850,9 @@ class MainViewModel(
                 onErrorAction = onErrorAction,
                 onCompleitionAction = onCompleitionAction
             )
+
+        fun setShowOnBoarding(value: Boolean) =
+            viewModelScope.launch { settings.setShowOnBoarding(value) }
     }
 
     inner class ViewModelSaldoActualSettings {
@@ -2061,6 +2296,8 @@ class MainViewModel(
 
     val exportModule = ExportModule()
     val sampleModule = SampleModule()
+    val viewModelInitial = ViewModelInitial()
+    val viewModelOnBoarding = ViewModelOnBoarding()
     val viewModelMain = ViewModelMain()
     val viewModelCategoryList = ViewModelCategoryList()
     val viewModelAddAccount = ViewModelAddAccount()

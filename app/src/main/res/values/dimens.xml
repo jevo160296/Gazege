@@ -2,4 +2,5 @@
 <resources>
     <dimen name="DefaultPadding">8.dp</dimen>
     <dimen name="FABDefaultSpace">90.dp</dimen>
+    <dimen name="MaxListSize">300.dp</dimen>
 </resources>

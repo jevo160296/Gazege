@@ -49,7 +49,7 @@ fun MainNavHost(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "main",
+            startDestination = INITIALSCREENROUTE,
             modifier = Modifier
                 .run {
                     if (currentRoute != "main" && currentRoute?.isNotEmpty() == true) {
@@ -59,6 +59,16 @@ fun MainNavHost(
                     }
                 }
         ) {
+            screenInitialScreen(
+                viewModelInitialScreen = mainViewModel.viewModelInitial,
+                onNavigateToOnBoarding = navController::navigateToOnBoarding,
+                onNavigateToMain = navController::navigateoToMain
+            )
+            screenOnBoardingScreen(
+                viewModelOnBoarding = mainViewModel.viewModelOnBoarding,
+                onNavigateToMainScreen = navController::navigateoToMain,
+                onImportData = mainViewModel::startActivityToLoadData
+            )
             screenMain(
                 viewModelMain = mainViewModel.viewModelMain,
                 viewModelCategoryList = mainViewModel.viewModelCategoryList,
