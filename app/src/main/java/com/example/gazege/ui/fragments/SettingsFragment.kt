@@ -102,13 +102,13 @@ fun SettingsFragment(
             items = listOf(
                 SegmentedButtonItem(
                     text = {
-                        Text(text = "Importar data")
+                        Text(text = stringResource(id = R.string.Import_data))
                     },
                     leadingIcon = {}
                 ),
                 SegmentedButtonItem(
                     text = {
-                        Text(text = "Exportar data")
+                        Text(text = stringResource(id = R.string.Export_data))
                     },
                     leadingIcon = {}
                 )

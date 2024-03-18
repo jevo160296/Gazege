@@ -38,7 +38,7 @@ data class Settings(
 
     fun getShowOnBoardingFlow(): Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[SHOW_ON_BOARDING] ?: true
+            preferences[SHOW_ON_BOARDING] ?: false
         }
 
     suspend fun setIncluirPresupuestoEnSaldoActualFlow(valor: Boolean) {

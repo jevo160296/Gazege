@@ -12,7 +12,8 @@ const val ONBOARDINGROUTE = "onBoardingScreen"
 
 fun NavGraphBuilder.screenOnBoardingScreen(
     viewModelOnBoarding: MainViewModel.ViewModelOnBoarding,
-    onNavigateToMainScreen: () -> Unit
+    onNavigateToMainScreen: () -> Unit,
+    onImportData: () -> Unit
 ) {
     composable(ONBOARDINGROUTE) {
         val allPerson = viewModelOnBoarding.rememberAllPerson().value
@@ -66,7 +67,8 @@ fun NavGraphBuilder.screenOnBoardingScreen(
                 personNames = newPersonNames,
                 onAddNewEmptyPerson = { newPersonNames.add("") },
                 onChangePerson = newPersonNames::set,
-                onDeletePerson = newPersonNames::removeAt
+                onDeletePerson = newPersonNames::removeAt,
+                onImportData = onImportData
             )
         } else {
             LoadingBoardingFragment()

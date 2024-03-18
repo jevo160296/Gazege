@@ -104,4 +104,6 @@
     <string name="on_boarding_add_account_message">Agrega algunas cuentas dónde guardas tu dinero, por ejemplo, billetera, cuenta de banco, tarjeta de crédito, etc.</string>
     <string name="on_boarding_add_category_message">Agrega algunas categorías, estas serán utilizadas para crear presupuestos y organizar los gastos e ingresos.</string>
     <string name="on_boarding_add_person_message">¿Quieres registrar préstamos y deudas con otras personas? A continuación puedes agregar las personas a las que puedes dar y recibir dinero.</string>
+    <string name="Import_data">Importar datos</string>
+    <string name="Export_data">Exportar datos</string>
 </resources>

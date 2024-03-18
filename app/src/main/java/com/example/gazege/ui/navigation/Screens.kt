@@ -66,7 +66,8 @@ fun MainNavHost(
             )
             screenOnBoardingScreen(
                 viewModelOnBoarding = mainViewModel.viewModelOnBoarding,
-                onNavigateToMainScreen = navController::navigateoToMain
+                onNavigateToMainScreen = navController::navigateoToMain,
+                onImportData = mainViewModel::startActivityToLoadData
             )
             screenMain(
                 viewModelMain = mainViewModel.viewModelMain,

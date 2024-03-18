@@ -1315,6 +1315,18 @@ class MainViewModel(
         @Composable
         fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
 
+        @Composable
+        fun rememberPrincipalPersonId() = principalPerson
+            .map { it?.id }
+            .observeAsState(-1)
+
+        @Composable
+        fun rememberPrincipalAccounts(principalPersonId: Int?) = remember(principalPersonId) {
+            allAccount
+                .map { it.filter { account -> account.ownerId == principalPersonId } }
+        }
+            .observeAsState()
+
         fun setShowOnBoarding(value: Boolean) = this@MainViewModel.setShowOnBoarding(value)
     }
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.example.gazege.R
+import com.example.gazege.ui.widgets.ButtonField
 import com.example.gazege.ui.widgets.Form
 import com.example.gazege.ui.widgets.SmallBody
 import com.example.gazege.ui.widgets.TextField
@@ -47,7 +48,8 @@ fun OnBoardingFragment(
     onChangePerson: (index: Int, newName: String) -> Unit,
     onDeletePerson: (index: Int) -> Unit,
     onNavigateToMainScreen: () -> Unit,
-    onShowOnBoardingChanged: (Boolean) -> Unit
+    onShowOnBoardingChanged: (Boolean) -> Unit,
+    onImportData: () -> Unit
 ) {
     val canBeSaved = !mainPersonName.isNullOrBlank() && !selfAccountsNames.isNullOrEmpty()
     Form(
@@ -67,6 +69,12 @@ fun OnBoardingFragment(
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding),
         title = stringResource(id = R.string.OnBoarding)
     ) {
+        ButtonField(
+            onClick = onImportData,
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
+            Text(text = stringResource(id = R.string.Import_data))
+        }
         SmallBody(
             modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
             text = stringResource(id = R.string.onboardingMessage1)
