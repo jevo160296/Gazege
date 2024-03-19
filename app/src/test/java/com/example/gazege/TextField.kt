@@ -1,7 +1,7 @@
 package com.example.gazege
 
 import androidx.compose.ui.text.AnnotatedString
-import com.example.gazege.ui.widgets.NumberTransformation
+import com.jmml.gazege.ui.widgets.NumberTransformation
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test

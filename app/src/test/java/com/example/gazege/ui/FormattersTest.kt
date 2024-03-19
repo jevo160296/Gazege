@@ -1,5 +1,6 @@
 package com.example.gazege.ui
 
+import com.jmml.gazege.ui.floatToShortText
 import org.junit.Test
 
 class FormattersTest {

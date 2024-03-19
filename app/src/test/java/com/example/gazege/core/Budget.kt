@@ -1,13 +1,13 @@
 package com.example.gazege.core
 
-import com.example.gazege.core.dao.BudgetDao
-import com.example.gazege.core.dsl.budgetWithCalculatedDataDSL
-import com.example.gazege.core.entities.AbsoluteMonthDays
-import com.example.gazege.core.entities.Budget
-import com.example.gazege.core.entities.BudgetType
-import com.example.gazege.core.entities.WeekDays
-import com.example.gazege.core.entities.toByteString
-import com.example.gazege.core.entities.toList
+import com.jmml.gazege.core.dao.BudgetDao
+import com.jmml.gazege.core.dsl.budgetWithCalculatedDataDSL
+import com.jmml.gazege.core.entities.AbsoluteMonthDays
+import com.jmml.gazege.core.entities.Budget
+import com.jmml.gazege.core.entities.BudgetType
+import com.jmml.gazege.core.entities.WeekDays
+import com.jmml.gazege.core.entities.toByteString
+import com.jmml.gazege.core.entities.toList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test

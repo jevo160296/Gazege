@@ -30,11 +30,11 @@ ksp {
 }
 
 android {
-    namespace 'com.example.gazege'
+    namespace 'com.jmml.gazege'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.gazege"
+        applicationId "com.jmml.gazege"
         minSdk 29
         targetSdk 34
         versionCode 75

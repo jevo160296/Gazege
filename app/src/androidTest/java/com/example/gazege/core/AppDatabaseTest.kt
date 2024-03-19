@@ -3,8 +3,9 @@ package com.example.gazege.core
 import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.gazege.core.entities.*
-import com.example.gazege.ui.databaseSample
+import com.jmml.gazege.core.AppDatabase
+import com.jmml.gazege.core.entities.*
+import com.jmml.gazege.ui.databaseSample
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

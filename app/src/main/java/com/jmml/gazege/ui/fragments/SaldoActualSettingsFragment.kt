@@ -1,0 +1,153 @@
+package com.jmml.gazege.ui.fragments
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.jmml.gazege.R
+import com.jmml.gazege.core.entities.Account
+import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.jmml.gazege.ui.doubleToMoneyString
+import com.jmml.gazege.ui.navigation.FullPersonSummaryState
+import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
+import com.jmml.gazege.ui.navigation.PersonSummaryState
+import com.jmml.gazege.ui.views.account.AccountSelectionPage
+import com.jmml.gazege.ui.widgets.LargeBody
+import com.jmml.gazege.ui.widgets.MediumHeadline
+import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+
+@Composable
+fun SaldoActualSettings(
+    accountList: List<AccountAndOwnerWithTransactions>,
+    summaryState: PersonSummaryState,
+    saving: Int,
+    incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
+    onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
+    onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
+) {
+    when (summaryState) {
+        is FullPersonSummaryState -> {
+            LoadedSaldoActualSettings(
+                accountList = accountList,
+                summaryState = summaryState,
+                saving = saving,
+                incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+                incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
+                onIncluirPresupuestoEnSaldoActualChanged = onIncluirPresupuestoEnSaldoActualChanged,
+                onIncluirDeudasEnSaldoActualChanged = onIncluirDeudasEnSaldoActualChanged,
+                onUpdateSeleccion = onUpdateSeleccion
+            )
+        }
+
+        is LoadingPersonSummaryState -> {
+            EmptySaldoActualSettings()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoadedSaldoActualSettings(
+    accountList: List<AccountAndOwnerWithTransactions>,
+    summaryState: FullPersonSummaryState,
+    saving: Int,
+    incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
+    onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
+    onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
+) {
+    val accountState = rememberTreeState()
+    Column {
+        TopAppBar(
+            title = {
+                MediumHeadline(text = stringResource(R.string.Ajustes_saldo_actual))
+            }
+        )
+        Box(Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))) {
+            LargeBody(text = stringResource(R.string.Ajustes_saldo_actual_desc))
+        }
+        if (saving > 0) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .height(4.dp)
+                    .fillMaxWidth()
+            )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        Column(
+            Modifier
+                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = incluirPresupuestoEnSaldoActual,
+                    onCheckedChange = onIncluirPresupuestoEnSaldoActualChanged
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(id = R.string.Incluir_presupuesto))
+                    Text(text = doubleToMoneyString(summaryState.presupuestoTotal))
+                }
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = incluirDeudasEnSaldoActual,
+                    onCheckedChange = onIncluirDeudasEnSaldoActualChanged
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(R.string.Incluir_deudas))
+                    Text(text = doubleToMoneyString(summaryState.deudasTotal))
+                }
+            }
+        }
+        AccountSelectionPage(
+            modifier = Modifier.navigationBarsPadding(),
+            accountList = accountList,
+            itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+            treeState = accountState,
+            onAccountStateChanged = { account, nuevoEstado ->
+                onUpdateSeleccion(account, nuevoEstado)
+            },
+            startDate = null,
+            endDate = null,
+        )
+    }
+}
+
+@Composable
+fun EmptySaldoActualSettings() {
+    // TODO Develop UI for loading saldo actual
+    Text(text = "Loading")
+}

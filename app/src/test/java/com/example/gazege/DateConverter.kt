@@ -1,13 +1,13 @@
 package com.example.gazege
 
-import com.example.gazege.core.converters.Converters
-import com.example.gazege.core.stableMinusMonths
-import com.example.gazege.core.stablePlusMonths
+import com.jmml.gazege.core.converters.Converters
+import com.jmml.gazege.core.stableMinusMonths
+import com.jmml.gazege.core.stablePlusMonths
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.util.*
+import java.util.Date
 
 class DateConverterUnitTest {
     private fun testOneDate(localDate: LocalDate, converter: Converters): LocalDate? {

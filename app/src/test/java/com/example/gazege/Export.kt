@@ -1,7 +1,7 @@
 package com.example.gazege
 
-import com.example.gazege.core.export.parseDate
-import com.example.gazege.core.export.realizeFormatter
+import com.jmml.gazege.core.export.parseDate
+import com.jmml.gazege.core.export.realizeFormatter
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate

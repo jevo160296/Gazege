@@ -1,7 +1,17 @@
 package com.example.gazege
 
-import com.example.gazege.core.dao.PersonDao
-import com.example.gazege.core.entities.*
+import com.jmml.gazege.core.dao.PersonDao
+import com.jmml.gazege.core.entities.Account
+import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
+import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
+import com.jmml.gazege.core.entities.BudgetType
+import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.CategoryWithSubCategories
+import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionAndAccounts
+import com.jmml.gazege.core.entities.categories
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -99,7 +109,7 @@ class DataModelTests {
     @Test
     fun testCategoryWithSubcategories() {
         val expected = listOf(
-            Category(0, "", null).let {
+            Category(0, "", BudgetType.FIXED, null).let {
                 CategoryWithSubCategories(
                     it,
                     listOf(
@@ -116,10 +126,10 @@ class DataModelTests {
                     )
                 )
             },
-            CategoryWithSubCategories(Category(1, "", null), listOf()),
-            CategoryWithSubCategories(Category(2, "", null), listOf()),
-            CategoryWithSubCategories(Category(3, "", null), listOf()),
-            CategoryWithSubCategories(Category(4, "", null), listOf())
+            CategoryWithSubCategories(Category(1, "", BudgetType.FIXED, null), listOf()),
+            CategoryWithSubCategories(Category(2, "", BudgetType.FIXED, null), listOf()),
+            CategoryWithSubCategories(Category(3, "", BudgetType.FIXED, null), listOf()),
+            CategoryWithSubCategories(Category(4, "", BudgetType.FIXED, null), listOf())
         )
         val categoriesDsl = categories {
             category(0, "") {
