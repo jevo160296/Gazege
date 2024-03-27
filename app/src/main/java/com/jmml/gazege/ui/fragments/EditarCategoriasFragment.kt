@@ -1,5 +1,6 @@
 package com.jmml.gazege.ui.fragments
 
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.FilledTonalIconToggleButton
@@ -18,10 +20,16 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -96,11 +104,12 @@ fun LoadedEditarCategorias(
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
         editarCategoriasState.categoriesWithCalculatedData
     val layoutDirection = LocalLayoutDirection.current
+    var hasZeroElements: Boolean? by rememberSaveable { mutableStateOf(null) }
 
     LaunchedEffect(categoriesWithCalculatedData.isEmpty()) {
-        onZeroElementsChanged(
-            categoriesWithCalculatedData.isEmpty()
-        )
+        val newValue = categoriesWithCalculatedData.isEmpty()
+        hasZeroElements = newValue
+        onZeroElementsChanged(newValue)
     }
 
     Column(
@@ -134,6 +143,19 @@ fun LoadedEditarCategorias(
             )
         }
         Row(
+            Modifier
+                .fillMaxWidth(1f)
+                .pointerInput(1) {
+                    detectDragGestures { change, dragAmount ->
+                        if (hasZeroElements?.not() == true) {
+                            change.consume()
+                            nestedScrollConnection.onPreScroll(
+                                dragAmount,
+                                NestedScrollSource.Wheel
+                            )
+                        }
+                    }
+                },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(
                 dimensionResource(id = R.dimen.DefaultPadding),
