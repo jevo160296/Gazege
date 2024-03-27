@@ -447,7 +447,7 @@ private fun MainFragmentResponsiveContent(
     val innerNestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                return if (!((0f..20f).contains(available.y))) {
+                return if (!((0f..20f).contains(available.y)) || source == NestedScrollSource.Wheel) {
                     val newOffset =
                         (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
                     val returnedOffset = if (newOffset != offsetYDP) {
@@ -700,7 +700,7 @@ private fun MainFragmentResponsiveContent(
                         change.consume()
                         innerNestedScrollConnection.onPreScroll(
                             dragAmount,
-                            NestedScrollSource.Drag
+                            NestedScrollSource.Wheel
                         )
                     }
                 }
