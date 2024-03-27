@@ -13,6 +13,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -254,7 +255,7 @@ fun LoadedAccountPage(
     onZeroElementsChanged: (Boolean) -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
-    onZeroElementsChanged(accountList.isEmpty())
+    LaunchedEffect(accountList.isEmpty()) { onZeroElementsChanged(accountList.isEmpty()) }
     onTitleSetted(stringResource(id = R.string.cuentas))
     Column(modifier = modifier) {
         AccountClickableTreeView(

@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -92,7 +93,11 @@ fun LoadedEditarCategorias(
         editarCategoriasState.categoriesWithCalculatedData
     val layoutDirection = LocalLayoutDirection.current
 
-    onZeroElementsChanged(categoriesWithCalculatedData.isEmpty())
+    LaunchedEffect(categoriesWithCalculatedData.isEmpty()) {
+        onZeroElementsChanged(
+            categoriesWithCalculatedData.isEmpty()
+        )
+    }
 
     Column(
         modifier = Modifier.padding(

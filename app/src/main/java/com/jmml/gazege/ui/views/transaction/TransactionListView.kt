@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +65,7 @@ fun LoadedTransactionPage(
     onTitleSetted: (String) -> Unit,
     onZeroElementsChanged: (Boolean) -> Unit,
 ) {
-    onZeroElementsChanged(transactionList.isEmpty())
+    LaunchedEffect(transactionList.isEmpty()) { onZeroElementsChanged(transactionList.isEmpty()) }
     onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
         LoadedTransactionRecyclerView(
