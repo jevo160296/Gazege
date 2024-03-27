@@ -13,6 +13,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -136,9 +137,12 @@ fun LoadedPersonPage(
     state: LazyListState,
     nestedScrollConnection: NestedScrollConnection? = null,
     onZeroElementsChanged: (Boolean) -> Unit,
-    onTitleSetted: (String) -> Unit
+    onTitleSetted: (String) -> Unit,
+    onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit
 ) {
     LaunchedEffect(allPerson.isEmpty()) { onZeroElementsChanged(allPerson.isEmpty()) }
+    val firstElementIsVisible by remember { derivedStateOf { state.firstVisibleItemIndex == 0 } }
+    LaunchedEffect(firstElementIsVisible) { onFirstElementVisibleChanged(firstElementIsVisible) }
     onTitleSetted(stringResource(id = R.string.personas))
     Column(modifier = modifier) {
         LoadedPersonRecyclerView(
@@ -191,15 +195,16 @@ private fun PreviewPersonPage() {
     DatabaseSample {
         GazegeTheme {
             LoadedPersonPage(
-                allPerson = personSample,
-                state = LazyListState(),
-                editPerson = {},
-                delPerson = {},
-                onTitleSetted = {},
                 itemHolderPaddingValues = PaddingValues(vertical = 50.dp),
-                detailPerson = {},
                 principalPersonSummaryState = personSummaryStateSample,
-                onZeroElementsChanged = {}
+                allPerson = personSample,
+                delPerson = {},
+                editPerson = {},
+                detailPerson = {},
+                state = LazyListState(),
+                onZeroElementsChanged = {},
+                onTitleSetted = {},
+                onFirstElementVisibleChanged = { }
             )
         }
     }

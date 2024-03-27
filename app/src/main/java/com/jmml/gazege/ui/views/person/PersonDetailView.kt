@@ -117,7 +117,8 @@ fun PersonDetail(
             state = rememberLazyListState(),
             itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
             onTitleSetted = {},
-            onZeroElementsChanged = {}
+            onZeroElementsChanged = {},
+            onFirstElementVisibleChanged = {}
         )
     }
 }

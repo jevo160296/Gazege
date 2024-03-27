@@ -35,6 +35,8 @@ import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.jmml.gazege.ui.views.category.CategoryListView
 import com.jmml.gazege.ui.widgets.DataView
 import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
+import com.jmml.gazege.ui.widgets.treeview.TreeState
+import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 
 @Composable
 fun EmptyEditarCategorias(
@@ -81,12 +83,14 @@ fun LoadedEditarCategorias(
     paddingValues: PaddingValues,
     editarCategoriasState: LoadedEditarCategoriasState,
     nestedScrollConnection: NestedScrollConnection,
+    state: TreeState = rememberTreeState(),
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit,
     showType: EditarCategoriasShowType,
     onZeroElementsChanged: (Boolean) -> Unit,
+    onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit,
     onShowTypeChanged: (newValue: EditarCategoriasShowType) -> Unit
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
@@ -175,7 +179,9 @@ fun LoadedEditarCategorias(
             onSetBudgetRequested = onSetBudgetRequested,
             paddingValues = paddingValues,
             showType = showType,
-            nestedScrollConnection = nestedScrollConnection
+            nestedScrollConnection = nestedScrollConnection,
+            onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
+            state = state
         )
     }
 }

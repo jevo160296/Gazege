@@ -155,6 +155,7 @@ fun MainFragment(
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
     val personState = rememberLazyListState()
+    val categoryListState = rememberTreeState()
 
     val scope = rememberCoroutineScope()
     var title: String by rememberSaveable {
@@ -375,6 +376,7 @@ fun MainFragment(
             onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
             showType = showType,
             categoriasState = categoriasState,
+            categoryState = categoryListState,
             onShowTypeChanged = onShowTypeChanged,
             onNavigateToEditCategory = onNavigateToEditCategory,
             onNavigateToAddBudget = onNavigateToAddBudget,
@@ -411,6 +413,7 @@ private fun MainFragmentResponsiveContent(
     onSaldoActualClick: () -> Unit,
     onPersonFilterValueChanged: (Boolean) -> Unit,
     transactionState: LazyListState,
+    categoryState: TreeState,
     accountState: TreeState,
     personState: LazyListState,
     navPosition: NavPosition,
@@ -444,10 +447,16 @@ private fun MainFragmentResponsiveContent(
         start = 8.dp,
         end = 8.dp
     )
-    val innerNestedScrollConnection = remember {
+    var isFirstElementVisible by rememberSaveable { mutableStateOf(false) }
+    var hasZeroElements: Boolean? by rememberSaveable { mutableStateOf(null) }
+    val innerNestedScrollConnection = remember(isFirstElementVisible) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                return if (!((0f..20f).contains(available.y)) || source == NestedScrollSource.Wheel) {
+                return if (
+                    !((0f..20f).contains(available.y)) ||
+                    source == NestedScrollSource.Wheel ||
+                    isFirstElementVisible
+                ) {
                     val newOffset =
                         (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
                     val returnedOffset = if (newOffset != offsetYDP) {
@@ -466,12 +475,17 @@ private fun MainFragmentResponsiveContent(
     val startDate = range.first
     val endDate = range.second
     val onZeroElementsChanged = remember {
-        { hasZeroElements: Boolean ->
-            if (hasZeroElements && offsetYDP != 0f) {
+        { newHasZeroElements: Boolean ->
+            if (hasZeroElements != newHasZeroElements) {
+                hasZeroElements = newHasZeroElements
+            }
+            if (newHasZeroElements && offsetYDP != 0f) {
                 offsetYDP = 0f
             }
         }
     }
+    val onFirstElementVisibleChanged =
+        remember { { isVisible: Boolean -> isFirstElementVisible = isVisible } }
 
     val filter = @Composable {
         Filter(
@@ -542,7 +556,9 @@ private fun MainFragmentResponsiveContent(
                 showType = showType,
                 onShowTypeChanged = onShowTypeChanged,
                 nestedScrollConnection = innerNestedScrollConnection,
-                onZeroElementsChanged = onZeroElementsChanged
+                onZeroElementsChanged = onZeroElementsChanged,
+                state = categoryState,
+                onFirstElementVisibleChanged = onFirstElementVisibleChanged
             )
 
             is EmptyEditarCategoriasState -> EmptyEditarCategorias(
@@ -565,7 +581,8 @@ private fun MainFragmentResponsiveContent(
                             editTransaction = onEditTransactionRequested,
                             onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
                             nestedScrollConnection = innerNestedScrollConnection,
-                            onZeroElementsChanged = onZeroElementsChanged
+                            onZeroElementsChanged = onZeroElementsChanged,
+                            onFirstElementVisibleChanged = onFirstElementVisibleChanged
                         )
                     }
 
@@ -595,7 +612,8 @@ private fun MainFragmentResponsiveContent(
                     endDate = null,
                     detailAccount = onAccountDetailRequested,
                     nestedScrollConnection = innerNestedScrollConnection,
-                    onZeroElementsChanged = onZeroElementsChanged
+                    onZeroElementsChanged = onZeroElementsChanged,
+                    onFirstElementVisibilityChanged = onFirstElementVisibleChanged
                 ) { newTitle -> onTitleChanged(newTitle) }
             }
 
@@ -631,7 +649,8 @@ private fun MainFragmentResponsiveContent(
                         detailPerson = onPersonDetailRequested,
                         principalPersonSummaryState = it,
                         nestedScrollConnection = innerNestedScrollConnection,
-                        onZeroElementsChanged = onZeroElementsChanged
+                        onZeroElementsChanged = onZeroElementsChanged,
+                        onFirstElementVisibleChanged = onFirstElementVisibleChanged
                     )
                 }
 
@@ -697,11 +716,13 @@ private fun MainFragmentResponsiveContent(
                 }
                 .pointerInput(1) {
                     detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        innerNestedScrollConnection.onPreScroll(
-                            dragAmount,
-                            NestedScrollSource.Wheel
-                        )
+                        if (hasZeroElements?.not() == true) {
+                            change.consume()
+                            innerNestedScrollConnection.onPreScroll(
+                                dragAmount,
+                                NestedScrollSource.Wheel
+                            )
+                        }
                     }
                 }
             ) {

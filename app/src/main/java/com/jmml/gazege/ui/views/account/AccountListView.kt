@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -253,9 +254,12 @@ fun LoadedAccountPage(
         )
     },
     onZeroElementsChanged: (Boolean) -> Unit,
+    onFirstElementVisibilityChanged: (isVisible: Boolean) -> Unit,
     onTitleSetted: (String) -> Unit
 ) {
     LaunchedEffect(accountList.isEmpty()) { onZeroElementsChanged(accountList.isEmpty()) }
+    val firstElementIsVisible by remember { derivedStateOf { treeState.listState.firstVisibleItemIndex == 0 } }
+    LaunchedEffect(firstElementIsVisible) { onFirstElementVisibilityChanged(firstElementIsVisible) }
     onTitleSetted(stringResource(id = R.string.cuentas))
     Column(modifier = modifier) {
         AccountClickableTreeView(
@@ -411,7 +415,8 @@ private fun PreviewPage() {
                 startDate = null,
                 endDate = null,
                 detailAccount = {},
-                onZeroElementsChanged = {}
+                onZeroElementsChanged = {},
+                onFirstElementVisibilityChanged = {}
             ) {}
         }
     }

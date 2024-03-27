@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,8 +65,11 @@ fun LoadedTransactionPage(
     nestedScrollConnection: NestedScrollConnection? = null,
     onTitleSetted: (String) -> Unit,
     onZeroElementsChanged: (Boolean) -> Unit,
+    onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit
 ) {
     LaunchedEffect(transactionList.isEmpty()) { onZeroElementsChanged(transactionList.isEmpty()) }
+    val firstElementIsVisible by remember { derivedStateOf { state.firstVisibleItemIndex == 0 } }
+    LaunchedEffect(firstElementIsVisible) { onFirstElementVisibleChanged(firstElementIsVisible) }
     onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
         LoadedTransactionRecyclerView(
@@ -332,7 +336,8 @@ private fun PreviewTransactionPage() {
                 editTransaction = {},
                 delTransaction = {},
                 onTitleSetted = {},
-                onZeroElementsChanged = {}
+                onZeroElementsChanged = {},
+                onFirstElementVisibleChanged = {}
             )
         }
     }

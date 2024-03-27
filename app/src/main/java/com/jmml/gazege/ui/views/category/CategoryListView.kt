@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +48,7 @@ import com.jmml.gazege.ui.widgets.GProgressIndicator
 import com.jmml.gazege.ui.widgets.LargeEmphasis
 import com.jmml.gazege.ui.widgets.treeview.NodeId
 import com.jmml.gazege.ui.widgets.treeview.TreeScope
+import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 import java.time.LocalDate
 
@@ -137,6 +140,8 @@ private fun EmptyCategoryAndBudgetViewHolder(
 fun CategoryListView(
     paddingValues: PaddingValues,
     nestedScrollConnection: NestedScrollConnection,
+    state: TreeState = rememberTreeState(),
+    onFirstElementsVisibleChanged: (isVisible: Boolean) -> Unit,
     categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     editCategory: (category: Category) -> Unit,
     onSetBudgetRequested: (category: Category) -> Unit,
@@ -148,12 +153,14 @@ fun CategoryListView(
     var menuIdExpanded: NodeId? by remember {
         mutableStateOf(null)
     }
+    val firstElementIsVisible by remember { derivedStateOf { state.listState.firstVisibleItemIndex == 0 } }
+    LaunchedEffect(firstElementIsVisible) { onFirstElementsVisibleChanged(firstElementIsVisible) }
     SimpleTreeList(
         modifier = Modifier.nestedScroll(nestedScrollConnection),
         contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding) * 2,
         nodes = nodes,
-        state = rememberTreeState()
+        state = state
     ) { node, scope ->
         ClickableTreeListItemViewHolder(
             level = node.level,
@@ -295,7 +302,8 @@ private fun CategoryListPreview() {
                     onSetBudgetRequested = {},
                     exportCategory = {},
                     showType = EditarCategoriasShowType.EXPANDED,
-                    nestedScrollConnection = object : NestedScrollConnection {}
+                    nestedScrollConnection = object : NestedScrollConnection {},
+                    onFirstElementsVisibleChanged = {}
                 )
             }
         }
