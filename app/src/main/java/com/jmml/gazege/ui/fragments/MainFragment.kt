@@ -1,13 +1,15 @@
 package com.jmml.gazege.ui.fragments
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
@@ -29,8 +31,8 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,11 +43,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.R
@@ -165,35 +173,6 @@ fun MainFragment(
         .let { categoryTemplate ->
             { categoryName: String -> categoryTemplate.format(categoryName) }
         }
-
-    var listIsEmpty: Boolean? by rememberSaveable { mutableStateOf(null) }
-    var isScrolledDown by rememberSaveable { mutableStateOf(true) }
-
-    val onZeroElementsChanged = { isEmpty: Boolean ->
-        listIsEmpty = isEmpty
-        if (isEmpty) {
-            isScrolledDown = true
-        }
-    }
-
-    val isVisible by remember {
-        derivedStateOf {
-            isScrolledDown || listIsEmpty ?: true
-        }
-    }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y < -1) {
-                    isScrolledDown = false
-                } else if (available.y > 50) {
-                    isScrolledDown = true
-                }
-                return Offset.Zero
-            }
-        }
-    }
 
 
     val yesLabel = stringResource(id = R.string.Si)
@@ -400,13 +379,16 @@ fun MainFragment(
             onNavigateToEditCategory = onNavigateToEditCategory,
             onNavigateToAddBudget = onNavigateToAddBudget,
             onExportCategoryRequested = onExportCategoryRequested,
-            showVertical = showVertical,
-            isVisible = isVisible,
-            nestedScrollConnection = nestedScrollConnection,
-            onZeroElementsChanged = onZeroElementsChanged
+            showVertical = showVertical
         )
     }
 }
+
+private fun Density.toDp(valuePx: Float): Dp = valuePx.div(this.density).dp
+
+private fun Density.toPx(valueDp: Dp): Float = valueDp.times(this.density).value
+
+private fun Density.toPx(valueDp: Float): Float = valueDp.times(this.density)
 
 @Composable
 private fun MainFragmentResponsiveContent(
@@ -449,19 +431,47 @@ private fun MainFragmentResponsiveContent(
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
-    onZeroElementsChanged: (Boolean) -> Unit,
-    nestedScrollConnection: NestedScrollConnection,
-    isVisible: Boolean,
     showVertical: Boolean
 ) {
+    val d = LocalDensity.current
+    var offsetYDP by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val animatedOffsetYDP by animateFloatAsState(targetValue = offsetYDP, label = "Size")
+    var maxOffsetYDP by remember { mutableFloatStateOf(0f) }
     val paddingValues = PaddingValues(
         top = 8.dp,
         bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
         start = 8.dp,
         end = 8.dp
     )
+    val innerNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                return if (!((0f..20f).contains(available.y))) {
+                    val newOffset =
+                        (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
+                    val returnedOffset = if (newOffset != offsetYDP) {
+                        available
+                    } else {
+                        Offset.Zero
+                    }
+                    offsetYDP = newOffset
+                    returnedOffset
+                } else {
+                    Offset.Zero
+                }
+            }
+        }
+    }
     val startDate = range.first
     val endDate = range.second
+    val onZeroElementsChanged = remember {
+        { hasZeroElements: Boolean ->
+            if (hasZeroElements && offsetYDP != 0f) {
+                offsetYDP = 0f
+            }
+        }
+    }
 
     val filter = @Composable {
         Filter(
@@ -531,8 +541,7 @@ private fun MainFragmentResponsiveContent(
                 onExportCategoryRequested = onExportCategoryRequested,
                 showType = showType,
                 onShowTypeChanged = onShowTypeChanged,
-                nestedScrollConnection = nestedScrollConnection,
-                isVisible = isVisible,
+                nestedScrollConnection = innerNestedScrollConnection,
                 onZeroElementsChanged = onZeroElementsChanged
             )
 
@@ -555,7 +564,7 @@ private fun MainFragmentResponsiveContent(
                             delTransaction = delTransaction,
                             editTransaction = onEditTransactionRequested,
                             onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                            nestedScrollConnection = nestedScrollConnection,
+                            nestedScrollConnection = innerNestedScrollConnection,
                             onZeroElementsChanged = onZeroElementsChanged
                         )
                     }
@@ -585,7 +594,7 @@ private fun MainFragmentResponsiveContent(
                     startDate = null,
                     endDate = null,
                     detailAccount = onAccountDetailRequested,
-                    nestedScrollConnection = nestedScrollConnection,
+                    nestedScrollConnection = innerNestedScrollConnection,
                     onZeroElementsChanged = onZeroElementsChanged
                 ) { newTitle -> onTitleChanged(newTitle) }
             }
@@ -621,7 +630,7 @@ private fun MainFragmentResponsiveContent(
                         onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
                         detailPerson = onPersonDetailRequested,
                         principalPersonSummaryState = it,
-                        nestedScrollConnection = nestedScrollConnection,
+                        nestedScrollConnection = innerNestedScrollConnection,
                         onZeroElementsChanged = onZeroElementsChanged
                     )
                 }
@@ -672,14 +681,33 @@ private fun MainFragmentResponsiveContent(
     }
 
     if (showVertical) {
-        Column(Modifier.padding(layoutPaddingValues)) {
-            AnimatedVisibility(visible = isVisible) {
-                Column {
-                    filter()
-                    personMonthSummaryView()
-                }
+        Box(Modifier.padding(layoutPaddingValues)) {
+            Box(Modifier.padding(top = (maxOffsetYDP.dp + animatedOffsetYDP.dp).coerceAtLeast(0.dp))) {
+                navigationView()
             }
-            navigationView()
+            Column(Modifier
+                .onGloballyPositioned { maxOffsetYDP = with(d) { it.size.height.div(density) } }
+                .offset {
+                    IntOffset(
+                        0,
+                        d
+                            .toPx(animatedOffsetYDP)
+                            .toInt()
+                    )
+                }
+                .pointerInput(1) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        innerNestedScrollConnection.onPreScroll(
+                            dragAmount,
+                            NestedScrollSource.Drag
+                        )
+                    }
+                }
+            ) {
+                filter()
+                personMonthSummaryView()
+            }
         }
     } else {
         Row(Modifier.padding(layoutPaddingValues)) {

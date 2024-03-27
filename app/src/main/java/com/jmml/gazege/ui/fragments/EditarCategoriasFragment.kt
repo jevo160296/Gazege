@@ -1,6 +1,5 @@
 package com.jmml.gazege.ui.fragments
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,7 +80,6 @@ fun LoadedEditarCategorias(
     paddingValues: PaddingValues,
     editarCategoriasState: LoadedEditarCategoriasState,
     nestedScrollConnection: NestedScrollConnection,
-    isVisible: Boolean,
     onEditCategoryRequested: (Category) -> Unit,
     onSetBudgetRequested: (Category) -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
@@ -102,73 +100,66 @@ fun LoadedEditarCategorias(
             end = paddingValues.calculateEndPadding(layoutDirection)
         )
     ) {
-        AnimatedVisibility(visible = isVisible) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+            modifier = Modifier
+                .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
+                .height(IntrinsicSize.Min)
+        ) {
+            DataView(
+                title = stringResource(id = R.string.Falta_pagar_recibir),
+                value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                modifier = Modifier.weight(1f)
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_real),
+                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                modifier = Modifier.weight(1f),
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_total),
+                value = doubleToMoneyString(editarCategoriasState.netFlow),
                 modifier = Modifier
-                    .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
-                    .height(IntrinsicSize.Min)
+                    .fillMaxHeight()
+                    .weight(1f)
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                dimensionResource(id = R.dimen.DefaultPadding),
+                alignment = Alignment.End
+            )
+        ) {
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.GRAPHICAL,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
             ) {
-                DataView(
-                    title = stringResource(id = R.string.Falta_pagar_recibir),
-                    value = doubleToMoneyString(editarCategoriasState.leftToPay),
-                    modifier = Modifier.weight(1f)
-                )
-                DataView(
-                    title = stringResource(id = R.string.Flujo_real),
-                    value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                    modifier = Modifier.weight(1f),
-                )
-                DataView(
-                    title = stringResource(id = R.string.Flujo_total),
-                    value = doubleToMoneyString(editarCategoriasState.netFlow),
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f)
+                Icon(
+                    painter = painterResource(id = R.drawable.show_graphical),
+                    contentDescription = ""
                 )
             }
-        }
-        AnimatedVisibility(
-            visible = isVisible,
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    dimensionResource(id = R.dimen.DefaultPadding),
-                    alignment = Alignment.End
-                )
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.EXPANDED,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
             ) {
-                FilledTonalIconToggleButton(
-                    checked = showType == EditarCategoriasShowType.GRAPHICAL,
-                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) },
-                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.show_graphical),
-                        contentDescription = ""
-                    )
-                }
-                FilledTonalIconToggleButton(
-                    checked = showType == EditarCategoriasShowType.EXPANDED,
-                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) },
-                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.show_expanded),
-                        contentDescription = ""
-                    )
-                }
-                FilledTonalIconToggleButton(
-                    checked = showType == EditarCategoriasShowType.COMPACT,
-                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
-                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.show_compact),
-                        contentDescription = ""
-                    )
-                }
+                Icon(
+                    painter = painterResource(id = R.drawable.show_expanded),
+                    contentDescription = ""
+                )
+            }
+            FilledTonalIconToggleButton(
+                checked = showType == EditarCategoriasShowType.COMPACT,
+                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.show_compact),
+                    contentDescription = ""
+                )
             }
         }
         CategoryListView(
