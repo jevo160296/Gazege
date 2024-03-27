@@ -8,8 +8,8 @@
         <intent
             android:data="https://www.example.gazege?transactionaction=ADD_INCOME"
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.example.gazege.MainActivity"
-            android:targetPackage="com.example.gazege">
+            android:targetClass="com.jmml.gazege.MainActivity"
+            android:targetPackage="com.jmml.gazege">
             <extra
                 android:name="add"
                 android:value="ingreso" />
@@ -23,8 +23,8 @@
         <intent
             android:data="https://www.example.gazege?transactionaction=ADD_EXPENSE"
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.example.gazege.MainActivity"
-            android:targetPackage="com.example.gazege">
+            android:targetClass="com.jmml.gazege.MainActivity"
+            android:targetPackage="com.jmml.gazege">
             <extra
                 android:name="add"
                 android:value="gasto" />
@@ -38,8 +38,8 @@
         <intent
             android:data="https://www.example.gazege?transactionaction=ADD_TRANSFER"
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.example.gazege.MainActivity"
-            android:targetPackage="com.example.gazege">
+            android:targetClass="com.jmml.gazege.MainActivity"
+            android:targetPackage="com.jmml.gazege">
             <extra
                 android:name="add"
                 android:value="transferencia" />
