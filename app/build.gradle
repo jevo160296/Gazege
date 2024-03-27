@@ -30,15 +30,15 @@ ksp {
 }
 
 android {
-    namespace 'com.example.gazege'
+    namespace 'com.jmml.gazege'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.gazege"
+        applicationId "com.jmml.gazege"
         minSdk 29
         targetSdk 34
-        versionCode 75
-        versionName '1.13.0'
+        versionCode 76
+        versionName '1.13.1'
 
         sourceSets {
             androidTest.assets.srcDirs +=
