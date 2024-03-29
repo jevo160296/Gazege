@@ -16,6 +16,8 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.data.sample
+import com.jmml.gazege.extensions.localdate.endOfMonth
+import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.fragments.MainFragment
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
@@ -95,17 +97,13 @@ fun NavGraphBuilder.screenMain(
                 onAccountDetailRequested = { onNavigateToAccountDetail(it.id) },
                 onAddTransactionRequested = {
                     val startDate = range.first
-                    val esMesActual =
-                        range.first?.withDayOfMonth(1) == LocalDate.now()
-                            .withDayOfMonth(1)
+                    val esMesActual = startDate?.startOfMonth() == today.startOfMonth()
                     val esMesPosterior =
                         startDate != null &&
-                                startDate.withDayOfMonth(1) > LocalDate.now()
-                            .withDayOfMonth(1)
-                    val date = if (esMesActual || startDate == null) LocalDate.now()
-                    else if (esMesPosterior) startDate.withDayOfMonth(1) else
-                        startDate.withDayOfMonth(1).plusMonths(1L)
-                            .minusDays(1L)
+                                startDate.startOfMonth() > today.startOfMonth()
+                    val date = if (esMesActual || startDate == null) today
+                    else if (esMesPosterior) startDate.startOfMonth() else
+                        startDate.endOfMonth()
                     onNavigateToAddTransaction(date, it)
                 },
                 onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },

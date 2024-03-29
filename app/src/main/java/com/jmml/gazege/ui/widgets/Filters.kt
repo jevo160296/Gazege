@@ -43,10 +43,10 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
-import com.jmml.gazege.core.firstDayOfMonth
-import com.jmml.gazege.core.lastDayOfMonth
-import com.jmml.gazege.core.stableMinusMonths
-import com.jmml.gazege.core.stablePlusMonths
+import com.jmml.gazege.extensions.localdate.endOfMonth
+import com.jmml.gazege.extensions.localdate.stableMinusMonths
+import com.jmml.gazege.extensions.localdate.stablePlusMonths
+import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.DateFormat
 import com.jmml.gazege.ui.localDateToString
 import com.jmml.gazege.ui.theme.GazegeTheme
@@ -458,8 +458,8 @@ fun DateFilterItems(
             onClick = {
                 if (startDate != null && endDate != null) {
                     val newRange = Pair(
-                        stableMinusMonths(startDate, 1L),
-                        stableMinusMonths(endDate, 1L)
+                        startDate.stableMinusMonths(1L),
+                        endDate.stableMinusMonths(1L)
                     )
                     onRangeChanged(newRange.first, newRange.second)
                 }
@@ -477,10 +477,7 @@ fun DateFilterItems(
             dateString,
             modifier = Modifier.clickable {
                 val newRange = LocalDate.now().let {
-                    Pair(
-                        firstDayOfMonth(it),
-                        lastDayOfMonth(it)
-                    )
+                    Pair(it.startOfMonth(), it.endOfMonth())
                 }
                 onRangeChanged(newRange.first, newRange.second)
             },
@@ -490,8 +487,8 @@ fun DateFilterItems(
             onClick = {
                 if (startDate != null && endDate != null) {
                     val newRange = Pair(
-                        stablePlusMonths(startDate, 1L),
-                        stablePlusMonths(endDate, 1L)
+                        startDate.stablePlusMonths(1L),
+                        endDate.stablePlusMonths(1L)
                     )
                     onRangeChanged(newRange.first, newRange.second)
                 }

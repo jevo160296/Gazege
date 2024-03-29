@@ -5,9 +5,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.jmml.gazege.core.dateBetween
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithTransactions
+import com.jmml.gazege.extensions.localdate.isBetween
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -45,10 +45,10 @@ interface CategoryDao {
             endDate: LocalDate
         ) = categoryWithTransactions.let {
             it.inTransactions
-                .filter { trx -> dateBetween(trx.date, startDate, endDate) }
+                .filter { trx -> trx.date.isBetween(startDate, endDate) }
                 .sumOf { trx -> trx.amount } -
                     it.outTransactions
-                        .filter { trx -> dateBetween(trx.date, startDate, endDate) }
+                        .filter { trx -> trx.date.isBetween(startDate, endDate) }
                         .sumOf { trx -> trx.amount }
         }
 

@@ -1,8 +1,8 @@
 package com.example.gazege
 
 import com.jmml.gazege.core.converters.Converters
-import com.jmml.gazege.core.stableMinusMonths
-import com.jmml.gazege.core.stablePlusMonths
+import com.jmml.gazege.extensions.localdate.stableMinusMonths
+import com.jmml.gazege.extensions.localdate.stablePlusMonths
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
@@ -79,7 +79,7 @@ class DateFunctionsUnitTest {
             assertEquals(
                 "Fechas no iguales",
                 it.expectedDate,
-                stablePlusMonths(it.date, it.months)
+                it.date.stablePlusMonths(it.months)
             )
         }
     }
@@ -107,7 +107,7 @@ class DateFunctionsUnitTest {
             assertEquals(
                 "Fechas no iguales",
                 it.expectedDate,
-                stableMinusMonths(it.date, it.months)
+                it.date.stableMinusMonths(it.months)
             )
         }
     }

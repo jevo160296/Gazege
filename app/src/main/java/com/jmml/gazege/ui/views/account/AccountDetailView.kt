@@ -43,7 +43,6 @@ import com.jmml.gazege.MainViewModel.Companion.applyTransferFilter
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.R
 import com.jmml.gazege.core.dao.AccountDao
-import com.jmml.gazege.core.dateBetween
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
@@ -52,6 +51,7 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.extensions.localdate.isBetween
 import com.jmml.gazege.plot.Plot
 import com.jmml.gazege.plot.PlotDataFromTransactions
 import com.jmml.gazege.ui.DatabaseSample
@@ -143,7 +143,7 @@ data class AccountDetailData(
                 allTransactions = account
                     .allTransactionsWithPocketTransactions
                     .sortedByDescending { it.date }
-                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .filter { it.date.isBetween(startDate, endDate) }
                     .let {
                         TransactionListItemDetails.from(
                             it,
@@ -160,7 +160,7 @@ data class AccountDetailData(
                 inTransactions = account
                     .allInTransactionsWithInPocketTransactions
                     .sortedByDescending { it.date }
-                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .filter { it.date.isBetween(startDate, endDate) }
                     .let {
                         TransactionListItemDetails.from(
                             it,
@@ -172,7 +172,7 @@ data class AccountDetailData(
                 outTransactions = account
                     .allOutTransactionsWithOutPocketTransactions
                     .sortedByDescending { it.date }
-                    .filter { dateBetween(it.date, startDate, endDate) }
+                    .filter { it.date.isBetween(startDate, endDate) }
                     .let {
                         TransactionListItemDetails.from(
                             it,
