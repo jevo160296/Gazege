@@ -41,6 +41,7 @@ import com.jmml.gazege.core.AppDatabase
 import com.jmml.gazege.core.AppRepository
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.core.export.CreateBackupDocument
+import com.jmml.gazege.extensions.livedata.observeOnce
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.IconVisibility
 import com.jmml.gazege.ui.fragments.SplashScreenFragment

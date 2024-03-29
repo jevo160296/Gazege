@@ -1,6 +1,10 @@
 package com.jmml.gazege.core.entities
 
 import com.jmml.gazege.core.dao.CategoryDao
+import com.jmml.gazege.extensions.closedrange.plus
+import com.jmml.gazege.extensions.closedrange.toSequence
+import com.jmml.gazege.extensions.list.mapSumOf
+import com.jmml.gazege.extensions.map.plus
 import java.time.LocalDate
 import java.util.SortedMap
 import kotlin.math.max

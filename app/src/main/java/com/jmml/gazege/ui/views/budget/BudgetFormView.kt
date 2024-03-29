@@ -38,7 +38,7 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.WeekDays
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
-import com.jmml.gazege.core.entities.toList
+import com.jmml.gazege.extensions.closedrange.toList
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryDropDown
 import com.jmml.gazege.ui.widgets.ComboBox

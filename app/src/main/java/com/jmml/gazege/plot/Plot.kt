@@ -15,8 +15,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
-import com.jmml.gazege.core.entities.toSequence
 import com.jmml.gazege.core.firstDayOfMonth
+import com.jmml.gazege.extensions.closedrange.toSequence
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.doubleToShortMoneyText
 import com.jmml.gazege.ui.theme.GazegeTheme

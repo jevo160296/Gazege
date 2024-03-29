@@ -1,12 +1,6 @@
 package com.jmml.gazege.core.export
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
-import com.jmml.gazege.DetailsExport
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.BudgetType
@@ -15,7 +9,7 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.toSequence
+import com.jmml.gazege.extensions.closedrange.toSequence
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import java.io.BufferedInputStream
@@ -31,20 +25,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class CreateBackupDocument : CreateDocument("application/gazip")
-
-open class CreateDetailsBackupDocument : ActivityResultContract<DetailsExport, Uri?>() {
-    private val mimeType: String = "application/gazip"
-    override fun createIntent(context: Context, input: DetailsExport): Intent {
-        return Intent(Intent.ACTION_CREATE_DOCUMENT)
-            .setType(mimeType)
-            .putExtra(Intent.EXTRA_TITLE, input.suggestedFileName)
-            .putExtra(Intent.EXTRA_UID, input.categoryId)
-    }
-
-    final override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
-        return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
-    }
-}
 
 private fun getCSVFormat() = CSVFormat.EXCEL
 

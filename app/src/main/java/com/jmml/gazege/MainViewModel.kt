@@ -8,11 +8,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
@@ -55,6 +53,7 @@ import com.jmml.gazege.core.export.writeCategoriesWithCalculatedData
 import com.jmml.gazege.core.export.writePersons
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
+import com.jmml.gazege.extensions.coroutines.safeLaunch
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -78,8 +77,6 @@ import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
@@ -97,27 +94,6 @@ import kotlin.collections.set
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES, CATEGORIAS
-}
-
-fun CoroutineScope.safeLaunch(
-    onErrorAction: (Throwable) -> Unit,
-    launchBody: suspend () -> Unit
-): Job {
-    val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        onErrorAction(throwable)
-    }
-    return this.launch(coroutineExceptionHandler) {
-        launchBody.invoke()
-    }
-}
-
-fun <T> LiveData<T>.observeOnce(owner: LifecycleOwner, observer: (T) -> Unit) {
-    observe(owner, object : Observer<T> {
-        override fun onChanged(value: T) {
-            removeObserver(this)
-            observer(value)
-        }
-    })
 }
 
 fun categoriesMergeBooleanFilter(

@@ -1,6 +1,9 @@
 package com.jmml.gazege.core.entities
 
 import com.jmml.gazege.core.dao.BudgetDao
+import com.jmml.gazege.extensions.closedrange.plus
+import com.jmml.gazege.extensions.map.merge
+import com.jmml.gazege.extensions.map.plus
 import java.time.LocalDate
 
 data class BudgetWithCalculatedData(
@@ -168,29 +171,6 @@ data class BudgetWithCalculatedData(
             }
     }
 }
-
-fun <K, U, V, W> Map<K, U>.merge(
-    other: Map<K, V>,
-    merger: (first: U?, second: V?) -> W
-): Map<K, W> =
-    (this.keys + other.keys).associateWith { merger(this[it], other[it]) }
-
-operator fun <K> Map<K, Double>.plus(other: Map<K, Double>) = merge(other) { first, second ->
-    (first ?: 0.0) + (second ?: 0.0)
-}
-
-fun <E> List<E>.mapSumOf(function: (E) -> Map<LocalDate, Double>): Map<LocalDate, Double> =
-    fold(emptyMap()) { acc, e -> acc + function(e) }
-
-operator fun <T : Comparable<T>> ClosedRange<T>?.plus(other: ClosedRange<T>?): ClosedRange<T>? =
-    if (this != null && other != null) {
-        minOf(start, other.start)..maxOf(endInclusive, other.endInclusive)
-    } else {
-        this ?: other
-    }
-
-fun <T : Comparable<T>> ClosedRange<T>.toSequence(next: (T) -> T): Sequence<T> =
-    generateSequence(start) { next(it).takeIf { current -> contains(current) } }
 
 fun List<BudgetWithCalculatedData.AggregatedBudgetWithCalculatedData>.sumOrNull() = this
     .takeIf { it.isNotEmpty() }

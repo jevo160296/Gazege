@@ -35,7 +35,8 @@ import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.BudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
-import com.jmml.gazege.core.entities.plus
+import com.jmml.gazege.extensions.closedrange.plus
+import com.jmml.gazege.extensions.map.plus
 import com.jmml.gazege.plot.CategoryPlot
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
