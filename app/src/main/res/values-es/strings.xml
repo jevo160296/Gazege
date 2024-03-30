@@ -106,4 +106,6 @@
     <string name="on_boarding_add_person_message">¿Quieres registrar préstamos y deudas con otras personas? A continuación puedes agregar las personas a las que puedes dar y recibir dinero.</string>
     <string name="Import_data">Importar datos</string>
     <string name="Export_data">Exportar datos</string>
+    <string name="why_cant_use_dynamic_color">Color dinámico solo está disponible para Android 12 o más.</string>
+    <string name="use_dynamic_color">Usar colores dinámicos.</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,6 +42,7 @@ import com.jmml.gazege.core.AppDatabase
 import com.jmml.gazege.core.AppRepository
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.core.export.CreateBackupDocument
+import com.jmml.gazege.extensions.livedata.observeOnce
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.IconVisibility
 import com.jmml.gazege.ui.fragments.SplashScreenFragment
@@ -133,7 +135,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContent {
-            GazegeTheme(appMode = stringResource(id = R.string.APP_MODE)) {
+            val useDynamicColor by mainViewModel.useDynamicColor.observeAsState(initial = false)
+            GazegeTheme(
+                appMode = stringResource(id = R.string.APP_MODE),
+                isDynamicColor = useDynamicColor
+            ) {
                 SetStatusBarColors()
                 val importState by mainViewModel.rememberImportState()
                 LaunchedEffect(key1 = Unit) {

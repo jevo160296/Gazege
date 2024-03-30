@@ -17,6 +17,7 @@ val INCLUIR_PRESUPUESTO_EN_SALDO_ACTUAL_FLOW = booleanPreferencesKey("incluir_pr
 val INCLUIR_DEUDAS_EN_SALDO_ACTUAL_FLOW = booleanPreferencesKey("incluir_deudas")
 val CATEGORY_ID_TO_EXPORT = intPreferencesKey("category_id_to_export")
 val SHOW_ON_BOARDING = booleanPreferencesKey("show_on_boarding")
+val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
 
 data class Settings(
     val context: Context
@@ -41,6 +42,11 @@ data class Settings(
             preferences[SHOW_ON_BOARDING] ?: false
         }
 
+    fun getUseDynamicColor(): Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[USE_DYNAMIC_COLOR] ?: false
+        }
+
     suspend fun setIncluirPresupuestoEnSaldoActualFlow(valor: Boolean) {
         context.dataStore.edit { settings ->
             settings[INCLUIR_PRESUPUESTO_EN_SALDO_ACTUAL_FLOW] = valor
@@ -62,6 +68,12 @@ data class Settings(
     suspend fun setShowOnBoarding(valor: Boolean) {
         context.dataStore.edit { settings ->
             settings[SHOW_ON_BOARDING] = valor
+        }
+    }
+
+    suspend fun setUseDynamicColor(valor: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[USE_DYNAMIC_COLOR] = valor
         }
     }
 }

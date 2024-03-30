@@ -72,7 +72,7 @@ fun TransactionFormFragment(
     }
     var date by rememberSaveable(transactionAndAccounts) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.date ?: LocalDate.now()
+            transactionAndAccounts?.transaction?.date
         )
     }
     var aNombreDe by rememberSaveable(transactionAndAccounts) {

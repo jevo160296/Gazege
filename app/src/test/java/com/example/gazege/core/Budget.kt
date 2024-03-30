@@ -7,7 +7,7 @@ import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.BudgetType
 import com.jmml.gazege.core.entities.WeekDays
 import com.jmml.gazege.core.entities.toByteString
-import com.jmml.gazege.core.entities.toList
+import com.jmml.gazege.extensions.closedrange.toList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test

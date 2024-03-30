@@ -123,23 +123,36 @@ fun LoadedEditarCategorias(
             modifier = Modifier
                 .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
                 .height(IntrinsicSize.Min)
+                .pointerInput(1) {
+                    detectDragGestures { change, dragAmount ->
+                        if (hasZeroElements?.not() == true) {
+                            change.consume()
+                            nestedScrollConnection.onPreScroll(
+                                dragAmount,
+                                NestedScrollSource.Wheel
+                            )
+                        }
+                    }
+                }
+
         ) {
             DataView(
                 title = stringResource(id = R.string.Falta_pagar_recibir),
                 value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                enabled = false,
                 modifier = Modifier.weight(1f)
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_real),
                 value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                enabled = false,
                 modifier = Modifier.weight(1f),
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_total),
                 value = doubleToMoneyString(editarCategoriasState.netFlow),
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(1f)
+                enabled = false,
+                modifier = Modifier.weight(1f)
             )
         }
         Row(

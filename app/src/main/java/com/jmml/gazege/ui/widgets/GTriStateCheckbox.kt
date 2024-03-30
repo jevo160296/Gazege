@@ -27,9 +27,9 @@ fun GTriStateCheckbox(
     state: ToggleableState,
     onClick: () -> Unit,
     colors: CheckboxColors = CheckboxDefaults.colors(
-        checkedColor = MaterialTheme.colorScheme.secondary,
-        checkmarkColor = MaterialTheme.colorScheme.onSecondary,
-        uncheckedColor = MaterialTheme.colorScheme.onSecondaryContainer
+        checkedColor = MaterialTheme.colorScheme.tertiary,
+        checkmarkColor = MaterialTheme.colorScheme.onTertiary,
+        uncheckedColor = MaterialTheme.colorScheme.onTertiaryContainer
     ),
     enabled: Boolean = true
 ) {

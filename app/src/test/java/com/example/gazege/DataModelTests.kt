@@ -113,13 +113,33 @@ class DataModelTests {
                 CategoryWithSubCategories(
                     it,
                     listOf(
-                        CategoryWithSubCategories(Category(5, "", it.id), listOf()),
-                        CategoryWithSubCategories(Category(6, "", it.id), listOf()),
-                        Category(7, "", it.id).let {
+                        CategoryWithSubCategories(
+                            Category(5, "", BudgetType.FIXED, it.id),
+                            listOf()
+                        ),
+                        CategoryWithSubCategories(
+                            Category(6, "", BudgetType.FIXED, it.id),
+                            listOf()
+                        ),
+                        Category(7, "", BudgetType.FIXED, it.id).let {
                             CategoryWithSubCategories(
                                 it, listOf(
-                                    CategoryWithSubCategories(Category(8, "", it.id), listOf()),
-                                    CategoryWithSubCategories(Category(9, "", it.id), listOf())
+                                    CategoryWithSubCategories(
+                                        Category(
+                                            8,
+                                            "",
+                                            BudgetType.FIXED,
+                                            it.id
+                                        ), listOf()
+                                    ),
+                                    CategoryWithSubCategories(
+                                        Category(
+                                            9,
+                                            "",
+                                            BudgetType.FIXED,
+                                            it.id
+                                        ), listOf()
+                                    )
                                 )
                             )
                         }
@@ -132,30 +152,30 @@ class DataModelTests {
             CategoryWithSubCategories(Category(4, "", BudgetType.FIXED, null), listOf())
         )
         val categoriesDsl = categories {
-            category(0, "") {
-                category(5, "") {}
-                category(6, "") {}
-                category(7, "") {
-                    category(8, "") {}
-                    category(9, "") {}
+            category(0, "", BudgetType.FIXED) {
+                category(5, "", BudgetType.FIXED) {}
+                category(6, "", BudgetType.FIXED) {}
+                category(7, "", BudgetType.FIXED) {
+                    category(8, "", BudgetType.FIXED) {}
+                    category(9, "", BudgetType.FIXED) {}
                 }
             }
-            category(1, "") {}
-            category(2, "") {}
-            category(3, "") {}
-            category(4, "") {}
+            category(1, "", BudgetType.FIXED) {}
+            category(2, "", BudgetType.FIXED) {}
+            category(3, "", BudgetType.FIXED) {}
+            category(4, "", BudgetType.FIXED) {}
         }
         val categories: List<CategoryWithSubCategories> = listOf(
-            Category(0, "", null),
-            Category(1, "", null),
-            Category(2, "", null),
-            Category(3, "", null),
-            Category(4, "", null),
-            Category(5, "", 0),
-            Category(6, "", 0),
-            Category(7, "", 0),
-            Category(8, "", 7),
-            Category(9, "", 7)
+            Category(0, "", BudgetType.FIXED, null),
+            Category(1, "", BudgetType.FIXED, null),
+            Category(2, "", BudgetType.FIXED, null),
+            Category(3, "", BudgetType.FIXED, null),
+            Category(4, "", BudgetType.FIXED, null),
+            Category(5, "", BudgetType.FIXED, 0),
+            Category(6, "", BudgetType.FIXED, 0),
+            Category(7, "", BudgetType.FIXED, 0),
+            Category(8, "", BudgetType.FIXED, 7),
+            Category(9, "", BudgetType.FIXED, 7)
         )
             .let { CategoryWithSubCategories.from(it) }
         assertArrayEquals(expected.toTypedArray(), categories.toTypedArray())

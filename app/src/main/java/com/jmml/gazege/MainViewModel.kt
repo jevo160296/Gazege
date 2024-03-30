@@ -1,5 +1,6 @@
 package com.jmml.gazege
 
+import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -8,11 +9,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
@@ -55,6 +54,7 @@ import com.jmml.gazege.core.export.writeCategoriesWithCalculatedData
 import com.jmml.gazege.core.export.writePersons
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
+import com.jmml.gazege.extensions.coroutines.safeLaunch
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -78,8 +78,6 @@ import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
@@ -99,27 +97,6 @@ enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES, CATEGORIAS
 }
 
-fun CoroutineScope.safeLaunch(
-    onErrorAction: (Throwable) -> Unit,
-    launchBody: suspend () -> Unit
-): Job {
-    val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        onErrorAction(throwable)
-    }
-    return this.launch(coroutineExceptionHandler) {
-        launchBody.invoke()
-    }
-}
-
-fun <T> LiveData<T>.observeOnce(owner: LifecycleOwner, observer: (T) -> Unit) {
-    observe(owner, object : Observer<T> {
-        override fun onChanged(value: T) {
-            removeObserver(this)
-            observer(value)
-        }
-    })
-}
-
 fun categoriesMergeBooleanFilter(
     categories: List<CategoryWithSubCategories>,
     booleanFilters: BooleanFilters<Int?, Pair<String, Int>>
@@ -131,11 +108,6 @@ fun categoriesMergeBooleanFilter(
             categoryWithLevel.map { (it.first.id) to (it.first.name to it.second) }
         )
     }
-
-data class DetailsExport(
-    val suggestedFileName: String,
-    val categoryId: Int
-)
 
 class MainViewModel(
     private val repository: AppRepository,
@@ -272,6 +244,7 @@ class MainViewModel(
         settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
     val categoryIdToExportFlow =
         settings.getCategoryIdToExportFlow().asLiveData()
+    val useDynamicColor = settings.getUseDynamicColor().asLiveData()
     val showOnBoarding = settings.getShowOnBoardingFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
@@ -899,6 +872,10 @@ class MainViewModel(
 
     fun settingsCategoryIdToExportFlow(newValue: Int) = viewModelScope.launch {
         settings.setCategoryIdToExportFlow(newValue)
+    }
+
+    fun settingsUseDynamicColorFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setUseDynamicColor(newValue)
     }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {
@@ -1831,6 +1808,9 @@ class MainViewModel(
         @Composable
         fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
 
+        @Composable
+        fun rememberUseDynamicColor() = useDynamicColor.observeAsState()
+
         fun updatePerson(
             vararg person: Person,
             onErrorAction: (Throwable) -> Unit
@@ -1853,6 +1833,11 @@ class MainViewModel(
 
         fun setShowOnBoarding(value: Boolean) =
             viewModelScope.launch { settings.setShowOnBoarding(value) }
+
+        fun canUseDynamicColor(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+        fun setUseDynamicColor(value: Boolean) =
+            this@MainViewModel.settingsUseDynamicColorFlow(value)
     }
 
     inner class ViewModelSaldoActualSettings {

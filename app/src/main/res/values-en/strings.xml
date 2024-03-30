@@ -106,4 +106,6 @@
     <string name="on_boarding_add_person_message">Would you like to keep track of when you lend money to someone or when someone lends money to you? You can register the people you can lend to or borrow from here.</string>
     <string name="Import_data">Import data</string>
     <string name="Export_data">Export data</string>
+    <string name="why_cant_use_dynamic_color">Dynamic color is only available on Android 12 and above.</string>
+    <string name="use_dynamic_color">Use dynamic colors.</string>
 </resources>

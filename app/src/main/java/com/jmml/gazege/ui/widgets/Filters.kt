@@ -19,8 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -35,18 +33,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
-import com.jmml.gazege.core.firstDayOfMonth
-import com.jmml.gazege.core.lastDayOfMonth
-import com.jmml.gazege.core.stableMinusMonths
-import com.jmml.gazege.core.stablePlusMonths
+import com.jmml.gazege.extensions.localdate.endOfMonth
+import com.jmml.gazege.extensions.localdate.stableMinusMonths
+import com.jmml.gazege.extensions.localdate.stablePlusMonths
+import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.DateFormat
 import com.jmml.gazege.ui.localDateToString
 import com.jmml.gazege.ui.theme.GazegeTheme
@@ -198,7 +196,7 @@ fun Filter(
                             Modifier
                                 .fillMaxWidth()
                                 .background(
-                                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
                                 )
                                 .verticalScroll(rememberScrollState())
                                 .padding(dimensionResource(id = R.dimen.DefaultPadding))
@@ -256,7 +254,7 @@ fun Filter(
                                         )
                                     )
                                 ) {
-                                    FilterChip(
+                                    GFilterChip(
                                         selected = transactionFilters[INCOME_FILTER],
                                         onClick = {
                                             onTransactionFiltersChanged(
@@ -272,7 +270,7 @@ fun Filter(
                                             )
                                         }
                                     )
-                                    FilterChip(
+                                    GFilterChip(
                                         selected = transactionFilters[TRANSFER_FILTER],
                                         onClick = {
                                             onTransactionFiltersChanged(
@@ -288,7 +286,7 @@ fun Filter(
                                             )
                                         }
                                     )
-                                    FilterChip(
+                                    GFilterChip(
                                         selected = transactionFilters[OUTCOME_FILTER],
                                         onClick = {
                                             onTransactionFiltersChanged(
@@ -370,15 +368,8 @@ fun Filter(
                                     )
                                 ) {
                                     categoriesFilter.values.forEach { (filterId, value) ->
-                                        FilterChip(
-                                            selected = value,
-                                            onClick = {
-                                                onCategoriesFilterChanged(
-                                                    categoriesFilter.switchOrDefault(
-                                                        filterId
-                                                    )
-                                                )
-                                            },
+                                        val level = categoriesFilter.metadata[filterId]?.second
+                                        GFilterChip(
                                             label = {
                                                 Text(
                                                     text = (categoriesFilter.metadata[filterId]?.first
@@ -386,25 +377,23 @@ fun Filter(
                                                         stringResource(
                                                             id = R.string.No_category
                                                         )
-                                                    }
+                                                    },
+                                                    fontWeight = if ((level
+                                                            ?: 0) > 0
+                                                    ) FontWeight.Normal else FontWeight.Bold
                                                 )
                                             },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = MaterialTheme
-                                                    .colorScheme
-                                                    .background
-                                                    .copy(
-                                                        alpha =
-                                                        if ((categoriesFilter.metadata[filterId]?.second
-                                                                ?: 0) > 0
-                                                        ) {
-                                                            0.6F
-                                                        } else {
-                                                            0.0F
-                                                        }
+                                            onClick = {
+                                                onCategoriesFilterChanged(
+                                                    categoriesFilter.switchOrDefault(
+                                                        filterId
                                                     )
-                                                    .compositeOver(MaterialTheme.colorScheme.secondaryContainer)
-                                            )
+                                                )
+                                            },
+                                            selected = value,
+                                            level = if ((level
+                                                    ?: 0) > 0
+                                            ) GFilterChipLevel.Secondary else GFilterChipLevel.Primary
                                         )
                                     }
                                 }
@@ -458,8 +447,8 @@ fun DateFilterItems(
             onClick = {
                 if (startDate != null && endDate != null) {
                     val newRange = Pair(
-                        stableMinusMonths(startDate, 1L),
-                        stableMinusMonths(endDate, 1L)
+                        startDate.stableMinusMonths(1L),
+                        endDate.stableMinusMonths(1L)
                     )
                     onRangeChanged(newRange.first, newRange.second)
                 }
@@ -477,10 +466,7 @@ fun DateFilterItems(
             dateString,
             modifier = Modifier.clickable {
                 val newRange = LocalDate.now().let {
-                    Pair(
-                        firstDayOfMonth(it),
-                        lastDayOfMonth(it)
-                    )
+                    Pair(it.startOfMonth(), it.endOfMonth())
                 }
                 onRangeChanged(newRange.first, newRange.second)
             },
@@ -490,8 +476,8 @@ fun DateFilterItems(
             onClick = {
                 if (startDate != null && endDate != null) {
                     val newRange = Pair(
-                        stablePlusMonths(startDate, 1L),
-                        stablePlusMonths(endDate, 1L)
+                        startDate.stablePlusMonths(1L),
+                        endDate.stablePlusMonths(1L)
                     )
                     onRangeChanged(newRange.first, newRange.second)
                 }
@@ -508,13 +494,12 @@ fun DateFilterItems(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonFilter(
     value: Boolean,
     onValueChanged: (newValue: Boolean) -> Unit
 ) {
-    FilterChip(
+    GFilterChip(
         selected = value,
         onClick = { onValueChanged(!value) },
         label = { Text(text = stringResource(id = R.string.Deuda_diferente_a_cero)) }

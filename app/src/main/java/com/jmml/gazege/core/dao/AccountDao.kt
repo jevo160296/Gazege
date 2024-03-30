@@ -6,12 +6,12 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.jmml.gazege.core.dateBetween
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.extensions.localdate.isBetween
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -56,7 +56,7 @@ interface AccountDao {
         ): Double {
             return account.inTransactions
                 .filter { it.sourceId !in accountsToOmit.map { account -> account.id } }
-                .filter { dateBetween(it.date, startDate, endDate) }
+                .filter { it.date.isBetween(startDate, endDate) }
                 .sumOf { it.amount }
         }
 
@@ -84,7 +84,7 @@ interface AccountDao {
         ): Double {
             return account.outTransactions
                 .filter { it.destinationId !in accountsToOmit.map { account -> account.id } }
-                .filter { dateBetween(it.date, startDate, endDate) }
+                .filter { it.date.isBetween(startDate, endDate) }
                 .sumOf { it.amount }
         }
 
