@@ -1,5 +1,6 @@
 package com.jmml.gazege
 
+import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -107,11 +108,6 @@ fun categoriesMergeBooleanFilter(
             categoryWithLevel.map { (it.first.id) to (it.first.name to it.second) }
         )
     }
-
-data class DetailsExport(
-    val suggestedFileName: String,
-    val categoryId: Int
-)
 
 class MainViewModel(
     private val repository: AppRepository,
@@ -248,6 +244,7 @@ class MainViewModel(
         settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
     val categoryIdToExportFlow =
         settings.getCategoryIdToExportFlow().asLiveData()
+    val useDynamicColor = settings.getUseDynamicColor().asLiveData()
     val showOnBoarding = settings.getShowOnBoardingFlow().asLiveData()
     private val allPerson = repository.getPersons().asLiveData()
     private val allAccount = repository.getAccounts().asLiveData()
@@ -875,6 +872,10 @@ class MainViewModel(
 
     fun settingsCategoryIdToExportFlow(newValue: Int) = viewModelScope.launch {
         settings.setCategoryIdToExportFlow(newValue)
+    }
+
+    fun settingsUseDynamicColorFlow(newValue: Boolean) = viewModelScope.launch {
+        settings.setUseDynamicColor(newValue)
     }
 
     private fun getPrincipalPerson(personList: List<Person>): Person? {
@@ -1807,6 +1808,9 @@ class MainViewModel(
         @Composable
         fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
 
+        @Composable
+        fun rememberUseDynamicColor() = useDynamicColor.observeAsState()
+
         fun updatePerson(
             vararg person: Person,
             onErrorAction: (Throwable) -> Unit
@@ -1829,6 +1833,11 @@ class MainViewModel(
 
         fun setShowOnBoarding(value: Boolean) =
             viewModelScope.launch { settings.setShowOnBoarding(value) }
+
+        fun canUseDynamicColor(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+        fun setUseDynamicColor(value: Boolean) =
+            this@MainViewModel.settingsUseDynamicColorFlow(value)
     }
 
     inner class ViewModelSaldoActualSettings {

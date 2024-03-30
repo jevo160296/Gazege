@@ -36,9 +36,9 @@ fun GRangeSlider(
     steps: Int = 10,
     onValueChangeFinished: (() -> Unit)? = null,
     colors: SliderColors = SliderDefaults.colors(
-        thumbColor = MaterialTheme.colorScheme.secondary,
-        activeTrackColor = MaterialTheme.colorScheme.secondary,
-        inactiveTrackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+        thumbColor = MaterialTheme.colorScheme.tertiary,
+        activeTrackColor = MaterialTheme.colorScheme.tertiary,
+        inactiveTrackColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
     )
 ) {
     val coercedStart = value.start.coerceIn(valueRange.start, valueRange.endInclusive)

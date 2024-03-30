@@ -25,6 +25,7 @@ fun NavGraphBuilder.screenSettings(
         val incomeAccount by viewModelSettings.rememberIncomeAccount()
         val outcomeAccount by viewModelSettings.rememberOutcomeAccount()
         val showOnBoarding by viewModelSettings.rememberShowOnBoarding()
+        val useDynamicColor by viewModelSettings.rememberUseDynamicColor()
 
         SettingsFragment(
             personList = allPerson,
@@ -80,7 +81,10 @@ fun NavGraphBuilder.screenSettings(
             onExportDataRequested = onExportDataRequested,
             onNavigateToBudget = onNavigateToBudget,
             onImportDataRequested = onImportDataRequested,
-            onShowOnBoardingNextRestart = viewModelSettings::setShowOnBoarding
+            onShowOnBoardingNextRestart = viewModelSettings::setShowOnBoarding,
+            onUseDynamicColorChanged = viewModelSettings::setUseDynamicColor,
+            canUseDynamicColor = viewModelSettings.canUseDynamicColor(),
+            useDynamicColor = useDynamicColor
         )
     }
 }

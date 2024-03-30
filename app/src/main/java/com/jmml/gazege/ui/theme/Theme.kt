@@ -1,5 +1,6 @@
 package com.jmml.gazege.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,19 +15,27 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -108,6 +117,7 @@ internal val LocalGazegeColorScheme = staticCompositionLocalOf { lightColorSchem
 fun GazegeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     appMode: String = "DEBUG",
+    isDynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val appModeParsed = when (appMode) {
@@ -116,10 +126,12 @@ fun GazegeTheme(
         else -> error("AppMode debe ser 'DEBUG' o 'RELEASE'. AppMode actual es: $appMode")
     }
 
-    val colors = if (darkTheme) {
-        DarkColors
-    } else {
-        LightColors
+    val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val colors = when {
+        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current) to DarkColors.second
+        dynamicColor && !darkTheme -> dynamicLightColorScheme(LocalContext.current) to LightColors.second
+        darkTheme -> DarkColors
+        else -> LightColors
     }
 
     val rememberedColorScheme = remember {
@@ -160,7 +172,8 @@ object GazegeTheme {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ThemePreviewLight() {
-    GazegeTheme {
+    var isDynamicColor by remember { mutableStateOf(true) }
+    GazegeTheme(isDynamicColor = isDynamicColor) {
         val colors = MaterialTheme.colorScheme.let {
             listOf(
                 it.primary to "primary",
@@ -198,10 +211,12 @@ private fun ThemePreviewLight() {
             Modifier.padding(vertical = 50.dp, horizontal = 8.dp),
             bottomBar = {
                 BottomAppBar {
-                    Image(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = ""
-                    )
+                    IconButton(onClick = { isDynamicColor = !isDynamicColor }) {
+                        Image(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = ""
+                        )
+                    }
                 }
             }
         ) { padding ->

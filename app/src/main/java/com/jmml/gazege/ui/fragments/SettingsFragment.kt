@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
@@ -36,6 +38,7 @@ import com.jmml.gazege.ui.views.transaction.AccountAndOwnerNode
 import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.ComboBox
 import com.jmml.gazege.ui.widgets.Form
+import com.jmml.gazege.ui.widgets.GTriStateCheckbox
 import com.jmml.gazege.ui.widgets.GazegeSegmentedButton
 import com.jmml.gazege.ui.widgets.SegmentedButtonItem
 
@@ -49,6 +52,9 @@ fun SettingsFragment(
     incomeAccount: Account?,
     outcomeAccount: Account?,
     showOnBoardingNextRestart: Boolean?,
+    canUseDynamicColor: Boolean,
+    useDynamicColor: Boolean?,
+    onUseDynamicColorChanged: (Boolean) -> Unit,
     onIncomeOutcomeAccountChanged: (Account?, Account?) -> Unit,
     onAddAccountRequested: () -> Unit,
     onAddPersonRequested: () -> Unit,
@@ -74,6 +80,15 @@ fun SettingsFragment(
     var personIdSelected by rememberSaveable(principalPerson?.id) {
         mutableStateOf(principalPerson?.id)
     }
+    var useDynamicColorState by rememberSaveable(useDynamicColor) {
+        mutableStateOf(
+            when (useDynamicColor) {
+                true -> ToggleableState.On
+                false -> ToggleableState.Off
+                else -> ToggleableState.Indeterminate
+            }
+        )
+    }
     val personSelected = personList.firstOrNull { it.id == personIdSelected }
     val incomeSelected = accountList.firstOrNull { it.account.id == incomeIdSelected }
     val outcomeSelected = accountList.firstOrNull { it.account.id == outcomeIdSelected }
@@ -89,6 +104,9 @@ fun SettingsFragment(
                 incomeSelected?.account,
                 outcomeSelected?.account
             )
+            if (useDynamicColorState == ToggleableState.Off || useDynamicColorState == ToggleableState.On) {
+                onUseDynamicColorChanged(useDynamicColorState == ToggleableState.On)
+            }
             onNavigateUpRequested()
         },
         isSavedButtonEnabled = true,
@@ -117,6 +135,22 @@ fun SettingsFragment(
                 0 -> onImportDataRequested()
                 1 -> onExportDataRequested()
             }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GTriStateCheckbox(
+                state = useDynamicColorState,
+                onClick = {
+                    useDynamicColorState = when (useDynamicColorState) {
+                        ToggleableState.On -> ToggleableState.Off
+                        ToggleableState.Off, ToggleableState.Indeterminate -> ToggleableState.On
+                    }
+                },
+                enabled = canUseDynamicColor
+            )
+            Text(stringResource(id = R.string.use_dynamic_color))
+        }
+        if (!canUseDynamicColor) {
+            Text(stringResource(id = R.string.why_cant_use_dynamic_color))
         }
         ButtonField(
             onClick = onNavigateToBudget
