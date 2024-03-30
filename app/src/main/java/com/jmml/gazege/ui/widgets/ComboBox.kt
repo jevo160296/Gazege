@@ -92,11 +92,17 @@ private fun <T> CoreComboBox(
     options: List<T>,
     optionsViewHolder: @Composable (Map<String?, List<T>>) -> Unit,
     itemToString: (T?) -> String,
-    filteringNotStarted: Boolean,
+    currentTextFilteringDisabled: Boolean,
+    currentTextFilter: (T, String) -> Boolean = { item: T, text: String ->
+        partialStringMatch(
+            itemToString(item),
+            text
+        )
+    },
     groupByKeySelector: ((T) -> String)? = null
 ) {
     val groupedOptions = options
-        .filter { partialStringMatch(itemToString(it), currentText) || filteringNotStarted }
+        .filter { currentTextFilter(it, currentText) || currentTextFilteringDisabled }
         .groupBy { groupByKeySelector?.invoke(it) }
     var isFocused by remember { mutableStateOf(false) }
 
@@ -185,7 +191,7 @@ fun <T> ComboBox(
         keyboardOptions = keyboardOptions,
         trailingIcon = { trailingIcon() },
         options = options,
-        filteringNotStarted = filteringNotStarted,
+        currentTextFilteringDisabled = filteringNotStarted,
         groupByKeySelector = groupByKeySelector,
         itemToString = itemToString,
         optionsViewHolder = { optionsViewHolder(it) }
@@ -336,7 +342,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
         optionsViewHolder = { optionsViewHolder(it) },
         itemToString = itemToString,
         groupByKeySelector = groupByKeySelector,
-        filteringNotStarted = filteringNotStarted
+        currentTextFilteringDisabled = filteringNotStarted
     )
 }
 
