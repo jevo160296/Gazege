@@ -42,6 +42,8 @@ import com.jmml.gazege.ui.widgets.treeview.ColumnTreeView
 import com.jmml.gazege.ui.widgets.treeview.DefaultTreeLeadingIcon
 import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
+import com.jmml.gazege.ui.widgets.treeview.TreeState
+import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +79,28 @@ private fun partialStringMatch(originalString: String, stringToMatch: String) =
         )
     )
 
+private fun <N, C : Node<N, C>> recursiveMatch(
+    node: C,
+    parent: C? = null,
+    foundItems: MutableList<NodeId> = mutableListOf(),
+    itemMatch: (item: C) -> Boolean
+): List<NodeId> {
+    if (itemMatch(node) && parent != null && NodeId.from(parent) !in foundItems) foundItems.add(
+        NodeId.from(parent)
+    )
+    if (itemMatch(node)) {
+        foundItems.add(NodeId.from(node))
+        for (child in node.children) {
+            recursiveMatch(child, node, foundItems) { true }
+        }
+        return foundItems.toList()
+    }
+    for (child in node.children) {
+        recursiveMatch(child, node, foundItems, itemMatch)
+    }
+    return foundItems.toList()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> CoreComboBox(
@@ -92,8 +116,8 @@ private fun <T> CoreComboBox(
     options: List<T>,
     optionsViewHolder: @Composable (Map<String?, List<T>>) -> Unit,
     itemToString: (T?) -> String,
-    currentTextFilteringDisabled: Boolean,
-    currentTextFilter: (T, String) -> Boolean = { item: T, text: String ->
+    filteringNotStarted: Boolean,
+    currentTextFilter: (item: T, text: String) -> Boolean = { item: T, text: String ->
         partialStringMatch(
             itemToString(item),
             text
@@ -102,7 +126,7 @@ private fun <T> CoreComboBox(
     groupByKeySelector: ((T) -> String)? = null
 ) {
     val groupedOptions = options
-        .filter { currentTextFilter(it, currentText) || currentTextFilteringDisabled }
+        .filter { currentTextFilter(it, currentText) || filteringNotStarted }
         .groupBy { groupByKeySelector?.invoke(it) }
     var isFocused by remember { mutableStateOf(false) }
 
@@ -191,7 +215,7 @@ fun <T> ComboBox(
         keyboardOptions = keyboardOptions,
         trailingIcon = { trailingIcon() },
         options = options,
-        currentTextFilteringDisabled = filteringNotStarted,
+        filteringNotStarted = filteringNotStarted,
         groupByKeySelector = groupByKeySelector,
         itemToString = itemToString,
         optionsViewHolder = { optionsViewHolder(it) }
@@ -226,13 +250,15 @@ fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
 @Composable
 private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     groupedOptions: Map<String?, List<C>>,
+    treeState: TreeState = rememberTreeState(),
     onNodeClick: (C) -> Unit,
     nodeToString: (C?) -> String,
-    nodeEnabled: (C) -> Boolean
+    nodeEnabled: (C) -> Boolean,
+    nodeVisible: (C) -> Boolean = { true }
 ) {
-    val nodes: List<C> = groupedOptions.flatMap {
-        it.value
-    }
+    val nodes: List<C> = groupedOptions
+        .flatMap { it.value }
+        .filter(nodeVisible)
     val inverseMap: Map<NodeId, String?> = groupedOptions.flatMap { (key, value) ->
         value.map {
             it.id() to key
@@ -241,6 +267,7 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     val contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
     ColumnTreeView(
         nodes = nodes,
+        treeState = treeState,
         groupSelector = { inverseMap[it.id()] },
         itemHolderPaddingValues = contentPadding
     ) { node, treeScope ->
@@ -290,6 +317,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
     var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
     var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
 
+    val treeState = rememberTreeState()
     val trailingIcon: @Composable () -> Unit = {
         val showClearButton = canClearSelection && selectedItem != null
         AnimatedContent(
@@ -311,9 +339,19 @@ fun <N, C : Node<N, C>> TreeComboBox(
             }
         }
     }
+    val queryResults: Set<NodeId> = remember(currentText) {
+        options.flatMap {
+            recursiveMatch(it) { item ->
+                partialStringMatch(itemToString(item), currentText)
+            }
+        }
+            .toSet()
+            .onEach { if (dropDownExpanded && !filteringNotStarted) treeState.expandToItem(it) }
+    }
     val optionsViewHolder: @Composable (Map<String?, List<C>>) -> Unit = {
         OptionsGroupTreeView(
             groupedOptions = it,
+            treeState = treeState,
             onNodeClick = { item ->
                 onExpandedChange(false)
                 onItemClick(item)
@@ -321,7 +359,8 @@ fun <N, C : Node<N, C>> TreeComboBox(
                 filteringNotStarted = true
             },
             nodeToString = itemToString,
-            nodeEnabled = nodeEnabled
+            nodeEnabled = nodeEnabled,
+            nodeVisible = { node -> filteringNotStarted || node.id() in queryResults }
         )
     }
 
@@ -342,7 +381,8 @@ fun <N, C : Node<N, C>> TreeComboBox(
         optionsViewHolder = { optionsViewHolder(it) },
         itemToString = itemToString,
         groupByKeySelector = groupByKeySelector,
-        currentTextFilteringDisabled = filteringNotStarted
+        filteringNotStarted = filteringNotStarted,
+        currentTextFilter = { _, _ -> true }
     )
 }
 
@@ -409,6 +449,97 @@ fun ComboBoxPreview() {
                 itemToString = itemToString,
                 onItemClick = onSelectedItemChanged
             )
+        }
+    }
+}
+
+
+@Preview(group = "treecombobox")
+@Composable
+fun TreeComboBoxPreview() {
+    val data = remember {
+        listOf(
+            "Ataud" to null,
+            "Bola" to "Ataud",
+            "Canasta" to "Ataud",
+            "Alberca" to null,
+            "Bebe" to "Alberca",
+            "Café" to "Alberca",
+            "Canasta" to null,
+            "Zapato" to "Canasta",
+            "Puerta" to "Canasta",
+            "Boliche" to "Puerta"
+        ).toMap()
+    }
+    val transformedData = StringTree.from(data)
+    val (dropDownExpanded, onDropDownExpandedChange) = remember { mutableStateOf(false) }
+    val (selectedItem, onSelectedItemChange) = remember { mutableStateOf<StringTree?>(null) }
+    TreeComboBox(
+        Modifier.padding(top = 24.dp),
+        dropDownExpanded = dropDownExpanded,
+        onExpandedChange = onDropDownExpandedChange,
+        options = transformedData,
+        selectedItem = selectedItem,
+        itemToString = { item -> item?.let { "${item.content} ${item.id()}" } ?: "" },
+        label = { Text(text = "Label") },
+        onItemClick = onSelectedItemChange,
+        nodeEnabled = { true }
+    )
+}
+
+class StringTree(
+    override val content: String,
+    override val children: List<StringTree>,
+    override val parentId: NodeId?,
+    override val relativeIndex: Int,
+    override val level: Int
+) : Node<String, StringTree> {
+    override fun toString(): String {
+        return this.content
+    }
+
+    companion object {
+        fun from(values: Map<String, String?>): List<StringTree> {
+            val parents = values
+                .filter { it.value == null || it.value == it.key }
+                .toList()
+            return parents.mapIndexed { index, pair ->
+                StringTree(
+                    content = pair.first,
+                    children = from(
+                        values,
+                        values.filterValues { it == pair.first },
+                        NodeId(null, index, 0),
+                        1
+                    ),
+                    parentId = null,
+                    relativeIndex = index,
+                    level = 0
+                )
+            }
+        }
+
+        private fun from(
+            values: Map<String, String?>,
+            chlidren: Map<String, String?>,
+            id: NodeId,
+            level: Int
+        ): List<StringTree> {
+            val childrenList = chlidren.toList()
+            return childrenList.mapIndexed { index, pair ->
+                StringTree(
+                    content = pair.first,
+                    children = from(
+                        values,
+                        values.filterValues { it == pair.first },
+                        NodeId(id, index, level),
+                        level + 1
+                    ),
+                    parentId = id,
+                    relativeIndex = index,
+                    level = level
+                )
+            }
         }
     }
 }

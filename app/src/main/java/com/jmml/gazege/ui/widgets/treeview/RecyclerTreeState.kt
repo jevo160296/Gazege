@@ -15,6 +15,10 @@ data class NodeId(
     val relativeIndex: Int,
     val level: Int
 ) : Parcelable {
+    override fun toString(): String {
+        return "($parentId).$relativeIndex.$level"
+    }
+
     companion object {
         fun <T : Node<*, *>> from(node: T): NodeId {
             return NodeId(node.parentId, node.relativeIndex, node.level)
@@ -43,9 +47,16 @@ data class TreeState(
     val listState: LazyListState
 ) {
     fun expandItem(itemId: NodeId) =
-        if (itemId !in expandedItems) expandedItems.add(itemId) else true
+        if (!isExpanded(itemId)) expandedItems.add(itemId) else true
+
+    fun expandToItem(itemId: NodeId) {
+        expandItem(itemId)
+        if (itemId.parentId != null && !isExpanded(itemId.parentId)) expandToItem(itemId.parentId)
+    }
 
     fun collapseItem(itemId: NodeId) = expandedItems.removeIf { it == itemId }
+
+    fun isExpanded(itemId: NodeId) = itemId in expandedItems
 
     companion object {
         val Saver: Saver<TreeState, *> = Saver<TreeState, ParcelableTreeState>(
