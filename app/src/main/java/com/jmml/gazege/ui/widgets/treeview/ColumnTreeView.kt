@@ -30,9 +30,9 @@ fun <N, C : Node<N, C>> ColumnTreeView(
         viewHolder,
         toggleExpanded = {
             if (it.expanded(expandedItems)) {
-                expandedItems.remove(NodeId.from(it))
+                treeState.collapseItem(NodeId.from(it))
             } else {
-                expandedItems.add(NodeId.from(it))
+                treeState.expandItem(NodeId.from(it))
             }
         },
         isExpanded = {

@@ -42,6 +42,11 @@ data class TreeState(
     val expandedItems: SnapshotStateList<NodeId>,
     val listState: LazyListState
 ) {
+    fun expandItem(itemId: NodeId) =
+        if (itemId !in expandedItems) expandedItems.add(itemId) else true
+
+    fun collapseItem(itemId: NodeId) = expandedItems.removeIf { it == itemId }
+
     companion object {
         val Saver: Saver<TreeState, *> = Saver<TreeState, ParcelableTreeState>(
             save = {
