@@ -38,13 +38,12 @@ fun TransactionFormFragment(
     personList: List<Person>,
     categoryList: List<Category>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
-    defaultDate: LocalDate = LocalDate.now(),
+    defaultDate: LocalDate? = null,
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,
     onAccountAddRequested: () -> Unit,
     onTransactionAndAccountsAdd: (Transaction, Boolean) -> Unit
 ) {
-
     val id by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.id) }
     var amount by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.amount) }
     var description by rememberSaveable(transactionAndAccounts) {
@@ -70,9 +69,9 @@ fun TransactionFormFragment(
             transactionAndAccounts?.transaction?.categoryId
         )
     }
-    var date by rememberSaveable(transactionAndAccounts) {
+    var date by rememberSaveable(transactionAndAccounts, defaultDate) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.date
+            transactionAndAccounts?.transaction?.date ?: defaultDate
         )
     }
     var aNombreDe by rememberSaveable(transactionAndAccounts) {
@@ -161,7 +160,6 @@ fun TransactionFormFragment(
             ),
             accountList = accountList,
             onAccountAddRequested = onAccountAddRequested,
-            defaultDate = defaultDate,
             onDateChanged = { date = it },
             realizarANombreDe = realizarANombreDe,
             onRealizarANombreDeChanged = { realizarANombreDe = it },
