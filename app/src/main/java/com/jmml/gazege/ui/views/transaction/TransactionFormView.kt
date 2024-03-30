@@ -53,7 +53,6 @@ fun TransactionAndAccountsForm(
     transactionAndAccounts: PartialTransactionAndAccounts,
     accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
-    defaultDate: LocalDate = LocalDate.now(),
     realizarANombreDe: Boolean,
     onRealizarANombreDeChanged: (Boolean) -> Unit,
     personList: List<Person>,
@@ -81,7 +80,7 @@ fun TransactionAndAccountsForm(
     val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
-    val date: LocalDate = transactionAndAccounts.transaction.date ?: defaultDate
+    val date: LocalDate? = transactionAndAccounts.transaction.date
     val selectedCategoryId = transactionAndAccounts.transaction.categoryId
     val nextAction: ImeAction = if (isComplete) {
         ImeAction.Done
