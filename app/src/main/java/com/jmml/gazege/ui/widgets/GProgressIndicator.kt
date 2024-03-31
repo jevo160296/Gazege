@@ -9,15 +9,21 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -40,8 +46,10 @@ fun GProgressIndicator(
         Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
     }
     val calculatedCompletion =
-        if (compleition <= 1.0) compleition
-        else 1.0 / compleition
+        if (compleition <= 0.0) 0.0
+        else if (compleition <= 1.0) compleition
+        else if (compleition < Double.POSITIVE_INFINITY) 1.0 / compleition
+        else 0.0
     LinearProgressIndicator(
         progress = { calculatedCompletion.toFloat() },
         modifier = Modifier
@@ -147,11 +155,26 @@ fun TurningCircularProgress() {
 @Preview
 @Composable
 fun LinearProgress() {
+    val (numerator, onNumeratorChange) = remember { mutableDoubleStateOf(1.0) }
+    val (denominator, onDenominatorChange) = remember { mutableDoubleStateOf(2.0) }
     GazegeTheme {
-        Box(
-            Modifier.background(MaterialTheme.colorScheme.background)
+        Column(
+            Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding()
+                .statusBarsPadding()
         ) {
-            GProgressIndicator(compleition = 2.0)
+            GProgressIndicator(compleition = numerator / denominator)
+            Slider(
+                value = numerator.toFloat(),
+                onValueChange = { onNumeratorChange(it.toDouble()) },
+                valueRange = -2.0f..2.0f
+            )
+            Slider(
+                value = denominator.toFloat(),
+                onValueChange = { onDenominatorChange(it.toDouble()) },
+                valueRange = 0.0f..2.0f
+            )
         }
     }
 }

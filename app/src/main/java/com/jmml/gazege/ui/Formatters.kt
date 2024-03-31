@@ -12,9 +12,12 @@ fun doubleToMoneyString(double: Double): String {
     return "$ %,1.0f".format(double)
 }
 
-fun doubleToPercentageString(double: Double): String {
-    return "%.2f %%".format(double * 100.0)
-}
+fun doubleToPercentageString(double: Double): String =
+    when (double) {
+        Double.NEGATIVE_INFINITY -> "-∞ %"
+        Double.POSITIVE_INFINITY -> "∞ %"
+        else -> "%.2f %%".format(double * 100.0)
+    }
 
 private fun round(number: Float, decimals: Int): Float =
     round(number * 10f.pow(decimals)) / 10f.pow(decimals)
