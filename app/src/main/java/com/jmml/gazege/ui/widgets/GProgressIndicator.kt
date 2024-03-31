@@ -39,9 +39,11 @@ fun GProgressIndicator(
     if (!compact) {
         Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
     }
-    val calculatedCompleition = if (compleition <= 1.0) compleition else 1.0 / compleition
+    val calculatedCompletion =
+        if (compleition <= 1.0) compleition
+        else 1.0 / compleition
     LinearProgressIndicator(
-        progress = { calculatedCompleition.toFloat() },
+        progress = { calculatedCompletion.toFloat() },
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp)),
