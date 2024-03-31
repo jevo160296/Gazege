@@ -9,15 +9,21 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -39,14 +45,27 @@ fun GProgressIndicator(
     if (!compact) {
         Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
     }
-    val calculatedCompleition = if (compleition <= 1.0) compleition else 1.0 / compleition
+    val calculatedCompletion =
+        if (compleition <= -1.0) 1.0
+        else if (compleition <= 0.0) compleition * -1
+        else if (compleition <= 1.0) compleition
+        else if (compleition < Double.POSITIVE_INFINITY) 1.0 / compleition
+        else 0.0
+    val calculatedColor =
+        if (compleition < 0.0) excessColor
+        else color
+    val trackColor =
+        if (compleition < 0.0) excessColor.copy(alpha = 0.2f)
+        else if ((0.0..1.0).contains(compleition)) color.copy(alpha = 0.2f)
+        else excessColor
+
     LinearProgressIndicator(
-        progress = { calculatedCompleition.toFloat() },
+        progress = { calculatedCompletion.toFloat() },
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp)),
-        color = color,
-        trackColor = if (compleition <= 1.0) color.copy(alpha = 0.2f) else excessColor,
+        color = calculatedColor,
+        trackColor = trackColor,
     )
 }
 
@@ -145,11 +164,29 @@ fun TurningCircularProgress() {
 @Preview
 @Composable
 fun LinearProgress() {
+    val (numerator, onNumeratorChange) = remember { mutableDoubleStateOf(1.0) }
+    val (denominator, onDenominatorChange) = remember { mutableDoubleStateOf(2.0) }
     GazegeTheme {
-        Box(
-            Modifier.background(MaterialTheme.colorScheme.background)
+        Column(
+            Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding()
+                .statusBarsPadding()
         ) {
-            GProgressIndicator(compleition = 2.0)
+            GProgressIndicator(
+                compleition = numerator / denominator,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+            Slider(
+                value = numerator.toFloat(),
+                onValueChange = { onNumeratorChange(it.toDouble()) },
+                valueRange = -2.0f..2.0f
+            )
+            Slider(
+                value = denominator.toFloat(),
+                onValueChange = { onDenominatorChange(it.toDouble()) },
+                valueRange = 0.0f..2.0f
+            )
         }
     }
 }
