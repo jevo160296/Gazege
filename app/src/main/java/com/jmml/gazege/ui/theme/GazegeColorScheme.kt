@@ -15,24 +15,34 @@ import com.jmml.gazege.ui.theme.tokens.ColorLightTokens
 class GazegeColorScheme(
     transfer: Color,
     income: Color,
-    expense: Color
+    expense: Color,
+    neutral: Color,
+    onNeutral: Color
 ) {
     var transfer by mutableStateOf(transfer, structuralEqualityPolicy())
         internal set
     var income by mutableStateOf(income, structuralEqualityPolicy())
         internal set
     var outcome by mutableStateOf(expense, structuralEqualityPolicy())
+    var neutral by mutableStateOf(neutral, structuralEqualityPolicy())
+        internal set
+    var onNeutral by mutableStateOf(onNeutral, structuralEqualityPolicy())
+        internal set
 
     /** Returns a copy of this ColorScheme, optionally overriding some of the values. */
     fun copy(
         transfer: Color = this.transfer,
         income: Color = this.income,
-        outcome: Color = this.outcome
+        outcome: Color = this.outcome,
+        neutral: Color = this.neutral,
+        onNeutral: Color = this.onNeutral
     ): GazegeColorScheme =
         GazegeColorScheme(
             transfer = transfer,
             income = income,
-            expense = outcome
+            expense = outcome,
+            neutral = neutral,
+            onNeutral = onNeutral
         )
 
     override fun toString(): String {
@@ -40,6 +50,8 @@ class GazegeColorScheme(
                 "transfer=$transfer" +
                 "income=$income" +
                 "outcome=$outcome" +
+                "neutral=$neutral" +
+                "onNeutral=$onNeutral" +
                 ")"
     }
 }
@@ -48,6 +60,8 @@ fun GazegeColorScheme.updateColorSchemeFrom(colorScheme: GazegeColorScheme) {
     this.income = colorScheme.income
     this.outcome = colorScheme.outcome
     this.transfer = colorScheme.transfer
+    this.neutral = colorScheme.neutral
+    this.onNeutral = colorScheme.onNeutral
 }
 
 /**
@@ -85,7 +99,9 @@ fun lightColorScheme(
     scrim: Color = ColorLightTokens.Scrim,
     transfer: Color = md_theme_light_transfer,
     income: Color = md_theme_light_income,
-    expense: Color = md_theme_light_expense
+    expense: Color = md_theme_light_expense,
+    neutral: Color = md_theme_light_neutral_chart,
+    onNeutral: Color = md_theme_light_on_neutral_chart
 ): Pair<ColorScheme, GazegeColorScheme> =
     Pair(
         ColorScheme(
@@ -122,7 +138,9 @@ fun lightColorScheme(
         GazegeColorScheme(
             transfer = transfer,
             income = income,
-            expense = expense
+            expense = expense,
+            neutral = neutral,
+            onNeutral = onNeutral
         )
     )
 
@@ -161,7 +179,9 @@ fun darkColorScheme(
     scrim: Color = ColorDarkTokens.Scrim,
     transfer: Color = md_theme_dark_transfer,
     income: Color = md_theme_dark_income,
-    expense: Color = md_theme_dark_expense
+    expense: Color = md_theme_dark_expense,
+    neutral: Color = md_theme_dark_neutral_chart,
+    onNeutral: Color = md_theme_dark_on_neutral_chart
 ): Pair<ColorScheme, GazegeColorScheme> =
     Pair(
         ColorScheme(
@@ -198,6 +218,8 @@ fun darkColorScheme(
         GazegeColorScheme(
             transfer = transfer,
             income = income,
-            expense = expense
+            expense = expense,
+            neutral = neutral,
+            onNeutral = onNeutral
         )
     )

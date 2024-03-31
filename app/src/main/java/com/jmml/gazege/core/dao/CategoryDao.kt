@@ -60,6 +60,14 @@ interface CategoryDao {
                 .div(expectedTotalFlow)
                 .takeIf { !it.isNaN() }
                 .let { it ?: 0.0 }
-                .coerceIn(0.0..1.0)
+                .let {
+                    when (it) {
+                        Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY -> 1.0
+                        else -> it
+                    }
+                }
+
+        fun calculateAhorroExceso(realTotalFlow: Double, initialExpectation: Double): Double =
+            realTotalFlow - initialExpectation
     }
 }

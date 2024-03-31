@@ -109,4 +109,9 @@
     <string name="Export_data">Exportar datos</string>
     <string name="why_cant_use_dynamic_color">Dynamic color is only available on Android 12 and above.</string>
     <string name="use_dynamic_color">Usar colores dinámicos.</string>
+    <string name="estimacion_inicial">Estimación inicial</string>
+    <string name="ahorrado">Ahorrado</string>
+    <string name="exceso">Exceso</string>
+    <string name="Falta_pagar">Falta pagar</string>
+    <string name="Falta_recibir">Falta recibir</string>
 </resources>

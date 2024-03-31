@@ -139,12 +139,12 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
 
     val completion = CategoryDao.calculateCategoryCompleition(
         realTotalFlow = realTotalFlow,
-        expectedTotalFlow = expectedTotalFlow
+        expectedTotalFlow = aggregatedBudget.expectedTotalFlow
     )
 
     val completionWithChildren = CategoryDao.calculateCategoryCompleition(
         realTotalFlow = realTotalFlow + childrenRealTotalFlow,
-        expectedTotalFlow = expectedTotalFlow + childrenExpectedTotalFlow
+        expectedTotalFlow = aggregatedBudget.expectedTotalFlow + childrenAggregatedBudget.expectedTotalFlow
     )
 
     val leftToPayToday: Double = forecastedTransactionsTimeSeries[currentDate] ?: 0.0

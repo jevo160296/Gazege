@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,14 +36,20 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.jmml.gazege.R
+import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.jmml.gazege.core.entities.sumOrNull
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.navigation.EmptyEditarCategoriasState
 import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryListView
+import com.jmml.gazege.ui.views.category.ahorroExcesoTexto
+import com.jmml.gazege.ui.views.category.excessColor
 import com.jmml.gazege.ui.widgets.DataView
 import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
+import com.jmml.gazege.ui.widgets.GProgressIndicator
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 
@@ -103,6 +110,24 @@ fun LoadedEditarCategorias(
 ) {
     val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
         editarCategoriasState.categoriesWithCalculatedData
+
+    val initialExpectation = remember(editarCategoriasState) {
+        editarCategoriasState.categoriesWithCalculatedData
+            .map { it.aggregatedBudget + it.childrenAggregatedBudget }
+            .sumOrNull()
+            ?.expectedTotalFlow
+            ?: 0.0
+    }
+    val totalCompleition = remember(editarCategoriasState) {
+        CategoryDao.calculateCategoryCompleition(
+            editarCategoriasState.realTotalFlow,
+            initialExpectation
+        )
+    }
+    val totalAhorroExceso = CategoryDao.calculateAhorroExceso(
+        editarCategoriasState.realTotalFlow,
+        initialExpectation
+    )
     val layoutDirection = LocalLayoutDirection.current
     var hasZeroElements: Boolean? by rememberSaveable { mutableStateOf(null) }
 
@@ -149,8 +174,8 @@ fun LoadedEditarCategorias(
                 modifier = Modifier.weight(1f),
             )
             DataView(
-                title = stringResource(id = R.string.Flujo_total),
-                value = doubleToMoneyString(editarCategoriasState.netFlow),
+                title = ahorroExcesoTexto(value = totalAhorroExceso),
+                value = doubleToMoneyString(totalAhorroExceso),
                 enabled = false,
                 modifier = Modifier.weight(1f)
             )
@@ -206,6 +231,12 @@ fun LoadedEditarCategorias(
                 )
             }
         }
+        GProgressIndicator(
+            compleition = totalCompleition,
+            labelString = stringResource(id = R.string.Progreso),
+            color = GazegeTheme.gazegeColorScheme.neutral,
+            excessColor = excessColor(value = totalAhorroExceso)
+        )
         CategoryListView(
             categoriesWithCalculatedData = categoriesWithCalculatedData,
             editCategory = onEditCategoryRequested,
