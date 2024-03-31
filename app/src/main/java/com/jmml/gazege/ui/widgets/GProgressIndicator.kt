@@ -46,17 +46,26 @@ fun GProgressIndicator(
         Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
     }
     val calculatedCompletion =
-        if (compleition <= 0.0) 0.0
+        if (compleition <= -1.0) 1.0
+        else if (compleition <= 0.0) compleition * -1
         else if (compleition <= 1.0) compleition
         else if (compleition < Double.POSITIVE_INFINITY) 1.0 / compleition
         else 0.0
+    val calculatedColor =
+        if (compleition < 0.0) excessColor
+        else color
+    val trackColor =
+        if (compleition < 0.0) excessColor.copy(alpha = 0.2f)
+        else if ((0.0..1.0).contains(compleition)) color.copy(alpha = 0.2f)
+        else excessColor
+
     LinearProgressIndicator(
         progress = { calculatedCompletion.toFloat() },
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp)),
-        color = color,
-        trackColor = if (compleition <= 1.0) color.copy(alpha = 0.2f) else excessColor,
+        color = calculatedColor,
+        trackColor = trackColor,
     )
 }
 
@@ -164,7 +173,10 @@ fun LinearProgress() {
                 .navigationBarsPadding()
                 .statusBarsPadding()
         ) {
-            GProgressIndicator(compleition = numerator / denominator)
+            GProgressIndicator(
+                compleition = numerator / denominator,
+                color = MaterialTheme.colorScheme.tertiary
+            )
             Slider(
                 value = numerator.toFloat(),
                 onValueChange = { onNumeratorChange(it.toDouble()) },
