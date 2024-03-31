@@ -33,18 +33,20 @@ fun GProgressIndicator(
     compleition: Double,
     labelString: String = "Progress",
     compact: Boolean = false,
+    excessColor: Color = MaterialTheme.colorScheme.error,
     color: Color = ProgressIndicatorDefaults.linearColor
 ) {
     if (!compact) {
         Text(text = "$labelString: ${doubleToPercentageString(compleition)}")
     }
+    val calculatedCompleition = if (compleition <= 1.0) compleition else 1.0 / compleition
     LinearProgressIndicator(
-        progress = { compleition.toFloat() },
+        progress = { calculatedCompleition.toFloat() },
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp)),
         color = color,
-        trackColor = color.copy(alpha = 0.2f),
+        trackColor = if (compleition <= 1.0) color.copy(alpha = 0.2f) else excessColor,
     )
 }
 
@@ -136,6 +138,18 @@ fun TurningCircularProgress() {
                 progress = currentProgress,
                 animated = true
             )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun LinearProgress() {
+    GazegeTheme {
+        Box(
+            Modifier.background(MaterialTheme.colorScheme.background)
+        ) {
+            GProgressIndicator(compleition = 2.0)
         }
     }
 }

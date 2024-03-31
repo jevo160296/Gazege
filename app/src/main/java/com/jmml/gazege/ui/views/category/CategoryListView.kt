@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
+import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.entities.BudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
@@ -44,6 +45,7 @@ import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.jmml.gazege.ui.templates.SimpleTreeList
 import com.jmml.gazege.ui.theme.GazegeTheme
+import com.jmml.gazege.ui.theme.LocalGazegeColorScheme
 import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.GProgressIndicator
 import com.jmml.gazege.ui.widgets.LargeEmphasis
@@ -54,10 +56,33 @@ import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 import java.time.LocalDate
 
 @Composable
+fun dynamicVisibilityTemplate(isVisible: Boolean) = @Composable { content: @Composable () -> Unit ->
+    AnimatedVisibility(visible = isVisible) {
+        content()
+    }
+}
+
+@Composable
+fun faltaPagarRecibirTexto(value: Double) =
+    if (value >= 0) stringResource(id = R.string.Falta_recibir)
+    else stringResource(id = R.string.Falta_pagar)
+
+@Composable
+fun ahorroExcesoTexto(value: Double) =
+    if (value >= 0) stringResource(id = R.string.ahorrado)
+    else stringResource(id = R.string.exceso)
+
+@Composable
+fun excessColor(value: Double) =
+    if (value >= 0.0) LocalGazegeColorScheme.current.income
+    else LocalGazegeColorScheme.current.outcome
+
+@Composable
 private fun CategoryAndBudgetViewHolder(
     categoryName: String,
     leftToPay: Double,
     expectedTotalFlow: Double,
+    initialExpectation: Double,
     availableToday: Double,
     realTotalFlow: Double,
     completion: Double,
@@ -66,17 +91,11 @@ private fun CategoryAndBudgetViewHolder(
     dateRange: ClosedRange<LocalDate>,
     showType: EditarCategoriasShowType
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
-    val dynamicVisibilityTemplate = @Composable { isVisible: Boolean ->
-        @Composable { content: @Composable () -> Unit ->
-            AnimatedVisibility(visible = isVisible) {
-                content()
-            }
-        }
-    }
     val expandedVisibility =
         dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED)
     val graphicalVisibility =
         dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.GRAPHICAL)
+    val ahorroExceso = CategoryDao.calculateAhorroExceso(realTotalFlow, initialExpectation)
 
     LargeEmphasis(text = categoryName)
     Row(
@@ -87,9 +106,11 @@ private fun CategoryAndBudgetViewHolder(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            expandedVisibility { Text(stringResource(id = R.string.Falta_pagar_recibir)) }
+            expandedVisibility { Text(faltaPagarRecibirTexto(value = leftToPay)) }
             expandedVisibility { Text(stringResource(id = R.string.Flujo_real)) }
             expandedVisibility { Text(stringResource(id = R.string.Flujo_total)) }
+            expandedVisibility { Text(stringResource(id = R.string.estimacion_inicial)) }
+            expandedVisibility { Text(ahorroExcesoTexto(value = ahorroExceso)) }
             Text(stringResource(id = R.string.Disponible_hoy))
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
@@ -97,6 +118,8 @@ private fun CategoryAndBudgetViewHolder(
             expandedVisibility { Text(doubleToMoneyString(leftToPay)) }
             expandedVisibility { Text(doubleToMoneyString(realTotalFlow)) }
             expandedVisibility { Text(doubleToMoneyString(expectedTotalFlow)) }
+            expandedVisibility { Text(doubleToMoneyString(initialExpectation)) }
+            expandedVisibility { Text(doubleToMoneyString(ahorroExceso)) }
             Text(doubleToMoneyString(availableToday))
         }
     }
@@ -111,7 +134,8 @@ private fun CategoryAndBudgetViewHolder(
     GProgressIndicator(
         completion,
         stringResource(id = R.string.Progreso),
-        color = MaterialTheme.colorScheme.tertiary
+        color = GazegeTheme.gazegeColorScheme.neutral,
+        excessColor = excessColor(value = ahorroExceso)
     )
 }
 
@@ -150,7 +174,11 @@ fun CategoryListView(
     showType: EditarCategoriasShowType,
     exportCategory: (category: Category) -> Unit
 ) {
-    val nodes = categoriesWithCalculatedData.map { CategoryWithBudgetNode(it) }
+    val nodes = remember(categoriesWithCalculatedData) {
+        categoriesWithCalculatedData.map {
+            CategoryWithBudgetNode(it)
+        }
+    }
     var menuIdExpanded: NodeId? by remember {
         mutableStateOf(null)
     }
@@ -213,6 +241,8 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
             } else {
                 categoryWithCalculatedData.childrenRealTotalFlow
             }
+    val initialExpectation: Double = categoryWithCalculatedData.aggregatedBudget.expectedTotalFlow +
+            if (isExpanded) 0.0 else categoryWithCalculatedData.childrenAggregatedBudget.expectedTotalFlow
     val completion =
         if (isExpanded) {
             categoryWithCalculatedData.completion
@@ -250,6 +280,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 leftToPay = leftToPay,
                 expectedTotalFlow = realFlow + leftToPay,
                 realTotalFlow = realFlow,
+                initialExpectation = initialExpectation,
                 availableToday = availableToday,
                 completion = completion,
                 pastForecast = pastForecast,

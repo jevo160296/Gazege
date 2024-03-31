@@ -36,6 +36,9 @@ val md_theme_light_scrim = Color(0xFF000000)
 val md_theme_light_transfer = Color(0xFF683bb8) //H=302
 val md_theme_light_expense = Color(0xFFa02c32) //H=20
 val md_theme_light_income = Color(0xFF00661a) //H=146
+val md_theme_light_neutral_chart = Color(0xFF4585F8)
+val md_theme_light_on_neutral_chart = Color(0xFFC4D4FF)
+
 val md_theme_dark_primary = Color(0xFFFFACEA)
 val md_theme_dark_onPrimary = Color(0xFF5D0054)
 val md_theme_dark_primaryContainer = Color(0xFF840078)
@@ -70,5 +73,7 @@ val md_theme_dark_scrim = Color(0xFF000000)
 val md_theme_dark_transfer = Color(0xFFbb9aff) //H=302
 val md_theme_dark_expense = Color(0xFFff8887) //H=20
 val md_theme_dark_income = Color(0xFF59c05c) //H=146
+val md_theme_dark_neutral_chart = Color(0xFF4585F8)
+val md_theme_dark_on_neutral_chart = Color(0xFFC4D4FF)
 
 
