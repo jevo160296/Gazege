@@ -20,6 +20,7 @@ fun <N, C : Node<N, C>> ColumnTreeView(
     groupViewHolder: @Composable (String) -> Unit = { Text(it) },
     treeState: TreeState = rememberTreeState(),
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
+    nodeVisible: (C) -> Boolean = { true },
     viewHolder: @Composable (node: C, scope: TreeScope<N, C>) -> Unit
 ) {
     val expandedItems = treeState.expandedItems
@@ -46,10 +47,11 @@ fun <N, C : Node<N, C>> ColumnTreeView(
         val calculatedBottom = itemHolderPaddingValues.calculateBottomPadding()
         Spacer(modifier = Modifier.height(calculatedTop))
         Nodes(
-            nodes,
+            nodes.filter(nodeVisible),
             startPadding = startPadding,
             endPadding = endPadding,
-            treeScope = treeScope
+            treeScope = treeScope,
+            nodeVisible = nodeVisible
         )
         Spacer(Modifier.height(calculatedBottom))
     }
@@ -58,6 +60,7 @@ fun <N, C : Node<N, C>> ColumnTreeView(
 @Composable
 private fun <N, C : Node<N, C>> ColumnScope.Nodes(
     nodes: List<C>,
+    nodeVisible: (C) -> Boolean,
     parentGroup: String? = null,
     startPadding: Dp,
     endPadding: Dp,
@@ -69,6 +72,7 @@ private fun <N, C : Node<N, C>> ColumnScope.Nodes(
         currentGroup = treeScope.groupSelector(node)
         Node(
             node,
+            nodeVisible = nodeVisible,
             previousGroup = previousGroup,
             currentGroup = currentGroup,
             startPadding = startPadding,
@@ -82,6 +86,7 @@ private fun <N, C : Node<N, C>> ColumnScope.Nodes(
 @Composable
 private fun <N, C : Node<N, C>> ColumnScope.Node(
     node: C,
+    nodeVisible: (C) -> Boolean,
     previousGroup: String?,
     currentGroup: String?,
     startPadding: Dp,
@@ -98,11 +103,12 @@ private fun <N, C : Node<N, C>> ColumnScope.Node(
     }
     if (treeScope.isExpanded(node)) {
         Nodes(
-            node.children,
+            node.children.filter(nodeVisible),
             parentGroup = currentGroup,
             startPadding = startPadding,
             endPadding = endPadding,
-            treeScope = treeScope
+            treeScope = treeScope,
+            nodeVisible = nodeVisible
         )
     }
 }

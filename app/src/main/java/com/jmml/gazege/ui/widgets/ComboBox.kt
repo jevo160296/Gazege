@@ -44,6 +44,7 @@ import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import java.text.Normalizer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,38 +69,42 @@ private fun <T> OptionsGroupView(
     }
 }
 
+private val REGEX_UNACCENT = "\\p{InCombiningDiacriticalMarks}+".toRegex()
+
+fun CharSequence.unaccent(): String {
+    val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
+    return REGEX_UNACCENT.replace(temp, "")
+}
+
 private fun partialStringMatch(originalString: String, stringToMatch: String) =
-    originalString.matches(
-        Regex(
-            ".*$stringToMatch.*",
-            setOf(
-                RegexOption.DOT_MATCHES_ALL,
-                RegexOption.IGNORE_CASE
+    originalString
+        .unaccent()
+        .matches(
+            Regex(
+                ".*${stringToMatch.unaccent()}.*",
+                setOf(
+                    RegexOption.DOT_MATCHES_ALL,
+                    RegexOption.IGNORE_CASE
+                )
             )
         )
-    )
 
 private fun <N, C : Node<N, C>> recursiveMatch(
     node: C,
-    parent: C? = null,
-    foundItems: MutableList<NodeId> = mutableListOf(),
     itemMatch: (item: C) -> Boolean
-): List<NodeId> {
-    if (itemMatch(node) && parent != null && NodeId.from(parent) !in foundItems) foundItems.add(
-        NodeId.from(parent)
-    )
-    if (itemMatch(node)) {
-        foundItems.add(NodeId.from(node))
-        for (child in node.children) {
-            recursiveMatch(child, node, foundItems) { true }
-        }
-        return foundItems.toList()
+): List<NodeId> = itemMatch(node)
+    .let { nodeMatches ->
+        node
+            .children
+            .flatMap { child -> recursiveMatch(child) { nodeMatches || itemMatch(it) } }
+            .let { childrenFinds ->
+                if (childrenFinds.isNotEmpty() || nodeMatches) {
+                    childrenFinds.plusElement(node.id())
+                } else {
+                    emptyList()
+                }
+            }
     }
-    for (child in node.children) {
-        recursiveMatch(child, node, foundItems, itemMatch)
-    }
-    return foundItems.toList()
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -256,9 +261,7 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     nodeEnabled: (C) -> Boolean,
     nodeVisible: (C) -> Boolean = { true }
 ) {
-    val nodes: List<C> = groupedOptions
-        .flatMap { it.value }
-        .filter(nodeVisible)
+    val nodes: List<C> = groupedOptions.flatMap { it.value }
     val inverseMap: Map<NodeId, String?> = groupedOptions.flatMap { (key, value) ->
         value.map {
             it.id() to key
@@ -269,6 +272,7 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
         nodes = nodes,
         treeState = treeState,
         groupSelector = { inverseMap[it.id()] },
+        nodeVisible = nodeVisible,
         itemHolderPaddingValues = contentPadding
     ) { node, treeScope ->
         Row {
@@ -468,7 +472,8 @@ fun TreeComboBoxPreview() {
             "Canasta" to null,
             "Zapato" to "Canasta",
             "Puerta" to "Canasta",
-            "Boliche" to "Puerta"
+            "Boliche" to "Puerta",
+            "Mancana" to "Puerta"
         ).toMap()
     }
     val transformedData = StringTree.from(data)
