@@ -59,7 +59,7 @@ interface CategoryDao {
             realTotalFlow
                 .div(expectedTotalFlow)
                 .takeIf { !it.isNaN() }
-                .let { it ?: 0.0 }
+                ?: 0.0
 
         fun calculateAhorroExceso(realTotalFlow: Double, initialExpectation: Double): Double =
             realTotalFlow - initialExpectation
