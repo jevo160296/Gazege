@@ -37,8 +37,8 @@ android {
         applicationId "com.jmml.gazege"
         minSdk 29
         targetSdk 34
-        versionCode 82
-        versionName '1.14.5'
+        versionCode 83
+        versionName '1.14.6'
 
         sourceSets {
             androidTest.assets.srcDirs +=
