@@ -1,38 +1,57 @@
 package com.jmml.gazege.ui.widgets
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -132,6 +151,27 @@ fun Filter(
             .spacedBy(dimensionResource(id = R.dimen.DefaultPadding), Alignment.End),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        AnimatedVisibility(dateFilterVisible) {
+            IconButton(
+                enabled = startDate != null || endDate != null,
+                onClick = { onRangeChanged(null, null) },
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.round_restart_alt_24),
+                    contentDescription = "Restart"
+                )
+            }
+        }
+        AnimatedVisibility(dateFilterVisible) {
+            DateFilterItems(
+                startDate = startDate,
+                endDate = endDate,
+                onRangeChanged = onRangeChanged
+            )
+        }
         Box {
             AssistChip(
                 onClick = { menuExpanded = !menuExpanded },
@@ -201,30 +241,6 @@ fun Filter(
                                 .verticalScroll(rememberScrollState())
                                 .padding(dimensionResource(id = R.dimen.DefaultPadding))
                         ) {
-                            if (dateFilterVisible) {
-                                Box(
-                                    Modifier.fillMaxWidth()
-                                ) {
-                                    IconButton(
-                                        enabled = startDate != null || endDate != null,
-                                        onClick = { onRangeChanged(null, null) },
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            contentColor = MaterialTheme.colorScheme.secondary
-                                        )
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.round_restart_alt_24),
-                                            contentDescription = "Restart"
-                                        )
-                                    }
-                                    DateFilterItems(
-                                        modifier = Modifier.align(Alignment.Center),
-                                        startDate = startDate,
-                                        endDate = endDate,
-                                        onRangeChanged = onRangeChanged
-                                    )
-                                }
-                            }
                             if (transactionsFilterVisible) {
                                 Row(
                                     modifier = Modifier.align(Alignment.Start),
@@ -431,30 +447,109 @@ fun Filter(
     }
 }
 
+@Stable
+internal fun IconButtonColors.containerColor(enabled: Boolean): Color =
+    if (enabled) containerColor else disabledContainerColor
+
+@Stable
+internal fun IconButtonColors.contentColor(enabled: Boolean): Color =
+    if (enabled) contentColor else disabledContentColor
+
+@Composable
+private fun GIcon(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .size(40.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(color = colors.containerColor(enabled)),
+        contentAlignment = Alignment.Center
+    ) {
+        val contentColor = colors.contentColor(enabled)
+        CompositionLocalProvider(LocalContentColor provides contentColor, content = content)
+    }
+}
+
 @Composable
 fun DateFilterItems(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     startDate: LocalDate?,
     endDate: LocalDate?,
     onRangeChanged: (newStartDate: LocalDate, newEndDate: LocalDate) -> Unit
 ) {
     val dateString = rangeToString(startDate, endDate)
+    val interactionSource = remember { MutableInteractionSource() }
+    val indication = rememberRipple()
+    val onClickCenter = {
+        val newRange = LocalDate
+            .now()
+            .let {
+                Pair(it.startOfMonth(), it.endOfMonth())
+            }
+        onRangeChanged(newRange.first, newRange.second)
+    }
+    val onClickBack = {
+        if (startDate != null && endDate != null) {
+            val newRange = Pair(
+                startDate.stableMinusMonths(1L),
+                endDate.stableMinusMonths(1L)
+            )
+            onRangeChanged(newRange.first, newRange.second)
+        } else {
+            onClickCenter()
+        }
+    }
+    val onClickNext = {
+        if (startDate != null && endDate != null) {
+            val newRange = Pair(
+                startDate.stablePlusMonths(1L),
+                endDate.stablePlusMonths(1L)
+            )
+            onRangeChanged(newRange.first, newRange.second)
+        } else {
+            onClickCenter()
+        }
+    }
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = {
-                if (startDate != null && endDate != null) {
-                    val newRange = Pair(
-                        startDate.stableMinusMonths(1L),
-                        endDate.stableMinusMonths(1L)
-                    )
-                    onRangeChanged(newRange.first, newRange.second)
+        modifier = modifier
+            .height(IntrinsicSize.Min)
+            .clip(MaterialTheme.shapes.extraLarge)
+            .indication(interactionSource, indication)
+            .pointerInput(startDate, endDate) {
+                detectHorizontalDragGestures { change, dragAmount ->
+                    change.consume()
+                    if (dragAmount >= 10.0) onClickBack()
+                    if (dragAmount <= -10.0) onClickNext()
+                }
+            }
+            .pointerInput(startDate, endDate) {
+                val width = size.width.toDouble()
+                val start = 90.0
+                val end = width - start
+                detectTapGestures(
+                    onPress = {
+                        val pressInteraction = PressInteraction.Press(it)
+                        interactionSource.emit(pressInteraction)
+                        tryAwaitRelease()
+                        interactionSource.emit(PressInteraction.Release(pressInteraction))
+                    }
+                ) { offset ->
+                    val x = offset.x
+                    when {
+                        x <= start -> onClickBack()
+                        x in start..end -> onClickCenter()
+                        x >= end -> onClickNext()
+                    }
                 }
             },
-            enabled = startDate != null && endDate != null
-        ) {
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        GIcon(enabled = startDate != null && endDate != null) {
             Icon(
                 painter = painterResource(
                     id = R.drawable.round_arrow_left_24
@@ -462,28 +557,18 @@ fun DateFilterItems(
                 contentDescription = "Left"
             )
         }
-        Text(
-            dateString,
-            modifier = Modifier.clickable {
-                val newRange = LocalDate.now().let {
-                    Pair(it.startOfMonth(), it.endOfMonth())
-                }
-                onRangeChanged(newRange.first, newRange.second)
-            },
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        IconButton(
-            onClick = {
-                if (startDate != null && endDate != null) {
-                    val newRange = Pair(
-                        startDate.stablePlusMonths(1L),
-                        endDate.stablePlusMonths(1L)
-                    )
-                    onRangeChanged(newRange.first, newRange.second)
-                }
-            },
-            enabled = startDate != null && endDate != null
+        Box(
+            Modifier
+                .fillMaxHeight(),
+            contentAlignment = Alignment.Center
         ) {
+            Text(
+                modifier = Modifier.animateContentSize(),
+                text = dateString,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        GIcon(enabled = startDate != null && endDate != null) {
             Icon(
                 painter = painterResource(
                     id = R.drawable.round_arrow_right_24
@@ -620,7 +705,7 @@ data class TextFilter(
     override fun resetValues(): TextFilter = copy(value = null)
 }
 
-@Preview
+@Preview(apiLevel = 33)
 @Composable
 private fun FilterPreview() {
     var startDate: LocalDate? by remember { mutableStateOf(null) }
@@ -656,8 +741,9 @@ private fun FilterPreview() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Filter(
-                startDate = LocalDate.of(2022, 1, 1),
-                endDate = LocalDate.of(2022, 1, 31),
+                Modifier.fillMaxWidth(),
+                startDate = startDate,
+                endDate = endDate,
                 onRangeChanged = { newStart, newEnd ->
                     startDate = newStart
                     endDate = newEnd
