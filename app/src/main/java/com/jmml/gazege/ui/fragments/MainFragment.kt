@@ -1,7 +1,7 @@
 package com.jmml.gazege.ui.fragments
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -437,9 +437,9 @@ private fun MainFragmentResponsiveContent(
     showVertical: Boolean
 ) {
     val d = LocalDensity.current
-    var offsetYDP by rememberSaveable { mutableFloatStateOf(0f) }
 
-    val animatedOffsetYDP by animateFloatAsState(targetValue = offsetYDP, label = "Size")
+    val scope = rememberCoroutineScope()
+    val animatedOffsetYDP = remember { Animatable(0f) }
     var maxOffsetYDP by remember { mutableFloatStateOf(0f) }
     val paddingValues = PaddingValues(
         top = 8.dp,
@@ -457,6 +457,7 @@ private fun MainFragmentResponsiveContent(
                     source == NestedScrollSource.Wheel ||
                     isFirstElementVisible
                 ) {
+                    val offsetYDP = animatedOffsetYDP.targetValue
                     val newOffset =
                         (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
                     val returnedOffset = if (newOffset != offsetYDP) {
@@ -464,7 +465,7 @@ private fun MainFragmentResponsiveContent(
                     } else {
                         Offset.Zero
                     }
-                    offsetYDP = newOffset
+                    scope.launch { animatedOffsetYDP.snapTo(newOffset) }
                     returnedOffset
                 } else {
                     Offset.Zero
@@ -476,11 +477,12 @@ private fun MainFragmentResponsiveContent(
     val endDate = range.second
     val onZeroElementsChanged = remember {
         { newHasZeroElements: Boolean ->
+            val offsetYDP = animatedOffsetYDP.targetValue
             if (hasZeroElements != newHasZeroElements) {
                 hasZeroElements = newHasZeroElements
             }
             if (newHasZeroElements && offsetYDP != 0f) {
-                offsetYDP = 0f
+                scope.launch { animatedOffsetYDP.animateTo(0f) }
             }
         }
     }
@@ -701,7 +703,16 @@ private fun MainFragmentResponsiveContent(
 
     if (showVertical) {
         Box(Modifier.padding(layoutPaddingValues)) {
-            Box(Modifier.padding(top = (maxOffsetYDP.dp + animatedOffsetYDP.dp).coerceAtLeast(0.dp))) {
+            Box(
+                Modifier
+                    .offset {
+                        IntOffset(
+                            0,
+                            d
+                                .toPx((maxOffsetYDP + animatedOffsetYDP.value).coerceAtLeast(0f))
+                                .toInt()
+                        )
+                    }) {
                 navigationView()
             }
             Column(Modifier
@@ -710,7 +721,7 @@ private fun MainFragmentResponsiveContent(
                     IntOffset(
                         0,
                         d
-                            .toPx(animatedOffsetYDP)
+                            .toPx(animatedOffsetYDP.value)
                             .toInt()
                     )
                 }
