@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.harmonizeColor
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -134,11 +135,17 @@ fun GazegeTheme(
         else -> LightColors
     }
 
-    val rememberedColorScheme = remember {
-        colors.second.copy()
-    }.apply {
-        updateColorSchemeFrom(colors.second)
-    }
+    val rememberedColorScheme = remember { colors.second.copy() }
+        .apply {
+            val primaryColor = colors.first.primary
+            updateColorSchemeFrom(
+                colors.second.copy(
+                    good = colors.second.good.harmonizeColor(primaryColor),
+                    bad = colors.second.bad.harmonizeColor(primaryColor),
+                    neutral = colors.second.neutral.harmonizeColor(primaryColor)
+                )
+            )
+        }
 
     MaterialTheme(
         colorScheme = colors.first,
