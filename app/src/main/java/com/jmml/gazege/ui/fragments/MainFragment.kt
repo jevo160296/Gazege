@@ -1,7 +1,7 @@
 package com.jmml.gazege.ui.fragments
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,8 +51,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.NavPosition
@@ -63,6 +61,8 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.data.SampleId
+import com.jmml.gazege.extensions.density.toDp
+import com.jmml.gazege.extensions.density.toPx
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -386,12 +386,6 @@ fun MainFragment(
     }
 }
 
-private fun Density.toDp(valuePx: Float): Dp = valuePx.div(this.density).dp
-
-private fun Density.toPx(valueDp: Dp): Float = valueDp.times(this.density).value
-
-private fun Density.toPx(valueDp: Float): Float = valueDp.times(this.density)
-
 @Composable
 private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
@@ -437,9 +431,9 @@ private fun MainFragmentResponsiveContent(
     showVertical: Boolean
 ) {
     val d = LocalDensity.current
-    var offsetYDP by rememberSaveable { mutableFloatStateOf(0f) }
 
-    val animatedOffsetYDP by animateFloatAsState(targetValue = offsetYDP, label = "Size")
+    val scope = rememberCoroutineScope()
+    val animatedOffsetYDP = remember { Animatable(0f) }
     var maxOffsetYDP by remember { mutableFloatStateOf(0f) }
     val paddingValues = PaddingValues(
         top = 8.dp,
@@ -457,6 +451,7 @@ private fun MainFragmentResponsiveContent(
                     source == NestedScrollSource.Wheel ||
                     isFirstElementVisible
                 ) {
+                    val offsetYDP = animatedOffsetYDP.targetValue
                     val newOffset =
                         (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
                     val returnedOffset = if (newOffset != offsetYDP) {
@@ -464,7 +459,7 @@ private fun MainFragmentResponsiveContent(
                     } else {
                         Offset.Zero
                     }
-                    offsetYDP = newOffset
+                    scope.launch { animatedOffsetYDP.snapTo(newOffset) }
                     returnedOffset
                 } else {
                     Offset.Zero
@@ -476,11 +471,12 @@ private fun MainFragmentResponsiveContent(
     val endDate = range.second
     val onZeroElementsChanged = remember {
         { newHasZeroElements: Boolean ->
+            val offsetYDP = animatedOffsetYDP.targetValue
             if (hasZeroElements != newHasZeroElements) {
                 hasZeroElements = newHasZeroElements
             }
             if (newHasZeroElements && offsetYDP != 0f) {
-                offsetYDP = 0f
+                scope.launch { animatedOffsetYDP.animateTo(0f) }
             }
         }
     }
@@ -701,7 +697,16 @@ private fun MainFragmentResponsiveContent(
 
     if (showVertical) {
         Box(Modifier.padding(layoutPaddingValues)) {
-            Box(Modifier.padding(top = (maxOffsetYDP.dp + animatedOffsetYDP.dp).coerceAtLeast(0.dp))) {
+            Box(
+                Modifier
+                    .offset {
+                        IntOffset(
+                            0,
+                            d
+                                .toPx((maxOffsetYDP + animatedOffsetYDP.value).coerceAtLeast(0f))
+                                .toInt()
+                        )
+                    }) {
                 navigationView()
             }
             Column(Modifier
@@ -710,7 +715,7 @@ private fun MainFragmentResponsiveContent(
                     IntOffset(
                         0,
                         d
-                            .toPx(animatedOffsetYDP)
+                            .toPx(animatedOffsetYDP.value)
                             .toInt()
                     )
                 }

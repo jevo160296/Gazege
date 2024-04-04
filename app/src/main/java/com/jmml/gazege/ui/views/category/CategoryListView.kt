@@ -74,8 +74,8 @@ fun ahorroExcesoTexto(value: Double) =
 
 @Composable
 fun excessColor(value: Double) =
-    if (value >= 0.0) LocalGazegeColorScheme.current.income
-    else LocalGazegeColorScheme.current.outcome
+    if (value >= 0.0) LocalGazegeColorScheme.current.good
+    else LocalGazegeColorScheme.current.bad
 
 @Composable
 private fun CategoryAndBudgetViewHolder(
