@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -44,14 +45,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -482,6 +487,9 @@ fun DateFilterItems(
     endDate: LocalDate?,
     onRangeChanged: (newStartDate: LocalDate, newEndDate: LocalDate) -> Unit
 ) {
+    var backSize by rememberSaveable { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+
     val dateString = rangeToString(startDate, endDate)
     val interactionSource = remember { MutableInteractionSource() }
     val indication = rememberRipple()
@@ -520,6 +528,7 @@ fun DateFilterItems(
             .height(IntrinsicSize.Min)
             .clip(MaterialTheme.shapes.extraLarge)
             .indication(interactionSource, indication)
+            .hoverable(interactionSource)
             .pointerInput(startDate, endDate) {
                 detectHorizontalDragGestures { change, dragAmount ->
                     change.consume()
@@ -528,8 +537,8 @@ fun DateFilterItems(
                 }
             }
             .pointerInput(startDate, endDate) {
-                val width = size.width.toDouble()
-                val start = 90.0
+                val width = size.width.toDp()
+                val start = backSize.dp
                 val end = width - start
                 detectTapGestures(
                     onPress = {
@@ -539,7 +548,7 @@ fun DateFilterItems(
                         interactionSource.emit(PressInteraction.Release(pressInteraction))
                     }
                 ) { offset ->
-                    val x = offset.x
+                    val x = offset.x.toDp()
                     when {
                         x <= start -> onClickBack()
                         x in start..end -> onClickCenter()
@@ -549,7 +558,12 @@ fun DateFilterItems(
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        GIcon(enabled = startDate != null && endDate != null) {
+        GIcon(
+            modifier = Modifier.onSizeChanged {
+                backSize = with(density) { it.width.toDp().value }
+            },
+            enabled = startDate != null && endDate != null
+        ) {
             Icon(
                 painter = painterResource(
                     id = R.drawable.round_arrow_left_24

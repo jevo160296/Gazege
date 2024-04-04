@@ -51,8 +51,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.NavPosition
@@ -63,6 +61,8 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.data.SampleId
+import com.jmml.gazege.extensions.density.toDp
+import com.jmml.gazege.extensions.density.toPx
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -385,12 +385,6 @@ fun MainFragment(
         )
     }
 }
-
-private fun Density.toDp(valuePx: Float): Dp = valuePx.div(this.density).dp
-
-private fun Density.toPx(valueDp: Dp): Float = valueDp.times(this.density).value
-
-private fun Density.toPx(valueDp: Float): Float = valueDp.times(this.density)
 
 @Composable
 private fun MainFragmentResponsiveContent(
