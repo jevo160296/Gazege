@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -156,6 +159,48 @@ fun LoadedPersonPage(
             modifier = nestedScrollConnection?.let { Modifier.nestedScroll(nestedScrollConnection) }
                 ?: Modifier
         )
+    }
+}
+
+@Composable
+fun PersonSelectionPage(
+    modifier: Modifier = Modifier,
+    principalPersonSummaryState: FullPersonSummaryState,
+    personList: List<Person>,
+    enabled: Boolean = true,
+    onPersonStateChanged: (Person, newValue: Boolean) -> Unit,
+    state: LazyListState = rememberLazyListState(),
+    contentPadding: PaddingValues = PaddingValues()
+) {
+    SimpleLazyList(
+        modifier = modifier,
+        state = state,
+        contentPadding = contentPadding,
+        items = personList
+    ) { person ->
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Checkbox(
+                    checked = person.debtsIncludedInTotal,
+                    enabled = enabled,
+                    onCheckedChange = {
+                        onPersonStateChanged(person, it)
+                    })
+                Text(text = person.name)
+            }
+            Text(text = principalPersonSummaryState.deudasFlujo[person]
+                ?.takeIf { it != 0.0 }
+                ?.let { valor -> "${personDeudaString(flujo = valor)} ${doubleToMoneyString(valor.absoluteValue)}" }
+                ?: ""
+            )
+        }
     }
 }
 

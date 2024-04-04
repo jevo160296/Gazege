@@ -120,7 +120,8 @@ data class FullPersonSummaryState(
                     allTransactions
                 )
             }
-            val deudasTotal = deudasFlujo.toList().sumOf { it.second }
+            val deudasTotal =
+                deudasFlujo.filterKeys { it.debtsIncludedInTotal }.toList().sumOf { it.second }
             val presupuestoTotal =
                 budgetWithCalculatedDatumAndCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
             return FullPersonSummaryState(

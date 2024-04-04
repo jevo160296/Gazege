@@ -113,4 +113,6 @@
     <string name="exceso">Excess</string>
     <string name="Falta_pagar">Left to pay</string>
     <string name="Falta_recibir">Left to receive</string>
+    <string name="Deudas_totales">Total debts</string>
+    <string name="Deudas_seleccionadas">Selected debts</string>
 </resources>
