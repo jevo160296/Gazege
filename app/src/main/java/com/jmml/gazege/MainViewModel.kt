@@ -732,6 +732,7 @@ class MainViewModel(
     fun updatePerson(vararg person: Person, onErrorAction: (Throwable) -> Unit) =
         viewModelScope.safeLaunch(onErrorAction) {
             repository.updatePerson(*person)
+
         }
 
     fun deletePerson(person: Person) = viewModelScope.launch {
@@ -1846,6 +1847,14 @@ class MainViewModel(
             accountAndOwnerWithTransactions.observeAsState(emptyList())
 
         @Composable
+        fun rememberPersonList(principalPersonId: Int?) = remember(principalPersonId) {
+            allPerson
+                .map { personList ->
+                    personList.filter { it.id == null || it.id != principalPersonId }
+                }
+        }.observeAsState(initial = emptyList())
+
+        @Composable
         fun rememberPersonSummaryState() =
             personSummaryState.observeAsState(loadingPersonSummaryState())
 
@@ -1875,6 +1884,15 @@ class MainViewModel(
                 account = account,
                 onErrorAction = onErrorAction,
                 onCompleitionAction = onCompleitionAction
+            )
+
+        fun updatePerson(
+            person: Person,
+            onErrorAction: (Throwable) -> Unit
+        ) =
+            this@MainViewModel.updatePerson(
+                person,
+                onErrorAction = onErrorAction
             )
     }
 

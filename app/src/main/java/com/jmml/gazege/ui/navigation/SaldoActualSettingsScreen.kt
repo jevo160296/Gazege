@@ -19,6 +19,7 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         val accountAndOwnerWithTransactions by viewModelSaldoActualSettings.rememberAccountAndOwnerWithTransactions()
         val personSummaryState by viewModelSaldoActualSettings.rememberPersonSummaryState()
         val principalPerson by viewModelSaldoActualSettings.rememberPrincipalPerson()
+        val personList by viewModelSaldoActualSettings.rememberPersonList(principalPersonId = principalPerson?.id)
         val incluirPresupuestoEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
         val incluirDeudasEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirDeudasEnSaldoActualFlow()
         val coroutineScope = rememberCoroutineScope()
@@ -26,12 +27,22 @@ fun NavGraphBuilder.screenSaldoActualSettings(
         var saving: Int by remember { mutableIntStateOf(0) }
         SaldoActualSettings(
             accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
+            personList = personList,
             summaryState = personSummaryState,
             saving = saving,
             incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
-            incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
             onIncluirPresupuestoEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirPresupuestoEnSaldoActualFlow,
-            onIncluirDeudasEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirDeudasEnSaldoActualFlow
+            onPersonStateChanged = { person, nuevoValor ->
+                saving += 1
+                coroutineScope.launch {
+                    viewModelSaldoActualSettings
+                        .updatePerson(person.copy(debtsIncludedInTotal = nuevoValor)) {}.join()
+                }.invokeOnCompletion {
+                    if (it?.cause == null) {
+                        saving -= 1
+                    }
+                }
+            }
         ) { account, nuevoEstado ->
             saving += 1
             coroutineScope.launch {
