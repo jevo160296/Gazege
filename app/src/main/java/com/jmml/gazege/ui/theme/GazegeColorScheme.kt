@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.jmml.gazege.extensions.closedrange.toSequence
+import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.copyM3HCT
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.generateTonalPalette
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.getColor
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.harmonizeColor
@@ -129,11 +131,25 @@ class GazegeColorScheme(
             return Color(ColorUtils.M3HCTToColor(newHue.coerceCircular(), colorHTC[1], colorHTC[2]))
         }
 
+        fun Color.copyM3HCT(
+            hue: Float? = null,
+            chroma: Float? = null,
+            tone: Float? = null
+        ): Color {
+            val currentM3HCT = FloatArray(3).apply { }
+            ColorUtils.colorToM3HCT(this.toArgb(), currentM3HCT)
+            val inputHue = hue ?: currentM3HCT[0]
+            val inputChroma = chroma ?: currentM3HCT[1]
+            val inputTone = tone ?: currentM3HCT[2]
+
+            return Color(ColorUtils.M3HCTToColor(inputHue, inputChroma, inputTone))
+        }
+
         fun List<Color>.harmonizePalette(baseColor: Color) =
             this.map { it.harmonizeColor(baseColor) }
 
         fun generateTonalPalette(color: Color): List<Color> {
-            //                      0    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16 17
+            //              0    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16 17
             val tones =
                 arrayListOf(100, 99, 98, 95, 90, 80, 70, 60, 50, 40, 35, 30, 25, 20, 15, 10, 5, 0)
             val colorHTC = FloatArray(3)
@@ -333,7 +349,7 @@ fun darkColorScheme(
     )
 
 @Composable
-fun ColorPaletteGenerator(
+private fun ColorPaletteGenerator(
     primaryColor: Color? = null,
     hue: Float,
     onHueChange: (Float) -> Unit,
@@ -394,32 +410,31 @@ fun ColorPaletteGenerator(
 }
 
 @Composable
-fun CheckTonalPalette(
-    primaryTonalPalette: List<Color>,
-    goodTonalPalette: List<Color>,
-    badTonalPalette: List<Color>,
-    neutralTonalPalette: List<Color>
+private fun CheckTonalPalette(
+    goodColor: Color,
+    badColor: Color,
+    neutralColor: Color
 ) {
     Column(
         Modifier
-            .background(primaryTonalPalette.getColor(ColorTokens.Surface))
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
             .padding(4.dp)
     ) {
-        Text(text = "On surface", color = primaryTonalPalette.getColor(ColorTokens.OnSurface))
+        Text(text = "On surface", color = MaterialTheme.colorScheme.onSurface)
         GProgressIndicator(
             compleition = 0.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = goodTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = goodColor
         )
         GProgressIndicator(
             compleition = 1.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = goodTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = goodColor
         )
         GProgressIndicator(
             compleition = 1.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = badTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = badColor
         )
     }
 }
@@ -427,21 +442,23 @@ fun CheckTonalPalette(
 @Preview
 @Composable
 fun TonalPalettes() {
-    MaterialTheme {
-        val (hue0, onHueChange0) = rememberSaveable { mutableFloatStateOf(180f) } //72f
-        val (hue1, onHueChange1) = rememberSaveable { mutableFloatStateOf(137f) }
-        val (hue2, onHueChange2) = rememberSaveable { mutableFloatStateOf(12f) }
-        val (hue3, onHueChange3) = rememberSaveable { mutableFloatStateOf(256f) }
+    GazegeTheme {
+        val (primaryHue, onPrimaryHueChange) = rememberSaveable { mutableFloatStateOf(0f) }
+        val (goodHue, onGoodHueChange) = rememberSaveable { mutableFloatStateOf(150f) }
+        val (badHue, onBadHueChange) = rememberSaveable { mutableFloatStateOf(12f) }
+        val (neutralHue, onNeutralHueChange) = rememberSaveable { mutableFloatStateOf(270f) }
 
-        val color0 = Color(ColorUtils.M3HCTToColor(hue0, 70f, 50f))
-        val color1 = Color(ColorUtils.M3HCTToColor(hue1, 70f, 50f))
-        val color2 = Color(ColorUtils.M3HCTToColor(hue2, 70f, 50f))
-        val color3 = Color(ColorUtils.M3HCTToColor(hue3, 70f, 50f))
+        val primaryColor = md_theme_light_primary.copyM3HCT(hue = primaryHue)
+        val goodColor = md_theme_light_good_chart.copyM3HCT(hue = goodHue)
+        val badColor = md_theme_light_bad_chart.copyM3HCT(hue = badHue)
+        val neutralColor = md_theme_light_neutral_chart.copyM3HCT(hue = neutralHue)
 
-        val tonalPalette0: List<Color> = generateTonalPalette(color0)
-        val tonalPalette1: List<Color> = generateTonalPalette(color1).harmonizePalette(color0)
-        val tonalPalette2: List<Color> = generateTonalPalette(color2).harmonizePalette(color0)
-        val tonalPalette3: List<Color> = generateTonalPalette(color3).harmonizePalette(color0)
+        val goodTonalPalette: List<Color> =
+            generateTonalPalette(goodColor).harmonizePalette(primaryColor)
+        val badTonalPalette: List<Color> =
+            generateTonalPalette(badColor).harmonizePalette(primaryColor)
+        val neutralTonalPalette: List<Color> =
+            generateTonalPalette(neutralColor).harmonizePalette(primaryColor)
 
         Box(
             modifier = Modifier
@@ -455,15 +472,34 @@ fun TonalPalettes() {
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ColorPaletteGenerator(hue = hue1, onHueChange = onHueChange1, primaryColor = color0)
-                ColorPaletteGenerator(hue = hue2, onHueChange = onHueChange2, primaryColor = color0)
-                ColorPaletteGenerator(hue = hue3, onHueChange = onHueChange3, primaryColor = color0)
-                ColorPaletteGenerator(hue = hue0, onHueChange = onHueChange0)
+                ColorPaletteGenerator(
+                    hue = goodHue,
+                    onHueChange = onGoodHueChange,
+                    primaryColor = primaryColor
+                )
+                ColorPaletteGenerator(
+                    hue = badHue,
+                    onHueChange = onBadHueChange,
+                    primaryColor = primaryColor
+                )
+                ColorPaletteGenerator(
+                    hue = neutralHue,
+                    onHueChange = onNeutralHueChange,
+                    primaryColor = primaryColor
+                )
+                ColorPaletteGenerator(
+                    hue = primaryHue,
+                    onHueChange = onPrimaryHueChange
+                )
                 CheckTonalPalette(
-                    primaryTonalPalette = tonalPalette0,
-                    goodTonalPalette = tonalPalette1,
-                    badTonalPalette = tonalPalette2,
-                    neutralTonalPalette = tonalPalette3
+                    goodColor = GazegeTheme.gazegeColorScheme.good,
+                    badColor = GazegeTheme.gazegeColorScheme.bad,
+                    neutralColor = GazegeTheme.gazegeColorScheme.neutral
+                )
+                CheckTonalPalette(
+                    goodColor = goodTonalPalette.getColor(ColorTokens.Primary),
+                    badColor = badTonalPalette.getColor(ColorTokens.Primary),
+                    neutralColor = neutralTonalPalette.getColor(ColorTokens.Primary)
                 )
             }
         }
