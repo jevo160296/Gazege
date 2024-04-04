@@ -149,7 +149,7 @@ class GazegeColorScheme(
             this.map { it.harmonizeColor(baseColor) }
 
         fun generateTonalPalette(color: Color): List<Color> {
-            //                      0    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16 17
+            //              0    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16 17
             val tones =
                 arrayListOf(100, 99, 98, 95, 90, 80, 70, 60, 50, 40, 35, 30, 25, 20, 15, 10, 5, 0)
             val colorHTC = FloatArray(3)
@@ -411,9 +411,9 @@ private fun ColorPaletteGenerator(
 
 @Composable
 private fun CheckTonalPalette(
-    goodTonalPalette: List<Color>,
-    badTonalPalette: List<Color>,
-    neutralTonalPalette: List<Color>
+    goodColor: Color,
+    badColor: Color,
+    neutralColor: Color
 ) {
     Column(
         Modifier
@@ -423,18 +423,18 @@ private fun CheckTonalPalette(
         Text(text = "On surface", color = MaterialTheme.colorScheme.onSurface)
         GProgressIndicator(
             compleition = 0.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = goodTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = goodColor
         )
         GProgressIndicator(
             compleition = 1.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = goodTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = goodColor
         )
         GProgressIndicator(
             compleition = 1.5,
-            color = neutralTonalPalette.getColor(ColorTokens.Primary),
-            excessColor = badTonalPalette.getColor(ColorTokens.Primary)
+            color = neutralColor,
+            excessColor = badColor
         )
     }
 }
@@ -443,15 +443,16 @@ private fun CheckTonalPalette(
 @Composable
 fun TonalPalettes() {
     GazegeTheme {
-        val (goodHue, onGoodHueChange) = rememberSaveable { mutableFloatStateOf(137f) }
+        val (primaryHue, onPrimaryHueChange) = rememberSaveable { mutableFloatStateOf(0f) }
+        val (goodHue, onGoodHueChange) = rememberSaveable { mutableFloatStateOf(150f) }
         val (badHue, onBadHueChange) = rememberSaveable { mutableFloatStateOf(12f) }
-        val (neutralHue, onNeutralHueChange) = rememberSaveable { mutableFloatStateOf(256f) }
+        val (neutralHue, onNeutralHueChange) = rememberSaveable { mutableFloatStateOf(270f) }
 
+        val primaryColor = md_theme_light_primary.copyM3HCT(hue = primaryHue)
         val goodColor = md_theme_light_good_chart.copyM3HCT(hue = goodHue)
         val badColor = md_theme_light_bad_chart.copyM3HCT(hue = badHue)
         val neutralColor = md_theme_light_neutral_chart.copyM3HCT(hue = neutralHue)
 
-        val primaryColor = MaterialTheme.colorScheme.primary
         val goodTonalPalette: List<Color> =
             generateTonalPalette(goodColor).harmonizePalette(primaryColor)
         val badTonalPalette: List<Color> =
@@ -486,10 +487,19 @@ fun TonalPalettes() {
                     onHueChange = onNeutralHueChange,
                     primaryColor = primaryColor
                 )
+                ColorPaletteGenerator(
+                    hue = primaryHue,
+                    onHueChange = onPrimaryHueChange
+                )
                 CheckTonalPalette(
-                    goodTonalPalette = goodTonalPalette,
-                    badTonalPalette = badTonalPalette,
-                    neutralTonalPalette = neutralTonalPalette
+                    goodColor = GazegeTheme.gazegeColorScheme.good,
+                    badColor = GazegeTheme.gazegeColorScheme.bad,
+                    neutralColor = GazegeTheme.gazegeColorScheme.neutral
+                )
+                CheckTonalPalette(
+                    goodColor = goodTonalPalette.getColor(ColorTokens.Primary),
+                    badColor = badTonalPalette.getColor(ColorTokens.Primary),
+                    neutralColor = neutralTonalPalette.getColor(ColorTokens.Primary)
                 )
             }
         }
