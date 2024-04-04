@@ -126,13 +126,15 @@ fun writePersons(outputStream: OutputStream, persons: List<Person>) =
                 printRecord(
                     "id",
                     "name",
-                    "importance"
+                    "importance",
+                    "debtsIncludedInTotal"
                 )
                 items.forEach {
                     printRecord(
                         it.id,
                         it.name,
-                        it.importance
+                        it.importance,
+                        it.debtsIncludedInTotal
                     )
                 }
             }
@@ -398,7 +400,9 @@ fun readPersonsFromCsv(inputStream: InputStream): List<Person> =
         Person(
             id = record[columnIndex["id"] ?: 0].toIntOrNull(),
             name = record[columnIndex["name"] ?: 0],
-            importance = record[columnIndex["importance"] ?: 0].toIntOrNull()
+            importance = record[columnIndex["importance"] ?: 0].toIntOrNull(),
+            debtsIncludedInTotal = columnIndex["debtsIncludedInTotal"]?.let { record[it] }
+                ?.lowercase()?.toBooleanStrictOrNull() ?: true
         )
     }
 
