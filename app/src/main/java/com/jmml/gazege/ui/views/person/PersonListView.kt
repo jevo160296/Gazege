@@ -167,6 +167,7 @@ fun PersonSelectionPage(
     modifier: Modifier = Modifier,
     principalPersonSummaryState: FullPersonSummaryState,
     personList: List<Person>,
+    enabled: Boolean = true,
     onPersonStateChanged: (Person, newValue: Boolean) -> Unit,
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues()
@@ -186,14 +187,18 @@ fun PersonSelectionPage(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
             ) {
-                Checkbox(checked = person.debtsIncludedInTotal, onCheckedChange = {
-                    onPersonStateChanged(person, it)
-                })
+                Checkbox(
+                    checked = person.debtsIncludedInTotal,
+                    enabled = enabled,
+                    onCheckedChange = {
+                        onPersonStateChanged(person, it)
+                    })
                 Text(text = person.name)
             }
             Text(text = principalPersonSummaryState.deudasFlujo[person]
                 ?.takeIf { it != 0.0 }
-                ?.let { valor -> personDeudaString(flujo = valor) } ?: ""
+                ?.let { valor -> "${personDeudaString(flujo = valor)} ${doubleToMoneyString(valor.absoluteValue)}" }
+                ?: ""
             )
         }
     }

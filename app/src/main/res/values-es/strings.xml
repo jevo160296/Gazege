@@ -113,4 +113,6 @@
     <string name="exceso">Exceso</string>
     <string name="Falta_pagar">Falta pagar</string>
     <string name="Falta_recibir">Falta recibir</string>
+    <string name="Deudas_totales">Deudas totales</string>
+    <string name="Deudas_seleccionadas">Deudas seleccionadas</string>
 </resources>

@@ -54,7 +54,9 @@ fun SaldoActualSettings(
     summaryState: PersonSummaryState,
     saving: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
     onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
     onPersonStateChanged: (person: Person, nuevoValor: Boolean) -> Unit,
     onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
 ) {
@@ -71,10 +73,12 @@ fun SaldoActualSettings(
                     saving = saving,
                     selectedPage = selectedPage,
                     incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+                    incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
                     accountListState = accountListState,
                     personListState = personListState,
                     onSelectedPageChange = onSelectedPageChange,
                     onIncluirPresupuestoEnSaldoActualChanged = onIncluirPresupuestoEnSaldoActualChanged,
+                    onIncluirDeudasEnSaldoActualChanged = onIncluirDeudasEnSaldoActualChanged,
                     onPersonStateChanged = onPersonStateChanged,
                     onUpdateSeleccion = onUpdateSeleccion
                 )
@@ -96,10 +100,12 @@ fun LoadedSaldoActualSettings(
     saving: Int,
     selectedPage: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
+    incluirDeudasEnSaldoActual: Boolean,
     accountListState: TreeState = rememberTreeState(),
     personListState: LazyListState = rememberLazyListState(),
     onSelectedPageChange: (Int) -> Unit,
     onIncluirPresupuestoEnSaldoActualChanged: (Boolean) -> Unit,
+    onIncluirDeudasEnSaldoActualChanged: (Boolean) -> Unit,
     onPersonStateChanged: (person: Person, nuevoValor: Boolean) -> Unit,
     onUpdateSeleccion: (account: Account, nuevoEstado: Boolean) -> Unit
 ) {
@@ -139,6 +145,22 @@ fun LoadedSaldoActualSettings(
                 ) {
                     Text(text = stringResource(id = R.string.Incluir_presupuesto))
                     Text(text = doubleToMoneyString(summaryState.presupuestoTotal))
+                }
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                Switch(
+                    checked = incluirDeudasEnSaldoActual,
+                    onCheckedChange = onIncluirDeudasEnSaldoActualChanged
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(id = R.string.Incluir_deudas))
+                    Text(text = doubleToMoneyString(summaryState.deudasTotal))
                 }
             }
         }
@@ -190,7 +212,8 @@ fun LoadedSaldoActualSettings(
                     principalPersonSummaryState = summaryState,
                     personList = personList,
                     onPersonStateChanged = onPersonStateChanged,
-                    state = personListState
+                    state = personListState,
+                    enabled = incluirDeudasEnSaldoActual
                 )
             }
         }

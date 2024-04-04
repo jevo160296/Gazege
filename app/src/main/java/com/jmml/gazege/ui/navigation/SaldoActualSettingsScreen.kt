@@ -30,7 +30,9 @@ fun NavGraphBuilder.screenSaldoActualSettings(
             personList = personList,
             summaryState = personSummaryState,
             saving = saving,
+            incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
             incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+            onIncluirDeudasEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirDeudasEnSaldoActualFlow,
             onIncluirPresupuestoEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirPresupuestoEnSaldoActualFlow,
             onPersonStateChanged = { person, nuevoValor ->
                 saving += 1
