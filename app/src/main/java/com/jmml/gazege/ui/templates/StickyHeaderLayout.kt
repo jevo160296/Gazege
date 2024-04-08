@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 fun StickyHeaderLayout(
     modifier: Modifier = Modifier,
     contentCanScrollBack: () -> Boolean,
-    headerScrollEnabled: () -> Boolean = { true },
+    headerScrollEnabled: () -> Boolean,
     freeScrollRange: ClosedRange<Float> = 0f..20f,
     header: @Composable BoxScope.() -> Unit,
     content: @Composable StickyHeaderScope.() -> Unit

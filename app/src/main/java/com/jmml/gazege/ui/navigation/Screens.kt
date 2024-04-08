@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,7 +37,6 @@ fun MainNavHost(
     Box(modifier = Modifier
         .background(MaterialTheme.colorScheme.background)
         .fillMaxSize()
-        .statusBarsPadding()
         .run {
             if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 this.navigationBarsPadding()
