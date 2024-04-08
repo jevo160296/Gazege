@@ -2,14 +2,12 @@ package com.jmml.gazege.ui.fragments
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
@@ -32,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,18 +37,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.R
@@ -61,8 +52,6 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.data.SampleId
-import com.jmml.gazege.extensions.density.toDp
-import com.jmml.gazege.extensions.density.toPx
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -78,6 +67,7 @@ import com.jmml.gazege.ui.navigation.TransactionDetailsState
 import com.jmml.gazege.ui.navigation.loadingTransactionDetailsState
 import com.jmml.gazege.ui.personaDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.templates.DynamicAddEntityFAB
+import com.jmml.gazege.ui.templates.StickyHeaderLayout
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
@@ -430,11 +420,8 @@ private fun MainFragmentResponsiveContent(
     onExportCategoryRequested: (Category) -> Unit,
     showVertical: Boolean
 ) {
-    val d = LocalDensity.current
-
     val scope = rememberCoroutineScope()
     val animatedOffsetYDP = remember { Animatable(0f) }
-    var maxOffsetYDP by remember { mutableFloatStateOf(0f) }
     val paddingValues = PaddingValues(
         top = 8.dp,
         bottom = dimensionResource(id = R.dimen.FABDefaultSpace),
@@ -443,30 +430,6 @@ private fun MainFragmentResponsiveContent(
     )
     var isFirstElementVisible by rememberSaveable { mutableStateOf(false) }
     var hasZeroElements: Boolean? by rememberSaveable { mutableStateOf(null) }
-    val innerNestedScrollConnection = remember(isFirstElementVisible) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                return if (
-                    !((0f..20f).contains(available.y)) ||
-                    source == NestedScrollSource.Wheel ||
-                    isFirstElementVisible
-                ) {
-                    val offsetYDP = animatedOffsetYDP.targetValue
-                    val newOffset =
-                        (offsetYDP + d.toDp(available.y).value).coerceIn(-maxOffsetYDP..0f)
-                    val returnedOffset = if (newOffset != offsetYDP) {
-                        available
-                    } else {
-                        Offset.Zero
-                    }
-                    scope.launch { animatedOffsetYDP.snapTo(newOffset) }
-                    returnedOffset
-                } else {
-                    Offset.Zero
-                }
-            }
-        }
-    }
     val startDate = range.first
     val endDate = range.second
     val onZeroElementsChanged = remember {
@@ -539,7 +502,7 @@ private fun MainFragmentResponsiveContent(
         }
     }
 
-    val categoriasPage = @Composable {
+    val categoriasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         onTitleChanged(stringResource(id = R.string.Categorias))
         when (categoriasState) {
             is LoadedEditarCategoriasState -> LoadedEditarCategorias(
@@ -551,7 +514,7 @@ private fun MainFragmentResponsiveContent(
                 onExportCategoryRequested = onExportCategoryRequested,
                 showType = showType,
                 onShowTypeChanged = onShowTypeChanged,
-                nestedScrollConnection = innerNestedScrollConnection,
+                nestedScrollConnection = nestedScrollConnection,
                 onZeroElementsChanged = onZeroElementsChanged,
                 state = categoryState,
                 onFirstElementVisibleChanged = onFirstElementVisibleChanged
@@ -564,7 +527,7 @@ private fun MainFragmentResponsiveContent(
         }
     }
 
-    val transactionPage = @Composable {
+    val transactionPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         Column {
             Crossfade(targetState = filteredTransactionList, label = "CrosFade transactions") {
                 when (it) {
@@ -576,7 +539,7 @@ private fun MainFragmentResponsiveContent(
                             delTransaction = delTransaction,
                             editTransaction = onEditTransactionRequested,
                             onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                            nestedScrollConnection = innerNestedScrollConnection,
+                            nestedScrollConnection = nestedScrollConnection,
                             onZeroElementsChanged = onZeroElementsChanged,
                             onFirstElementVisibleChanged = onFirstElementVisibleChanged
                         )
@@ -593,7 +556,7 @@ private fun MainFragmentResponsiveContent(
         }
     }
 
-    val cuentasPage = @Composable {
+    val cuentasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         when (principalPersonSummaryState) {
             is FullPersonSummaryState -> {
                 LoadedAccountPage(
@@ -607,7 +570,7 @@ private fun MainFragmentResponsiveContent(
                     startDate = null,
                     endDate = null,
                     detailAccount = onAccountDetailRequested,
-                    nestedScrollConnection = innerNestedScrollConnection,
+                    nestedScrollConnection = nestedScrollConnection,
                     onZeroElementsChanged = onZeroElementsChanged,
                     onFirstElementVisibilityChanged = onFirstElementVisibleChanged
                 ) { newTitle -> onTitleChanged(newTitle) }
@@ -620,7 +583,7 @@ private fun MainFragmentResponsiveContent(
         }
     }
 
-    val personsPage = @Composable {
+    val personsPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         Crossfade(targetState = principalPersonSummaryState, label = "CrossFade") {
             when (it) {
                 is FullPersonSummaryState -> {
@@ -644,7 +607,7 @@ private fun MainFragmentResponsiveContent(
                         onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
                         detailPerson = onPersonDetailRequested,
                         principalPersonSummaryState = it,
-                        nestedScrollConnection = innerNestedScrollConnection,
+                        nestedScrollConnection = nestedScrollConnection,
                         onZeroElementsChanged = onZeroElementsChanged,
                         onFirstElementVisibleChanged = onFirstElementVisibleChanged
                     )
@@ -673,67 +636,39 @@ private fun MainFragmentResponsiveContent(
         }
     }
 
-    val navigationView = @Composable {
+    val navigationView = @Composable { nestedScrollConnection: NestedScrollConnection ->
         Crossfade(targetState = navPosition, label = "navigationView") {
             when (it) {
                 NavPosition.CATEGORIAS -> {
-                    categoriasPage()
+                    categoriasPage(nestedScrollConnection)
                 }
 
                 NavPosition.TRANSACCIONES -> {
-                    transactionPage()
+                    transactionPage(nestedScrollConnection)
                 }
 
                 NavPosition.CUENTAS -> {
-                    cuentasPage()
+                    cuentasPage(nestedScrollConnection)
                 }
 
                 NavPosition.PERSONS -> {
-                    personsPage()
+                    personsPage(nestedScrollConnection)
                 }
             }
         }
     }
 
     if (showVertical) {
-        Box(Modifier.padding(layoutPaddingValues)) {
-            Box(
-                Modifier
-                    .offset {
-                        IntOffset(
-                            0,
-                            d
-                                .toPx((maxOffsetYDP + animatedOffsetYDP.value).coerceAtLeast(0f))
-                                .toInt()
-                        )
-                    }) {
-                navigationView()
-            }
-            Column(Modifier
-                .onGloballyPositioned { maxOffsetYDP = with(d) { it.size.height.div(density) } }
-                .offset {
-                    IntOffset(
-                        0,
-                        d
-                            .toPx(animatedOffsetYDP.value)
-                            .toInt()
-                    )
+        StickyHeaderLayout(
+            Modifier.padding(layoutPaddingValues),
+            canScrollBack = { !isFirstElementVisible },
+            header = {
+                Column {
+                    filter()
+                    personMonthSummaryView()
                 }
-                .pointerInput(1) {
-                    detectDragGestures { change, dragAmount ->
-                        if (hasZeroElements?.not() == true) {
-                            change.consume()
-                            innerNestedScrollConnection.onPreScroll(
-                                dragAmount,
-                                NestedScrollSource.Wheel
-                            )
-                        }
-                    }
-                }
-            ) {
-                filter()
-                personMonthSummaryView()
-            }
+            }) {
+            navigationView(nestedScrollConnection)
         }
     } else {
         Row(Modifier.padding(layoutPaddingValues)) {
@@ -741,7 +676,7 @@ private fun MainFragmentResponsiveContent(
                 filter()
                 personMonthSummaryView()
             }
-            navigationView()
+            navigationView(object : NestedScrollConnection {})
         }
     }
 }
