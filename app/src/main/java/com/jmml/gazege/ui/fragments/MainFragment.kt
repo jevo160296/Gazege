@@ -661,7 +661,8 @@ private fun MainFragmentResponsiveContent(
     if (showVertical) {
         StickyHeaderLayout(
             Modifier.padding(layoutPaddingValues),
-            canScrollBack = { !isFirstElementVisible },
+            headerScrollEnabled = { hasZeroElements != true },
+            contentCanScrollBack = { !isFirstElementVisible },
             header = {
                 Column {
                     filter()

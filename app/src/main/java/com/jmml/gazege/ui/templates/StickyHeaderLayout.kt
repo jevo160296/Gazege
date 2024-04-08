@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,7 +42,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun StickyHeaderLayout(
     modifier: Modifier = Modifier,
-    canScrollBack: () -> Boolean,
+    contentCanScrollBack: () -> Boolean,
+    headerScrollEnabled: () -> Boolean = { true },
     freeScrollRange: ClosedRange<Float> = 0f..20f,
     header: @Composable BoxScope.() -> Unit,
     content: @Composable StickyHeaderScope.() -> Unit
@@ -48,13 +52,19 @@ fun StickyHeaderLayout(
     val (headerHeight, onHeaderHeightChange) = remember { mutableStateOf(0.dp) }
     val headerScrolling = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    val sHscope = remember(headerHeight, canScrollBack, freeScrollRange) {
+    val scrollEnabled = headerScrollEnabled()
+    val sHscope = remember(headerHeight, contentCanScrollBack, freeScrollRange, scrollEnabled) {
         StickyHeaderScope(
             object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                     val headerCanScrollDown = headerScrolling.targetValue < 0f
                     val headerCanScrollUp = headerScrolling.targetValue > -headerHeight.value
-                    val scrollHeader = { verticalScroll: Float ->
+                    val scrollAmount = available.y
+                    val scrollingDown = scrollAmount > 0
+                    val scrollingDownFast = scrollAmount > freeScrollRange.endInclusive
+                    val scrollingUpFast = scrollAmount < freeScrollRange.start
+                    val scrollHeader = {
+                        val verticalScroll = with(density) { available.y.toDp().value }
                         val newHeaderScroll =
                             (headerScrolling.targetValue + verticalScroll).coerceIn(-headerHeight.value..0f)
                         scope.launch { headerScrolling.snapTo(newHeaderScroll) }
@@ -62,28 +72,34 @@ fun StickyHeaderLayout(
                     }
                     val scrollContent = { Offset.Zero }
                     return if (
-                        available.y < freeScrollRange.start && headerCanScrollUp ||
-                        available.y > freeScrollRange.endInclusive && headerCanScrollDown ||
-                        available.y > 0 && !canScrollBack()
-                    ) scrollHeader(with(density) { available.y.toDp().value })
+                        scrollEnabled &&
+                        (headerCanScrollDown || !scrollingDown) &&
+                        (scrollingUpFast && headerCanScrollUp ||
+                                scrollingDownFast && headerCanScrollDown ||
+                                scrollingDown && !contentCanScrollBack())
+                    ) scrollHeader()
                     else scrollContent()
                 }
             },
             NestedScrollDispatcher()
         )
     }
-    Box(modifier
-        .pointerInput(sHscope) {
-            detectVerticalDragGestures { change, dragAmount ->
-                change.consume()
-                scope.launch {
-                    headerScrolling.snapTo(
-                        (headerScrolling.targetValue + dragAmount.toDp().value).coerceIn(
-                            -headerHeight.value..0f
-                        )
-                    )
+    LaunchedEffect(scrollEnabled) { if (!scrollEnabled) headerScrolling.animateTo(0f) }
+    Box(
+        modifier
+            .pointerInput(sHscope) {
+                detectVerticalDragGestures { change, dragAmount ->
+                    if (scrollEnabled) {
+                        change.consume()
+                        scope.launch {
+                            headerScrolling.snapTo(
+                                (headerScrolling.targetValue + dragAmount.toDp().value).coerceIn(
+                                    -headerHeight.value..0f
+                                )
+                            )
+                        }
+                    }
                 }
-            }
         }) {
         Box(Modifier
             .onSizeChanged {
@@ -119,6 +135,7 @@ class StickyHeaderScope(
 private fun StickyHeaderLayoutPreview() {
     val items = (0..100).toList()
     val state = rememberLazyListState()
+    val (scrollEnabled, scrollEnabledChanged) = remember { mutableStateOf(true) }
     GazegeTheme {
         StickyHeaderLayout(
             Modifier
@@ -127,16 +144,19 @@ private fun StickyHeaderLayoutPreview() {
                 .systemBarsPadding()
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            canScrollBack = { state.firstVisibleItemIndex > 0 },
+            freeScrollRange = -20f..20f,
+            headerScrollEnabled = { scrollEnabled },
+            contentCanScrollBack = { state.firstVisibleItemIndex > 0 || state.firstVisibleItemScrollOffset > 10 },
             header = {
                 Column(
                     Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
                 ) {
-                    Text(text = "T1")
-                    Text(text = "T2")
+                    Text(text = "firstVisibleItemIndex=${remember { derivedStateOf { state.firstVisibleItemIndex } }}")
+                    Text(text = "offset=${remember { derivedStateOf { state.firstVisibleItemScrollOffset } }}")
                     Text(text = "T3")
+                    Switch(checked = scrollEnabled, onCheckedChange = scrollEnabledChanged)
                 }
             }) {
             LazyColumn(
@@ -146,7 +166,7 @@ private fun StickyHeaderLayoutPreview() {
                 state = state,
             ) {
                 items(items.size) {
-                    Text(it.toString())
+                    Text(modifier = Modifier, text = it.toString())
                 }
             }
         }
