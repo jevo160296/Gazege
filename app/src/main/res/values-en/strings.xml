@@ -115,4 +115,10 @@
     <string name="Falta_recibir">Left to receive</string>
     <string name="Deudas_totales">Total debts</string>
     <string name="Deudas_seleccionadas">Selected debts</string>
+    <string name="Requirements_to_import_data">To import data you need a backup file (backup.gazip)</string>
+    <string name="Additional_setup">Additional setup</string>
+    <string name="Fresh_start">Fresh start</string>
+    <string name="Finish">Finish</string>
+    <string name="Previous_step">Previous step</string>
+    <string name="Next_step">Next step</string>
 </resources>
