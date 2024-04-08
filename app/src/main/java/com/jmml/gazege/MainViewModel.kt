@@ -1952,9 +1952,8 @@ class MainViewModel(
         private val descriptionFilter: MutableLiveData<Pair<Int?, TextFilter>> = MutableLiveData()
         private val accountFilterValue: MutableLiveData<Pair<Int?, BooleanFilters<String, Nothing>>> =
             MutableLiveData()
-        private val accountCategoryFilterValue = MutableLiveData(
-            booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
-        )
+        private val accountCategoryFilterValue: MutableLiveData<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>> =
+            MutableLiveData()
         private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
             .combine(allAccount) { accountDetail, allAccount ->
                 object {
@@ -2031,7 +2030,7 @@ class MainViewModel(
                             endDate = range.second,
                             principalPerson = principalPerson,
                             transactionFilters = accountFilterValue.second,
-                            categoriesFilter = accountCategoryFilterValue,
+                            categoriesFilter = accountCategoryFilterValue.second,
                             descriptionFilter = descriptionFilter.second
                         )
                     }
@@ -2043,24 +2042,27 @@ class MainViewModel(
             accountId: Int?,
             categories: List<CategoryWithSubCategories>
         ) = remember(accountId) {
-            mutableStateOf(
-                categories
-                    .flattenWithLevel()
-                    .let { categories ->
-                        booleanFilterOf(
-                            defaultValue = true,
-                            filterNames = categories
-                                .map { it.first.id }
-                                .plus(null),
-                            metadata = categories.associate {
-                                (it.first.id ?: 0) to (it.first.name to it.second)
+            accountCategoryFilterValue
+                .also {
+                    if (it.value?.first != accountId) {
+                        it.value = accountId to categories
+                            .flattenWithLevel()
+                            .let { categories ->
+                                booleanFilterOf(
+                                    defaultValue = true,
+                                    filterNames = categories
+                                        .map { it.first.id }
+                                        .plus(null),
+                                    metadata = categories.associate {
+                                        (it.first.id ?: 0) to (it.first.name to it.second)
+                                    }
+                                        .plus(null to ("" to 0))
+                                )
                             }
-                                .plus(null to ("" to 0))
-                        )
                     }
-
-            )
-        }
+                }
+                .map { it.second }
+        }.observeAsState(booleanFilterOf<Int?, Pair<String, Int>>(emptyList()))
 
         @Composable
         fun rememberDescriptionFilter(accountId: Int?) = remember(accountId) {
@@ -2137,7 +2139,7 @@ class MainViewModel(
                 accountFilterValue.value = newId to accountFilters
             }
             if (accountCategoryFilters != accountCategoryFilterValue.value) {
-                accountCategoryFilterValue.value = accountCategoryFilters
+                accountCategoryFilterValue.value = newId to accountCategoryFilters
             }
             if (descriptionFilter != descriptionFilterValue.value) {
                 descriptionFilterValue.value = descriptionFilter
@@ -2152,6 +2154,11 @@ class MainViewModel(
         fun updateDescriptionFilter(newValue: TextFilter) = descriptionFilter.apply {
             value = value?.first to newValue
         }
+
+        fun updateCategoryFilter(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
+            accountCategoryFilterValue.apply {
+                value = value?.first to newValue
+            }
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)

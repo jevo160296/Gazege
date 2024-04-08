@@ -43,7 +43,7 @@ fun NavGraphBuilder.screenAccountDetail(
             accountId = accountId
         )
         val categories by viewModelAccountDetail.rememberCategoriesWithSubcategories()
-        var categoriesFilter by viewModelAccountDetail.rememberCategoriesFilter(
+        val categoriesFilter by viewModelAccountDetail.rememberCategoriesFilter(
             accountId = accountId,
             categories = categories
         )
@@ -109,9 +109,7 @@ fun NavGraphBuilder.screenAccountDetail(
                 filters = accountFilterValue,
                 onFiltersChanged = viewModelAccountDetail::updateAccountFilter,
                 categoriesFilter = categoriesFilter,
-                onCategoriesFilterChanged = {
-                    categoriesFilter = it
-                },
+                onCategoriesFilterChanged = viewModelAccountDetail::updateCategoryFilter,
                 descriptionFilterState = descriptionFilter,
                 onDescriptionFilterStateChanged = viewModelAccountDetail::updateDescriptionFilter
             )
