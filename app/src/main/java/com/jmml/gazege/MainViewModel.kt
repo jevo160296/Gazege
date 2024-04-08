@@ -1951,15 +1951,8 @@ class MainViewModel(
     inner class ViewModelAccountDetail {
         private var accountId: Int? = null
         private val descriptionFilter: MutableLiveData<TextFilter> = MutableLiveData()
-        private val accountFilterValue = MutableLiveData(
-            booleanFilterOf<String, Nothing>(
-                listOf(
-                    INCOME_FILTER,
-                    OUTCOME_FILTER,
-                    TRANSFER_FILTER
-                )
-            )
-        )
+        private val accountFilterValue: MutableLiveData<Pair<Int?, BooleanFilters<String, Nothing>>> =
+            MutableLiveData()
         private val accountCategoryFilterValue = MutableLiveData(
             booleanFilterOf<Int?, Pair<String, Int>>(emptyList())
         )
@@ -2038,7 +2031,7 @@ class MainViewModel(
                             startDate = range.first,
                             endDate = range.second,
                             principalPerson = principalPerson,
-                            transactionFilters = accountFilterValue,
+                            transactionFilters = accountFilterValue.second,
                             categoriesFilter = accountCategoryFilterValue,
                             descriptionFilter = descriptionFilter
                         )
@@ -2083,14 +2076,25 @@ class MainViewModel(
 
         @Composable
         fun rememberAccountFilterValue(accountId: Int?) = remember(accountId) {
-            mutableStateOf(
-                booleanFilterOf<String, Nothing>(
+            accountFilterValue
+                .also {
+                    if (it.value?.first != this.accountId) {
+                        it.value = this.accountId to booleanFilterOf(
+                            listOf(
+                                TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
+                            ), true
+                        )
+                    }
+                }
+        }
+            .map { it.second }
+            .observeAsState(
+                booleanFilterOf(
                     listOf(
                         TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
                     ), true
                 )
             )
-        }
 
         @Composable
         fun rememberAccountDetailData(
@@ -2130,7 +2134,7 @@ class MainViewModel(
                 accountDetailId.value = newId
             }
             if (accountFilters != accountFilterValue.value) {
-                accountFilterValue.value = accountFilters
+                accountFilterValue.value = newId to accountFilters
             }
             if (accountCategoryFilters != accountCategoryFilterValue.value) {
                 accountCategoryFilterValue.value = accountCategoryFilters
@@ -2138,6 +2142,10 @@ class MainViewModel(
             if (descriptionFilter != descriptionFilterValue.value) {
                 descriptionFilterValue.value = descriptionFilter
             }
+        }
+
+        fun updateAccountFilter(newValue: BooleanFilters<String, Nothing>) {
+            accountFilterValue.value = accountFilterValue.value?.first to newValue
         }
 
         fun updateDescriptionFilter(newValue: TextFilter) {

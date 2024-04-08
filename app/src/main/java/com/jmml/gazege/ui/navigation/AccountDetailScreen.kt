@@ -39,7 +39,7 @@ fun NavGraphBuilder.screenAccountDetail(
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
 
-        var accountFilterValue by viewModelAccountDetail.rememberAccountFilterValue(
+        val accountFilterValue by viewModelAccountDetail.rememberAccountFilterValue(
             accountId = accountId
         )
         val categories by viewModelAccountDetail.rememberCategoriesWithSubcategories()
@@ -107,7 +107,7 @@ fun NavGraphBuilder.screenAccountDetail(
                     )
                 },
                 filters = accountFilterValue,
-                onFiltersChanged = { accountFilterValue = it },
+                onFiltersChanged = viewModelAccountDetail::updateAccountFilter,
                 categoriesFilter = categoriesFilter,
                 onCategoriesFilterChanged = {
                     categoriesFilter = it
