@@ -115,4 +115,10 @@
     <string name="Falta_recibir">Falta recibir</string>
     <string name="Deudas_totales">Deudas totales</string>
     <string name="Deudas_seleccionadas">Deudas seleccionadas</string>
+    <string name="Requirements_to_import_data">Para importar datos debes tener un archivo de recuperación (backup.gazip)</string>
+    <string name="Additional_setup">Configuración adicional</string>
+    <string name="Fresh_start">Iniciar de cero</string>
+    <string name="Finish">Finalizar</string>
+    <string name="Previous_step">Paso anterior</string>
+    <string name="Next_step">Siguiente paso</string>
 </resources>

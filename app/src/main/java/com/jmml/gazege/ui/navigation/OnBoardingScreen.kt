@@ -27,6 +27,7 @@ fun NavGraphBuilder.screenOnBoardingScreen(
         val (mainPersonName, onMainPersonNameChanged) = viewModelOnBoarding.rememberMainPersonName(
             principalPerson?.name
         )
+        val (onboardingStep, onboardingStepChange) = viewModelOnBoarding.rememberOnBoardingStep()
         val selfAccountNames =
             viewModelOnBoarding.rememberSelfAccountNames(allAccounts?.filter { it.ownerId == principalPerson?.id }
                 ?.map { it.name } ?: emptyList())
@@ -68,7 +69,9 @@ fun NavGraphBuilder.screenOnBoardingScreen(
                 onAddNewEmptyPerson = { newPersonNames.add("") },
                 onChangePerson = newPersonNames::set,
                 onDeletePerson = newPersonNames::removeAt,
-                onImportData = onImportData
+                onImportData = onImportData,
+                onBoardingStep = onboardingStep,
+                onboardingStepChange = onboardingStepChange
             )
         } else {
             LoadingBoardingFragment()
