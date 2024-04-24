@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
 import com.jmml.gazege.ui.doubleToMoneyString
+import com.jmml.zoo.ui.state.ZProgressIndicator
 
 @Composable
 fun DataView(
@@ -167,7 +168,7 @@ fun DataViewWithTrailingComposable(
 fun DataViewProgressBar(
     progress: Double
 ) {
-    GProgressIndicator(
+    ZProgressIndicator(
         compleition = progress,
         color = MaterialTheme.colorScheme.tertiary,
         compact = true

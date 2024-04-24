@@ -51,7 +51,6 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
-import com.jmml.gazege.extensions.localdate.isBetween
 import com.jmml.gazege.plot.Plot
 import com.jmml.gazege.plot.PlotDataFromTransactions
 import com.jmml.gazege.ui.DatabaseSample
@@ -77,6 +76,7 @@ import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
+import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 

@@ -55,7 +55,6 @@ import com.jmml.gazege.core.export.writeCategoriesWithCalculatedData
 import com.jmml.gazege.core.export.writePersons
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
-import com.jmml.gazege.extensions.coroutines.safeLaunch
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
@@ -79,6 +78,7 @@ import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
+import com.jmml.zoo.extensions.coroutines.safeLaunch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull

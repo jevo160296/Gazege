@@ -41,13 +41,13 @@ import com.jmml.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.jmml.gazege.ui.templates.SelectableTreeListItemViewHolder
 import com.jmml.gazege.ui.templates.SimpleTreeList
 import com.jmml.gazege.ui.theme.GazegeTheme
-import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.SmallEmphasis
 import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import java.time.LocalDate
 
 @Composable
@@ -292,7 +292,7 @@ fun LoadingAccountPage() {
             .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        GIndefiniteCircularProgressIndicator()
+        ZIndefiniteCircularProgressIndicator()
         Text(stringResource(id = R.string.LoadingPersonSummaryView))
     }
 }

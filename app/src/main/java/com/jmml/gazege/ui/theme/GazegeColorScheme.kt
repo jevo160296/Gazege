@@ -37,7 +37,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
-import com.jmml.gazege.extensions.closedrange.toSequence
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.copyM3HCT
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.generateTonalPalette
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.getColor
@@ -45,7 +44,8 @@ import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.harmonizeColor
 import com.jmml.gazege.ui.theme.GazegeColorScheme.Companion.harmonizePalette
 import com.jmml.gazege.ui.theme.tokens.ColorDarkTokens
 import com.jmml.gazege.ui.theme.tokens.ColorLightTokens
-import com.jmml.gazege.ui.widgets.GProgressIndicator
+import com.jmml.zoo.extensions.closedrange.toSequence
+import com.jmml.zoo.ui.state.ZProgressIndicator
 import com.patrykandpatrick.vico.compose.component.shape.composeShape
 
 
@@ -421,17 +421,17 @@ private fun CheckTonalPalette(
             .padding(4.dp)
     ) {
         Text(text = "On surface", color = MaterialTheme.colorScheme.onSurface)
-        GProgressIndicator(
+        ZProgressIndicator(
             compleition = 0.5,
             color = neutralColor,
             excessColor = goodColor
         )
-        GProgressIndicator(
+        ZProgressIndicator(
             compleition = 1.5,
             color = neutralColor,
             excessColor = goodColor
         )
-        GProgressIndicator(
+        ZProgressIndicator(
             compleition = 1.5,
             color = neutralColor,
             excessColor = badColor

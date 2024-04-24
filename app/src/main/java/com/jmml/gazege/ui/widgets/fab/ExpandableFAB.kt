@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.jmml.gazege.ui.widgets.menu.DropdownMenu
+import com.jmml.zoo.ui.menu.DropdownMenu
 
 
 @Composable

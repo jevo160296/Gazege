@@ -27,12 +27,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.jmml.gazege.R
-import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.SmallBody
 import com.jmml.gazege.ui.widgets.TextField
-import com.jmml.gazege.ui.widgets.input.TextButton
+import com.jmml.zoo.ui.input.ButtonField
+import com.jmml.zoo.ui.input.TextButton
 
 @Composable
 fun OnBoardingFragment(

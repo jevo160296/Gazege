@@ -1,9 +1,9 @@
 package com.jmml.gazege.core.entities
 
 import com.jmml.gazege.core.dao.BudgetDao
-import com.jmml.gazege.extensions.closedrange.plus
-import com.jmml.gazege.extensions.map.merge
-import com.jmml.gazege.extensions.map.plus
+import com.jmml.zoo.extensions.closedrange.plus
+import com.jmml.zoo.extensions.map.merge
+import com.jmml.zoo.extensions.map.plus
 import java.time.LocalDate
 
 data class BudgetWithCalculatedData(

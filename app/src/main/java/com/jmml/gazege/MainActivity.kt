@@ -42,7 +42,6 @@ import com.jmml.gazege.core.AppDatabase
 import com.jmml.gazege.core.AppRepository
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.core.export.CreateBackupDocument
-import com.jmml.gazege.extensions.livedata.observeOnce
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.fragments.IconVisibility
 import com.jmml.gazege.ui.fragments.SplashScreenFragment
@@ -50,9 +49,10 @@ import com.jmml.gazege.ui.fragments.TextVisibility
 import com.jmml.gazege.ui.navigation.MainNavHost
 import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.theme.GazegeTheme
-import com.jmml.gazege.ui.widgets.GDefiniteCircularProgressIndicator
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.MediumHeadline
+import com.jmml.zoo.extensions.livedata.observeOnce
+import com.jmml.zoo.ui.state.ZDefiniteCircularProgressIndicator
 import kotlinx.coroutines.delay
 import kotlin.math.min
 
@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
                                     MainViewModel.Type.IMPORT -> MediumHeadline(text = "Importing data")
                                     MainViewModel.Type.EXPORT -> MediumHeadline(text = "Exporting data")
                                 }
-                                GDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
+                                ZDefiniteCircularProgressIndicator(progress = importState.progress.toFloat())
                                 LargeBody(
                                     modifier = Modifier.animateContentSize(),
                                     text = importState.message

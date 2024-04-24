@@ -83,7 +83,6 @@ import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.EmptyPersonMonthSummaryView
 import com.jmml.gazege.ui.widgets.Filter
-import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.jmml.gazege.ui.widgets.LoadedPersonMonthSummaryView
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.ModalSheetContent
@@ -91,6 +90,7 @@ import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -628,7 +628,7 @@ private fun MainFragmentResponsiveContent(
                             .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        GIndefiniteCircularProgressIndicator()
+                        ZIndefiniteCircularProgressIndicator()
                         Text(stringResource(id = R.string.LoadingPersonSummaryView))
                     }
                 }

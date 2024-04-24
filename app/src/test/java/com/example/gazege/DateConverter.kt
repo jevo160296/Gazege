@@ -1,8 +1,8 @@
 package com.example.gazege
 
 import com.jmml.gazege.core.converters.Converters
-import com.jmml.gazege.extensions.localdate.stableMinusMonths
-import com.jmml.gazege.extensions.localdate.stablePlusMonths
+import com.jmml.zoo.extensions.localdate.stableMinusMonths
+import com.jmml.zoo.extensions.localdate.stablePlusMonths
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate

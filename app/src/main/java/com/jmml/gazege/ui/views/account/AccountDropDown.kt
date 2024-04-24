@@ -12,8 +12,8 @@ import androidx.compose.ui.res.stringResource
 import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.ui.views.transaction.AccountAndOwnerNode
-import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.MutableTreeComboBox
+import com.jmml.zoo.ui.input.ButtonField
 
 @Composable
 fun AccountDropDownMenu(

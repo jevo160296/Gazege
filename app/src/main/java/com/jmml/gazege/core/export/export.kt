@@ -9,7 +9,7 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.extensions.closedrange.toSequence
+import com.jmml.zoo.extensions.closedrange.toSequence
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import java.io.BufferedInputStream

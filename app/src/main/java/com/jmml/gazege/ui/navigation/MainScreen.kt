@@ -16,12 +16,12 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.data.sample
-import com.jmml.gazege.extensions.localdate.endOfMonth
-import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.fragments.MainFragment
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.zoo.extensions.localdate.endOfMonth
+import com.jmml.zoo.extensions.localdate.startOfMonth
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenMain(

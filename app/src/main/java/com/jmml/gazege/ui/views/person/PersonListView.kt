@@ -37,9 +37,9 @@ import com.jmml.gazege.ui.navigation.FullPersonSummaryState
 import com.jmml.gazege.ui.templates.ClickableListItemViewHolder
 import com.jmml.gazege.ui.templates.SimpleLazyList
 import com.jmml.gazege.ui.theme.GazegeTheme
-import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.SmallEmphasis
+import com.jmml.zoo.ui.input.ButtonField
 import kotlin.math.absoluteValue
 
 @Composable

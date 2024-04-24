@@ -36,8 +36,6 @@ import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.entities.BudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
-import com.jmml.gazege.extensions.closedrange.plus
-import com.jmml.gazege.extensions.map.plus
 import com.jmml.gazege.plot.CategoryPlot
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
@@ -46,13 +44,15 @@ import com.jmml.gazege.ui.templates.ClickableTreeListItemViewHolder
 import com.jmml.gazege.ui.templates.SimpleTreeList
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.theme.LocalGazegeColorScheme
-import com.jmml.gazege.ui.widgets.ButtonField
-import com.jmml.gazege.ui.widgets.GProgressIndicator
 import com.jmml.gazege.ui.widgets.LargeEmphasis
 import com.jmml.gazege.ui.widgets.treeview.NodeId
 import com.jmml.gazege.ui.widgets.treeview.TreeScope
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.extensions.closedrange.plus
+import com.jmml.zoo.extensions.map.plus
+import com.jmml.zoo.ui.input.ButtonField
+import com.jmml.zoo.ui.state.ZProgressIndicator
 import java.time.LocalDate
 
 @Composable
@@ -131,7 +131,7 @@ private fun CategoryAndBudgetViewHolder(
             dateRange = dateRange
         )
     }
-    GProgressIndicator(
+    ZProgressIndicator(
         completion,
         stringResource(id = R.string.Progreso),
         color = GazegeTheme.gazegeColorScheme.neutral,

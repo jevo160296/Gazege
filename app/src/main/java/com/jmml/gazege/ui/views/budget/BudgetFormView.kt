@@ -38,16 +38,16 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.WeekDays
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
-import com.jmml.gazege.extensions.closedrange.toList
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryDropDown
 import com.jmml.gazege.ui.widgets.ComboBox
 import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.Form
-import com.jmml.gazege.ui.widgets.GazegeSegmentedButton
 import com.jmml.gazege.ui.widgets.NumberField
-import com.jmml.gazege.ui.widgets.SegmentedButtonItem
 import com.jmml.gazege.ui.widgets.TextField
+import com.jmml.zoo.extensions.closedrange.toList
+import com.jmml.zoo.ui.input.SegmentedButtonItem
+import com.jmml.zoo.ui.input.ZSegmentedButton
 import java.lang.Integer.max
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -150,7 +150,7 @@ fun BudgetFormView(
         itemSpacing = dimensionResource(id = R.dimen.DefaultPadding),
         itemsColumnsModifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))
     ) {
-        GazegeSegmentedButton(
+        ZSegmentedButton(
             modifier = Modifier.fillMaxWidth(),
             selectedIndex = if (isGasto) {
                 0

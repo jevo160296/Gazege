@@ -7,7 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithTransactions
-import com.jmml.gazege.extensions.localdate.isBetween
+import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
