@@ -63,8 +63,6 @@ import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
-import com.jmml.gazege.ui.navigation.TransactionDetailsState
-import com.jmml.gazege.ui.navigation.loadingTransactionDetailsState
 import com.jmml.gazege.ui.personaDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.templates.DynamicAddEntityFAB
 import com.jmml.gazege.ui.templates.StickyHeaderLayout
@@ -90,6 +88,7 @@ import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.clases.Result
 import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -99,7 +98,7 @@ import java.time.LocalDate
 fun MainFragment(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: TransactionDetailsState,
+    filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
@@ -381,7 +380,7 @@ private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: TransactionDetailsState,
+    filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
@@ -531,9 +530,9 @@ private fun MainFragmentResponsiveContent(
         Column {
             Crossfade(targetState = filteredTransactionList, label = "CrosFade transactions") {
                 when (it) {
-                    is LoadedTransactionDetailsState -> {
+                    is Result.Success -> {
                         LoadedTransactionPage(
-                            transactionList = it.transactionList,
+                            transactionList = it.data.transactionList,
                             itemHolderPaddingValues = paddingValues,
                             state = transactionState,
                             delTransaction = delTransaction,
@@ -545,12 +544,11 @@ private fun MainFragmentResponsiveContent(
                         )
                     }
 
-                    loadingTransactionDetailsState() -> {
-                        LoadingTransactionPage(
-                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                            itemHolderPaddingValues = paddingValues
-                        )
-                    }
+                    is Result.Error -> Text(text = "Error ${it.exception}")
+                    Result.Loading -> LoadingTransactionPage(
+                        onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+                        itemHolderPaddingValues = paddingValues
+                    )
                 }
             }
         }
@@ -708,8 +706,10 @@ private fun DefaultPreview() {
             MainFragment(
                 allPerson = personSample,
                 accountList = accountAndOwnerWithTransactionsSample,
-                filteredTransactionList = LoadedTransactionDetailsState(
-                    transactionListItemDetailsSample
+                filteredTransactionList = Result.Success(
+                    LoadedTransactionDetailsState(
+                        transactionListItemDetailsSample
+                    )
                 ),
                 principalPersonSummaryState = personSummaryStateSample,
                 navPosition = navPosition,

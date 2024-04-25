@@ -26,7 +26,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.jmml.gazege.core.AppDatabase
@@ -51,9 +51,12 @@ import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.MediumHeadline
-import com.jmml.zoo.extensions.livedata.observeOnce
+import com.jmml.zoo.extensions.flow.collectAsState
 import com.jmml.zoo.ui.state.ZDefiniteCircularProgressIndicator
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlin.math.min
 
 class MainActivity : ComponentActivity() {
@@ -116,26 +119,34 @@ class MainActivity : ComponentActivity() {
             }
         }
         resultLauncherExportDetails = registerForActivityResult(CreateBackupDocument()) { uri ->
-            mainViewModel.categoryIdToExportFlow.observeOnce(this) { categoryId ->
-                mainViewModel.settingsCategoryIdToExportFlow(-1)
-                mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData.observeOnce(this) { categories ->
-                    categories
-                        .recursiveFirstOrNull { it.category.category.id == categoryId }
-                        ?.let { categoryToExport ->
-                            uri?.let {
-                                contentResolver.openOutputStream(uri)?.let { outputStream ->
-                                    mainViewModel.exportModule.exportDetails(
-                                        outputStream,
-                                        categoryToExport
-                                    )
+            mainViewModel
+                .viewModelScope
+                .launch {
+                    mainViewModel
+                        .categoryIdToExportFlow
+                        .combine(mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData) { categoryId, categories ->
+                            categoryId to categories
+                        }
+                        .firstOrNull()
+                        ?.let { (categoryId, categories) ->
+                            categories
+                                .recursiveFirstOrNull { it.category.category.id == categoryId }
+                                ?.let { categoryToExport ->
+                                    uri?.let {
+                                        contentResolver.openOutputStream(uri)?.let { outputStream ->
+                                            mainViewModel.exportModule.exportDetails(
+                                                outputStream,
+                                                categoryToExport
+                                            )
+                                        }
+                                    }
                                 }
-                            }
+                            mainViewModel.settingsCategoryIdToExportFlow(-1)
                         }
                 }
-            }
         }
         setContent {
-            val useDynamicColor by mainViewModel.useDynamicColor.observeAsState(initial = false)
+            val useDynamicColor by mainViewModel.useDynamicColor.collectAsState(initial = false)
             GazegeTheme(
                 appMode = stringResource(id = R.string.APP_MODE),
                 isDynamicColor = useDynamicColor

@@ -10,15 +10,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.distinctUntilChanged
-import androidx.lifecycle.map
-import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.jmml.gazege.core.AppRepository
 import com.jmml.gazege.core.entities.Account
@@ -61,7 +55,6 @@ import com.jmml.gazege.ui.navigation.EditarCategoriasState
 import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.jmml.gazege.ui.navigation.LoadedPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
-import com.jmml.gazege.ui.navigation.LoadingTransactionsDetailsState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.loadingPersonSummaryState
@@ -78,10 +71,24 @@ import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
+import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.coroutines.safeLaunch
+import com.jmml.zoo.extensions.flow.collectAsState
+import com.jmml.zoo.extensions.flow.shareInViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
@@ -93,6 +100,15 @@ import java.util.Locale
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlin.collections.set
+
+fun <T1, T2, R> Flow<T1>.combineDefault(
+    flow: Flow<T2>,
+    transform: suspend (a: T1, b: T2) -> R
+): Flow<R> =
+    combine(flow) { value1, value2 ->
+        val result = withContext(Dispatchers.Default) { transform(value1, value2) }
+        result
+    }
 
 enum class NavPosition {
     PERSONS, CUENTAS, TRANSACCIONES, CATEGORIAS
@@ -173,7 +189,7 @@ class MainViewModel(
             )
         )
 
-    private val today = MutableLiveData(LocalDate.now())
+    private val today = MutableStateFlow(LocalDate.now())
 
     fun updateToday(newDate: LocalDate) {
         today.value = newDate
@@ -190,87 +206,43 @@ class MainViewModel(
             )
         )
 
-    private inline fun <reified A, reified B, reified X> LiveData<A>.combine(
-        otherSource: LiveData<B>,
-        crossinline merger: suspend (A, B) -> X
-    ) = MediatorLiveData<X>()
-        .apply {
-            val update = {
-                if (this@combine.isInitialized && otherSource.isInitialized) {
-                    if (this@combine.value is A && otherSource.value is B) {
-                        val a = this@combine.value as A
-                        val b = otherSource.value as B
-                        viewModelScope.launch {
-                            withContext(Dispatchers.Default) {
-                                postValue(merger(a, b))
-                            }
-                        }
-                    }
-                }
-            }
-            addSource(this@combine) { update() }
-            addSource(otherSource) { update() }
-        }
-        .distinctUntilChanged()
-
-    private inline fun <reified A, reified B, reified X, reified Y : X> LiveData<A>.combine(
-        otherSource: LiveData<B>,
-        crossinline whileUpdating: () -> Y,
-        crossinline merger: suspend (A, B) -> Y
-    ) = MediatorLiveData<X>()
-        .apply {
-            val update = {
-                postValue(whileUpdating())
-                if (this@combine.isInitialized && otherSource.isInitialized) {
-                    if (this@combine.value is A && otherSource.value is B) {
-                        val a = this@combine.value as A
-                        val b = otherSource.value as B
-                        viewModelScope.launch {
-                            withContext(Dispatchers.Default) {
-                                postValue(merger(a, b))
-                            }
-                        }
-                    }
-                }
-            }
-            addSource(this@combine) { update() }
-            addSource(otherSource) { update() }
-        }
-        .distinctUntilChanged()
-
     private var appInitialized = false
     private val incluirPresupuestoEnSaldoActual =
-        settings.getIncluirPresupuestoEnSaldoActualFlow().asLiveData()
+        settings.getIncluirPresupuestoEnSaldoActualFlow().shareInViewModel()
     private val incluirDeudasEnSaldoActual =
-        settings.getIncluirDeudasEnSaldoActualFlow().asLiveData()
+        settings.getIncluirDeudasEnSaldoActualFlow().shareInViewModel()
     val categoryIdToExportFlow =
-        settings.getCategoryIdToExportFlow().asLiveData()
-    val useDynamicColor = settings.getUseDynamicColor().asLiveData()
-    val showOnBoarding = settings.getShowOnBoardingFlow().asLiveData()
-    private val allPerson = repository.getPersons().asLiveData()
-    private val allAccount = repository.getAccounts().asLiveData()
-    private val allTransactions = repository.getTransactions(null, null).asLiveData()
-    private val categories = repository.getCategories().asLiveData()
-    private val budget = repository.getBudgets().asLiveData()
-    private val principalPerson = allPerson.map { persons -> getPrincipalPerson(persons) }
+        settings.getCategoryIdToExportFlow().shareInViewModel()
+    val useDynamicColor = settings.getUseDynamicColor().shareInViewModel()
+    val showOnBoarding = settings.getShowOnBoardingFlow().shareInViewModel()
+    private val allPerson = repository.getPersons().shareInViewModel()
+    private val allAccount = repository.getAccounts().shareInViewModel()
+    private val allTransactions = repository.getTransactions(null, null).shareInViewModel()
+    private val categories = repository.getCategories().shareInViewModel()
+    private val budget = repository.getBudgets().shareInViewModel()
+    private val principalPerson = allPerson
+        .map { persons -> getPrincipalPerson(persons) }
+        .shareInViewModel()
 
-    private val accountAndOwner: LiveData<List<AccountAndOwner>> =
-        allAccount.combine(allPerson) { allAccount, allPerson ->
-            AccountAndOwner.from(
-                allAccount,
-                allPerson
-            )
-        }
-
-    private val accountAndOwnerWithTransactions: LiveData<List<AccountAndOwnerWithTransactions>> =
+    private val accountAndOwner: SharedFlow<List<AccountAndOwner>> =
         allAccount
-            .combine(allPerson) { allAccount, allPerson ->
+            .combineDefault(allPerson) { allAccount, allPerson ->
+                AccountAndOwner.from(
+                    allAccount,
+                    allPerson
+                )
+            }
+            .shareInViewModel()
+
+    private val accountAndOwnerWithTransactions: SharedFlow<List<AccountAndOwnerWithTransactions>> =
+        allAccount
+            .combineDefault(allPerson) { allAccount, allPerson ->
                 object {
                     val allAccount = allAccount
                     val allPerson = allPerson
                 }
             }
-            .combine(allTransactions) { combined, allTransactions ->
+            .combineDefault(allTransactions) { combined, allTransactions ->
                 combined.run {
                     AccountAndOwnerWithTransactions.from(
                         allAccount,
@@ -279,10 +251,13 @@ class MainViewModel(
                     )
                 }
             }
+            .shareInViewModel()
 
-    private val accountAndOwnerUserFirst: LiveData<List<AccountAndOwner>> =
-        accountAndOwner.map { it.sortedByDescending { acc -> acc.owner.importance } }
-    private val accountAndOwnerWithTransactionsAndPockets: LiveData<List<AccountAndOwnerWithTransactionsAndPockets>> =
+    private val accountAndOwnerUserFirst: SharedFlow<List<AccountAndOwner>> =
+        accountAndOwner
+            .map { it.sortedByDescending { acc -> acc.owner.importance } }
+            .shareInViewModel()
+    private val accountAndOwnerWithTransactionsAndPockets: SharedFlow<List<AccountAndOwnerWithTransactionsAndPockets>> =
         accountAndOwnerWithTransactions.map { lista ->
             lista.map { item ->
                 AccountAndOwnerWithTransactionsAndPockets.from(
@@ -291,29 +266,34 @@ class MainViewModel(
                 )
             }
         }
-    private val personWithAccounts: LiveData<List<PersonWithAccounts>> =
-        allPerson.combine(accountAndOwnerWithTransactionsAndPockets) { allPerson, accountAndOwnerWithTransactionsAndPockets ->
-            PersonWithAccounts.from(allPerson, accountAndOwnerWithTransactionsAndPockets)
-        }
-    private val categoriesWithSubCategories: LiveData<List<CategoryWithSubCategories>> = categories
-        .map { CategoryWithSubCategories.from(it) }
+            .shareInViewModel()
+    private val personWithAccounts: SharedFlow<List<PersonWithAccounts>> =
+        allPerson
+            .combineDefault(accountAndOwnerWithTransactionsAndPockets) { allPerson, accountAndOwnerWithTransactionsAndPockets ->
+                PersonWithAccounts.from(allPerson, accountAndOwnerWithTransactionsAndPockets)
+            }
+            .shareInViewModel()
+    private val categoriesWithSubCategories: SharedFlow<List<CategoryWithSubCategories>> =
+        categories
+            .map { CategoryWithSubCategories.from(it) }
+            .shareInViewModel()
 
-    private val budgetAndCategoryWithTransactions: LiveData<List<BudgetAndCategoryWithTransactions>> =
+    private val budgetAndCategoryWithTransactions: SharedFlow<List<BudgetAndCategoryWithTransactions>> =
         budget
-            .combine(categories) { budget, categories ->
+            .combineDefault(categories) { budget, categories ->
                 object {
                     val budget = budget
                     val categories = categories
                 }
             }
-            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+            .combineDefault(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
                 object {
                     val budget = combined.budget
                     val categories = combined.categories
                     val accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
                 }
             }
-            .combine(principalPerson) { combined, principalPerson ->
+            .combineDefault(principalPerson) { combined, principalPerson ->
                 combined.run {
                     if (principalPerson == null) {
                         emptyList()
@@ -327,16 +307,17 @@ class MainViewModel(
                     }
                 }
             }
+            .shareInViewModel()
 
-    private val categoryWithTransactions: LiveData<List<CategoryWithTransactions>> =
+    private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
         categories
-            .combine(principalPerson) { categories, principalPerson ->
+            .combineDefault(principalPerson) { categories, principalPerson ->
                 object {
                     val categories = categories
                     val principalPerson = principalPerson
                 }
             }
-            .combine(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
+            .combineDefault(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
                 if (combined.principalPerson != null) {
                     CategoryWithTransactions.from(
                         category = combined.categories,
@@ -347,6 +328,7 @@ class MainViewModel(
                     emptyList()
                 }
             }
+            .shareInViewModel()
 
     private val initialRange = today.map { today ->
         today.withDayOfMonth(1).let {
@@ -354,22 +336,23 @@ class MainViewModel(
         }
     }
 
-    private val variableRange = MutableLiveData<Pair<LocalDate?, LocalDate?>?>(null)
+    private val variableRange = MutableStateFlow<Pair<LocalDate?, LocalDate?>?>(null)
 
-    private val range: LiveData<Pair<LocalDate?, LocalDate?>> = initialRange
-        .combine(variableRange) { initialRange, variableRange ->
+    private val range: SharedFlow<Pair<LocalDate?, LocalDate?>> = initialRange
+        .combineDefault(variableRange) { initialRange, variableRange ->
             variableRange ?: initialRange
         }
+        .shareInViewModel()
 
-    private val budgetWithCalculatedData: LiveData<List<BudgetWithCalculatedData>> =
+    private val budgetWithCalculatedData: SharedFlow<List<BudgetWithCalculatedData>> =
         budgetAndCategoryWithTransactions
-            .combine(range) { budgetAndCategoryWithTransactions, range ->
+            .combineDefault(range) { budgetAndCategoryWithTransactions, range ->
                 object {
                     val budgetAndCategoryWithTransactions = budgetAndCategoryWithTransactions
                     val range = range
                 }
             }
-            .combine(today) { combined, today ->
+            .combineDefault(today) { combined, today ->
                 val range = combined.range
                 val budgetAndCategoryWithTransactions = combined.budgetAndCategoryWithTransactions
                 val startDate = range.first
@@ -385,16 +368,17 @@ class MainViewModel(
                     emptyList()
                 }
             }
+            .shareInViewModel()
 
-    private val categoryWithCalculatedData: LiveData<List<CategoryWithCalculatedData>> =
+    private val categoryWithCalculatedData: SharedFlow<List<CategoryWithCalculatedData>> =
         categoryWithTransactions
-            .combine(range) { categoryWithTransactions, range ->
+            .combineDefault(range) { categoryWithTransactions, range ->
                 object {
                     val categoryWithTransactions = categoryWithTransactions
                     val range = range
                 }
             }
-            .combine(today) { combined, today ->
+            .combineDefault(today) { combined, today ->
                 val range = combined.range
                 val categoryWithTransactions = combined.categoryWithTransactions
                 val startDate = range.first
@@ -410,19 +394,21 @@ class MainViewModel(
                     emptyList()
                 }
             }
+            .shareInViewModel()
 
-    private val budgetWithCalculatedDataAndCategory: LiveData<List<BudgetWithCalculatedDataAndCategory>> =
-        budgetWithCalculatedData.combine(categories) { budgetWithCalculatedData, categories ->
+    private val budgetWithCalculatedDataAndCategory: SharedFlow<List<BudgetWithCalculatedDataAndCategory>> =
+        budgetWithCalculatedData.combineDefault(categories) { budgetWithCalculatedData, categories ->
             BudgetWithCalculatedDataAndCategory.from(budgetWithCalculatedData, categories)
         }
+            .shareInViewModel()
 
-    val categoryWithSubcategoriesAndBudgetWithCalculatedData: LiveData<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
-        budgetWithCalculatedDataAndCategory.combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
+    val categoryWithSubcategoriesAndBudgetWithCalculatedData: SharedFlow<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>> =
+        budgetWithCalculatedDataAndCategory.combineDefault(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubcategories ->
             object {
                 val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
                 val categoriesWithSubcategories = categoriesWithSubcategories
             }
-        }.combine(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
+        }.combineDefault(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
             CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
                 budgetWithCalculatedDataAndCategory = combined.budgetWithCalculatedDataAndCategory,
                 categoriesWithSubcategories = combined.categoriesWithSubcategories,
@@ -431,16 +417,17 @@ class MainViewModel(
                 }
             )
         }
+            .shareInViewModel()
 
-    private val editarCategoriasState: LiveData<EditarCategoriasState> =
+    private val editarCategoriasState: SharedFlow<EditarCategoriasState> =
         budgetWithCalculatedDataAndCategory
-            .combine(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
+            .combineDefault(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
                 object {
                     val budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory
                     val categoriesWithSubCategories = categoriesWithSubCategories
                 }
             }
-            .combine(categoryWithCalculatedData)
+            .combineDefault(categoryWithCalculatedData)
             { combined, categoryWithCalculatedData ->
                 val categoryWithCalculatedDataMap =
                     categoryWithCalculatedData.associateBy { it.category.id ?: 0 }
@@ -452,66 +439,63 @@ class MainViewModel(
                     )
                 )
             }
+            .shareInViewModel()
 
-    private val transactionFilters: MutableLiveData<BooleanFilters<String, Nothing>> =
-        MutableLiveData(
+    private val transactionFilters: MutableStateFlow<BooleanFilters<String, Nothing>> =
+        MutableStateFlow(
             booleanFilterOf(
                 listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
                 true
             )
         )
 
-    private val categoriesFiltersValue: MutableLiveData<BooleanFilters<Int?, Pair<String, Int>>> =
-        MediatorLiveData(booleanFilterOf<Int?, Pair<String, Int>>(emptyList(), defaultValue = true))
-            .apply {
-                addSource(categoriesWithSubCategories) { categories ->
-                    viewModelScope.launch {
-                        withContext(Dispatchers.Default) {
-                            val orderedCategories = categories
-                                .sortedBy { it.category.name }
-                                .flattenWithLevel(0)
-                            val updatedValue = if (isInitialized) {
-                                val oldValue = value!!
-                                val updatedValue = categoriesMergeBooleanFilter(
-                                    categories, oldValue
-                                )
-                                updatedValue
-                                    .copy(
-                                        values = updatedValue
-                                            .let {
-                                                it.values.toMutableMap().apply {
-                                                    this[null] = oldValue.values.getOrDefault(
-                                                        null,
-                                                        updatedValue.defaultValue
-                                                    )
-                                                }
-                                            },
-                                        metadata = updatedValue
-                                            .let {
-                                                it.metadata.toMutableMap().apply {
-                                                    this[null] = "" to 0
-                                                }
-                                            }
-                                    )
-                            } else {
-                                booleanFilterOf(
-                                    filterNames = orderedCategories.map { it.first.id },
-                                    metadata = orderedCategories.associate {
-                                        (it.first.id) to (it.first.name to it.second)
-                                    }
-                                )
-                                    .let {
-                                        it.copy(
-                                            values = it.values.plus(null to true),
-                                            metadata = it.metadata.plus(null to ("" to 0))
+
+    private val _categoriesFiltersValue: MutableStateFlow<BooleanFilters<Int?, Pair<String, Int>>?> =
+        MutableStateFlow(null)
+
+    private val categoriesFiltersValue: SharedFlow<BooleanFilters<Int?, Pair<String, Int>>> =
+        _categoriesFiltersValue
+            .combineDefault(categoriesWithSubCategories) { oldValue, categories ->
+                val orderedCategories = categories
+                    .sortedBy { it.category.name }
+                    .flattenWithLevel(0)
+                val updatedValue = if (oldValue != null) {
+                    val updatedValue = categoriesMergeBooleanFilter(categories, oldValue)
+                    updatedValue
+                        .copy(
+                            values = updatedValue
+                                .let {
+                                    it.values.toMutableMap().apply {
+                                        this[null] = oldValue.values.getOrDefault(
+                                            null,
+                                            updatedValue.defaultValue
                                         )
                                     }
-                            }
-                            postValue(updatedValue)
+                                },
+                            metadata = updatedValue
+                                .let {
+                                    it.metadata.toMutableMap().apply {
+                                        this[null] = "" to 0
+                                    }
+                                }
+                        )
+                } else {
+                    booleanFilterOf(
+                        filterNames = orderedCategories.map { it.first.id },
+                        metadata = orderedCategories.associate {
+                            (it.first.id) to (it.first.name to it.second)
                         }
-                    }
+                    )
+                        .let {
+                            it.copy(
+                                values = it.values.plus(null to true),
+                                metadata = it.metadata.plus(null to ("" to 0))
+                            )
+                        }
                 }
+                updatedValue
             }
+            .shareInViewModel()
 
     private val personFilterValue: MutableLiveData<Boolean> = MutableLiveData(true)
 
@@ -528,7 +512,7 @@ class MainViewModel(
     }
 
     fun updateCategoriasFiltersValue(newValue: BooleanFilters<Int?, Pair<String, Int>>) {
-        categoriesFiltersValue.value = newValue
+        _categoriesFiltersValue.value = newValue
     }
 
     fun updatePersonFilterValue(newValue: Boolean) {
@@ -536,106 +520,136 @@ class MainViewModel(
     }
 
     fun updateValueFilterValue(newValue: DoubleFilter) {
-        valueFilterValue.value = newValue
+        _valueFilterValue.value = newValue
     }
 
     fun updateDescriptionFilterValue(newValue: TextFilter) {
         descriptionFilterValue.value = newValue
     }
 
-    private val incomeAccount = allAccount.map { accounts -> getIncomeAccount(accounts) }
-    private val outcomeAccount = allAccount.map { accounts -> getOutcomeAccount(accounts) }
+    private val incomeAccount =
+        allAccount.map { accounts -> getIncomeAccount(accounts) }.shareInViewModel()
+    private val outcomeAccount =
+        allAccount.map { accounts -> getOutcomeAccount(accounts) }.shareInViewModel()
 
-    private val rangeTransactions = range.switchMap { range ->
-        repository.getTransactions(range.first, range.second).asLiveData()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val rangeTransactions = range.transformLatest { range ->
+        repository
+            .getTransactions(range.first, range.second)
+            .onStart { emit(Result.Loading) }
+            .collect { emit(Result.Success(it)) }
     }
     private val transactionAmountRangeValue =
-        rangeTransactions.map {
-            val amountList = it.map { transaction -> transaction.amount }.distinct()
-            val max = (amountList.maxOrNull() ?: 0.0).toFloat()
-            val min = (amountList.minOrNull() ?: 0.0).toFloat()
-            min..max
+        rangeTransactions.mapNotNull { transactionResult ->
+            if (transactionResult is Result.Success) {
+                val transactions = transactionResult.data
+                val amountList = transactions.map { transaction -> transaction.amount }.distinct()
+                val max = (amountList.maxOrNull() ?: 0.0).toFloat()
+                val min = (amountList.minOrNull() ?: 0.0).toFloat()
+                min..max
+            } else null
         }
-    private val valueFilterValue: MutableLiveData<DoubleFilter> =
-        MediatorLiveData<DoubleFilter>()
-            .apply {
-                addSource(transactionAmountRangeValue) {
-                    val oldValue = value?.value
-                    value = DoubleFilter(
-                        value = oldValue,
-                        range = it
-                    )
-                }
+    private val _valueFilterValue = MutableStateFlow<DoubleFilter?>(null)
+    private val valueFilterValue: SharedFlow<DoubleFilter> =
+        _valueFilterValue
+            .combineDefault(transactionAmountRangeValue) { oldValue, transactionAmountRangeValue ->
+                DoubleFilter(
+                    value = oldValue?.value,
+                    range = transactionAmountRangeValue
+                )
             }
-    private val descriptionFilterValue: MutableLiveData<TextFilter> =
-        MutableLiveData(TextFilter(null))
-    private val accountDetailId = MutableLiveData<Int?>(null)
+            .shareInViewModel()
+    private val descriptionFilterValue: MutableStateFlow<TextFilter> =
+        MutableStateFlow(TextFilter(null))
+    private val accountDetailId = MutableStateFlow<Int?>(null)
     private val accountDetail = accountAndOwnerWithTransactionsAndPockets
-        .combine(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
+        .combineDefault(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
             accountAndOwnerWithTransactionsAndPockets.firstOrNull {
                 it.accountAndOwnerWithTransactions.account.id == accountDetailId
             }
         }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
-    private val filteredTransactionListitemDetails: LiveData<LoadedTransactionDetailsState> =
+    private val filteredTransactionListitemDetails: SharedFlow<Result<LoadedTransactionDetailsState>> =
         rangeTransactions
-            .combine(categories) { rangeTransactions, categories ->
+            .combineDefault(categories) { rangeTransactions, categories ->
                 object {
                     val rangeTransactions = rangeTransactions
                     val categories = categories
                 }
             }
-            .combine(allAccount) { combined, allAccount ->
+            .combineDefault(allAccount) { combined, allAccount ->
                 object {
                     val rangeTransactions = combined.rangeTransactions
                     val categories = combined.categories
                     val allAccount = allAccount
                 }
             }
-            .combine(principalPerson) { combined, principalPerson ->
+            .combineDefault(principalPerson) { combined, principalPerson ->
                 object {
                     val rangeTransactions = combined.rangeTransactions
                     val categories = combined.categories
                     val allAccount = combined.allAccount
                 }.run {
-                    TransactionListItemDetails.from(
-                        rangeTransactions,
-                        categories,
-                        allAccount,
-                        principalPerson?.id
-                    )
+                    if (rangeTransactions is Result.Success) {
+                        Result.Success(
+                            TransactionListItemDetails.from(
+                                rangeTransactions.data,
+                                categories,
+                                allAccount,
+                                principalPerson?.id
+                            )
+                        )
+                    } else Result.Loading
                 }
             }
-            .combine(transactionFilters) { filteredTransactions, filtersValue ->
-                filteredTransactions
-                    .applyIncomeFilter(filtersValue[INCOME_FILTER])
-                    .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
-                    .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+            .combineDefault(transactionFilters) { filteredTransactions, filtersValue ->
+                if (filteredTransactions is Result.Success) {
+                    Result.Success(
+                        filteredTransactions
+                            .data
+                            .applyIncomeFilter(filtersValue[INCOME_FILTER])
+                            .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
+                            .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+                    )
+                } else Result.Loading
             }
-            .combine(categoriesFiltersValue) { filteredTransactions, filtersValue ->
-                filteredTransactions.applyCategoriesFilter(filtersValue)
+            .combineDefault(categoriesFiltersValue) { filteredTransactions, filtersValue ->
+                if (filteredTransactions is Result.Success) {
+                    Result.Success(
+                        filteredTransactions.data.applyCategoriesFilter(filtersValue)
+                    )
+                } else Result.Loading
             }
-            .combine(valueFilterValue) { filteredTransactions, valueFilterValue ->
-                valueFilterValue?.let {
-                    filteredTransactions.applyValueFilter(valueFilterValue)
-                } ?: filteredTransactions
+            .combineDefault(valueFilterValue) { filteredTransactions, valueFilterValue ->
+                if (filteredTransactions is Result.Success) {
+                    Result.Success(
+                        valueFilterValue.let {
+                            filteredTransactions.data.applyValueFilter(valueFilterValue)
+                        } ?: filteredTransactions.data
+                    )
+                } else Result.Loading
             }
-            .combine(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
-                LoadedTransactionDetailsState(
-                    filteredTransactions.applyDescriptionFilter(descriptionFilterValue)
-                )
+            .combineDefault(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
+                if (filteredTransactions is Result.Success) {
+                    Result.Success(
+                        LoadedTransactionDetailsState(
+                            filteredTransactions.data.applyDescriptionFilter(descriptionFilterValue)
+                        )
+                    )
+                } else Result.Loading
             }
+            .shareInViewModel()
 
-    private val allTransactionAndAccountsAndCategory: LiveData<List<TransactionAndAccountsAndCategory>> =
+    private val allTransactionAndAccountsAndCategory: SharedFlow<List<TransactionAndAccountsAndCategory>> =
         allTransactions
-            .combine(allAccount) { allTransactions, allAccount ->
+            .combineDefault(allAccount) { allTransactions, allAccount ->
                 object {
                     val allTransactions = allTransactions
                     val allAccount = allAccount
                 }
             }
-            .combine(categories) { combined, categories ->
+            .combineDefault(categories) { combined, categories ->
                 combined.run {
                     TransactionAndAccountsAndCategory.from(
                         allTransactions,
@@ -644,10 +658,11 @@ class MainViewModel(
                     )
                 }
             }
+            .shareInViewModel()
 
     private var cachedPersonSummaryState: PersonSummaryState = loadingPersonSummaryState()
 
-    private val personSummaryState: LiveData<PersonSummaryState> =
+    private val personSummaryState: SharedFlow<PersonSummaryState> =
         principalPersonWithAccounts
             .combine(range) { principalPersonWithAccounts, range ->
                 object {
@@ -692,32 +707,34 @@ class MainViewModel(
                     val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
                 }
             }
-            .combine(
-                incluirDeudasEnSaldoActual,
-                whileUpdating = { cachedPersonSummaryState }
-            ) { combined, incluirDeudasEnSaldoActual ->
-                combined.run {
-                    val summaryState = LoadedPersonSummaryState.from(
-                        principalPersonWithAccounts,
-                        range.first,
-                        range.second,
-                        allPersons = personWithAccounts,
-                        allTransactions = allTransactionAndAccountsAndCategory
-                            .map {
-                                TransactionAndAccounts(
-                                    it.transaction,
-                                    it.sourceAccount,
-                                    it.destinationAccount
-                                )
-                            },
-                        budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
-                        includeBudget = incluirPresupuestoEnSaldoActual,
-                        includeDebts = incluirDeudasEnSaldoActual
-                    )
-                    cachedPersonSummaryState = ReloadingPersonSummaryState.from(summaryState)
-                    summaryState
+            .combineTransform(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+                emit(cachedPersonSummaryState)
+                val result = withContext(Dispatchers.Default) {
+                    combined.run {
+                        val summaryState = LoadedPersonSummaryState.from(
+                            principalPersonWithAccounts,
+                            range.first,
+                            range.second,
+                            allPersons = personWithAccounts,
+                            allTransactions = allTransactionAndAccountsAndCategory
+                                .map {
+                                    TransactionAndAccounts(
+                                        it.transaction,
+                                        it.sourceAccount,
+                                        it.destinationAccount
+                                    )
+                                },
+                            budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
+                            includeBudget = incluirPresupuestoEnSaldoActual,
+                            includeDebts = incluirDeudasEnSaldoActual
+                        )
+                        cachedPersonSummaryState = ReloadingPersonSummaryState.from(summaryState)
+                        summaryState
+                    }
                 }
+                emit(result)
             }
+            .shareInViewModel()
 
     fun updateRange(startDate: LocalDate?, endDate: LocalDate?) {
         variableRange.value = Pair(startDate, endDate)
@@ -1292,19 +1309,23 @@ class MainViewModel(
 
     inner class ViewModelInitial {
         @Composable
-        fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
+        fun rememberShowOnBoarding() = showOnBoarding.collectAsState(null)
 
         @Composable
-        fun rememberPrincipalPersonId() = principalPerson
-            .map { it?.id }
-            .observeAsState(-1)
+        fun rememberPrincipalPersonId() = remember {
+            principalPerson
+                .map { it?.id }
+                .shareInViewModel()
+        }
+            .collectAsState(-1)
 
         @Composable
         fun rememberPrincipalAccounts(principalPersonId: Int?) = remember(principalPersonId) {
             allAccount
                 .map { it.filter { account -> account.ownerId == principalPersonId } }
+                .shareInViewModel()
         }
-            .observeAsState()
+            .collectAsState(null)
 
         fun setShowOnBoarding(value: Boolean) = this@MainViewModel.setShowOnBoarding(value)
     }
@@ -1340,22 +1361,22 @@ class MainViewModel(
         }
 
         @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+        fun rememberIncomeAccount() = incomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+        fun rememberOutcomeAccount() = outcomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState()
+        fun rememberAllPerson() = allPerson.collectAsState(null)
 
         @Composable
-        fun rememberAllAccounts() = allAccount.observeAsState()
+        fun rememberAllAccounts() = allAccount.collectAsState(null)
 
         @Composable
-        fun rememberAllCategories() = categories.observeAsState()
+        fun rememberAllCategories() = categories.collectAsState(null)
 
         @Composable
-        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
 
         fun onBoardingFinished(
             allPerson: List<Person>,
@@ -1514,26 +1535,26 @@ class MainViewModel(
 
     inner class ViewModelMain {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(emptyList())
 
         @Composable
         fun rememberFilteredTransactionListItemDetails() =
-            filteredTransactionListitemDetails.observeAsState(LoadingTransactionsDetailsState)
+            filteredTransactionListitemDetails.collectAsState(Result.Loading)
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(loadingPersonSummaryState())
+            personSummaryState.collectAsState(cachedPersonSummaryState)
 
         @Composable
-        fun rememberRange() = range.observeAsState(Pair(null, null))
+        fun rememberRange() = range.collectAsState(Pair(null, null))
 
         @Composable
         fun rememberTransactionFiltersValue() = transactionFilters
-            .observeAsState(
+            .collectAsState(
                 booleanFilterOf(
                     listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
                     true
@@ -1542,21 +1563,21 @@ class MainViewModel(
 
         @Composable
         fun rememberCategoriesFiltersValue() =
-            categoriesFiltersValue.observeAsState(booleanFilterOf(emptyList(), true))
+            categoriesFiltersValue.collectAsState(booleanFilterOf(emptyList(), true))
 
         @Composable
         fun rememberPersonFilterValue() = personFilterValue.observeAsState(false)
 
         @Composable
         fun rememberValueFilterValue() =
-            valueFilterValue.observeAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
+            valueFilterValue.collectAsState(DoubleFilter(0.0f..0.0f, 0.0f..0.0f))
 
         @Composable
         fun rememberDescriptionFilterValue() =
-            descriptionFilterValue.observeAsState(TextFilter(null))
+            descriptionFilterValue.collectAsState(TextFilter(null))
 
         @Composable
-        fun rememberToday(): State<LocalDate> = today.observeAsState(initial = LocalDate.now())
+        fun rememberToday(): State<LocalDate> = today.collectAsState(initial = LocalDate.now())
 
         fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
 
@@ -1596,7 +1617,7 @@ class MainViewModel(
 
         @Composable
         fun rememberEditarCategoriasState() =
-            editarCategoriasState.observeAsState(nullCategoriasState())
+            editarCategoriasState.collectAsState(nullCategoriasState())
 
         fun updateShowType(newValue: EditarCategoriasShowType) = _showPlot.postValue(newValue)
 
@@ -1605,23 +1626,23 @@ class MainViewModel(
 
     inner class ViewModelAddAccount {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(initial = emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+        fun rememberAllAccount() = allAccount.collectAsState(emptyList())
 
         @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+        fun rememberIncomeAccount() = incomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+        fun rememberOutcomeAccount() = outcomeAccount.collectAsState(null)
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(emptyList())
 
         @Composable
-        fun rememberToday() = today.observeAsState(LocalDate.now())
+        fun rememberToday() = today.collectAsState(LocalDate.now())
 
         fun insertAccount(
             vararg account: Account,
@@ -1652,7 +1673,7 @@ class MainViewModel(
 
     inner class ViewModelAddPerson {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         fun insertPerson(
             vararg person: Person,
@@ -1666,30 +1687,32 @@ class MainViewModel(
 
     inner class ViewModelAddTransaction {
         @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+        fun rememberIncomeAccount() = incomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+        fun rememberOutcomeAccount() = outcomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+        fun rememberAllAccount() = allAccount.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         @Composable
-        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+        fun rememberAccountAndOwner() = accountAndOwner
+            .collectAsState(emptyList())
 
         @Composable
         fun rememberAccountAndOwnerUserFirst() =
-            accountAndOwnerUserFirst.observeAsState(emptyList())
+            accountAndOwnerUserFirst
+                .collectAsState(emptyList())
 
         fun insertTransaction(
             vararg transaction: Transaction,
@@ -1703,26 +1726,26 @@ class MainViewModel(
     inner class ViewModelEditAccount {
         @Composable
         fun rememberAccountAndOwnerWithTransactionsAndPockets() =
-            accountAndOwnerWithTransactionsAndPockets.observeAsState(emptyList())
+            accountAndOwnerWithTransactionsAndPockets.collectAsState(emptyList())
 
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberAllAccount() = allAccount.observeAsState(emptyList())
+        fun rememberAllAccount() = allAccount.collectAsState(emptyList())
 
         @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+        fun rememberIncomeAccount() = incomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+        fun rememberOutcomeAccount() = outcomeAccount.collectAsState(null)
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(emptyList())
 
         @Composable
-        fun rememberToday() = today.observeAsState(LocalDate.now())
+        fun rememberToday() = today.collectAsState(LocalDate.now())
 
         fun updateAccount(
             account: Account,
@@ -1753,7 +1776,7 @@ class MainViewModel(
 
     inner class ViewModelEditPerson {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         fun updatePerson(
             vararg person: Person,
@@ -1773,22 +1796,23 @@ class MainViewModel(
                         .firstOrNull { it.transaction.id == transactionId }
                         ?.toTransactionAndAccounts()
                 }
+                .shareInViewModel()
         }
-            .observeAsState()
+            .collectAsState(null)
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(emptyList())
 
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         fun updateTransaction(transaction: Transaction) =
             this@MainViewModel.updateTransaction(transaction)
@@ -1796,25 +1820,25 @@ class MainViewModel(
 
     inner class ViewModelSettings {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
 
         @Composable
-        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+        fun rememberAccountAndOwner() = accountAndOwner.collectAsState(emptyList())
 
         @Composable
-        fun rememberIncomeAccount() = incomeAccount.observeAsState()
+        fun rememberIncomeAccount() = incomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberOutcomeAccount() = outcomeAccount.observeAsState()
+        fun rememberOutcomeAccount() = outcomeAccount.collectAsState(null)
 
         @Composable
-        fun rememberShowOnBoarding() = showOnBoarding.observeAsState()
+        fun rememberShowOnBoarding() = showOnBoarding.collectAsState(null)
 
         @Composable
-        fun rememberUseDynamicColor() = useDynamicColor.observeAsState()
+        fun rememberUseDynamicColor() = useDynamicColor.collectAsState(null)
 
         fun updatePerson(
             vararg person: Person,
@@ -1848,7 +1872,7 @@ class MainViewModel(
     inner class ViewModelSaldoActualSettings {
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.observeAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(emptyList())
 
         @Composable
         fun rememberPersonList(principalPersonId: Int?) = remember(principalPersonId) {
@@ -1856,22 +1880,23 @@ class MainViewModel(
                 .map { personList ->
                     personList.filter { it.id == null || it.id != principalPersonId }
                 }
-        }.observeAsState(initial = emptyList())
+                .shareInViewModel()
+        }.collectAsState(initial = emptyList())
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(loadingPersonSummaryState())
+            personSummaryState.collectAsState(loadingPersonSummaryState())
 
         @Composable
-        fun rememberPrincipalPerson() = principalPerson.observeAsState()
+        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
 
         @Composable
         fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
-            incluirPresupuestoEnSaldoActual.observeAsState(false)
+            incluirPresupuestoEnSaldoActual.collectAsState(false)
 
         @Composable
         fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
-            incluirDeudasEnSaldoActual.observeAsState(false)
+            incluirDeudasEnSaldoActual.collectAsState(false)
 
         fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
             this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)
@@ -1902,14 +1927,14 @@ class MainViewModel(
 
     inner class ViewModelAddCategory {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         fun insertCategory(
             vararg category: Category,
@@ -1925,18 +1950,18 @@ class MainViewModel(
 
     inner class ViewModelEditCategory {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
         fun rememberBudgetAndCategoryWithCalculatedData() =
-            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+            budgetWithCalculatedDataAndCategory.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         fun updateCategory(
             vararg newCategory: Category,
@@ -1953,26 +1978,33 @@ class MainViewModel(
     }
 
     inner class ViewModelAccountDetail {
-        private val descriptionFilter: MutableLiveData<Pair<Int?, TextFilter>> = MutableLiveData()
-        private val accountFilterValue: MutableLiveData<Pair<Int?, BooleanFilters<String, Nothing>>> =
-            MutableLiveData()
-        private val accountCategoryFilterValue: MutableLiveData<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>> =
-            MutableLiveData()
-        private val accountDetailData: LiveData<AccountDetailData?> = accountDetail
-            .combine(allAccount) { accountDetail, allAccount ->
+        private val _descriptionFilter: MutableStateFlow<Pair<Int?, TextFilter>?> =
+            MutableStateFlow(null)
+        private val descriptionFilter: SharedFlow<Pair<Int?, TextFilter>> =
+            _descriptionFilter.filterNotNull().shareInViewModel()
+        private val _accountFilterValue: MutableStateFlow<Pair<Int?, BooleanFilters<String, Nothing>>?> =
+            MutableStateFlow(null)
+        private val accountFilterValue: SharedFlow<Pair<Int?, BooleanFilters<String, Nothing>>> =
+            _accountFilterValue.filterNotNull().shareInViewModel()
+        private val _accountCategoryFilterValue: MutableStateFlow<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>?> =
+            MutableStateFlow(null)
+        private val accountCategoryFilterValue: SharedFlow<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>> =
+            _accountCategoryFilterValue.filterNotNull().shareInViewModel()
+        private val accountDetailData: SharedFlow<AccountDetailData?> = accountDetail
+            .combineDefault(allAccount) { accountDetail, allAccount ->
                 object {
                     val accountDetail = accountDetail
                     val allAccount = allAccount
                 }
             }
-            .combine(categories) { combined, categories ->
+            .combineDefault(categories) { combined, categories ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
                     val categories = categories
                 }
             }
-            .combine(budget) { combined, budget ->
+            .combineDefault(budget) { combined, budget ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -1980,7 +2012,7 @@ class MainViewModel(
                     val budget = budget
                 }
             }
-            .combine(range) { combined, range ->
+            .combineDefault(range) { combined, range ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -1989,7 +2021,7 @@ class MainViewModel(
                     val range = range
                 }
             }
-            .combine(principalPerson) { combined, principalPerson ->
+            .combineDefault(principalPerson) { combined, principalPerson ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -1999,7 +2031,7 @@ class MainViewModel(
                     val principalPerson = principalPerson
                 }
             }
-            .combine(accountFilterValue) { combined, accountFilterValue ->
+            .combineDefault(accountFilterValue) { combined, accountFilterValue ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2010,7 +2042,7 @@ class MainViewModel(
                     val accountFilterValue = accountFilterValue
                 }
             }
-            .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
+            .combineDefault(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2022,7 +2054,7 @@ class MainViewModel(
                     val accountCategoryFilterValue = accountCategoryFilterValue
                 }
             }
-            .combine(descriptionFilter) { combined, descriptionFilter ->
+            .combineDefault(descriptionFilter) { combined, descriptionFilter ->
                 combined.run {
                     accountDetail?.let {
                         AccountDetailData.build(
@@ -2040,6 +2072,7 @@ class MainViewModel(
                     }
                 }
             }
+            .shareInViewModel()
 
         @Composable
         fun rememberCategoriesFilter(
@@ -2048,8 +2081,8 @@ class MainViewModel(
         ) = remember(accountId) {
             accountCategoryFilterValue
                 .also {
-                    if (it.value?.first != accountId) {
-                        it.value = accountId to categories
+                    if (it.replayCache.firstOrNull()?.first != accountId) {
+                        _accountCategoryFilterValue.value = accountId to categories
                             .flattenWithLevel()
                             .let { categories ->
                                 booleanFilterOf(
@@ -2066,26 +2099,29 @@ class MainViewModel(
                     }
                 }
                 .map { it.second }
-        }.observeAsState(booleanFilterOf<Int?, Pair<String, Int>>(emptyList()))
+                .shareInViewModel()
+        }
+            .collectAsState(booleanFilterOf<Int?, Pair<String, Int>>(emptyList()))
 
         @Composable
         fun rememberDescriptionFilter(accountId: Int?) = remember(accountId) {
             descriptionFilter
                 .also {
-                    if (it.value?.first != accountId) {
-                        it.value = accountId to TextFilter(null)
+                    if (it.replayCache.firstOrNull()?.first != accountId) {
+                        _descriptionFilter.value = accountId to TextFilter(null)
                     }
                 }
                 .map { it.second }
+                .shareInViewModel()
         }
-            .observeAsState(TextFilter(null))
+            .collectAsState(TextFilter(null))
 
         @Composable
         fun rememberAccountFilterValue(accountId: Int?) = remember(accountId) {
             accountFilterValue
                 .also {
-                    if (it.value?.first != accountId) {
-                        it.value = accountId to booleanFilterOf(
+                    if (it.replayCache.firstOrNull()?.first != accountId) {
+                        _accountFilterValue.value = accountId to booleanFilterOf(
                             listOf(
                                 TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
                             ), true
@@ -2093,8 +2129,9 @@ class MainViewModel(
                     }
                 }
                 .map { it.second }
+                .shareInViewModel()
         }
-            .observeAsState(
+            .collectAsState(
                 booleanFilterOf(
                     listOf(
                         TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
@@ -2115,18 +2152,18 @@ class MainViewModel(
                 accountCategoryFilters,
                 descriptionFilter
             )
-            return accountDetailData.observeAsState()
+            return accountDetailData.collectAsState(null)
         }
 
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberAccountAndOwner() = accountAndOwner.observeAsState(emptyList())
+        fun rememberAccountAndOwner() = accountAndOwner.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoriesWithSubcategories() =
-            categoriesWithSubCategories.observeAsState(emptyList())
+            categoriesWithSubCategories.collectAsState(emptyList())
 
         fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
 
@@ -2139,11 +2176,11 @@ class MainViewModel(
             if (newId != accountDetailId.value) {
                 accountDetailId.value = newId
             }
-            if (accountFilters != accountFilterValue.value) {
-                accountFilterValue.value = newId to accountFilters
+            if (accountFilters != _accountFilterValue.value) {
+                _accountFilterValue.value = newId to accountFilters
             }
-            if (accountCategoryFilters != accountCategoryFilterValue.value) {
-                accountCategoryFilterValue.value = newId to accountCategoryFilters
+            if (accountCategoryFilters != _accountCategoryFilterValue.value) {
+                _accountCategoryFilterValue.value = newId to accountCategoryFilters
             }
             if (descriptionFilter != descriptionFilterValue.value) {
                 descriptionFilterValue.value = descriptionFilter
@@ -2151,16 +2188,16 @@ class MainViewModel(
         }
 
         fun updateAccountFilter(newValue: BooleanFilters<String, Nothing>) =
-            accountFilterValue.apply {
+            _accountFilterValue.apply {
                 value = value?.first to newValue
             }
 
-        fun updateDescriptionFilter(newValue: TextFilter) = descriptionFilter.apply {
+        fun updateDescriptionFilter(newValue: TextFilter) = _descriptionFilter.apply {
             value = value?.first to newValue
         }
 
         fun updateCategoryFilter(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
-            accountCategoryFilterValue.apply {
+            _accountCategoryFilterValue.apply {
                 value = value?.first to newValue
             }
 
@@ -2170,11 +2207,11 @@ class MainViewModel(
 
     inner class ViewModelPersonDetail {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.observeAsState(loadingPersonSummaryState())
+            personSummaryState.collectAsState(loadingPersonSummaryState())
 
         @Composable
         fun rememberPeopleTransactionListItemDetails(
@@ -2183,7 +2220,7 @@ class MainViewModel(
             debt: Double
         ) = remember(otherPersonId, justPendingTransactions, debt) {
             allTransactions
-                .combine(allAccount) { allTransactions, allAccount ->
+                .combineDefault(allAccount) { allTransactions, allAccount ->
                     val personAccountsIds = allAccount
                         .filter { it.ownerId == otherPersonId }
                         .map { it.id }
@@ -2199,14 +2236,14 @@ class MainViewModel(
                         val accounts = allAccount
                     }
                 }
-                .combine(categories) { combined, categories ->
+                .combineDefault(categories) { combined, categories ->
                     object {
                         val transactions = combined.transactions
                         val accounts = combined.accounts
                         val categories = categories
                     }
                 }
-                .combine(principalPerson) { combined, principalPerson ->
+                .combineDefault(principalPerson) { combined, principalPerson ->
                     object {
                         val transactions = combined.transactions
                         val categories = combined.categories
@@ -2242,8 +2279,9 @@ class MainViewModel(
                         }
                     }
                 }
+                .shareInViewModel()
         }
-            .observeAsState()
+            .collectAsState(null)
 
         fun deletePerson(person: Person) = this@MainViewModel.deletePerson(person)
 
@@ -2253,25 +2291,25 @@ class MainViewModel(
 
     inner class ViewModelEditBudget {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
         fun rememberBudgetAndCategoryWithCalculatedData() =
-            budgetWithCalculatedDataAndCategory.observeAsState(emptyList())
+            budgetWithCalculatedDataAndCategory.collectAsState(emptyList())
 
         fun deleteBudget(budget: Budget) = this@MainViewModel.deleteBudget(budget)
     }
 
     inner class ViewModelAddOneBudget {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         fun insertBudget(
             vararg budget: Budget,
@@ -2288,22 +2326,22 @@ class MainViewModel(
     inner class ViewModelOneBudgetDetail {
         @Composable
         fun rememberBudgetAndCategoryWithTransactions() =
-            budgetAndCategoryWithTransactions.observeAsState(emptyList())
+            budgetAndCategoryWithTransactions.collectAsState(emptyList())
     }
 
     inner class ViewModelEditOneBudget {
         @Composable
-        fun rememberAllPerson() = allPerson.observeAsState(emptyList())
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategories() = categories.observeAsState(emptyList())
+        fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
-        fun rememberBudget() = budget.observeAsState(emptyList())
+        fun rememberBudget() = budget.collectAsState(emptyList())
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.observeAsState(emptyList())
+            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(emptyList())
 
         fun updateBudget(
             budget: Budget,

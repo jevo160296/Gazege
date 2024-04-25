@@ -20,6 +20,7 @@ import com.jmml.gazege.ui.fragments.MainFragment
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.localdate.endOfMonth
 import com.jmml.zoo.extensions.localdate.startOfMonth
 import java.time.LocalDate
@@ -62,7 +63,7 @@ fun NavGraphBuilder.screenMain(
         }
         val snackbarHostState = SnackbarHostState()
 
-        val dataLoaded = filteredTransactionListItemDetails is LoadedTransactionDetailsState
+        val dataLoaded = filteredTransactionListItemDetails is Result.Success
 
         LaunchedEffect(key1 = dataLoaded) {
             if (dataLoaded) {
