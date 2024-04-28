@@ -548,7 +548,9 @@ class MainViewModel(
     private val descriptionFilterValue: MutableStateFlow<TextFilter> =
         MutableStateFlow(TextFilter(null))
     private val principalPersonWithAccounts =
-        personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
+        personWithAccounts
+            .map { getPrincipalPersonWithAccounts(it) }
+            .shareInViewModel()
     private val filteredTransactionListitemDetails: SharedFlow<Result<LoadedTransactionDetailsState>> =
         rangeTransactions
             .combineDefault(categories) { rangeTransactions, categories ->
