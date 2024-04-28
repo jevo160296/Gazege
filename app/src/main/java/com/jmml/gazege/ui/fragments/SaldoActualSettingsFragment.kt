@@ -91,7 +91,7 @@ fun SaldoActualSettings(
             }
 
             is LoadingPersonSummaryState -> {
-                EmptySaldoActualSettings()
+                LoadingSaldoActualSettings()
             }
         }
     }
@@ -260,7 +260,7 @@ fun LoadedSaldoActualSettings(
 }
 
 @Composable
-fun EmptySaldoActualSettings() {
+fun LoadingSaldoActualSettings() {
     // TODO Develop UI for loading saldo actual
     Text(text = "Loading")
 }

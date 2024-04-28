@@ -63,7 +63,8 @@ fun NavGraphBuilder.screenMain(
         }
         val snackbarHostState = SnackbarHostState()
 
-        val dataLoaded = filteredTransactionListItemDetails is Result.Success
+        val dataLoaded =
+            filteredTransactionListItemDetails is Result.Success && accountAndOwnerWithTransactions is Result.Success
 
         LaunchedEffect(key1 = dataLoaded) {
             if (dataLoaded) {

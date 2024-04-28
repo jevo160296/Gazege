@@ -1,12 +1,15 @@
 package com.jmml.gazege.ui.fragments
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -20,6 +23,7 @@ import com.jmml.gazege.ui.savers.PartialAccountAndOwner
 import com.jmml.gazege.ui.savers.accountAndOwnerSaver
 import com.jmml.gazege.ui.views.account.AccountAndOwnerForm
 import com.jmml.gazege.ui.widgets.Form
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 
 
 @Composable
@@ -101,5 +105,12 @@ fun AccountFormFragment(
             onDoneAction = saveAccount,
             isComplete = completeState
         )
+    }
+}
+
+@Composable
+fun LoadingAccountFormFragment() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        ZIndefiniteCircularProgressIndicator()
     }
 }

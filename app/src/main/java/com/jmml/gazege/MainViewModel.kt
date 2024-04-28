@@ -75,6 +75,7 @@ import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.coroutines.safeLaunch
 import com.jmml.zoo.extensions.flow.collectAsState
 import com.jmml.zoo.extensions.flow.shareInViewModel
+import com.jmml.zoo.extensions.flow.zDistinctUntilChanged
 import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -83,12 +84,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -214,7 +216,10 @@ class MainViewModel(
     private val incluirPresupuestoEnSaldoActual =
         settings.getIncluirPresupuestoEnSaldoActualFlow().shareInViewModel()
     private val incluirDeudasEnSaldoActual =
-        settings.getIncluirDeudasEnSaldoActualFlow().shareInViewModel()
+        settings
+            .getIncluirDeudasEnSaldoActualFlow()
+            .distinctUntilChanged()
+            .shareInViewModel()
     val categoryIdToExportFlow =
         settings.getCategoryIdToExportFlow().shareInViewModel()
     val useDynamicColor = settings.getUseDynamicColor().shareInViewModel()
@@ -238,7 +243,7 @@ class MainViewModel(
             }
             .shareInViewModel()
 
-    private val accountAndOwnerWithTransactions: SharedFlow<List<AccountAndOwnerWithTransactions>> =
+    private val accountAndOwnerWithTransactions: SharedFlow<Result<List<AccountAndOwnerWithTransactions>>> =
         allAccount
             .combineDefault(allPerson) { allAccount, allPerson ->
                 object {
@@ -248,10 +253,12 @@ class MainViewModel(
             }
             .combineDefault(allTransactions) { combined, allTransactions ->
                 combined.run {
-                    AccountAndOwnerWithTransactions.from(
-                        allAccount,
-                        allPerson,
-                        allTransactions
+                    Result.Success(
+                        AccountAndOwnerWithTransactions.from(
+                            allAccount,
+                            allPerson,
+                            allTransactions
+                        )
                     )
                 }
             }
@@ -262,13 +269,16 @@ class MainViewModel(
             .map { it.sortedByDescending { acc -> acc.owner.importance } }
             .shareInViewModel()
     private val accountAndOwnerWithTransactionsAndPockets: SharedFlow<List<AccountAndOwnerWithTransactionsAndPockets>> =
-        accountAndOwnerWithTransactions.map { lista ->
-            lista.map { item ->
-                AccountAndOwnerWithTransactionsAndPockets.from(
-                    item,
-                    lista
-                )
-            }
+        accountAndOwnerWithTransactions.mapNotNull { result ->
+            if (result is Result.Success) {
+                val lista = result.data
+                lista.map { item ->
+                    AccountAndOwnerWithTransactionsAndPockets.from(
+                        item,
+                        lista
+                    )
+                }
+            } else null
         }
             .shareInViewModel()
     private val personWithAccounts: SharedFlow<List<PersonWithAccounts>> =
@@ -302,15 +312,18 @@ class MainViewModel(
                     if (principalPerson == null) {
                         emptyList()
                     } else {
-                        BudgetAndCategoryWithTransactions.from(
-                            budget = budget,
-                            category = categories,
-                            person = principalPerson,
-                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                        )
+                        if (accountAndOwnerWithTransactions is Result.Success) {
+                            BudgetAndCategoryWithTransactions.from(
+                                budget = budget,
+                                category = categories,
+                                person = principalPerson,
+                                accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.data
+                            )
+                        } else null
                     }
                 }
             }
+            .filterNotNull()
             .shareInViewModel()
 
     private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
@@ -323,15 +336,18 @@ class MainViewModel(
             }
             .combineDefault(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
                 if (combined.principalPerson != null) {
-                    CategoryWithTransactions.from(
-                        category = combined.categories,
-                        person = combined.principalPerson,
-                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                    )
+                    if (accountAndOwnerWithTransactions is Result.Success) {
+                        CategoryWithTransactions.from(
+                            category = combined.categories,
+                            person = combined.principalPerson,
+                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.data
+                        )
+                    } else null
                 } else {
                     emptyList()
                 }
             }
+            .filterNotNull()
             .shareInViewModel()
 
     private val initialRange = today.map { today ->
@@ -551,7 +567,7 @@ class MainViewModel(
         personWithAccounts
             .map { getPrincipalPersonWithAccounts(it) }
             .shareInViewModel()
-    private val filteredTransactionListitemDetails: SharedFlow<Result<LoadedTransactionDetailsState>> =
+    private val filteredTransactionListitemDetails: SharedFlow<Result.Success<LoadedTransactionDetailsState>> =
         rangeTransactions
             .combineDefault(categories) { rangeTransactions, categories ->
                 object {
@@ -619,6 +635,10 @@ class MainViewModel(
                         )
                     )
                 } else Result.Loading
+            }
+            .mapNotNull {
+                if (it is Result.Success) it
+                else null
             }
             .shareInViewModel()
 
@@ -688,7 +708,32 @@ class MainViewModel(
                     val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
                 }
             }
-            .combineTransform(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+            .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory =
+                        combined.budgetWithCalculatedDataAndCategory
+                    val incluirPresupuestoEnSaldoActual = combined.incluirPresupuestoEnSaldoActual
+                    val incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual
+                }
+            }
+            .zDistinctUntilChanged { old, new ->
+                old === new ||
+                        (
+                                old.principalPersonWithAccounts == new.principalPersonWithAccounts &&
+                                        old.range == new.range &&
+                                        old.personWithAccounts == new.personWithAccounts &&
+                                        old.allTransactionAndAccountsAndCategory == new.allTransactionAndAccountsAndCategory &&
+                                        old.budgetWithCalculatedDataAndCategory == new.budgetWithCalculatedDataAndCategory &&
+                                        old.incluirPresupuestoEnSaldoActual == new.incluirPresupuestoEnSaldoActual &&
+                                        old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual
+                                )
+            }
+            .transform { combined ->
                 emit(cachedPersonSummaryState)
                 val result = withContext(Dispatchers.Default) {
                     combined.run {
@@ -1520,7 +1565,7 @@ class MainViewModel(
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
 
         @Composable
         fun rememberFilteredTransactionListItemDetails() =
@@ -1620,7 +1665,7 @@ class MainViewModel(
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
 
         @Composable
         fun rememberToday() = today.collectAsState(LocalDate.now())
@@ -1723,7 +1768,7 @@ class MainViewModel(
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
 
         @Composable
         fun rememberToday() = today.collectAsState(LocalDate.now())
@@ -1783,7 +1828,7 @@ class MainViewModel(
 
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
 
         @Composable
         fun rememberAllPerson() = allPerson.collectAsState(emptyList())
@@ -1853,7 +1898,7 @@ class MainViewModel(
     inner class ViewModelSaldoActualSettings {
         @Composable
         fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(emptyList())
+            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
 
         @Composable
         fun rememberPersonList(principalPersonId: Int?) = remember(principalPersonId) {
@@ -1866,7 +1911,7 @@ class MainViewModel(
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.collectAsState(loadingPersonSummaryState())
+            personSummaryState.collectAsState(cachedPersonSummaryState)
 
         @Composable
         fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
@@ -2222,7 +2267,7 @@ class MainViewModel(
 
         @Composable
         fun rememberPersonSummaryState() =
-            personSummaryState.collectAsState(loadingPersonSummaryState())
+            personSummaryState.collectAsState(cachedPersonSummaryState)
 
         @Composable
         fun rememberPeopleTransactionListItemDetails(

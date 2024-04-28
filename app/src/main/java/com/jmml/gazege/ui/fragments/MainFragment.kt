@@ -97,7 +97,7 @@ import java.time.LocalDate
 @Composable
 fun MainFragment(
     allPerson: List<Person>,
-    accountList: List<AccountAndOwnerWithTransactions>,
+    accountList: Result<List<AccountAndOwnerWithTransactions>>,
     filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
     navPosition: NavPosition,
@@ -379,7 +379,7 @@ fun MainFragment(
 private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
-    accountList: List<AccountAndOwnerWithTransactions>,
+    accountList: Result<List<AccountAndOwnerWithTransactions>>,
     filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
@@ -555,10 +555,10 @@ private fun MainFragmentResponsiveContent(
     }
 
     val cuentasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
-        when (principalPersonSummaryState) {
-            is FullPersonSummaryState -> {
+        when {
+            principalPersonSummaryState is FullPersonSummaryState && accountList is Result.Success -> {
                 LoadedAccountPage(
-                    accountList = accountList.filter { person ->
+                    accountList = accountList.data.filter { person ->
                         person.owner.id == principalPersonSummaryState.person.id
                     },
                     itemHolderPaddingValues = paddingValues,
@@ -574,7 +574,7 @@ private fun MainFragmentResponsiveContent(
                 ) { newTitle -> onTitleChanged(newTitle) }
             }
 
-            is LoadingPersonSummaryState -> {
+            else -> {
                 onTitleChanged(stringResource(id = R.string.cuentas))
                 LoadingAccountPage()
             }
@@ -705,7 +705,7 @@ private fun DefaultPreview() {
         GazegeTheme(darkTheme = true) {
             MainFragment(
                 allPerson = personSample,
-                accountList = accountAndOwnerWithTransactionsSample,
+                accountList = Result.Success(accountAndOwnerWithTransactionsSample),
                 filteredTransactionList = Result.Success(
                     LoadedTransactionDetailsState(
                         transactionListItemDetailsSample
