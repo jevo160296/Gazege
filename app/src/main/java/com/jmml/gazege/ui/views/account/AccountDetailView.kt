@@ -40,6 +40,7 @@ import com.jmml.gazege.MainViewModel.Companion.applyDescriptionFilter
 import com.jmml.gazege.MainViewModel.Companion.applyIncomeFilter
 import com.jmml.gazege.MainViewModel.Companion.applyOutcomeFilter
 import com.jmml.gazege.MainViewModel.Companion.applyTransferFilter
+import com.jmml.gazege.MainViewModel.Companion.applyValueFilter
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.R
 import com.jmml.gazege.core.dao.AccountDao
@@ -121,7 +122,8 @@ data class AccountDetailData(
             principalPerson: Person?,
             transactionFilters: BooleanFilters<String, Nothing>,
             categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
-            descriptionFilter: TextFilter
+            descriptionFilter: TextFilter,
+            valueFilter: DoubleFilter
         ): AccountDetailData {
             return AccountDetailData(
                 account = AccountAndOwner(
@@ -156,7 +158,8 @@ data class AccountDetailData(
                     .applyOutcomeFilter(transactionFilters[OUTCOME_FILTER])
                     .applyTransferFilter(transactionFilters[TRANSFER_FILTER])
                     .applyCategoriesFilter(categoriesFilter)
-                    .applyDescriptionFilter(descriptionFilter),
+                    .applyDescriptionFilter(descriptionFilter)
+                    .applyValueFilter(valueFilter),
                 inTransactions = account
                     .allInTransactionsWithInPocketTransactions
                     .sortedByDescending { it.date }
@@ -202,7 +205,9 @@ fun AccountDetail(
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
-    onDescriptionFilterStateChanged: (TextFilter) -> Unit
+    onDescriptionFilterStateChanged: (TextFilter) -> Unit,
+    valueFilter: DoubleFilter,
+    onValueFilterChanged: (DoubleFilter) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -231,7 +236,9 @@ fun AccountDetail(
                 categoriesFilter = categoriesFilter,
                 onCategoriesFilterChanged = onCategoriesFilterChanged,
                 descriptionFilterState = descriptionFilterState,
-                onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
+                onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
+                valueFilter = valueFilter,
+                onValueFilterChanged = onValueFilterChanged
             )
         }
     }
@@ -258,7 +265,9 @@ private fun NotNullAccountDetail(
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
-    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    valueFilter: DoubleFilter,
+    onValueFilterChanged: (DoubleFilter) -> Unit
 ) {
     val total = data.total
     val childrenTotal = data.childrenTotal
@@ -330,8 +339,8 @@ private fun NotNullAccountDetail(
             onTransactionFiltersChanged = onFiltersChanged,
             categoriesFilter = categoriesFilter,
             onCategoriesFilterChanged = onCategoriesFilterChanged,
-            valueFilterState = DoubleFilter(0.0f..0.0f, 0.0f..0.0f),
-            onValueFilterStateChanged = {},
+            valueFilterState = valueFilter,
+            onValueFilterStateChanged = onValueFilterChanged,
             descriptionFilterState = descriptionFilterState,
             onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
         )
@@ -473,7 +482,9 @@ private fun NullAccountDetail(
         categoriesFilter = booleanFilterOf(emptyList()),
         onCategoriesFilterChanged = {},
         descriptionFilterState = TextFilter(null),
-        onDescriptionFilterStateChanged = {}
+        onDescriptionFilterStateChanged = {},
+        valueFilter = DoubleFilter(null, 0f..0f),
+        onValueFilterChanged = {}
     )
 }
 
@@ -508,7 +519,8 @@ private fun AccountDetailPreview() {
                                     )
                                 ),
                                 booleanFilterOf(emptyList()),
-                                descriptionFilter = TextFilter(null)
+                                descriptionFilter = TextFilter(null),
+                                valueFilter = DoubleFilter(null, 0f..0f)
                             )
                         }
                     }
@@ -545,7 +557,9 @@ private fun AccountDetailPreview() {
                         categoriesFilter = booleanFilterOf(emptyList()),
                         onCategoriesFilterChanged = {},
                         descriptionFilterState = TextFilter(null),
-                        onDescriptionFilterStateChanged = {}
+                        onDescriptionFilterStateChanged = {},
+                        valueFilter = DoubleFilter(null, 0f..0f),
+                        onValueFilterChanged = {}
                     )
                 }
             }

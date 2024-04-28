@@ -75,6 +75,7 @@ import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.coroutines.safeLaunch
 import com.jmml.zoo.extensions.flow.collectAsState
 import com.jmml.zoo.extensions.flow.shareInViewModel
+import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -89,6 +90,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
@@ -99,7 +102,6 @@ import java.time.LocalDate
 import java.util.Locale
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import kotlin.collections.set
 
 fun <T1, T2, R> Flow<T1>.combineDefault(
     flow: Flow<T2>,
@@ -122,7 +124,9 @@ fun categoriesMergeBooleanFilter(
     .flattenWithLevel()
     .let { categoryWithLevel ->
         booleanFilters.updateWithMetadata(
-            categoryWithLevel.map { (it.first.id) to (it.first.name to it.second) }
+            categoryWithLevel
+                .map { (it.first.id) to (it.first.name to it.second) }
+                .plus(null to ("" to 0))
         )
     }
 
@@ -460,38 +464,20 @@ class MainViewModel(
                     .sortedBy { it.category.name }
                     .flattenWithLevel(0)
                 val updatedValue = if (oldValue != null) {
-                    val updatedValue = categoriesMergeBooleanFilter(categories, oldValue)
-                    updatedValue
-                        .copy(
-                            values = updatedValue
-                                .let {
-                                    it.values.toMutableMap().apply {
-                                        this[null] = oldValue.values.getOrDefault(
-                                            null,
-                                            updatedValue.defaultValue
-                                        )
-                                    }
-                                },
-                            metadata = updatedValue
-                                .let {
-                                    it.metadata.toMutableMap().apply {
-                                        this[null] = "" to 0
-                                    }
-                                }
-                        )
+                    categoriesMergeBooleanFilter(categories, oldValue)
+
                 } else {
                     booleanFilterOf(
-                        filterNames = orderedCategories.map { it.first.id },
-                        metadata = orderedCategories.associate {
-                            (it.first.id) to (it.first.name to it.second)
-                        }
+                        filterNames = orderedCategories
+                            .map { it.first.id }
+                            .plus(null),
+                        metadata = orderedCategories
+                            .associate {
+                                (it.first.id) to (it.first.name to it.second)
+                            }
+                            .plus(null to ("" to 0)),
+                        defaultValue = true
                     )
-                        .let {
-                            it.copy(
-                                values = it.values.plus(null to true),
-                                metadata = it.metadata.plus(null to ("" to 0))
-                            )
-                        }
                 }
                 updatedValue
             }
@@ -561,13 +547,6 @@ class MainViewModel(
             .shareInViewModel()
     private val descriptionFilterValue: MutableStateFlow<TextFilter> =
         MutableStateFlow(TextFilter(null))
-    private val accountDetailId = MutableStateFlow<Int?>(null)
-    private val accountDetail = accountAndOwnerWithTransactionsAndPockets
-        .combineDefault(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
-            accountAndOwnerWithTransactionsAndPockets.firstOrNull {
-                it.accountAndOwnerWithTransactions.account.id == accountDetailId
-            }
-        }
     private val principalPersonWithAccounts =
         personWithAccounts.map { getPrincipalPersonWithAccounts(it) }
     private val filteredTransactionListitemDetails: SharedFlow<Result<LoadedTransactionDetailsState>> =
@@ -626,7 +605,7 @@ class MainViewModel(
                     Result.Success(
                         valueFilterValue.let {
                             filteredTransactions.data.applyValueFilter(valueFilterValue)
-                        } ?: filteredTransactions.data
+                        }
                     )
                 } else Result.Loading
             }
@@ -1978,18 +1957,83 @@ class MainViewModel(
     }
 
     inner class ViewModelAccountDetail {
-        private val _descriptionFilter: MutableStateFlow<Pair<Int?, TextFilter>?> =
+        private val _accountDetailId = MutableStateFlow<Int?>(null)
+        private val accountDetailId = _accountDetailId
+            .filterNotNull()
+            .shareInViewModel()
+        private val accountDetail = accountAndOwnerWithTransactionsAndPockets
+            .combineDefault(accountDetailId) { accountAndOwnerWithTransactionsAndPockets, accountDetailId ->
+                accountAndOwnerWithTransactionsAndPockets.firstOrNull {
+                    it.accountAndOwnerWithTransactions.account.id == accountDetailId
+                }
+            }
+        private val _descriptionFilter: MutableStateFlow<TextFilter> =
+            MutableStateFlow(TextFilter(null))
+        private val descriptionFilter: SharedFlow<TextFilter> =
+            _descriptionFilter.shareInViewModel()
+        private val _accountFilterValue: MutableStateFlow<BooleanFilters<String, Nothing>> =
+            MutableStateFlow(
+                booleanFilterOf(
+                    listOf(
+                        TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
+                    ), true
+                )
+            )
+        private val accountFilterValue: SharedFlow<BooleanFilters<String, Nothing>> =
+            _accountFilterValue.shareInViewModel()
+        private val _accountCategoryFilterValue: MutableStateFlow<BooleanFilters<Int?, Pair<String, Int>>?> =
             MutableStateFlow(null)
-        private val descriptionFilter: SharedFlow<Pair<Int?, TextFilter>> =
-            _descriptionFilter.filterNotNull().shareInViewModel()
-        private val _accountFilterValue: MutableStateFlow<Pair<Int?, BooleanFilters<String, Nothing>>?> =
-            MutableStateFlow(null)
-        private val accountFilterValue: SharedFlow<Pair<Int?, BooleanFilters<String, Nothing>>> =
-            _accountFilterValue.filterNotNull().shareInViewModel()
-        private val _accountCategoryFilterValue: MutableStateFlow<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>?> =
-            MutableStateFlow(null)
-        private val accountCategoryFilterValue: SharedFlow<Pair<Int?, BooleanFilters<Int?, Pair<String, Int>>>> =
-            _accountCategoryFilterValue.filterNotNull().shareInViewModel()
+        private val accountCategoryFilterValue: SharedFlow<BooleanFilters<Int?, Pair<String, Int>>> =
+            _accountCategoryFilterValue
+                .combineDefault(categoriesWithSubCategories) { filterValue, categories ->
+                    if (filterValue == null) {
+                        val flattenCategories = categories.flattenWithLevel()
+                        booleanFilterOf(
+                            filterNames = flattenCategories
+                                .map { it.first.id }
+                                .plus(null),
+                            defaultValue = true,
+                            metadata = flattenCategories
+                                .associate { it.first.id to (it.first.name to it.second) }
+                                .plus(null to ("" to 0))
+                        )
+                    } else {
+                        categoriesMergeBooleanFilter(
+                            categories = categories,
+                            booleanFilters = filterValue
+                        )
+                    }
+                }
+                .shareInViewModel()
+        private val _accountValueFilter = MutableStateFlow(DoubleFilter(null, 0f..0f))
+        private val accountValueFilter = _accountValueFilter
+            .combine(range) { accountValueFilter, range ->
+                object {
+                    val accountValueFilter = accountValueFilter
+                    val range = range
+                }
+            }
+            .combine(accountDetail) { combined, accountDetail ->
+                combined.run {
+                    if (accountDetail != null) {
+                        val min = accountDetail
+                            .accountAndOwnerWithTransactions
+                            .allTransactions
+                            .filter { it.date.isBetween(range.first, range.second) }
+                            .minOfOrNull { it.amount.toFloat() } ?: 0f
+                        val max = accountDetail
+                            .accountAndOwnerWithTransactions
+                            .allTransactions
+                            .filter { it.date.isBetween(range.first, range.second) }
+                            .maxOfOrNull { it.amount.toFloat() } ?: 0f
+                        _accountValueFilter
+                            .updateAndGet {
+                                accountValueFilter.copy(range = min..max)
+                            }
+                    } else accountValueFilter
+                }
+            }
+            .shareInViewModel()
         private val accountDetailData: SharedFlow<AccountDetailData?> = accountDetail
             .combineDefault(allAccount) { accountDetail, allAccount ->
                 object {
@@ -2054,6 +2098,19 @@ class MainViewModel(
                     val accountCategoryFilterValue = accountCategoryFilterValue
                 }
             }
+            .combineDefault(accountValueFilter) { combined, accountValueFilter ->
+                object {
+                    val accountDetail = combined.accountDetail
+                    val allAccount = combined.allAccount
+                    val categories = combined.categories
+                    val budget = combined.budget
+                    val range = combined.range
+                    val principalPerson = combined.principalPerson
+                    val accountFilterValue = combined.accountFilterValue
+                    val accountCategoryFilterValue = combined.accountCategoryFilterValue
+                    val accountValueFilter = accountValueFilter
+                }
+            }
             .combineDefault(descriptionFilter) { combined, descriptionFilter ->
                 combined.run {
                     accountDetail?.let {
@@ -2065,9 +2122,10 @@ class MainViewModel(
                             startDate = range.first,
                             endDate = range.second,
                             principalPerson = principalPerson,
-                            transactionFilters = accountFilterValue.second,
-                            categoriesFilter = accountCategoryFilterValue.second,
-                            descriptionFilter = descriptionFilter.second
+                            transactionFilters = accountFilterValue,
+                            categoriesFilter = accountCategoryFilterValue,
+                            valueFilter = accountValueFilter,
+                            descriptionFilter = descriptionFilter
                         )
                     }
                 }
@@ -2075,84 +2133,55 @@ class MainViewModel(
             .shareInViewModel()
 
         @Composable
-        fun rememberCategoriesFilter(
-            accountId: Int?,
-            categories: List<CategoryWithSubCategories>
-        ) = remember(accountId) {
-            accountCategoryFilterValue
-                .also {
-                    if (it.replayCache.firstOrNull()?.first != accountId) {
-                        _accountCategoryFilterValue.value = accountId to categories
-                            .flattenWithLevel()
-                            .let { categories ->
-                                booleanFilterOf(
-                                    defaultValue = true,
-                                    filterNames = categories
-                                        .map { it.first.id }
-                                        .plus(null),
-                                    metadata = categories.associate {
-                                        (it.first.id ?: 0) to (it.first.name to it.second)
-                                    }
-                                        .plus(null to ("" to 0))
-                                )
-                            }
-                    }
+        fun rememberCategoriesFilter(accountId: Int?) =
+            rememberSaveable(accountId) {
+                _accountDetailId.update { accountId }
+                accountId ?: -1
+            }
+                .let {
+                    accountCategoryFilterValue
+                        .collectAsState(booleanFilterOf(emptyList()))
                 }
-                .map { it.second }
-                .shareInViewModel()
-        }
-            .collectAsState(booleanFilterOf<Int?, Pair<String, Int>>(emptyList()))
 
         @Composable
-        fun rememberDescriptionFilter(accountId: Int?) = remember(accountId) {
-            descriptionFilter
-                .also {
-                    if (it.replayCache.firstOrNull()?.first != accountId) {
-                        _descriptionFilter.value = accountId to TextFilter(null)
-                    }
-                }
-                .map { it.second }
-                .shareInViewModel()
+        fun rememberDescriptionFilter(accountId: Int?) = rememberSaveable(accountId) {
+            _accountDetailId.update { accountId }
+            accountId ?: -1
+        }.let {
+            descriptionFilter.collectAsState(TextFilter(null))
         }
-            .collectAsState(TextFilter(null))
 
         @Composable
-        fun rememberAccountFilterValue(accountId: Int?) = remember(accountId) {
+        fun rememberAccountValueFilter(accountId: Int?) = rememberSaveable(accountId) {
+            _accountDetailId.update { accountId }
+            accountId ?: -1
+        }.let {
+            accountValueFilter.collectAsState(DoubleFilter(null, 0f..0f))
+        }
+
+        @Composable
+        fun rememberAccountFilterValue(accountId: Int?) = rememberSaveable(accountId) {
+            _accountDetailId.update { accountId }
+            accountId ?: -1
+        }.let {
             accountFilterValue
-                .also {
-                    if (it.replayCache.firstOrNull()?.first != accountId) {
-                        _accountFilterValue.value = accountId to booleanFilterOf(
-                            listOf(
-                                TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
-                            ), true
-                        )
-                    }
-                }
-                .map { it.second }
-                .shareInViewModel()
-        }
-            .collectAsState(
-                booleanFilterOf(
-                    listOf(
-                        TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
-                    ), true
+                .collectAsState(
+                    booleanFilterOf(
+                        listOf(
+                            TRANSFER_FILTER, INCOME_FILTER, OUTCOME_FILTER
+                        ), true
+                    )
                 )
-            )
+        }
 
         @Composable
         fun rememberAccountDetailData(
-            accountId: Int?,
-            accountFilters: BooleanFilters<String, Nothing>,
-            accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>,
-            descriptionFilter: TextFilter
-        ): State<AccountDetailData?> {
-            updateAccountDetailIdIfDifferent(
-                accountId,
-                accountFilters,
-                accountCategoryFilters,
-                descriptionFilter
-            )
-            return accountDetailData.collectAsState(null)
+            accountId: Int?
+        ): State<AccountDetailData?> = rememberSaveable(accountId) {
+            _accountDetailId.update { accountId }
+            accountId ?: -1
+        }.let {
+            accountDetailData.collectAsState(null)
         }
 
         @Composable
@@ -2161,44 +2190,24 @@ class MainViewModel(
         @Composable
         fun rememberAccountAndOwner() = accountAndOwner.collectAsState(emptyList())
 
-        @Composable
-        fun rememberCategoriesWithSubcategories() =
-            categoriesWithSubCategories.collectAsState(emptyList())
-
         fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
-
-        private fun updateAccountDetailIdIfDifferent(
-            newId: Int?,
-            accountFilters: BooleanFilters<String, Nothing>,
-            accountCategoryFilters: BooleanFilters<Int?, Pair<String, Int>>,
-            descriptionFilter: TextFilter
-        ) {
-            if (newId != accountDetailId.value) {
-                accountDetailId.value = newId
-            }
-            if (accountFilters != _accountFilterValue.value) {
-                _accountFilterValue.value = newId to accountFilters
-            }
-            if (accountCategoryFilters != _accountCategoryFilterValue.value) {
-                _accountCategoryFilterValue.value = newId to accountCategoryFilters
-            }
-            if (descriptionFilter != descriptionFilterValue.value) {
-                descriptionFilterValue.value = descriptionFilter
-            }
-        }
 
         fun updateAccountFilter(newValue: BooleanFilters<String, Nothing>) =
             _accountFilterValue.apply {
-                value = value?.first to newValue
+                value = newValue
             }
 
         fun updateDescriptionFilter(newValue: TextFilter) = _descriptionFilter.apply {
-            value = value?.first to newValue
+            value = newValue
+        }
+
+        fun updateValueFilter(newValue: DoubleFilter) = _accountValueFilter.apply {
+            value = newValue
         }
 
         fun updateCategoryFilter(newValue: BooleanFilters<Int?, Pair<String, Int>>) =
             _accountCategoryFilterValue.apply {
-                value = value?.first to newValue
+                value = newValue
             }
 
         fun deleteTransaction(transaction: Transaction) =
@@ -2432,11 +2441,12 @@ class MainViewModel(
         suspend fun List<TransactionListItemDetails>.applyValueFilter(
             filterValue: DoubleFilter
         ) = withContext(Dispatchers.Default) {
-            filterValue.value?.let {
-                filter { transaction ->
-                    filterValue.value.contains(transaction.transaction.amount.toFloat())
-                }
-            }
+            filterValue
+                .value?.let {
+                    filter { transaction ->
+                        filterValue.value.contains(transaction.transaction.amount.toFloat())
+                    }
+                } ?: this@applyValueFilter
         }
     }
 }

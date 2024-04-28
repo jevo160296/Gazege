@@ -39,22 +39,17 @@ fun NavGraphBuilder.screenAccountDetail(
     ) { navStack ->
         val accountId = navStack.arguments?.getInt("accountId")
 
-        val accountFilterValue by viewModelAccountDetail.rememberAccountFilterValue(
-            accountId = accountId
-        )
-        val categories by viewModelAccountDetail.rememberCategoriesWithSubcategories()
+        val accountFilterValue =
+            viewModelAccountDetail.rememberAccountFilterValue(accountId = accountId).value
         val categoriesFilter by viewModelAccountDetail.rememberCategoriesFilter(
-            accountId = accountId,
-            categories = categories
+            accountId = accountId
         )
         val descriptionFilter by viewModelAccountDetail.rememberDescriptionFilter(
             accountId = accountId
         )
+        val valueFilter by viewModelAccountDetail.rememberAccountValueFilter(accountId = accountId)
         val data by viewModelAccountDetail.rememberAccountDetailData(
-            accountId,
-            accountFilterValue,
-            categoriesFilter,
-            descriptionFilter
+            accountId
         )
         var fabExpanded by remember { mutableStateOf(false) }
 
@@ -111,7 +106,9 @@ fun NavGraphBuilder.screenAccountDetail(
                 categoriesFilter = categoriesFilter,
                 onCategoriesFilterChanged = viewModelAccountDetail::updateCategoryFilter,
                 descriptionFilterState = descriptionFilter,
-                onDescriptionFilterStateChanged = viewModelAccountDetail::updateDescriptionFilter
+                onDescriptionFilterStateChanged = viewModelAccountDetail::updateDescriptionFilter,
+                valueFilter = valueFilter,
+                onValueFilterChanged = viewModelAccountDetail::updateValueFilter
             )
         } else {
             Text("Cuenta vacía")

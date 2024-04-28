@@ -269,10 +269,12 @@ fun Filter(
                                     Text(stringResource(id = R.string.transacciones))
                                 }
                                 Row(
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(
-                                        dimensionResource(
+                                        space = dimensionResource(
                                             id = R.dimen.DefaultPadding
-                                        )
+                                        ),
+                                        alignment = Alignment.CenterHorizontally
                                     )
                                 ) {
                                     GFilterChip(
@@ -675,7 +677,7 @@ data class BooleanFilters<U, T>(
         return (other is BooleanFilters<*, *>) && (this.toString() == other.toString())
     }
 
-    operator fun get(valueName: U): Boolean = values.getValue(valueName)
+    operator fun get(valueName: U): Boolean = values.getOrDefault(valueName, defaultValue)
 }
 
 fun <U, T> booleanFilterOf(
