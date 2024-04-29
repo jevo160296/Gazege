@@ -37,8 +37,8 @@ android {
         applicationId "com.jmml.gazege"
         minSdk 29
         targetSdk 34
-        versionCode 87
-        versionName '1.15.2'
+        versionCode 88
+        versionName '1.16.0alfa'
 
         sourceSets {
             androidTest.assets.srcDirs +=
@@ -78,7 +78,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = '17'
-        freeCompilerArgs = ["-opt-in=kotlin.RequiresOptIn", '-Xjvm-default=compatibility']
+        freeCompilerArgs = ["-opt-in=kotlin.RequiresOptIn", '-Xjvm-default=compatibility', "-Xcontext-receivers"]
     }
     buildFeatures {
         compose true
@@ -105,6 +105,7 @@ android {
 
 dependencies {
     implementation 'org.apache.commons:commons-csv:1.10.0'
+    implementation files('C:/Users/jevo1/AndroidStudioProjects/shared/zoo/build/outputs/aar/zoo-release.aar')
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     androidTestImplementation "androidx.room:room-testing:$room_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"

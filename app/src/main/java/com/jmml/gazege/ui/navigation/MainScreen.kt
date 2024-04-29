@@ -16,12 +16,13 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.data.sample
-import com.jmml.gazege.extensions.localdate.endOfMonth
-import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.fragments.MainFragment
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.zoo.clases.Result
+import com.jmml.zoo.extensions.localdate.endOfMonth
+import com.jmml.zoo.extensions.localdate.startOfMonth
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenMain(
@@ -49,6 +50,7 @@ fun NavGraphBuilder.screenMain(
         val accountAndOwnerWithTransactions by viewModelMain.rememberAccountAndOwnerWithTransactions()
         val filteredTransactionListItemDetails by viewModelMain.rememberFilteredTransactionListItemDetails()
         val principalPersonSummaryState by viewModelMain.rememberPersonSummaryState()
+        val principalPerson by viewModelMain.rememberPrincipalPerson()
         val range by viewModelMain.rememberRange()
         val transactionFilters by viewModelMain.rememberTransactionFiltersValue()
         val categoriesFiltersValue by viewModelMain.rememberCategoriesFiltersValue()
@@ -62,7 +64,8 @@ fun NavGraphBuilder.screenMain(
         }
         val snackbarHostState = SnackbarHostState()
 
-        val dataLoaded = filteredTransactionListItemDetails is LoadedTransactionDetailsState
+        val dataLoaded =
+            filteredTransactionListItemDetails is Result.Success
 
         LaunchedEffect(key1 = dataLoaded) {
             if (dataLoaded) {
@@ -77,6 +80,7 @@ fun NavGraphBuilder.screenMain(
                 accountList = accountAndOwnerWithTransactions,
                 filteredTransactionList = filteredTransactionListItemDetails,
                 principalPersonSummaryState = principalPersonSummaryState,
+                principalPerson = principalPerson,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,

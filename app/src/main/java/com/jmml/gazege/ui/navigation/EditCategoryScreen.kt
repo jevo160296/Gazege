@@ -1,6 +1,7 @@
 package com.jmml.gazege.ui.navigation
 
 import android.database.sqlite.SQLiteConstraintException
+import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
@@ -11,6 +12,8 @@ import androidx.navigation.navArgument
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.ui.views.category.CategoryForm
+import com.jmml.gazege.ui.views.category.LoadingCategoryForm
+import com.jmml.zoo.clases.Result
 import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.screenEditCategory(
@@ -28,7 +31,8 @@ fun NavGraphBuilder.screenEditCategory(
         )
     ) { navStack ->
         val categories by viewModelEditCategory.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModelEditCategory.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val budgetWithCalculatedDataAndCategory =
+            viewModelEditCategory.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData().value
         val budgetAndCategoryWithCalculatedData by viewModelEditCategory.rememberBudgetAndCategoryWithCalculatedData()
 
         val coroutineScope = rememberCoroutineScope()
@@ -38,40 +42,44 @@ fun NavGraphBuilder.screenEditCategory(
 
         val categoryBudget =
             budgetAndCategoryWithCalculatedData.filter { it.category.id == categoryId }
-        CategoryForm(
-            category?.let { Pair(category, categoryBudget) },
-            categories,
-            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-            onCategorySave = { newCategory, state ->
-                viewModelEditCategory.updateCategory(
-                    newCategory,
-                    onCompleitionAction = onNavigateUp
-                ) { error ->
-                    val msg = when (error) {
-                        is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
-                            "${newCategory.name} ya existe."
-                        } else {
-                            "CONSTRAINT ERROR"
-                        }
+        when (budgetWithCalculatedDataAndCategory) {
+            is Result.Error -> Text(text = "Error ${budgetWithCalculatedDataAndCategory.exception}")
+            Result.Loading -> LoadingCategoryForm()
+            is Result.Success -> CategoryForm(
+                category?.let { Pair(category, categoryBudget) },
+                categories,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
+                onCategorySave = { newCategory, state ->
+                    viewModelEditCategory.updateCategory(
+                        newCategory,
+                        onCompleitionAction = onNavigateUp
+                    ) { error ->
+                        val msg = when (error) {
+                            is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
+                                "${newCategory.name} ya existe."
+                            } else {
+                                "CONSTRAINT ERROR"
+                            }
 
-                        else -> error.toString()
+                            else -> error.toString()
+                        }
+                        coroutineScope.launch {
+                            state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
+                        }
                     }
-                    coroutineScope.launch {
-                        state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
+                },
+                onBudgetDeleteRequested = { viewModelEditCategory.deleteBudget(it.budget.budget) },
+                onBudgetDetailRequested = {},
+                onBudgetEditRequested = { budget ->
+                    budget.budgetId?.let {
+                        onNavigateToEditOneBudgetRequested(
+                            it
+                        )
                     }
-                }
-            },
-            onBudgetDeleteRequested = { viewModelEditCategory.deleteBudget(it.budget.budget) },
-            onBudgetDetailRequested = {},
-            onBudgetEditRequested = { budget ->
-                budget.budgetId?.let {
-                    onNavigateToEditOneBudgetRequested(
-                        it
-                    )
-                }
-            },
-            onBudgetAddRequested = onNavigateToAddOneBudgetRequested
-        )
+                },
+                onBudgetAddRequested = onNavigateToAddOneBudgetRequested
+            )
+        }
     }
 }
 

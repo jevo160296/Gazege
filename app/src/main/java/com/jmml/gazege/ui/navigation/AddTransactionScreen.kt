@@ -2,6 +2,7 @@ package com.jmml.gazege.ui.navigation
 
 import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
@@ -13,8 +14,10 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.core.entities.Account
+import com.jmml.gazege.ui.fragments.LoadingTransactionFormFragment
 import com.jmml.gazege.ui.fragments.TransactionFormFragment
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.zoo.clases.Result
 import java.time.LocalDate
 
 fun NavGraphBuilder.screenAddTransaction(
@@ -48,7 +51,8 @@ fun NavGraphBuilder.screenAddTransaction(
         val allPerson by viewModelAddTransaction.rememberAllPerson()
         val allAccount by viewModelAddTransaction.rememberAllAccount()
         val categories by viewModelAddTransaction.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModelAddTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val budgetWithCalculatedDataAndCategory =
+            viewModelAddTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData().value
 
         LaunchedEffect(key1 = allPerson.isNotEmpty()) {
             if (allPerson.isNotEmpty()) {
@@ -81,25 +85,29 @@ fun NavGraphBuilder.screenAddTransaction(
             } else {
                 viewModelAddTransaction.rememberAccountAndOwnerUserFirst().value
             }
-        TransactionFormFragment(
-            contentPadding = PaddingValues(8.dp),
-            itemSpacing = 8.dp,
-            accountList = orderedAccounts,
-            personList = allPerson,
-            categoryList = categories,
-            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-            defaultDate = LocalDate.of(
-                yearMonthDay.div(10000),
-                yearMonthDay.mod(10000).div(100),
-                yearMonthDay.mod(100)
-            ),
-            fixedSourceAccount = initialSourceAccount,
-            fixedDestinationAccount = initialDestinationAccount,
-            onAccountAddRequested = onNavigateToAddAccount
-        ) { newTransaction, addAnotherTransaction ->
-            viewModelAddTransaction.insertTransaction(newTransaction)
-            if (!addAnotherTransaction) {
-                onNavigateUp()
+        when (budgetWithCalculatedDataAndCategory) {
+            is Result.Error -> Text(text = "Error: ${budgetWithCalculatedDataAndCategory.exception}")
+            Result.Loading -> LoadingTransactionFormFragment()
+            is Result.Success -> TransactionFormFragment(
+                contentPadding = PaddingValues(8.dp),
+                itemSpacing = 8.dp,
+                accountList = orderedAccounts,
+                personList = allPerson,
+                categoryList = categories,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
+                defaultDate = LocalDate.of(
+                    yearMonthDay.div(10000),
+                    yearMonthDay.mod(10000).div(100),
+                    yearMonthDay.mod(100)
+                ),
+                fixedSourceAccount = initialSourceAccount,
+                fixedDestinationAccount = initialDestinationAccount,
+                onAccountAddRequested = onNavigateToAddAccount
+            ) { newTransaction, addAnotherTransaction ->
+                viewModelAddTransaction.insertTransaction(newTransaction)
+                if (!addAnotherTransaction) {
+                    onNavigateUp()
+                }
             }
         }
     }

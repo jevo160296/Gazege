@@ -19,7 +19,7 @@ import com.jmml.gazege.R
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.widgets.fab.ExpandableFAB
 import com.jmml.gazege.ui.widgets.fab.ExtendedFAB
-import com.jmml.gazege.ui.widgets.menu.DropDownMenuItem
+import com.jmml.zoo.ui.menu.DropDownMenuItem
 
 @Composable
 fun DynamicAddEntityFAB(

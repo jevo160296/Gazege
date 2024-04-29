@@ -11,7 +11,7 @@ import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.jmml.gazege.core.entities.Person
-import com.jmml.gazege.extensions.localdate.isBetween
+import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 

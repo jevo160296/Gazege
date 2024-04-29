@@ -18,13 +18,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
-import com.jmml.gazege.extensions.closedrange.toSequence
-import com.jmml.gazege.extensions.localdate.startOfMonth
-import com.jmml.gazege.extensions.sequence.repeat
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.doubleToShortMoneyText
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.widgets.MediumHeadline
+import com.jmml.zoo.extensions.closedrange.toSequence
+import com.jmml.zoo.extensions.localdate.startOfMonth
+import com.jmml.zoo.extensions.sequence.repeat
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
 import com.patrykandpatrick.vico.compose.chart.Chart

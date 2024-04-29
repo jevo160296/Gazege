@@ -29,10 +29,10 @@ import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.ui.savers.PartialAccountAndOwner
 import com.jmml.gazege.ui.views.transaction.AccountAndOwnerNode
-import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.ComboBox
 import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
+import com.jmml.zoo.ui.input.ButtonField
 
 @Composable
 fun AccountAndOwnerForm(

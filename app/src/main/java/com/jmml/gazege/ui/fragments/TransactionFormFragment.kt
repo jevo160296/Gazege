@@ -183,3 +183,7 @@ fun TransactionFormFragment(
         )
     }
 }
+
+@Composable
+fun LoadingTransactionFormFragment() {
+}

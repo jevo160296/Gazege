@@ -65,15 +65,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
-import com.jmml.gazege.extensions.localdate.endOfMonth
-import com.jmml.gazege.extensions.localdate.stableMinusMonths
-import com.jmml.gazege.extensions.localdate.stablePlusMonths
-import com.jmml.gazege.extensions.localdate.startOfMonth
 import com.jmml.gazege.ui.DateFormat
 import com.jmml.gazege.ui.localDateToString
 import com.jmml.gazege.ui.theme.GazegeTheme
-import com.jmml.gazege.ui.widgets.menu.DropdownMenu
 import com.jmml.gazege.ui.widgets.sliders.GRangeSlider
+import com.jmml.zoo.extensions.localdate.endOfMonth
+import com.jmml.zoo.extensions.localdate.stableMinusMonths
+import com.jmml.zoo.extensions.localdate.stablePlusMonths
+import com.jmml.zoo.extensions.localdate.startOfMonth
+import com.jmml.zoo.ui.menu.DropdownMenu
 import java.time.LocalDate
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -269,10 +269,12 @@ fun Filter(
                                     Text(stringResource(id = R.string.transacciones))
                                 }
                                 Row(
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(
-                                        dimensionResource(
+                                        space = dimensionResource(
                                             id = R.dimen.DefaultPadding
-                                        )
+                                        ),
+                                        alignment = Alignment.CenterHorizontally
                                     )
                                 ) {
                                     GFilterChip(
@@ -675,7 +677,7 @@ data class BooleanFilters<U, T>(
         return (other is BooleanFilters<*, *>) && (this.toString() == other.toString())
     }
 
-    operator fun get(valueName: U): Boolean = values.getValue(valueName)
+    operator fun get(valueName: U): Boolean = values.getOrDefault(valueName, defaultValue)
 }
 
 fun <U, T> booleanFilterOf(

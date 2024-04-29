@@ -63,8 +63,6 @@ import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
-import com.jmml.gazege.ui.navigation.TransactionDetailsState
-import com.jmml.gazege.ui.navigation.loadingTransactionDetailsState
 import com.jmml.gazege.ui.personaDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.templates.DynamicAddEntityFAB
 import com.jmml.gazege.ui.templates.StickyHeaderLayout
@@ -73,7 +71,6 @@ import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.account.LoadedAccountPage
-import com.jmml.gazege.ui.views.account.LoadingAccountPage
 import com.jmml.gazege.ui.views.person.LoadedPersonPage
 import com.jmml.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.jmml.gazege.ui.views.transaction.LoadedTransactionPage
@@ -83,7 +80,6 @@ import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.EmptyPersonMonthSummaryView
 import com.jmml.gazege.ui.widgets.Filter
-import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
 import com.jmml.gazege.ui.widgets.LoadedPersonMonthSummaryView
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.ModalSheetContent
@@ -91,6 +87,8 @@ import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.clases.Result
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -99,8 +97,9 @@ import java.time.LocalDate
 fun MainFragment(
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: TransactionDetailsState,
+    filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
+    principalPerson: Person?,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
@@ -292,6 +291,7 @@ fun MainFragment(
             accountList = accountList,
             filteredTransactionList = filteredTransactionList,
             principalPersonSummaryState = principalPersonSummaryState,
+            principalPerson = principalPerson,
             personFilterValue = personFilterValue,
             delPerson = {
                 scope.launch {
@@ -381,7 +381,8 @@ private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
     accountList: List<AccountAndOwnerWithTransactions>,
-    filteredTransactionList: TransactionDetailsState,
+    filteredTransactionList: Result<LoadedTransactionDetailsState>,
+    principalPerson: Person?,
     principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
@@ -531,9 +532,9 @@ private fun MainFragmentResponsiveContent(
         Column {
             Crossfade(targetState = filteredTransactionList, label = "CrosFade transactions") {
                 when (it) {
-                    is LoadedTransactionDetailsState -> {
+                    is Result.Success -> {
                         LoadedTransactionPage(
-                            transactionList = it.transactionList,
+                            transactionList = it.data.transactionList,
                             itemHolderPaddingValues = paddingValues,
                             state = transactionState,
                             delTransaction = delTransaction,
@@ -545,42 +546,32 @@ private fun MainFragmentResponsiveContent(
                         )
                     }
 
-                    loadingTransactionDetailsState() -> {
-                        LoadingTransactionPage(
-                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                            itemHolderPaddingValues = paddingValues
-                        )
-                    }
+                    is Result.Error -> Text(text = "Error ${it.exception}")
+                    Result.Loading -> LoadingTransactionPage(
+                        onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+                        itemHolderPaddingValues = paddingValues
+                    )
                 }
             }
         }
     }
 
     val cuentasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
-        when (principalPersonSummaryState) {
-            is FullPersonSummaryState -> {
-                LoadedAccountPage(
-                    accountList = accountList.filter { person ->
-                        person.owner.id == principalPersonSummaryState.person.id
-                    },
-                    itemHolderPaddingValues = paddingValues,
-                    treeState = accountState,
-                    delAccount = delAccount,
-                    editAccount = onEditAccountRequested,
-                    startDate = null,
-                    endDate = null,
-                    detailAccount = onAccountDetailRequested,
-                    nestedScrollConnection = nestedScrollConnection,
-                    onZeroElementsChanged = onZeroElementsChanged,
-                    onFirstElementVisibilityChanged = onFirstElementVisibleChanged
-                ) { newTitle -> onTitleChanged(newTitle) }
-            }
-
-            is LoadingPersonSummaryState -> {
-                onTitleChanged(stringResource(id = R.string.cuentas))
-                LoadingAccountPage()
-            }
-        }
+        LoadedAccountPage(
+            accountList = accountList.filter { person ->
+                person.owner.id == principalPerson?.id
+            },
+            itemHolderPaddingValues = paddingValues,
+            treeState = accountState,
+            delAccount = delAccount,
+            editAccount = onEditAccountRequested,
+            startDate = null,
+            endDate = null,
+            detailAccount = onAccountDetailRequested,
+            nestedScrollConnection = nestedScrollConnection,
+            onZeroElementsChanged = onZeroElementsChanged,
+            onFirstElementVisibilityChanged = onFirstElementVisibleChanged
+        ) { newTitle -> onTitleChanged(newTitle) }
     }
 
     val personsPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
@@ -628,7 +619,7 @@ private fun MainFragmentResponsiveContent(
                             .padding(top = dimensionResource(id = R.dimen.DefaultPadding)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        GIndefiniteCircularProgressIndicator()
+                        ZIndefiniteCircularProgressIndicator()
                         Text(stringResource(id = R.string.LoadingPersonSummaryView))
                     }
                 }
@@ -708,10 +699,13 @@ private fun DefaultPreview() {
             MainFragment(
                 allPerson = personSample,
                 accountList = accountAndOwnerWithTransactionsSample,
-                filteredTransactionList = LoadedTransactionDetailsState(
-                    transactionListItemDetailsSample
+                filteredTransactionList = Result.Success(
+                    LoadedTransactionDetailsState(
+                        transactionListItemDetailsSample
+                    )
                 ),
                 principalPersonSummaryState = personSummaryStateSample,
+                principalPerson = personSummaryStateSample.person,
                 navPosition = navPosition,
                 range = Pair(LocalDate.now(), LocalDate.now()),
                 personFilterValue = false,

@@ -48,10 +48,10 @@ import com.jmml.gazege.ui.views.category.CategoryListView
 import com.jmml.gazege.ui.views.category.ahorroExcesoTexto
 import com.jmml.gazege.ui.views.category.excessColor
 import com.jmml.gazege.ui.widgets.DataView
-import com.jmml.gazege.ui.widgets.GIndefiniteCircularProgressIndicator
-import com.jmml.gazege.ui.widgets.GProgressIndicator
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
+import com.jmml.zoo.ui.state.ZProgressIndicator
 
 @Composable
 fun EmptyEditarCategorias(
@@ -86,7 +86,7 @@ fun EmptyEditarCategorias(
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column {
-                GIndefiniteCircularProgressIndicator()
+                ZIndefiniteCircularProgressIndicator()
                 Text(stringResource(id = R.string.Cargando))
             }
         }
@@ -231,7 +231,7 @@ fun LoadedEditarCategorias(
                 )
             }
         }
-        GProgressIndicator(
+        ZProgressIndicator(
             compleition = totalCompleition,
             labelString = stringResource(id = R.string.Progreso),
             color = GazegeTheme.gazegeColorScheme.neutral,

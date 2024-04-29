@@ -35,12 +35,12 @@ import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.ui.views.account.AccountDropDownMenu
 import com.jmml.gazege.ui.views.transaction.AccountAndOwnerNode
-import com.jmml.gazege.ui.widgets.ButtonField
 import com.jmml.gazege.ui.widgets.ComboBox
 import com.jmml.gazege.ui.widgets.Form
 import com.jmml.gazege.ui.widgets.GTriStateCheckbox
-import com.jmml.gazege.ui.widgets.GazegeSegmentedButton
-import com.jmml.gazege.ui.widgets.SegmentedButtonItem
+import com.jmml.zoo.ui.input.ButtonField
+import com.jmml.zoo.ui.input.SegmentedButtonItem
+import com.jmml.zoo.ui.input.ZSegmentedButton
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -114,7 +114,7 @@ fun SettingsFragment(
         itemSpacing = 8.dp,
         itemsColumnsModifier = Modifier.padding(PaddingValues(8.dp))
     ) {
-        GazegeSegmentedButton(
+        ZSegmentedButton(
             modifier = Modifier.fillMaxWidth(),
             selectedIndex = null,
             items = listOf(
