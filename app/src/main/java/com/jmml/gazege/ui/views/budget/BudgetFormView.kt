@@ -222,6 +222,10 @@ fun BudgetFormView(
 }
 
 @Composable
+fun LoadingBudgetFormView() {
+}
+
+@Composable
 private fun WeekDaysPicker(
     frequencyType: FrequencyType,
     weekDaysDays: Set<DayOfWeek>,

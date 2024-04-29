@@ -71,7 +71,6 @@ import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.account.LoadedAccountPage
-import com.jmml.gazege.ui.views.account.LoadingAccountPage
 import com.jmml.gazege.ui.views.person.LoadedPersonPage
 import com.jmml.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.jmml.gazege.ui.views.transaction.LoadedTransactionPage
@@ -97,9 +96,10 @@ import java.time.LocalDate
 @Composable
 fun MainFragment(
     allPerson: List<Person>,
-    accountList: Result<List<AccountAndOwnerWithTransactions>>,
+    accountList: List<AccountAndOwnerWithTransactions>,
     filteredTransactionList: Result<LoadedTransactionDetailsState>,
     principalPersonSummaryState: PersonSummaryState,
+    principalPerson: Person?,
     navPosition: NavPosition,
     range: Pair<LocalDate?, LocalDate?>,
     personFilterValue: Boolean,
@@ -291,6 +291,7 @@ fun MainFragment(
             accountList = accountList,
             filteredTransactionList = filteredTransactionList,
             principalPersonSummaryState = principalPersonSummaryState,
+            principalPerson = principalPerson,
             personFilterValue = personFilterValue,
             delPerson = {
                 scope.launch {
@@ -379,8 +380,9 @@ fun MainFragment(
 private fun MainFragmentResponsiveContent(
     layoutPaddingValues: PaddingValues,
     allPerson: List<Person>,
-    accountList: Result<List<AccountAndOwnerWithTransactions>>,
+    accountList: List<AccountAndOwnerWithTransactions>,
     filteredTransactionList: Result<LoadedTransactionDetailsState>,
+    principalPerson: Person?,
     principalPersonSummaryState: PersonSummaryState,
     personFilterValue: Boolean,
     delPerson: (Person) -> Unit,
@@ -555,30 +557,21 @@ private fun MainFragmentResponsiveContent(
     }
 
     val cuentasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
-        when {
-            principalPersonSummaryState is FullPersonSummaryState && accountList is Result.Success -> {
-                LoadedAccountPage(
-                    accountList = accountList.data.filter { person ->
-                        person.owner.id == principalPersonSummaryState.person.id
-                    },
-                    itemHolderPaddingValues = paddingValues,
-                    treeState = accountState,
-                    delAccount = delAccount,
-                    editAccount = onEditAccountRequested,
-                    startDate = null,
-                    endDate = null,
-                    detailAccount = onAccountDetailRequested,
-                    nestedScrollConnection = nestedScrollConnection,
-                    onZeroElementsChanged = onZeroElementsChanged,
-                    onFirstElementVisibilityChanged = onFirstElementVisibleChanged
-                ) { newTitle -> onTitleChanged(newTitle) }
-            }
-
-            else -> {
-                onTitleChanged(stringResource(id = R.string.cuentas))
-                LoadingAccountPage()
-            }
-        }
+        LoadedAccountPage(
+            accountList = accountList.filter { person ->
+                person.owner.id == principalPerson?.id
+            },
+            itemHolderPaddingValues = paddingValues,
+            treeState = accountState,
+            delAccount = delAccount,
+            editAccount = onEditAccountRequested,
+            startDate = null,
+            endDate = null,
+            detailAccount = onAccountDetailRequested,
+            nestedScrollConnection = nestedScrollConnection,
+            onZeroElementsChanged = onZeroElementsChanged,
+            onFirstElementVisibilityChanged = onFirstElementVisibleChanged
+        ) { newTitle -> onTitleChanged(newTitle) }
     }
 
     val personsPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
@@ -705,13 +698,14 @@ private fun DefaultPreview() {
         GazegeTheme(darkTheme = true) {
             MainFragment(
                 allPerson = personSample,
-                accountList = Result.Success(accountAndOwnerWithTransactionsSample),
+                accountList = accountAndOwnerWithTransactionsSample,
                 filteredTransactionList = Result.Success(
                     LoadedTransactionDetailsState(
                         transactionListItemDetailsSample
                     )
                 ),
                 principalPersonSummaryState = personSummaryStateSample,
+                principalPerson = personSummaryStateSample.person,
                 navPosition = navPosition,
                 range = Pair(LocalDate.now(), LocalDate.now()),
                 personFilterValue = false,

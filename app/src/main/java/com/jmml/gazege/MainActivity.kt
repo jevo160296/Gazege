@@ -51,10 +51,12 @@ import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.MediumHeadline
+import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.flow.collectAsState
 import com.jmml.zoo.ui.state.ZDefiniteCircularProgressIndicator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlin.math.min
@@ -125,8 +127,11 @@ class MainActivity : ComponentActivity() {
                     mainViewModel
                         .categoryIdToExportFlow
                         .combine(mainViewModel.categoryWithSubcategoriesAndBudgetWithCalculatedData) { categoryId, categories ->
-                            categoryId to categories
+                            if (categories is Result.Success) {
+                                categoryId to categories.data
+                            } else null
                         }
+                        .filterNotNull()
                         .firstOrNull()
                         ?.let { (categoryId, categories) ->
                             categories

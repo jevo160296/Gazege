@@ -37,12 +37,11 @@ fun NavGraphBuilder.screenEditTransaction(
             viewModelEditTransaction.rememberAccountAndOwnerWithTransactions().value
         val allPerson by viewModelEditTransaction.rememberAllPerson()
         val categories by viewModelEditTransaction.rememberCategories()
-        val budgetWithCalculatedDataAndCategory by viewModelEditTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData()
+        val budgetWithCalculatedDataAndCategory =
+            viewModelEditTransaction.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData().value
 
-        when (accountAndOwnerWithTransactions) {
-            is Result.Error -> Text(text = "Error ${accountAndOwnerWithTransactions.exception}")
-            Result.Loading -> LoadingTransactionFormFragment()
-            is Result.Success -> TransactionFormFragment(
+        when {
+            accountAndOwnerWithTransactions is Result.Success && budgetWithCalculatedDataAndCategory is Result.Success -> TransactionFormFragment(
                 contentPadding = PaddingValues(8.dp),
                 itemSpacing = 8.dp,
                 transactionAndAccounts = selectedTransactionAndAccounts,
@@ -54,12 +53,20 @@ fun NavGraphBuilder.screenEditTransaction(
                 },
                 personList = allPerson,
                 categoryList = categories,
-                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
                 onAccountAddRequested = onNavigateToAddAccount
             ) { editedTransaction, _ ->
                 viewModelEditTransaction.updateTransaction(editedTransaction)
                 onNavigateUp()
             }
+
+            accountAndOwnerWithTransactions is Result.Error || budgetWithCalculatedDataAndCategory is Result.Error -> Text(
+                text =
+                if (accountAndOwnerWithTransactions is Result.Error) "AccountError: ${accountAndOwnerWithTransactions.exception}" else "" +
+                        if (budgetWithCalculatedDataAndCategory is Result.Error) "BudgetError: ${budgetWithCalculatedDataAndCategory.exception}" else ""
+            )
+
+            else -> LoadingTransactionFormFragment()
         }
     }
 }

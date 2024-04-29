@@ -50,6 +50,7 @@ fun NavGraphBuilder.screenMain(
         val accountAndOwnerWithTransactions by viewModelMain.rememberAccountAndOwnerWithTransactions()
         val filteredTransactionListItemDetails by viewModelMain.rememberFilteredTransactionListItemDetails()
         val principalPersonSummaryState by viewModelMain.rememberPersonSummaryState()
+        val principalPerson by viewModelMain.rememberPrincipalPerson()
         val range by viewModelMain.rememberRange()
         val transactionFilters by viewModelMain.rememberTransactionFiltersValue()
         val categoriesFiltersValue by viewModelMain.rememberCategoriesFiltersValue()
@@ -64,7 +65,7 @@ fun NavGraphBuilder.screenMain(
         val snackbarHostState = SnackbarHostState()
 
         val dataLoaded =
-            filteredTransactionListItemDetails is Result.Success && accountAndOwnerWithTransactions is Result.Success
+            filteredTransactionListItemDetails is Result.Success
 
         LaunchedEffect(key1 = dataLoaded) {
             if (dataLoaded) {
@@ -79,6 +80,7 @@ fun NavGraphBuilder.screenMain(
                 accountList = accountAndOwnerWithTransactions,
                 filteredTransactionList = filteredTransactionListItemDetails,
                 principalPersonSummaryState = principalPersonSummaryState,
+                principalPerson = principalPerson,
                 navPosition = navPosition,
                 range = range,
                 personFilterValue = personFilterValue,

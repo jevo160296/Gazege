@@ -163,6 +163,10 @@ fun CategoryForm(
 }
 
 @Composable
+fun LoadingCategoryForm() {
+}
+
+@Composable
 private fun budgetTypeMapper(budgetType: BudgetType) = when (budgetType) {
     BudgetType.FIXED -> stringResource(id = R.string.Fijo)
     BudgetType.VARIABLE -> stringResource(id = R.string.Variable)
