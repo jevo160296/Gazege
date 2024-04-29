@@ -2121,14 +2121,11 @@ class MainViewModel(
             .combine(accountDetail) { combined, accountDetail ->
                 combined.run {
                     if (accountDetail != null) {
-                        val min = accountDetail
-                            .accountAndOwnerWithTransactions
-                            .allTransactions
+                        val transactions = accountDetail.allTransactionsWithPocketTransactions
+                        val min = transactions
                             .filter { it.date.isBetween(range.first, range.second) }
                             .minOfOrNull { it.amount.toFloat() } ?: 0f
-                        val max = accountDetail
-                            .accountAndOwnerWithTransactions
-                            .allTransactions
+                        val max = transactions
                             .filter { it.date.isBetween(range.first, range.second) }
                             .maxOfOrNull { it.amount.toFloat() } ?: 0f
                         _accountValueFilter
