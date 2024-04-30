@@ -10,9 +10,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.jmml.gazege.core.AppRepository
 import com.jmml.gazege.core.entities.Account
@@ -50,6 +52,7 @@ import com.jmml.gazege.core.export.writePersons
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
 import com.jmml.gazege.ui.Settings
+import com.jmml.gazege.ui.clockFlow
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
 import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
@@ -73,6 +76,7 @@ import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.coroutines.safeLaunch
+import com.jmml.zoo.extensions.flow.asResult
 import com.jmml.zoo.extensions.flow.collectAsState
 import com.jmml.zoo.extensions.flow.shareInViewModel
 import com.jmml.zoo.extensions.flow.zDistinctUntilChanged
@@ -139,7 +143,8 @@ class MainViewModel(
     private val settings: Settings,
     private val resultLauncherSaveData: ActivityResultLauncher<String>,
     private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>,
-    private val resultLauncherExportDetails: ActivityResultLauncher<String>
+    private val resultLauncherExportDetails: ActivityResultLauncher<String>,
+    private val getLifecycle: () -> Lifecycle
 ) :
     ViewModel() {
     fun appInitialized(): Boolean {
@@ -147,6 +152,8 @@ class MainViewModel(
         appInitialized = true
         return currentValue
     }
+
+    private val lifecycle get() = getLifecycle()
 
     fun startActivityToSaveData(
         suggestedName: String
@@ -197,10 +204,27 @@ class MainViewModel(
             )
         )
 
-    private val today = MutableStateFlow(LocalDate.now())
+    private val _today = MutableStateFlow(LocalDate.now())
+    private val _calendarDay = clockFlow()
+        .map { it.toLocalDate() }
+        .zDistinctUntilChanged { old, new -> old == new }
+        .asResult()
+        .transform {
+            emit(it)
+            emit(Result.Loading)
+        }
+
+    private val today = _today
+        .combine(_calendarDay) { today, calendarDay ->
+            if (calendarDay is Result.Success) _today.updateAndGet { calendarDay.data }
+            else today
+        }
+        .zDistinctUntilChanged { old, new -> old == new }
+        .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+        .shareInViewModel()
 
     fun updateToday(newDate: LocalDate) {
-        today.value = newDate
+        _today.value = newDate
     }
 
     @Composable
@@ -2563,7 +2587,8 @@ class MainViewModelFactory(
     private val settings: Settings,
     private val resultLauncherSaveTransaction: ActivityResultLauncher<String>,
     private val resultLauncherOpenDocument: ActivityResultLauncher<Array<String>>,
-    private val resultLauncherExportDetails: ActivityResultLauncher<String>
+    private val resultLauncherExportDetails: ActivityResultLauncher<String>,
+    private val getLifecycle: () -> Lifecycle
 ) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -2574,7 +2599,8 @@ class MainViewModelFactory(
                 settings,
                 resultLauncherSaveTransaction,
                 resultLauncherOpenDocument,
-                resultLauncherExportDetails
+                resultLauncherExportDetails,
+                getLifecycle
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
