@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
             resultLauncherSaveData,
             resultLauncherOpenDocument,
             resultLauncherExportDetails
-        )
+        ) { lifecycle }
     }
 
     private fun handleIntent() {
