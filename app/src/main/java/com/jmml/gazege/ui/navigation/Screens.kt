@@ -32,7 +32,6 @@ fun MainNavHost(
     onDataLoaded: () -> Unit
 ) {
     val current = navController.currentBackStackEntryAsState()
-    val backstackSize = navController.rememberBackQueueSize()
     val currentRoute = current.value?.destination?.route
     Box(modifier = Modifier
         .background(MaterialTheme.colorScheme.background)
@@ -124,7 +123,7 @@ fun MainNavHost(
             )
             screenAddTransaction(
                 viewModelAddTransaction = mainViewModel.viewModelAddTransaction,
-                onNavigateUp = { navController.navigateUpOrClose(backstackSize) { onCloseApp() } },
+                onNavigateUp = { navController.navigateUpOrClose { onCloseApp() } },
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onDataLoaded = onDataLoaded
             )
@@ -209,18 +208,12 @@ fun MainNavHost(
     }
 }
 
-@Composable
-fun NavController.rememberBackQueueSize(): Int {
-    //val currentBackStack by this.currentBackStack.collectAsState()
-    return 2
-}
-
-fun NavController.navigateUpOrClose(
-    backQueueSize: Int,
-    onCloseApp: () -> Unit
-) {
+fun NavController.navigateUpOrClose(onCloseApp: () -> Unit) {
+    val lastScreenIsEmpty = previousBackStackEntry
+        ?.destination
+        ?.route
+        ?.let { it == INITIALSCREENROUTE }
+        ?: true
     navigateUp()
-    if (backQueueSize <= 1) {
-        onCloseApp()
-    }
+    if (lastScreenIsEmpty) onCloseApp()
 }
