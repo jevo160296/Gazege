@@ -55,7 +55,9 @@ fun MainNavHost(
                     } else {
                         this
                     }
-                }
+                },
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
         ) {
             screenInitialScreen(
                 viewModelInitialScreen = mainViewModel.viewModelInitial,
