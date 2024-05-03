@@ -182,8 +182,11 @@ fun MainFragment(
         floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(selected = navPosition == NavPosition.TRANSACCIONES,
+                NavigationBarItem(
+                    selected = navPosition == NavPosition.TRANSACCIONES,
                     onClick = { onNavStatusChanged(NavPosition.TRANSACCIONES) },
+                    label = { Text(text = stringResource(id = R.string.transacciones)) },
+                    alwaysShowLabel = false,
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.transaccion),
@@ -193,6 +196,8 @@ fun MainFragment(
                 NavigationBarItem(
                     selected = navPosition == NavPosition.CUENTAS,
                     onClick = { onNavStatusChanged(NavPosition.CUENTAS) },
+                    label = { Text(text = stringResource(id = R.string.cuentas)) },
+                    alwaysShowLabel = false,
                     icon = {
                         Icon(
                             painter = painterResource(
@@ -203,6 +208,8 @@ fun MainFragment(
                 NavigationBarItem(
                     selected = navPosition == NavPosition.CATEGORIAS,
                     onClick = { onNavStatusChanged(NavPosition.CATEGORIAS) },
+                    label = { Text(text = stringResource(id = R.string.Categorias)) },
+                    alwaysShowLabel = false,
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.categorias),
@@ -212,6 +219,8 @@ fun MainFragment(
                 NavigationBarItem(
                     selected = navPosition == NavPosition.PERSONS,
                     onClick = { onNavStatusChanged(NavPosition.PERSONS) },
+                    label = { Text(text = stringResource(id = R.string.personas)) },
+                    alwaysShowLabel = false,
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_baseline_person_24),
