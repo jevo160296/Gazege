@@ -20,6 +20,12 @@ data class AccountAndOwnerWithTransactionsAndPockets(
             *pockets.flatMap { it.allTransactionsWithPocketTransactions }.toTypedArray()
         )
 
+    val allPocketsAndSubPockets: List<AccountAndOwnerWithTransactionsAndPockets> = pockets
+        .flatMap {
+            listOf(it)
+                .plus(it.allPocketsAndSubPockets)
+        }
+
     companion object {
         fun from(
             accountAndOwnerWithTransactions: AccountAndOwnerWithTransactions,

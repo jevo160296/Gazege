@@ -51,7 +51,7 @@ import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.core.entities.TransactionListItemDetailsWithAccount
 import com.jmml.gazege.plot.Plot
 import com.jmml.gazege.plot.PlotDataFromTransactions
 import com.jmml.gazege.ui.DatabaseSample
@@ -80,14 +80,15 @@ import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.logging.Logger
 
 data class AccountDetailData(
     val account: AccountAndOwner,
     val total: Double,
     val childrenTotal: Double,
-    val allTransactions: List<TransactionListItemDetails>,
-    val inTransactions: List<TransactionListItemDetails>,
-    val outTransactions: List<TransactionListItemDetails>,
+    val allTransactions: List<TransactionListItemDetailsWithAccount>,
+    val inTransactions: List<TransactionListItemDetailsWithAccount>,
+    val outTransactions: List<TransactionListItemDetailsWithAccount>,
     val allAccounts: List<Account>,
     val allCategories: List<Category>,
     val budget: List<Budget>,
@@ -95,7 +96,8 @@ data class AccountDetailData(
     val endDate: LocalDate?,
     val principalPerson: Person?
 ) {
-    val allTransactionsListItemDetails: List<TransactionListItemDetails> = allTransactions
+    val allTransactionsListItemDetails: List<TransactionListItemDetailsWithAccount> =
+        allTransactions
 
     val expensesPlotDataFromTransactions: PlotDataFromTransactions =
         PlotDataFromTransactions(outTransactions)
@@ -125,6 +127,14 @@ data class AccountDetailData(
             descriptionFilter: TextFilter,
             valueFilter: DoubleFilter
         ): AccountDetailData {
+            val accountList = listOf(account.accountAndOwnerWithTransactions.account.id)
+                .plus(
+                    account.allPocketsAndSubPockets
+                        .map { it.accountAndOwnerWithTransactions.account.id }
+                )
+                .filterNotNull()
+                .toSet()
+            Logger.getLogger("Ids").info("$accountList")
             return AccountDetailData(
                 account = AccountAndOwner(
                     account.accountAndOwnerWithTransactions.account,
@@ -147,11 +157,12 @@ data class AccountDetailData(
                     .sortedByDescending { it.date }
                     .filter { it.date.isBetween(startDate, endDate) }
                     .let {
-                        TransactionListItemDetails.from(
+                        TransactionListItemDetailsWithAccount.from(
                             it,
                             allCategories,
                             allAccounts,
-                            principalPerson?.id
+                            principalPerson?.id,
+                            accountList
                         )
                     }
                     .applyIncomeFilter(transactionFilters[INCOME_FILTER])
@@ -165,11 +176,12 @@ data class AccountDetailData(
                     .sortedByDescending { it.date }
                     .filter { it.date.isBetween(startDate, endDate) }
                     .let {
-                        TransactionListItemDetails.from(
+                        TransactionListItemDetailsWithAccount.from(
                             it,
                             allCategories,
                             allAccounts,
-                            principalPerson?.id
+                            principalPerson?.id,
+                            accountList
                         )
                     },
                 outTransactions = account
@@ -177,11 +189,12 @@ data class AccountDetailData(
                     .sortedByDescending { it.date }
                     .filter { it.date.isBetween(startDate, endDate) }
                     .let {
-                        TransactionListItemDetails.from(
+                        TransactionListItemDetailsWithAccount.from(
                             it,
                             allCategories,
                             allAccounts,
-                            principalPerson?.id
+                            principalPerson?.id,
+                            accountList
                         )
                     }
             )
@@ -520,7 +533,7 @@ private fun AccountDetailPreview() {
                                 ),
                                 booleanFilterOf(emptyList()),
                                 descriptionFilter = TextFilter(null),
-                                valueFilter = DoubleFilter(null, 0f..0f)
+                                valueFilter = DoubleFilter(null, 0f..0f),
                             )
                         }
                     }
