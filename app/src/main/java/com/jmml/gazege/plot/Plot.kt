@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.doubleToShortMoneyText
 import com.jmml.gazege.ui.theme.GazegeTheme
@@ -47,9 +47,9 @@ import java.time.LocalDate
 import java.time.Period
 
 data class PlotDataFromTransactions(
-    val transactionsListItemDetails: List<TransactionListItemDetails>
-) : PlotData<List<TransactionListItemDetails>> {
-    override val inputData: Array<List<TransactionListItemDetails>>
+    val transactionsListItemDetails: List<ITransactionListDetail>
+) : PlotData<List<ITransactionListDetail>> {
+    override val inputData: Array<List<ITransactionListDetail>>
         get() = arrayOf(
             transactionsListItemDetails
         )
@@ -70,7 +70,7 @@ data class PlotDataFromTransactions(
 
     override fun dateMapper(date: LocalDate): Float = mapper?.get(date) ?: 0f
 
-    override fun generateList(inputData: List<TransactionListItemDetails>): List<Pair<LocalDate, Double>> {
+    override fun generateList(inputData: List<ITransactionListDetail>): List<Pair<LocalDate, Double>> {
         val transactions = inputData.map { it.transaction }
         val minDate = dateRange?.start
         val maxDate = dateRange?.endInclusive

@@ -31,6 +31,7 @@ import com.jmml.gazege.core.entities.CategoryWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithTransactions
+import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.Transaction
@@ -2161,20 +2162,20 @@ class MainViewModel(
             }
             .shareInViewModel()
         private val accountDetailData: SharedFlow<AccountDetailData?> = accountDetail
-            .combineDefault(allAccount) { accountDetail, allAccount ->
+            .combine(allAccount) { accountDetail, allAccount ->
                 object {
                     val accountDetail = accountDetail
                     val allAccount = allAccount
                 }
             }
-            .combineDefault(categories) { combined, categories ->
+            .combine(categories) { combined, categories ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
                     val categories = categories
                 }
             }
-            .combineDefault(budget) { combined, budget ->
+            .combine(budget) { combined, budget ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2182,7 +2183,7 @@ class MainViewModel(
                     val budget = budget
                 }
             }
-            .combineDefault(range) { combined, range ->
+            .combine(range) { combined, range ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2191,7 +2192,7 @@ class MainViewModel(
                     val range = range
                 }
             }
-            .combineDefault(principalPerson) { combined, principalPerson ->
+            .combine(principalPerson) { combined, principalPerson ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2201,7 +2202,7 @@ class MainViewModel(
                     val principalPerson = principalPerson
                 }
             }
-            .combineDefault(accountFilterValue) { combined, accountFilterValue ->
+            .combine(accountFilterValue) { combined, accountFilterValue ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2212,7 +2213,7 @@ class MainViewModel(
                     val accountFilterValue = accountFilterValue
                 }
             }
-            .combineDefault(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
+            .combine(accountCategoryFilterValue) { combined, accountCategoryFilterValue ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2224,7 +2225,7 @@ class MainViewModel(
                     val accountCategoryFilterValue = accountCategoryFilterValue
                 }
             }
-            .combineDefault(accountValueFilter) { combined, accountValueFilter ->
+            .combine(accountValueFilter) { combined, accountValueFilter ->
                 object {
                     val accountDetail = combined.accountDetail
                     val allAccount = combined.allAccount
@@ -2250,8 +2251,8 @@ class MainViewModel(
                             principalPerson = principalPerson,
                             transactionFilters = accountFilterValue,
                             categoriesFilter = accountCategoryFilterValue,
-                            valueFilter = accountValueFilter,
-                            descriptionFilter = descriptionFilter
+                            descriptionFilter = descriptionFilter,
+                            valueFilter = accountValueFilter
                         )
                     }
                 }
@@ -2519,7 +2520,7 @@ class MainViewModel(
     val viewModelEditOneBudget = ViewModelEditOneBudget()
 
     companion object {
-        suspend fun List<TransactionListItemDetails>.applyIncomeFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyIncomeFilter(
             incomeFilterValue: Boolean
         ) = withContext(Dispatchers.Default) {
             filter {
@@ -2527,7 +2528,7 @@ class MainViewModel(
             }
         }
 
-        suspend fun List<TransactionListItemDetails>.applyOutcomeFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyOutcomeFilter(
             outcomeFilterValue: Boolean
         ) = withContext(Dispatchers.Default) {
             filter {
@@ -2535,7 +2536,7 @@ class MainViewModel(
             }
         }
 
-        suspend fun List<TransactionListItemDetails>.applyTransferFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyTransferFilter(
             transferFilterValue: Boolean
         ) = withContext(Dispatchers.Default) {
             filter {
@@ -2543,7 +2544,7 @@ class MainViewModel(
             }
         }
 
-        suspend fun List<TransactionListItemDetails>.applyCategoriesFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyCategoriesFilter(
             filters: BooleanFilters<Int?, Pair<String, Int>>
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
@@ -2551,7 +2552,7 @@ class MainViewModel(
             }
         }
 
-        suspend fun List<TransactionListItemDetails>.applyDescriptionFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyDescriptionFilter(
             descriptionFilter: TextFilter
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
@@ -2569,7 +2570,7 @@ class MainViewModel(
             }
         }
 
-        suspend fun List<TransactionListItemDetails>.applyValueFilter(
+        suspend fun <T : ITransactionListDetail> List<T>.applyValueFilter(
             filterValue: DoubleFilter
         ) = withContext(Dispatchers.Default) {
             filterValue

@@ -37,8 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
+import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.core.entities.TransactionListItemDetailsWithAccount
 import com.jmml.gazege.core.entities.TransactionType
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.DateFormat
@@ -108,11 +110,11 @@ fun transactionGroupSelector(transaction: Transaction): String =
 @Composable
 fun TransactionHeaderViewHolder(group: String) = DefaultGroupViewHolder(group)
 
-fun LazyListScope.transactionLazyListItems(
-    transactionList: List<TransactionListItemDetails>,
-    editTransaction: (TransactionListItemDetails) -> Unit,
-    delTransaction: (TransactionListItemDetails) -> Unit,
-    groupSelector: (TransactionListItemDetails) -> String = { transactionGroupSelector(it.transaction) }
+fun <T : ITransactionListDetail> LazyListScope.transactionLazyListItems(
+    transactionList: List<T>,
+    editTransaction: (T) -> Unit,
+    delTransaction: (T) -> Unit,
+    groupSelector: (T) -> String = { transactionGroupSelector(it.transaction) }
 ) = itemsGrouped(
     transactionList,
     groupSelector,
@@ -211,10 +213,106 @@ private fun TransactionViewHolder(
 }
 
 @Composable
-private fun TransactionGroupItemViewHolder(
-    transaction: TransactionListItemDetails,
-    editTransaction: (TransactionListItemDetails) -> Unit,
-    delTransaction: (TransactionListItemDetails) -> Unit
+private fun TransactionWithAccountViewHolder(
+    transaction: TransactionListItemDetailsWithAccount
+) {
+    val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
+        { icon, text, color ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.DefaultPadding))
+            ) {
+                Icon(painter = icon, contentDescription = "Icon", tint = color)
+                SmallEmphasis(text = text, color = color)
+            }
+        }
+    val tipoRow: @Composable () -> Unit = @Composable {
+        when (transaction.transactionType) {
+            TransactionType.INCOME -> iconText(
+                painterResource(R.drawable.ingreso_icon),
+                stringResource(R.string.Ingreso),
+                GazegeTheme.gazegeColorScheme.income
+            )
+
+            TransactionType.OUTCOME -> iconText(
+                painterResource(R.drawable.gasto_icon),
+                stringResource(R.string.Gasto),
+                GazegeTheme.gazegeColorScheme.outcome
+            )
+
+            TransactionType.TRANSFER -> iconText(
+                painterResource(R.drawable.transfer_icon),
+                stringResource(R.string.Transferencia),
+                GazegeTheme.gazegeColorScheme.transfer
+            )
+        }
+    }
+    val accountRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
+        if (transaction.sourceAccount.isIncome.not()) {
+            LargeBody(text = transaction.sourceAccount.name, maxLines = 1)
+        }
+        if (transaction.sourceAccount.isIncome.not() && transaction.destinationAccount.isOutcome.not()) {
+            LargeEmphasis(text = " --> ", maxLines = 1)
+        }
+        if (transaction.destinationAccount.isOutcome.not()) {
+            LargeBody(text = transaction.destinationAccount.name, maxLines = 1)
+        }
+    }
+    val categoryRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
+        LargeBody(
+            text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+        )
+    }
+    val descriptionRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
+        LargeBody(text = transaction.transaction.description)
+    }
+
+    Column {
+        tipoRow()
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.7f),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Row(modifier = Modifier) { accountRow() }
+                Row(modifier = Modifier) { categoryRow() }
+                Row(modifier = Modifier) { descriptionRow() }
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(0.3f),
+                horizontalAlignment = Alignment.End
+            ) {
+                LargeBody(
+                    text = doubleToMoneyString(transaction.transaction.amount),
+                    color = when (transaction.transactionAccountType) {
+                        TransactionType.INCOME -> GazegeTheme.gazegeColorScheme.income
+                        TransactionType.OUTCOME -> GazegeTheme.gazegeColorScheme.outcome
+                        TransactionType.TRANSFER -> MaterialTheme.colorScheme.onBackground
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
+    transaction: T,
+    editTransaction: (T) -> Unit,
+    delTransaction: (T) -> Unit
 ) {
     var menuIdExpanded: Int? by remember {
         mutableStateOf(null)
@@ -224,7 +322,10 @@ private fun TransactionGroupItemViewHolder(
         onItemLongPressed = { menuIdExpanded = transaction.transaction.id }
     ) {
         Box {
-            TransactionViewHolder(transaction = transaction)
+            if (transaction is TransactionListItemDetails) TransactionViewHolder(transaction = transaction)
+            else if (transaction is TransactionListItemDetailsWithAccount) TransactionWithAccountViewHolder(
+                transaction = transaction
+            )
         }
         DropdownMenu(
             expanded = menuIdExpanded == transaction.transaction.id,
@@ -249,10 +350,10 @@ private fun TransactionGroupItemViewHolder(
 }
 
 @Composable
-private fun LoadedTransactionRecyclerView(
-    transactionList: List<TransactionListItemDetails>,
-    editTransaction: (TransactionListItemDetails) -> Unit,
-    delTransaction: (TransactionListItemDetails) -> Unit,
+private fun <T : ITransactionListDetail> LoadedTransactionRecyclerView(
+    transactionList: List<T>,
+    editTransaction: (T) -> Unit,
+    delTransaction: (T) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     state: LazyListState
