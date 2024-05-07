@@ -77,7 +77,7 @@
     <string name="Incluir_deudas">Include debts</string>
     <string name="Flujo_estimado_hasta_hoy">Estimated flow until now</string>
     <string name="Flujo_total">Total flow</string>
-    <string name="Flujo_real">Real flow</string>
+    <string name="Flujo_categorizado">Categorized flow</string>
     <string name="Falta_pagar_recibir">Left to pay-receive</string>
     <string name="Flujo_estimado_desde_manana">Estimated flow since tomorrow</string>
     <string name="Nueva_transaccion">Add transaction</string>

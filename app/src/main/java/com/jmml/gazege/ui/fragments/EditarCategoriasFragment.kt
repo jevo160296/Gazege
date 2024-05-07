@@ -47,6 +47,7 @@ import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryListView
 import com.jmml.gazege.ui.views.category.ahorroExcesoTexto
 import com.jmml.gazege.ui.views.category.excessColor
+import com.jmml.gazege.ui.views.category.faltaPagarRecibirTexto
 import com.jmml.gazege.ui.widgets.DataView
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
@@ -67,14 +68,9 @@ fun EmptyEditarCategorias(
                 .height(IntrinsicSize.Min)
         ) {
             DataView(
-                title = stringResource(id = R.string.Falta_pagar_recibir),
+                title = faltaPagarRecibirTexto(value = editarCategoriasState.leftToPay),
                 value = doubleToMoneyString(editarCategoriasState.leftToPay),
                 modifier = Modifier.weight(1f)
-            )
-            DataView(
-                title = stringResource(id = R.string.Flujo_real),
-                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                modifier = Modifier.weight(1f),
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_total),
@@ -82,6 +78,11 @@ fun EmptyEditarCategorias(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(1f)
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_categorizado),
+                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                modifier = Modifier.weight(1f),
             )
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -162,22 +163,22 @@ fun LoadedEditarCategorias(
 
         ) {
             DataView(
-                title = stringResource(id = R.string.Falta_pagar_recibir),
+                title = faltaPagarRecibirTexto(editarCategoriasState.leftToPay),
                 value = doubleToMoneyString(editarCategoriasState.leftToPay),
                 enabled = false,
                 modifier = Modifier.weight(1f)
-            )
-            DataView(
-                title = stringResource(id = R.string.Flujo_real),
-                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
-                enabled = false,
-                modifier = Modifier.weight(1f),
             )
             DataView(
                 title = ahorroExcesoTexto(value = totalAhorroExceso),
                 value = doubleToMoneyString(totalAhorroExceso),
                 enabled = false,
                 modifier = Modifier.weight(1f)
+            )
+            DataView(
+                title = stringResource(id = R.string.Flujo_categorizado),
+                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                enabled = false,
+                modifier = Modifier.weight(1f),
             )
         }
         Row(
