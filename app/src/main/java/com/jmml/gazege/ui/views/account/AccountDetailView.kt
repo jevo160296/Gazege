@@ -80,7 +80,6 @@ import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.zoo.extensions.localdate.isBetween
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.util.logging.Logger
 
 data class AccountDetailData(
     val account: AccountAndOwner,
@@ -134,7 +133,6 @@ data class AccountDetailData(
                 )
                 .filterNotNull()
                 .toSet()
-            Logger.getLogger("Ids").info("$accountList")
             return AccountDetailData(
                 account = AccountAndOwner(
                     account.accountAndOwnerWithTransactions.account,
@@ -226,8 +224,8 @@ fun AccountDetail(
         mutableStateOf(showGraphs)
     }
     val showLoadingScreen = data == null || data.account.account.id != accountAndOwner.account.id
-    Crossfade(targetState = showLoadingScreen, label = "") {
-        if (it) {
+    Crossfade(targetState = showLoadingScreen, label = "") { showLoading ->
+        if (showLoading) {
             NullAccountDetail(accountAndOwner)
         } else {
             NotNullAccountDetail(
