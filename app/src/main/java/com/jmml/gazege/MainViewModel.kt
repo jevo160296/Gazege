@@ -2317,6 +2317,9 @@ class MainViewModel(
         @Composable
         fun rememberAccountAndOwner() = accountAndOwner.collectAsState(emptyList())
 
+        @Composable
+        fun rememberDateRange() = range.collectAsState(initial = null to null)
+
         fun deleteAccount(account: Account) = this@MainViewModel.deleteAccount(account)
 
         fun updateAccountFilter(newValue: BooleanFilters<String, Nothing>) =
@@ -2339,6 +2342,10 @@ class MainViewModel(
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
+
+        fun onDateRangeChange(startDate: LocalDate?, endDate: LocalDate?) {
+            this@MainViewModel.updateRange(startDate, endDate)
+        }
     }
 
     inner class ViewModelPersonDetail {

@@ -1,6 +1,8 @@
 package com.jmml.gazege.ui.fragments
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +27,7 @@ import com.jmml.gazege.ui.savers.PartialTransactionAndAccounts
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.jmml.gazege.ui.widgets.Form
+import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import java.time.LocalDate
 
 
@@ -186,4 +189,5 @@ fun TransactionFormFragment(
 
 @Composable
 fun LoadingTransactionFormFragment() {
+    Box(Modifier.fillMaxSize()) { ZIndefiniteCircularProgressIndicator() }
 }

@@ -107,7 +107,7 @@ private fun CategoryAndBudgetViewHolder(
     ) {
         Column {
             expandedVisibility { Text(faltaPagarRecibirTexto(value = leftToPay)) }
-            expandedVisibility { Text(stringResource(id = R.string.Flujo_real)) }
+            expandedVisibility { Text(stringResource(id = R.string.Flujo_categorizado)) }
             expandedVisibility { Text(stringResource(id = R.string.Flujo_total)) }
             expandedVisibility { Text(stringResource(id = R.string.estimacion_inicial)) }
             expandedVisibility { Text(ahorroExcesoTexto(value = ahorroExceso)) }

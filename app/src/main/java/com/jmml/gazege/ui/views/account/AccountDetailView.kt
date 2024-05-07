@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,9 +80,10 @@ import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.zoo.extensions.localdate.isBetween
+import com.jmml.zoo.ui.layout.CollapsibleContent
+import com.jmml.zoo.ui.layout.CollapsibleContentDefaults
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.util.logging.Logger
 
 data class AccountDetailData(
     val account: AccountAndOwner,
@@ -134,7 +137,6 @@ data class AccountDetailData(
                 )
                 .filterNotNull()
                 .toSet()
-            Logger.getLogger("Ids").info("$accountList")
             return AccountDetailData(
                 account = AccountAndOwner(
                     account.accountAndOwnerWithTransactions.account,
@@ -220,14 +222,16 @@ fun AccountDetail(
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     valueFilter: DoubleFilter,
-    onValueFilterChanged: (DoubleFilter) -> Unit
+    onValueFilterChanged: (DoubleFilter) -> Unit,
+    dateRange: Pair<LocalDate?, LocalDate?>,
+    onDateRangeChange: (newStart: LocalDate?, newEnd: LocalDate?) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
     }
     val showLoadingScreen = data == null || data.account.account.id != accountAndOwner.account.id
-    Crossfade(targetState = showLoadingScreen, label = "") {
-        if (it) {
+    Crossfade(targetState = showLoadingScreen, label = "") { showLoading ->
+        if (showLoading) {
             NullAccountDetail(accountAndOwner)
         } else {
             NotNullAccountDetail(
@@ -251,7 +255,9 @@ fun AccountDetail(
                 descriptionFilterState = descriptionFilterState,
                 onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
                 valueFilter = valueFilter,
-                onValueFilterChanged = onValueFilterChanged
+                onValueFilterChanged = onValueFilterChanged,
+                dateRange = dateRange,
+                onDateRangeChange = onDateRangeChange
             )
         }
     }
@@ -274,6 +280,8 @@ private fun NotNullAccountDetail(
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
     filters: BooleanFilters<String, Nothing>,
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
+    dateRange: Pair<LocalDate?, LocalDate?>,
+    onDateRangeChange: (newStart: LocalDate?, newEnd: LocalDate?) -> Unit,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
@@ -293,6 +301,8 @@ private fun NotNullAccountDetail(
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
     }
+
+    val scrollBehavior = CollapsibleContentDefaults.scrollBehavior()
     EntityDetail(
         modalController = modalController,
         title = stringResource(id = R.string.cuenta) +
@@ -335,70 +345,77 @@ private fun NotNullAccountDetail(
             }
         }
     ) {
-        LargeEmphasis(
-            text =
-            stringResource(id = R.string.Propietario) +
-                    " ${account.owner.name}",
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        )
-        Filter(
-            modifier = Modifier.fillMaxWidth(),
-            dateFilterVisible = false,
-            startDate = null,
-            endDate = null,
-            onRangeChanged = { _, _ -> },
-            transactionsFilterVisible = true,
-            transactionFilters = filters,
-            onTransactionFiltersChanged = onFiltersChanged,
-            categoriesFilter = categoriesFilter,
-            onCategoriesFilterChanged = onCategoriesFilterChanged,
-            valueFilterState = valueFilter,
-            onValueFilterStateChanged = onValueFilterChanged,
-            descriptionFilterState = descriptionFilterState,
-            onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            DataView(
-                modifier = Modifier.weight(1f),
-                title = stringResource(id = R.string.total),
-                value = doubleToMoneyString(total),
-                enabled = false
-            )
-            DataView(
-                modifier = Modifier.weight(1f),
-                title = stringResource(id = R.string.TotalConBolsillos),
-                value = doubleToMoneyString(total + childrenTotal),
-                enabled = false
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            Switch(
-                checked = switchEnabled,
-                onCheckedChange = onShowGraphsChanged,
-                thumbContent = if (switchEnabled) {
-                    @Composable {
-                        Icon(
-                            modifier = Modifier
-                                .size(SwitchDefaults.IconSize),
-                            painter = painterResource(id = R.drawable.ic_round_check_24),
-                            contentDescription = "Check",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                } else {
-                    null
+        CollapsibleContent(scrollBehavior = scrollBehavior) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                LargeEmphasis(
+                    text =
+                    stringResource(id = R.string.Propietario) +
+                            " ${account.owner.name}",
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                )
+                Filter(
+                    modifier = Modifier.fillMaxWidth(),
+                    dateFilterVisible = true,
+                    startDate = dateRange.first,
+                    endDate = dateRange.second,
+                    onRangeChanged = onDateRangeChange,
+                    transactionsFilterVisible = true,
+                    transactionFilters = filters,
+                    onTransactionFiltersChanged = onFiltersChanged,
+                    categoriesFilter = categoriesFilter,
+                    onCategoriesFilterChanged = onCategoriesFilterChanged,
+                    valueFilterState = valueFilter,
+                    onValueFilterStateChanged = onValueFilterChanged,
+                    descriptionFilterState = descriptionFilterState,
+                    onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    DataView(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(id = R.string.total),
+                        value = doubleToMoneyString(total),
+                        enabled = false
+                    )
+                    DataView(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(id = R.string.TotalConBolsillos),
+                        value = doubleToMoneyString(total + childrenTotal),
+                        enabled = false
+                    )
                 }
-            )
-            LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    Switch(
+                        checked = switchEnabled,
+                        onCheckedChange = onShowGraphsChanged,
+                        thumbContent = if (switchEnabled) {
+                            @Composable {
+                                Icon(
+                                    modifier = Modifier
+                                        .size(SwitchDefaults.IconSize),
+                                    painter = painterResource(id = R.drawable.ic_round_check_24),
+                                    contentDescription = "Check",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                    LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+                }
+            }
         }
         LazyColumn(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             contentPadding =
             dimensionResource(id = R.dimen.DefaultPadding).let {
                 PaddingValues(
@@ -497,7 +514,9 @@ private fun NullAccountDetail(
         descriptionFilterState = TextFilter(null),
         onDescriptionFilterStateChanged = {},
         valueFilter = DoubleFilter(null, 0f..0f),
-        onValueFilterChanged = {}
+        onValueFilterChanged = {},
+        dateRange = null to null,
+        onDateRangeChange = { _, _ -> }
     )
 }
 
@@ -540,6 +559,8 @@ private fun AccountDetailPreview() {
                     AccountDetail(
                         accountAndOwner = accountAndOwnerSample.first(),
                         data = accountDetailData,
+                        showGraphs = false,
+                        onShowGraphsChanged = {},
                         onAction = { account, action ->
                             scope.launch {
                                 snackBackState.showSnackbar(
@@ -550,6 +571,9 @@ private fun AccountDetailPreview() {
                                 )
                             }
                         },
+                        fabExpanded = false,
+                        onFabExpandedChanged = {},
+                        onAddTransactionRequested = {},
                         onTransactionAction = { transaction, action ->
                             scope.launch {
                                 snackBackState.showSnackbar(
@@ -560,11 +584,6 @@ private fun AccountDetailPreview() {
                                 )
                             }
                         },
-                        showGraphs = false,
-                        onShowGraphsChanged = {},
-                        onAddTransactionRequested = {},
-                        onFabExpandedChanged = {},
-                        fabExpanded = false,
                         filters = booleanFilterOf(emptyList()),
                         onFiltersChanged = {},
                         categoriesFilter = booleanFilterOf(emptyList()),
@@ -572,7 +591,9 @@ private fun AccountDetailPreview() {
                         descriptionFilterState = TextFilter(null),
                         onDescriptionFilterStateChanged = {},
                         valueFilter = DoubleFilter(null, 0f..0f),
-                        onValueFilterChanged = {}
+                        onValueFilterChanged = {},
+                        dateRange = null to null,
+                        onDateRangeChange = { _, _ -> }
                     )
                 }
             }

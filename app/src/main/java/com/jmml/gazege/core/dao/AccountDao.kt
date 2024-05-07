@@ -129,14 +129,8 @@ interface AccountDao {
             endDate: LocalDate?
         ): Double {
             val newRange = Pair(startDate, endDate)
-            val shouldBeCalculated = account.accountAndOwnerWithTransactions.childrenTotal.isNaN()
-                    || account.accountAndOwnerWithTransactions.range != newRange
-            if (shouldBeCalculated) {
-                val childrenTotal = calculateChildrenTotal(account, startDate, endDate)
-                account.accountAndOwnerWithTransactions.childrenTotal = childrenTotal
-                account.accountAndOwnerWithTransactions.range = newRange
-            }
-            return account.accountAndOwnerWithTransactions.childrenTotal
+            account.accountAndOwnerWithTransactions.range = newRange
+            return calculateChildrenTotal(account, startDate, endDate)
         }
 
         fun getTotal(
