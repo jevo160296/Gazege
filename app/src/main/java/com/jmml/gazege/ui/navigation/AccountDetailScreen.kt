@@ -66,29 +66,20 @@ fun NavGraphBuilder.screenAccountDetail(
             AccountDetail(
                 accountAndOwner = account,
                 data = data,
+                showGraphs = showGraphs,
+                onShowGraphsChanged = {
+                    coroutineScope.launch {
+                        withContext(Dispatchers.Default) {
+                            showGraphs = it
+                        }
+                    }
+                },
                 onAction = { actionAccount, action ->
                     when (action) {
                         AccountAction.EDIT -> onNavigateToEditAccount(accountId)
                         AccountAction.DELETE -> {
                             onNavigateUp()
                             viewModelAccountDetail.deleteAccount(actionAccount)
-                        }
-                    }
-                },
-                onTransactionAction = { transaction, action ->
-                    val transactionId = transaction.id
-                    when (action) {
-                        TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
-                        TransactionAction.DELETE -> viewModelAccountDetail.deleteTransaction(
-                            transaction
-                        )
-                    }
-                },
-                showGraphs = showGraphs,
-                onShowGraphsChanged = {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.Default) {
-                            showGraphs = it
                         }
                     }
                 },
@@ -101,6 +92,15 @@ fun NavGraphBuilder.screenAccountDetail(
                         account.account
                     )
                 },
+                onTransactionAction = { transaction, action ->
+                    val transactionId = transaction.id
+                    when (action) {
+                        TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
+                        TransactionAction.DELETE -> viewModelAccountDetail.deleteTransaction(
+                            transaction
+                        )
+                    }
+                },
                 filters = accountFilterValue,
                 onFiltersChanged = viewModelAccountDetail::updateAccountFilter,
                 categoriesFilter = categoriesFilter,
@@ -108,7 +108,9 @@ fun NavGraphBuilder.screenAccountDetail(
                 descriptionFilterState = descriptionFilter,
                 onDescriptionFilterStateChanged = viewModelAccountDetail::updateDescriptionFilter,
                 valueFilter = valueFilter,
-                onValueFilterChanged = viewModelAccountDetail::updateValueFilter
+                onValueFilterChanged = viewModelAccountDetail::updateValueFilter,
+                dateRange = viewModelAccountDetail.rememberDateRange().value,
+                onDateRangeChange = viewModelAccountDetail::onDateRangeChange
             )
         } else {
             Text("Cuenta vacía")

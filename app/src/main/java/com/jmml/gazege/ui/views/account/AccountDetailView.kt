@@ -218,7 +218,9 @@ fun AccountDetail(
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     valueFilter: DoubleFilter,
-    onValueFilterChanged: (DoubleFilter) -> Unit
+    onValueFilterChanged: (DoubleFilter) -> Unit,
+    dateRange: Pair<LocalDate?, LocalDate?>,
+    onDateRangeChange: (newStart: LocalDate?, newEnd: LocalDate?) -> Unit
 ) {
     var innerShowGraphs by remember {
         mutableStateOf(showGraphs)
@@ -249,7 +251,9 @@ fun AccountDetail(
                 descriptionFilterState = descriptionFilterState,
                 onDescriptionFilterStateChanged = onDescriptionFilterStateChanged,
                 valueFilter = valueFilter,
-                onValueFilterChanged = onValueFilterChanged
+                onValueFilterChanged = onValueFilterChanged,
+                dateRange = dateRange,
+                onDateRangeChange = onDateRangeChange
             )
         }
     }
@@ -272,6 +276,8 @@ private fun NotNullAccountDetail(
     onAddTransactionRequested: (AddTransactionAction) -> Unit,
     filters: BooleanFilters<String, Nothing>,
     onFiltersChanged: (newFilters: BooleanFilters<String, Nothing>) -> Unit,
+    dateRange: Pair<LocalDate?, LocalDate?>,
+    onDateRangeChange: (newStart: LocalDate?, newEnd: LocalDate?) -> Unit,
     categoriesFilter: BooleanFilters<Int?, Pair<String, Int>>,
     onCategoriesFilterChanged: (newFilters: BooleanFilters<Int?, Pair<String, Int>>) -> Unit,
     descriptionFilterState: TextFilter,
@@ -341,10 +347,10 @@ private fun NotNullAccountDetail(
         )
         Filter(
             modifier = Modifier.fillMaxWidth(),
-            dateFilterVisible = false,
-            startDate = null,
-            endDate = null,
-            onRangeChanged = { _, _ -> },
+            dateFilterVisible = true,
+            startDate = dateRange.first,
+            endDate = dateRange.second,
+            onRangeChanged = onDateRangeChange,
             transactionsFilterVisible = true,
             transactionFilters = filters,
             onTransactionFiltersChanged = onFiltersChanged,
@@ -495,7 +501,9 @@ private fun NullAccountDetail(
         descriptionFilterState = TextFilter(null),
         onDescriptionFilterStateChanged = {},
         valueFilter = DoubleFilter(null, 0f..0f),
-        onValueFilterChanged = {}
+        onValueFilterChanged = {},
+        dateRange = null to null,
+        onDateRangeChange = { _, _ -> }
     )
 }
 
@@ -538,6 +546,8 @@ private fun AccountDetailPreview() {
                     AccountDetail(
                         accountAndOwner = accountAndOwnerSample.first(),
                         data = accountDetailData,
+                        showGraphs = false,
+                        onShowGraphsChanged = {},
                         onAction = { account, action ->
                             scope.launch {
                                 snackBackState.showSnackbar(
@@ -548,6 +558,9 @@ private fun AccountDetailPreview() {
                                 )
                             }
                         },
+                        fabExpanded = false,
+                        onFabExpandedChanged = {},
+                        onAddTransactionRequested = {},
                         onTransactionAction = { transaction, action ->
                             scope.launch {
                                 snackBackState.showSnackbar(
@@ -558,11 +571,6 @@ private fun AccountDetailPreview() {
                                 )
                             }
                         },
-                        showGraphs = false,
-                        onShowGraphsChanged = {},
-                        onAddTransactionRequested = {},
-                        onFabExpandedChanged = {},
-                        fabExpanded = false,
                         filters = booleanFilterOf(emptyList()),
                         onFiltersChanged = {},
                         categoriesFilter = booleanFilterOf(emptyList()),
@@ -570,7 +578,9 @@ private fun AccountDetailPreview() {
                         descriptionFilterState = TextFilter(null),
                         onDescriptionFilterStateChanged = {},
                         valueFilter = DoubleFilter(null, 0f..0f),
-                        onValueFilterChanged = {}
+                        onValueFilterChanged = {},
+                        dateRange = null to null,
+                        onDateRangeChange = { _, _ -> }
                     )
                 }
             }
