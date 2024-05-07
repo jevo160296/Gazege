@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,6 +80,8 @@ import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
 import com.jmml.zoo.extensions.localdate.isBetween
+import com.jmml.zoo.ui.layout.CollapsibleContent
+import com.jmml.zoo.ui.layout.CollapsibleContentDefaults
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -297,6 +301,8 @@ private fun NotNullAccountDetail(
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
     }
+
+    val scrollBehavior = CollapsibleContentDefaults.scrollBehavior()
     EntityDetail(
         modalController = modalController,
         title = stringResource(id = R.string.cuenta) +
@@ -339,70 +345,77 @@ private fun NotNullAccountDetail(
             }
         }
     ) {
-        LargeEmphasis(
-            text =
-            stringResource(id = R.string.Propietario) +
-                    " ${account.owner.name}",
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        )
-        Filter(
-            modifier = Modifier.fillMaxWidth(),
-            dateFilterVisible = true,
-            startDate = dateRange.first,
-            endDate = dateRange.second,
-            onRangeChanged = onDateRangeChange,
-            transactionsFilterVisible = true,
-            transactionFilters = filters,
-            onTransactionFiltersChanged = onFiltersChanged,
-            categoriesFilter = categoriesFilter,
-            onCategoriesFilterChanged = onCategoriesFilterChanged,
-            valueFilterState = valueFilter,
-            onValueFilterStateChanged = onValueFilterChanged,
-            descriptionFilterState = descriptionFilterState,
-            onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            DataView(
-                modifier = Modifier.weight(1f),
-                title = stringResource(id = R.string.total),
-                value = doubleToMoneyString(total),
-                enabled = false
-            )
-            DataView(
-                modifier = Modifier.weight(1f),
-                title = stringResource(id = R.string.TotalConBolsillos),
-                value = doubleToMoneyString(total + childrenTotal),
-                enabled = false
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            Switch(
-                checked = switchEnabled,
-                onCheckedChange = onShowGraphsChanged,
-                thumbContent = if (switchEnabled) {
-                    @Composable {
-                        Icon(
-                            modifier = Modifier
-                                .size(SwitchDefaults.IconSize),
-                            painter = painterResource(id = R.drawable.ic_round_check_24),
-                            contentDescription = "Check",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                } else {
-                    null
+        CollapsibleContent(scrollBehavior = scrollBehavior) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+            ) {
+                LargeEmphasis(
+                    text =
+                    stringResource(id = R.string.Propietario) +
+                            " ${account.owner.name}",
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                )
+                Filter(
+                    modifier = Modifier.fillMaxWidth(),
+                    dateFilterVisible = true,
+                    startDate = dateRange.first,
+                    endDate = dateRange.second,
+                    onRangeChanged = onDateRangeChange,
+                    transactionsFilterVisible = true,
+                    transactionFilters = filters,
+                    onTransactionFiltersChanged = onFiltersChanged,
+                    categoriesFilter = categoriesFilter,
+                    onCategoriesFilterChanged = onCategoriesFilterChanged,
+                    valueFilterState = valueFilter,
+                    onValueFilterStateChanged = onValueFilterChanged,
+                    descriptionFilterState = descriptionFilterState,
+                    onDescriptionFilterStateChanged = onDescriptionFilterStateChanged
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    DataView(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(id = R.string.total),
+                        value = doubleToMoneyString(total),
+                        enabled = false
+                    )
+                    DataView(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(id = R.string.TotalConBolsillos),
+                        value = doubleToMoneyString(total + childrenTotal),
+                        enabled = false
+                    )
                 }
-            )
-            LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    Switch(
+                        checked = switchEnabled,
+                        onCheckedChange = onShowGraphsChanged,
+                        thumbContent = if (switchEnabled) {
+                            @Composable {
+                                Icon(
+                                    modifier = Modifier
+                                        .size(SwitchDefaults.IconSize),
+                                    painter = painterResource(id = R.drawable.ic_round_check_24),
+                                    contentDescription = "Check",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                    LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+                }
+            }
         }
         LazyColumn(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             contentPadding =
             dimensionResource(id = R.dimen.DefaultPadding).let {
                 PaddingValues(
