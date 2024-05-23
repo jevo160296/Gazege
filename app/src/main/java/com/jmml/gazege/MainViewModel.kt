@@ -91,6 +91,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -1806,8 +1807,12 @@ class MainViewModel(
         fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(Result.Loading)
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() = remember {
+            categoryWithSubcategoriesAndBudgetWithCalculatedData
+                .filter { it !is Result.Loading }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
 
         @Composable
         fun rememberAccountAndOwner() = accountAndOwner
@@ -1905,8 +1910,12 @@ class MainViewModel(
             .collectAsState(null)
 
         @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
+        fun rememberAccountAndOwnerWithTransactions() = remember {
+            accountAndOwnerWithTransactions
+                .filter { it !is Result.Loading }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
 
         @Composable
         fun rememberAllPerson() = allPerson.collectAsState(emptyList())
@@ -1915,8 +1924,12 @@ class MainViewModel(
         fun rememberCategories() = categories.collectAsState(emptyList())
 
         @Composable
-        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =
-            categoryWithSubcategoriesAndBudgetWithCalculatedData.collectAsState(Result.Loading)
+        fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() = remember {
+            categoryWithSubcategoriesAndBudgetWithCalculatedData
+                .filter { it !is Result.Loading }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
 
         fun updateTransaction(transaction: Transaction) =
             this@MainViewModel.updateTransaction(transaction)
