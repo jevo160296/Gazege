@@ -227,30 +227,6 @@ fun <T> ComboBox(
     )
 }
 
-@Composable
-fun <N, C : Node<N, C>> DefaultComboBoxViewHolder(
-    itemToString: (C?) -> String,
-    node: C,
-    onItemClick: (C) -> Unit,
-    contentPadding: PaddingValues,
-    enabled: Boolean
-) {
-    val layoutDirection = LocalLayoutDirection.current
-    DropdownMenuItem(
-        text = { Text(itemToString(node)) },
-        onClick = { onItemClick(node) },
-        contentPadding = contentPadding.let {
-            PaddingValues(
-                start = 8.dp,
-                top = it.calculateTopPadding(),
-                bottom = it.calculateBottomPadding(),
-                end = it.calculateEndPadding(layoutDirection)
-            )
-        },
-        enabled = enabled
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <N, C : Node<N, C>> OptionsGroupTreeView(
@@ -261,6 +237,7 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
     nodeEnabled: (C) -> Boolean,
     nodeVisible: (C) -> Boolean = { true }
 ) {
+    val layoutDirection = LocalLayoutDirection.current
     val nodes: List<C> = groupedOptions.flatMap { it.value }
     val inverseMap: Map<NodeId, String?> = groupedOptions.flatMap { (key, value) ->
         value.map {
@@ -276,24 +253,31 @@ private fun <N, C : Node<N, C>> OptionsGroupTreeView(
         itemHolderPaddingValues = contentPadding
     ) { node, treeScope ->
         Row {
-            Spacer(modifier = Modifier.width(node.level.dp * 8))
             val isExpanded = treeScope.isExpanded(node)
-            if (node.children.isNotEmpty()) {
-                IconToggleButton(
-                    modifier = Modifier.width(32.dp),
-                    checked = isExpanded,
-                    onCheckedChange = { treeScope.toggleExpanded(node) }
-                ) {
-                    DefaultTreeLeadingIcon(isExpanded = isExpanded)
-                }
-            } else {
-                Spacer(Modifier.width(32.dp))
-            }
-            DefaultComboBoxViewHolder(
-                itemToString = nodeToString,
-                node = node,
-                onItemClick = onNodeClick,
-                contentPadding = contentPadding,
+            DropdownMenuItem(
+                leadingIcon = {
+                    if (node.children.isNotEmpty()) {
+                        IconToggleButton(
+                            modifier = Modifier.width(32.dp),
+                            checked = isExpanded,
+                            onCheckedChange = { treeScope.toggleExpanded(node) }
+                        ) {
+                            DefaultTreeLeadingIcon(isExpanded = isExpanded)
+                        }
+                    } else {
+                        Spacer(Modifier.width(32.dp))
+                    }
+                },
+                text = { Text(nodeToString(node)) },
+                onClick = { onNodeClick(node) },
+                contentPadding = contentPadding.let {
+                    PaddingValues(
+                        start = (8 + node.level * 8).dp,
+                        top = it.calculateTopPadding(),
+                        bottom = it.calculateBottomPadding(),
+                        end = it.calculateEndPadding(layoutDirection)
+                    )
+                },
                 enabled = nodeEnabled(node)
             )
         }
