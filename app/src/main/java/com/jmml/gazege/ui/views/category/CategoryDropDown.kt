@@ -1,15 +1,22 @@
 package com.jmml.gazege.ui.views.category
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.widgets.TreeComboBox
 import com.jmml.gazege.ui.widgets.treeview.Node
@@ -85,4 +92,28 @@ fun CategoryDropDown(
         keyboardActions = keyboardActions,
         nodeEnabled = { true }
     )
+}
+
+@Preview
+@Composable
+fun CategoryDropDownPreview() {
+    DatabaseSample {
+        val budgetWithCalculatedDataAndCategory =
+            this.categoryWithSubcategoriesAndBudgetWithCalculatedDataSample
+        val selectedCategory = null
+        Box(
+            Modifier
+                .navigationBarsPadding()
+                .systemBarsPadding()
+        ) {
+            CategoryDropDown(
+                categoryList = emptyList(),
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+                selectedCategory = selectedCategory,
+                label = { Text(text = "Label") })
+            {
+
+            }
+        }
+    }
 }
