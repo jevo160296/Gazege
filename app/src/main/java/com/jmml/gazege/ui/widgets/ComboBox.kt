@@ -121,7 +121,7 @@ private fun <T> CoreComboBox(
     options: List<T>,
     optionsViewHolder: @Composable (Map<String?, List<T>>) -> Unit,
     itemToString: (T?) -> String,
-    filteringNotStarted: Boolean,
+    filteringStarted: Boolean,
     currentTextFilter: (item: T, text: String) -> Boolean = { item: T, text: String ->
         partialStringMatch(
             itemToString(item),
@@ -131,7 +131,7 @@ private fun <T> CoreComboBox(
     groupByKeySelector: ((T) -> String)? = null
 ) {
     val groupedOptions = options
-        .filter { currentTextFilter(it, currentText) || filteringNotStarted }
+        .filter { currentTextFilter(it, currentText) || !filteringStarted }
         .groupBy { groupByKeySelector?.invoke(it) }
     var isFocused by remember { mutableStateOf(false) }
 
@@ -189,7 +189,7 @@ fun <T> ComboBox(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     groupByKeySelector: ((T) -> String)? = null
 ) {
-    var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
+    var filteringStarted by remember { mutableStateOf(false) }
     var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
 
     val trailingIcon: @Composable () -> Unit =
@@ -201,7 +201,7 @@ fun <T> ComboBox(
                 onExpandedChange(false)
                 onItemClick(item)
                 currentText = itemToString(item)
-                filteringNotStarted = true
+                filteringStarted = false
             },
             itemToString = itemToString
         )
@@ -212,7 +212,7 @@ fun <T> ComboBox(
         onExpandedChange = onExpandedChange,
         currentText = currentText,
         onCurrentTextChanged = {
-            filteringNotStarted = false
+            filteringStarted = true
             currentText = it
         },
         label = label,
@@ -220,7 +220,7 @@ fun <T> ComboBox(
         keyboardOptions = keyboardOptions,
         trailingIcon = { trailingIcon() },
         options = options,
-        filteringNotStarted = filteringNotStarted,
+        filteringStarted = filteringStarted,
         groupByKeySelector = groupByKeySelector,
         itemToString = itemToString,
         optionsViewHolder = { optionsViewHolder(it) }
@@ -302,7 +302,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
     nodeEnabled: (C) -> Boolean,
     groupByKeySelector: ((C) -> String)? = null
 ) {
-    var filteringNotStarted by remember(dropDownExpanded) { mutableStateOf(dropDownExpanded) }
+    var filteringStarted by remember { mutableStateOf(false) }
     var currentText by remember(selectedItem) { mutableStateOf(itemToString(selectedItem)) }
 
     val treeState = rememberTreeState()
@@ -334,7 +334,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
             }
         }
             .toSet()
-            .onEach { if (dropDownExpanded && !filteringNotStarted) treeState.expandToItem(it) }
+            .onEach { if (dropDownExpanded && filteringStarted) treeState.expandToItem(it) }
     }
     val optionsViewHolder: @Composable (Map<String?, List<C>>) -> Unit = {
         OptionsGroupTreeView(
@@ -344,11 +344,11 @@ fun <N, C : Node<N, C>> TreeComboBox(
                 onExpandedChange(false)
                 onItemClick(item)
                 currentText = itemToString(item)
-                filteringNotStarted = true
+                filteringStarted = false
             },
             nodeToString = itemToString,
             nodeEnabled = nodeEnabled,
-            nodeVisible = { node -> filteringNotStarted || node.id() in queryResults }
+            nodeVisible = { node -> !filteringStarted || node.id() in queryResults }
         )
     }
 
@@ -357,7 +357,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
         onExpandedChange = onExpandedChange,
         currentText = currentText,
         onCurrentTextChanged = {
-            filteringNotStarted = false
+            filteringStarted = true
             currentText = it
         },
         label = { label() },
@@ -369,7 +369,7 @@ fun <N, C : Node<N, C>> TreeComboBox(
         optionsViewHolder = { optionsViewHolder(it) },
         itemToString = itemToString,
         groupByKeySelector = groupByKeySelector,
-        filteringNotStarted = filteringNotStarted,
+        filteringStarted = filteringStarted,
         currentTextFilter = { _, _ -> true }
     )
 }
