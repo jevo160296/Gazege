@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonDetail(
+    principalPerson: Person,
     person: Person,
     viewModelPersonDetail: MainViewModel.ViewModelPersonDetail,
     deuda: Double,
@@ -52,6 +53,7 @@ fun PersonDetail(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
     val transactionListItemDetails by viewModelPersonDetail.rememberPeopleTransactionListItemDetails(
+        principalPerson.id,
         person.id,
         justPendingTransactions,
         deuda

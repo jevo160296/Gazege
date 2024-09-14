@@ -2363,6 +2363,9 @@ class MainViewModel(
 
     inner class ViewModelPersonDetail {
         @Composable
+        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
+
+        @Composable
         fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
@@ -2371,10 +2374,11 @@ class MainViewModel(
 
         @Composable
         fun rememberPeopleTransactionListItemDetails(
+            principalPersonId: Int?,
             otherPersonId: Int?,
             justPendingTransactions: Boolean,
             debt: Double
-        ) = remember(otherPersonId, justPendingTransactions, debt) {
+        ) = remember(principalPersonId, otherPersonId, justPendingTransactions, debt) {
             allTransactions
                 .combineDefault(allAccount) { allTransactions, allAccount ->
                     val personAccountsIds = allAccount
@@ -2428,7 +2432,6 @@ class MainViewModel(
                                     cumSum += it.transaction.amount * sign
                                     condition
                                 }
-                                .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
                             filteredTransactions
                         } else {
                             allTransactions
