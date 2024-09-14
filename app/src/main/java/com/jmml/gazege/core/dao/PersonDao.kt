@@ -114,7 +114,7 @@ interface PersonDao {
             return person.egresosCache[Pair(startDate, endDate)] ?: 0.0
         }
 
-        private fun direction(
+        fun direction(
             fromPersonId: Int?,
             toPersonId: Int?,
             transaction: TransactionAndAccounts
