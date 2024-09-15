@@ -35,6 +35,7 @@ fun NavGraphBuilder.screenPersonDetail(
             }
         )
     ) { navStack ->
+        val principalPerson = viewModelPersonDetail.rememberPrincipalPerson().value
         val allPerson by viewModelPersonDetail.rememberAllPerson()
         val personSummaryState = viewModelPersonDetail.rememberPersonSummaryState().value
 
@@ -43,8 +44,9 @@ fun NavGraphBuilder.screenPersonDetail(
         when (personSummaryState) {
             is FullPersonSummaryState -> {
                 val deuda = personSummaryState.deudasFlujo[person] ?: 0.0
-                if (person != null) {
+                if (person != null && principalPerson != null) {
                     PersonDetail(
+                        principalPerson = principalPerson,
                         person = person,
                         onPersonAction = { _, action ->
                             when (action) {
@@ -69,7 +71,7 @@ fun NavGraphBuilder.screenPersonDetail(
                     )
                 } else {
                     // TODO Develop UI for empty person
-                    Text(text = "Empty person")
+                    Text(text = "Empty person or principal person")
                 }
             }
 

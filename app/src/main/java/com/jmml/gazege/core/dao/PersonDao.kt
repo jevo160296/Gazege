@@ -12,7 +12,6 @@ import com.jmml.gazege.core.entities.TransactionAndAccounts
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-
 @Dao
 interface PersonDao {
     @Transaction
@@ -115,71 +114,50 @@ interface PersonDao {
             return person.egresosCache[Pair(startDate, endDate)] ?: 0.0
         }
 
+        fun direction(
+            fromPersonId: Int?,
+            toPersonId: Int?,
+            transaction: TransactionAndAccounts
+        ): Int {
+            val sameDirection = transaction.transaction.aNombreDe == null &&
+                    transaction.sourceAccount.ownerId == fromPersonId &&
+                    transaction.destinationAccount.ownerId == toPersonId &&
+                    !transaction.sourceAccount.isIncome &&
+                    !transaction.destinationAccount.isOutcome ||
+                    transaction.transaction.aNombreDe != null &&
+                    transaction.sourceAccount.ownerId == fromPersonId &&
+                    transaction.transaction.aNombreDe == toPersonId &&
+                    !transaction.sourceAccount.isIncome ||
+                    transaction.transaction.aNombreDe != null &&
+                    transaction.transaction.aNombreDe == fromPersonId &&
+                    transaction.destinationAccount.ownerId == toPersonId &&
+                    !transaction.destinationAccount.isOutcome
+            val differentDirection = transaction.transaction.aNombreDe == null &&
+                    transaction.sourceAccount.ownerId == toPersonId &&
+                    transaction.destinationAccount.ownerId == fromPersonId &&
+                    !transaction.sourceAccount.isIncome &&
+                    !transaction.destinationAccount.isOutcome ||
+                    transaction.transaction.aNombreDe != null &&
+                    transaction.sourceAccount.ownerId == toPersonId &&
+                    transaction.transaction.aNombreDe == fromPersonId &&
+                    !transaction.sourceAccount.isIncome ||
+                    transaction.transaction.aNombreDe != null &&
+                    transaction.transaction.aNombreDe == toPersonId &&
+                    transaction.destinationAccount.ownerId == fromPersonId &&
+                    !transaction.destinationAccount.isOutcome
+            return if (sameDirection && !differentDirection) 1
+            else if (!sameDirection && differentDirection) -1
+            else 0
+        }
+
         private fun calculateFlujo(
             from: Person,
             to: Person,
             transacciones: List<TransactionAndAccounts>
         ): Double {
-            data class TransactionAndPerson(
-                val sourcePersonId: Int,
-                val destinationPersonId: Int,
-                val sourceAccountIsIncome: Boolean,
-                val sourceAccountIsOutcome: Boolean,
-                val destinationAccountIsIncome: Boolean,
-                val destinationAccountIsOutcome: Boolean,
-                val value: Double,
-            )
-
-            val mappedTransactions: List<TransactionAndPerson> = listOf(
-                transacciones
-                    .filter { it.transaction.aNombreDe == null }
-                    .map {
-                        TransactionAndPerson(
-                            sourcePersonId = it.sourceAccount.ownerId,
-                            destinationPersonId = it.destinationAccount.ownerId,
-                            value = it.transaction.amount,
-                            sourceAccountIsIncome = it.sourceAccount.isIncome,
-                            sourceAccountIsOutcome = it.sourceAccount.isOutcome,
-                            destinationAccountIsIncome = it.destinationAccount.isIncome,
-                            destinationAccountIsOutcome = it.destinationAccount.isOutcome
-                        )
-                    },
-                transacciones
-                    .filter { it.transaction.aNombreDe != null }
-                    .map {
-                        TransactionAndPerson(
-                            sourcePersonId = it.transaction.aNombreDe ?: -1,
-                            destinationPersonId = it.destinationAccount.ownerId,
-                            value = it.transaction.amount,
-                            sourceAccountIsIncome = false,
-                            sourceAccountIsOutcome = false,
-                            destinationAccountIsIncome = it.destinationAccount.isIncome,
-                            destinationAccountIsOutcome = it.destinationAccount.isOutcome
-                        )
-                    },
-                transacciones
-                    .filter { it.transaction.aNombreDe != null }
-                    .map {
-                        TransactionAndPerson(
-                            sourcePersonId = it.sourceAccount.ownerId,
-                            destinationPersonId = it.transaction.aNombreDe ?: -1,
-                            value = it.transaction.amount,
-                            sourceAccountIsIncome = it.sourceAccount.isIncome,
-                            sourceAccountIsOutcome = it.sourceAccount.isOutcome,
-                            destinationAccountIsIncome = false,
-                            destinationAccountIsOutcome = false
-                        )
-                    }
-            ).flatten()
-            val inTransactions = mappedTransactions
-                .filter { it.sourcePersonId == to.id && it.destinationPersonId == from.id && !it.sourceAccountIsIncome && !it.sourceAccountIsOutcome }
-            val outTransactions = mappedTransactions
-                .filter { it.sourcePersonId == from.id && it.destinationPersonId == to.id && !it.destinationAccountIsIncome && !it.destinationAccountIsOutcome }
-
-            val totalIn = inTransactions.sumOf { it.value }
-            val totalOut = outTransactions.sumOf { it.value }
-
-            return totalOut - totalIn
+            val values =
+                transacciones.map { it to direction(from.id, to.id, it) * it.transaction.amount }
+            return values.sumOf { it.second }
         }
 
         /**

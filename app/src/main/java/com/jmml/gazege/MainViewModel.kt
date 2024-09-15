@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.jmml.gazege.core.AppRepository
+import com.jmml.gazege.core.dao.PersonDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
@@ -2363,6 +2364,9 @@ class MainViewModel(
 
     inner class ViewModelPersonDetail {
         @Composable
+        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
+
+        @Composable
         fun rememberAllPerson() = allPerson.collectAsState(emptyList())
 
         @Composable
@@ -2371,10 +2375,11 @@ class MainViewModel(
 
         @Composable
         fun rememberPeopleTransactionListItemDetails(
+            principalPersonId: Int?,
             otherPersonId: Int?,
             justPendingTransactions: Boolean,
             debt: Double
-        ) = remember(otherPersonId, justPendingTransactions, debt) {
+        ) = remember(principalPersonId, otherPersonId, justPendingTransactions, debt) {
             allTransactions
                 .combineDefault(allAccount) { allTransactions, allAccount ->
                     val personAccountsIds = allAccount
@@ -2419,16 +2424,19 @@ class MainViewModel(
                                 .sortedByDescending { it.transaction.date }
                             val filteredTransactions = sortedTransactions
                                 .takeWhile {
-                                    val sign = when (it.transactionType) {
-                                        TransactionType.INCOME -> -1.0
-                                        TransactionType.OUTCOME -> 1.0
-                                        else -> 0.0
-                                    }
+                                    val sign = PersonDao.direction(
+                                        principalPersonId,
+                                        otherPersonId,
+                                        TransactionAndAccounts(
+                                            it.transaction,
+                                            it.sourceAccount,
+                                            it.destinationAccount
+                                        )
+                                    )
                                     val condition = cumSum != debt
                                     cumSum += it.transaction.amount * sign
                                     condition
                                 }
-                                .filter { it.transactionType == TransactionType.INCOME || it.transactionType == TransactionType.OUTCOME }
                             filteredTransactions
                         } else {
                             allTransactions
