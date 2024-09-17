@@ -1,10 +1,13 @@
 package com.jmml.gazege.ui.views.person
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
@@ -20,13 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
+import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.personaDeleitionConfirmationBuilder
+import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.BottomSheetController
 import com.jmml.gazege.ui.views.EntityDetail
@@ -37,7 +43,6 @@ import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.SmallBody
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonDetail(
     principalPerson: Person,
@@ -71,7 +76,7 @@ fun PersonDetail(
 private fun PersonDetailUI(
     person: Person,
     deuda: Double,
-    transactionListItemDetails: List<TransactionListItemDetails>?,
+    transactionListItemDetails: List<TransactionListItemDetailsWithSign>?,
     justPendingTransactions: Boolean,
     onJustPendingTransactionsChange: (Boolean) -> Unit,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
@@ -147,5 +152,46 @@ private fun PersonDetailUI(
             onZeroElementsChanged = {},
             onFirstElementVisibleChanged = {}
         )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewPersonDetail() {
+    GazegeTheme {
+        val (justPendingTransactions, onJustPendingTransactionsChange) = remember {
+            mutableStateOf(
+                true
+            )
+        }
+        Box(
+            Modifier
+                .navigationBarsPadding()
+                .statusBarsPadding()) {
+            DatabaseSample {
+                val person = remember { this.personSample.firstOrNull() }
+                val person2 = remember { this.personSample.getOrNull(1) }
+                val transactionListItemDetails = remember {
+                    TransactionListItemDetailsWithSign.from(
+                        this.transactionSample,
+                        this.categorieSample,
+                        this.accountSample,
+                        person?.id,
+                        person2?.id
+                    )
+                }
+                if (person != null) {
+                    PersonDetailUI(
+                        person = person,
+                        deuda = 1000.0,
+                        transactionListItemDetails = transactionListItemDetails,
+                        justPendingTransactions = justPendingTransactions,
+                        onJustPendingTransactionsChange = onJustPendingTransactionsChange,
+                        onPersonAction = { _, _ -> },
+                        onTransactionAction = { _, _ -> }
+                    )
+                }
+            }
+        }
     }
 }

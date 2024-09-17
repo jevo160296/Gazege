@@ -41,6 +41,7 @@ import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithAccount
+import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.core.entities.TransactionType
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.DateFormat
@@ -57,10 +58,10 @@ import com.jmml.gazege.ui.widgets.PulsatingCard
 import com.jmml.gazege.ui.widgets.SmallEmphasis
 
 @Composable
-fun LoadedTransactionPage(
+fun <T : ITransactionListDetail> LoadedTransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
-    transactionList: List<TransactionListItemDetails>,
+    transactionList: List<T>,
     delTransaction: (Transaction) -> Unit,
     editTransaction: (Transaction) -> Unit,
     state: LazyListState,
@@ -309,6 +310,103 @@ private fun TransactionWithAccountViewHolder(
 }
 
 @Composable
+private fun TransactionWithSignViewHolder(transaction: TransactionListItemDetailsWithSign) {
+    val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
+        { icon, text, color ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.DefaultPadding))
+            ) {
+                Icon(painter = icon, contentDescription = "Icon", tint = color)
+                SmallEmphasis(text = text, color = color)
+            }
+        }
+    val tipoRow: @Composable () -> Unit = @Composable {
+        when (transaction.transactionType) {
+            TransactionType.INCOME -> iconText(
+                painterResource(R.drawable.ingreso_icon),
+                stringResource(R.string.Ingreso),
+                GazegeTheme.gazegeColorScheme.income
+            )
+
+            TransactionType.OUTCOME -> iconText(
+                painterResource(R.drawable.gasto_icon),
+                stringResource(R.string.Gasto),
+                GazegeTheme.gazegeColorScheme.outcome
+            )
+
+            TransactionType.TRANSFER -> iconText(
+                painterResource(R.drawable.transfer_icon),
+                stringResource(R.string.Transferencia),
+                GazegeTheme.gazegeColorScheme.transfer
+            )
+        }
+    }
+    val accountRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.cuentas)}: ")
+        if (transaction.sourceAccount.isIncome.not()) {
+            LargeBody(text = transaction.sourceAccount.name, maxLines = 1)
+        }
+        if (transaction.sourceAccount.isIncome.not() && transaction.destinationAccount.isOutcome.not()) {
+            LargeEmphasis(text = " --> ", maxLines = 1)
+        }
+        if (transaction.destinationAccount.isOutcome.not()) {
+            LargeBody(text = transaction.destinationAccount.name, maxLines = 1)
+        }
+    }
+    val categoryRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
+        LargeBody(
+            text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+        )
+    }
+    val descriptionRow: @Composable () -> Unit = @Composable {
+        LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
+        LargeBody(text = transaction.transaction.description)
+    }
+
+    Column {
+        tipoRow()
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.7f),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Row(modifier = Modifier) { accountRow() }
+                Row(modifier = Modifier) { categoryRow() }
+                Row(modifier = Modifier) { descriptionRow() }
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(0.3f),
+                horizontalAlignment = Alignment.End
+            ) {
+                LargeBody(
+                    text = doubleToMoneyString(transaction.transaction.amount),
+                    color = (transaction.transaction.amount * transaction.sign).let {
+                        when {
+                            it < 0 -> GazegeTheme.gazegeColorScheme.income
+                            it > 0 -> GazegeTheme.gazegeColorScheme.outcome
+                            else -> MaterialTheme.colorScheme.onBackground
+
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
     transaction: T,
     editTransaction: (T) -> Unit,
@@ -322,10 +420,15 @@ private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
         onItemLongPressed = { menuIdExpanded = transaction.transaction.id }
     ) {
         Box {
-            if (transaction is TransactionListItemDetails) TransactionViewHolder(transaction = transaction)
-            else if (transaction is TransactionListItemDetailsWithAccount) TransactionWithAccountViewHolder(
-                transaction = transaction
-            )
+            when (transaction) {
+                is TransactionListItemDetails -> TransactionViewHolder(transaction = transaction)
+                is TransactionListItemDetailsWithAccount -> TransactionWithAccountViewHolder(
+                    transaction = transaction
+                )
+
+                is TransactionListItemDetailsWithSign -> TransactionWithSignViewHolder(transaction = transaction)
+                else -> throw Error("Transaction list type UI not implemented.")
+            }
         }
         DropdownMenu(
             expanded = menuIdExpanded == transaction.transaction.id,

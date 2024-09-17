@@ -17,7 +17,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.jmml.gazege.core.AppRepository
-import com.jmml.gazege.core.dao.PersonDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
@@ -39,6 +38,7 @@ import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
 import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.core.entities.TransactionType
 import com.jmml.gazege.core.entities.flattenWithLevel
 import com.jmml.gazege.core.export.readAccountFromCsv
@@ -2401,21 +2401,13 @@ class MainViewModel(
                     object {
                         val transactions = combined.transactions
                         val accounts = combined.accounts
-                        val categories = categories
-                    }
-                }
-                .combineDefault(principalPerson) { combined, principalPerson ->
-                    object {
-                        val transactions = combined.transactions
-                        val categories = combined.categories
-                        val accounts = combined.accounts
-                        val principalPersonId = principalPerson?.id
                     }.run {
-                        val allTransactions = TransactionListItemDetails.from(
+                        val allTransactions = TransactionListItemDetailsWithSign.from(
                             transactions,
                             categories,
                             accounts,
-                            principalPersonId
+                            principalPersonId,
+                            otherPersonId
                         )
                         if (justPendingTransactions) {
                             var cumSum = 0.0
@@ -2424,15 +2416,7 @@ class MainViewModel(
                                 .sortedByDescending { it.transaction.date }
                             val filteredTransactions = sortedTransactions
                                 .takeWhile {
-                                    val sign = PersonDao.direction(
-                                        principalPersonId,
-                                        otherPersonId,
-                                        TransactionAndAccounts(
-                                            it.transaction,
-                                            it.sourceAccount,
-                                            it.destinationAccount
-                                        )
-                                    )
+                                    val sign = it.sign
                                     val condition = cumSum != debt
                                     cumSum += it.transaction.amount * sign
                                     condition
