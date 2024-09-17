@@ -1,5 +1,6 @@
 package com.jmml.gazege.ui.views.person
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,8 +13,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
@@ -44,7 +50,9 @@ import com.jmml.gazege.ui.views.TransactionAction
 import com.jmml.gazege.ui.views.transaction.LoadedTransactionPage
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.SmallBody
+import com.jmml.zoo.extensions.numerical.toMoneyString
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 @Composable
 fun PersonDetail(
@@ -88,81 +96,164 @@ private fun PersonDetailUI(
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
     }
+    var simplifyView: Boolean by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-
-    EntityDetail(
-        modalController = modalController,
-        title = person.name,
-        onEditClick = { onPersonAction(person, PersonAction.EDIT) },
-        onDeleteClick = {
-            modalController = BottomSheetController(
-                getMsg = {
-                    personaDeleitionConfirmationBuilder()(person.name)
-                },
-                action = {
-                    onPersonAction(person, PersonAction.DELETE)
-                }
+    val simplifyViewButton = @Composable {
+        IconButton(onClick = { simplifyView = !simplifyView }) {
+            Icon(
+                painter = painterResource(id = R.drawable.eye),
+                contentDescription = "Edit"
             )
-            scope.launch { sheetState.show() }
-        },
-        aditionalItem = {
-            IconButton(onClick = { }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.print_24),
-                    contentDescription = "Edit"
+        }
+    }
+
+    Crossfade(simplifyView, label = "Crossfade") {
+        if (!it) {
+            EntityDetail(
+                modalController = modalController,
+                title = person.name,
+                onEditClick = { onPersonAction(person, PersonAction.EDIT) },
+                onDeleteClick = {
+                    modalController = BottomSheetController(
+                        getMsg = {
+                            personaDeleitionConfirmationBuilder()(person.name)
+                        },
+                        action = {
+                            onPersonAction(person, PersonAction.DELETE)
+                        }
+                    )
+                    scope.launch { sheetState.show() }
+                },
+                aditionalItem = simplifyViewButton,
+                sheetState = sheetState
+            ) {
+                SmallBody(
+                    text = "${personDeudaString(deuda)}: ${doubleToMoneyString(deuda)}",
+                    Modifier.padding(
+                        horizontal = dimensionResource(
+                            id = R.dimen.DefaultPadding
+                        )
+                    )
+                )
+                MediumHeadline(
+                    text = stringResource(id = R.string.transacciones), modifier = Modifier.padding(
+                        horizontal = dimensionResource(
+                            id = R.dimen.DefaultPadding
+                        )
+                    )
+                )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
+                ) {
+                    Switch(
+                        checked = justPendingTransactions,
+                        onCheckedChange = { onJustPendingTransactionsChange(it) },
+                    )
+                    Text(text = stringResource(id = R.string.justPendingTransactions))
+                }
+                LoadedTransactionPage(
+                    transactionList = transactionListItemDetails ?: emptyList(),
+                    delTransaction = {
+                        modalController = BottomSheetController(
+                            getMsg = {
+                                transactionDeleitionConfirmationBuilder()()
+                            },
+                            action = {
+                                onTransactionAction(it, TransactionAction.DELETE)
+                            }
+                        )
+                        scope.launch { sheetState.show() }
+                    },
+                    editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
+                    state = rememberLazyListState(),
+                    itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    onTitleSetted = {},
+                    onZeroElementsChanged = {},
+                    onFirstElementVisibleChanged = {}
                 )
             }
-        },
-        sheetState = sheetState
-    ) {
-        SmallBody(
-            text = "${personDeudaString(deuda)}: ${doubleToMoneyString(deuda)}", Modifier.padding(
-                horizontal = dimensionResource(
-                    id = R.dimen.DefaultPadding
-                )
-            )
-        )
-        MediumHeadline(
-            text = stringResource(id = R.string.transacciones), modifier = Modifier.padding(
-                horizontal = dimensionResource(
-                    id = R.dimen.DefaultPadding
-                )
-            )
-        )
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding))
-        ) {
-            Switch(
-                checked = justPendingTransactions,
-                onCheckedChange = { onJustPendingTransactionsChange(it) },
-            )
-            Text(text = stringResource(id = R.string.justPendingTransactions))
-        }
-        LoadedTransactionPage(
-            transactionList = transactionListItemDetails ?: emptyList(),
-            delTransaction = {
-                modalController = BottomSheetController(
-                    getMsg = {
-                        transactionDeleitionConfirmationBuilder()()
+        } else {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { MediumHeadline(person.name) },
+                        actions = {
+                            simplifyViewButton()
+                        }
+                    )
+                },
+                bottomBar = {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MediumHeadline("Total:")
+                        MediumHeadline(
+                            deuda.absoluteValue.toMoneyString(),
+                            color = when {
+                                deuda < 0 -> GazegeTheme.gazegeColorScheme.income
+                                deuda > 0 -> GazegeTheme.gazegeColorScheme.outcome
+                                else -> MaterialTheme.colorScheme.onBackground
+                            }
+                        )
+                    }
+                }
+            ) {
+                LoadedTransactionPage(
+                    modifier = Modifier.padding(it),
+                    transactionList = transactionListItemDetails ?: emptyList(),
+                    delTransaction = {
+                        modalController = BottomSheetController(
+                            getMsg = {
+                                transactionDeleitionConfirmationBuilder()()
+                            },
+                            action = {
+                                onTransactionAction(it, TransactionAction.DELETE)
+                            }
+                        )
+                        scope.launch { sheetState.show() }
                     },
-                    action = {
-                        onTransactionAction(it, TransactionAction.DELETE)
+                    editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
+                    state = rememberLazyListState(),
+                    itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    onTitleSetted = {},
+                    onZeroElementsChanged = {},
+                    onFirstElementVisibleChanged = {},
+                    transactionViewHolder = {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                it.transaction.description,
+                                Modifier.weight(2f / 3f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                it.transaction.amount.toMoneyString(),
+                                Modifier.weight(1f / 3f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.End,
+                                color = (it.sign * it.transaction.amount).let { value ->
+                                    when {
+                                        value < 0 -> GazegeTheme.gazegeColorScheme.income
+                                        value > 0 -> GazegeTheme.gazegeColorScheme.outcome
+                                        else -> MaterialTheme.colorScheme.onBackground
+                                    }
+                                }
+                            )
+                        }
                     }
                 )
-                scope.launch { sheetState.show() }
-            },
-            editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
-            state = rememberLazyListState(),
-            itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
-            onTitleSetted = {},
-            onZeroElementsChanged = {},
-            onFirstElementVisibleChanged = {}
-        )
+            }
+        }
     }
 }
 

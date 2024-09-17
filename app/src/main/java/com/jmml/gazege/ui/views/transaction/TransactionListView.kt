@@ -68,7 +68,14 @@ fun <T : ITransactionListDetail> LoadedTransactionPage(
     nestedScrollConnection: NestedScrollConnection? = null,
     onTitleSetted: (String) -> Unit,
     onZeroElementsChanged: (Boolean) -> Unit,
-    onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit
+    onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit,
+    dateViewHolder: @Composable (String) -> Unit = { TransactionHeaderViewHolder(it) },
+    transactionViewHolder: @Composable (T) -> Unit = { transaction ->
+        TransactionGroupItemViewHolder(
+            transaction,
+            { editTransaction(it.transaction) },
+            { delTransaction(it.transaction) })
+    }
 ) {
     LaunchedEffect(transactionList.isEmpty()) { onZeroElementsChanged(transactionList.isEmpty()) }
     val firstElementIsVisible by remember { derivedStateOf { state.firstVisibleItemIndex == 0 } }
@@ -76,17 +83,13 @@ fun <T : ITransactionListDetail> LoadedTransactionPage(
     onTitleSetted(stringResource(id = R.string.transacciones))
     Column(modifier = modifier) {
         LoadedTransactionRecyclerView(
+            transactionList = transactionList,
             modifier = nestedScrollConnection?.let { Modifier.nestedScroll(nestedScrollConnection) }
                 ?: Modifier,
-            transactionList = transactionList,
-            editTransaction = { transactionAndAccounts ->
-                editTransaction(transactionAndAccounts.transaction)
-            },
-            delTransaction = { transactionAndAccounts ->
-                delTransaction(transactionAndAccounts.transaction)
-            },
             contentPadding = itemHolderPaddingValues,
-            state = state
+            state = state,
+            transactionViewHolder = transactionViewHolder,
+            dateViewHolder = dateViewHolder
         )
     }
 }
@@ -397,7 +400,6 @@ private fun TransactionWithSignViewHolder(transaction: TransactionListItemDetail
                             it < 0 -> GazegeTheme.gazegeColorScheme.income
                             it > 0 -> GazegeTheme.gazegeColorScheme.outcome
                             else -> MaterialTheme.colorScheme.onBackground
-
                         }
                     }
                 )
@@ -425,7 +427,6 @@ private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
                 is TransactionListItemDetailsWithAccount -> TransactionWithAccountViewHolder(
                     transaction = transaction
                 )
-
                 is TransactionListItemDetailsWithSign -> TransactionWithSignViewHolder(transaction = transaction)
                 else -> throw Error("Transaction list type UI not implemented.")
             }
@@ -455,21 +456,20 @@ private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
 @Composable
 private fun <T : ITransactionListDetail> LoadedTransactionRecyclerView(
     transactionList: List<T>,
-    editTransaction: (T) -> Unit,
-    delTransaction: (T) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    state: LazyListState
+    state: LazyListState,
+    dateViewHolder: @Composable (String) -> Unit,
+    transactionViewHolder: @Composable (T) -> Unit
 ) = GroupedLazyList(
     modifier = modifier,
     state = state,
     contentPadding = contentPadding,
     items = transactionList,
     groupSelector = { transactionGroupSelector(it.transaction) },
-    groupViewHolder = { TransactionHeaderViewHolder(it) }
-) {
-    TransactionGroupItemViewHolder(it, editTransaction, delTransaction)
-}
+    groupViewHolder = dateViewHolder,
+    itemViewHolder = transactionViewHolder
+)
 
 @Composable
 private fun LoadingTransactionRecyclerView(
@@ -522,9 +522,9 @@ private fun PreviewTransactionList() {
     DatabaseSample {
         LoadedTransactionRecyclerView(
             transactionList = transactionListItemDetailsSample,
-            editTransaction = {},
-            delTransaction = {},
-            state = LazyListState()
+            state = LazyListState(),
+            transactionViewHolder = { TransactionGroupItemViewHolder(it, {}, {}) },
+            dateViewHolder = { TransactionHeaderViewHolder(it) }
         )
     }
 }
