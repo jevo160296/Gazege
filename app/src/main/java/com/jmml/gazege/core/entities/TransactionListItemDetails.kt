@@ -17,10 +17,6 @@ data class TransactionListItemDetails(
     override val destinationAccount: Account,
     override val transactionType: TransactionType
 ) : ITransactionListDetail {
-    fun toTransactionAndAccounts(): TransactionAndAccounts = TransactionAndAccounts(
-        transaction, sourceAccount, destinationAccount
-    )
-
     companion object {
         fun from(
             transactions: List<Transaction>,
