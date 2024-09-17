@@ -32,6 +32,7 @@ internal fun EntityDetail(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     sheetState: SheetState,
+    aditionalItem: (@Composable () -> Unit)? = null,
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -51,6 +52,9 @@ internal fun EntityDetail(
                         )
                     },
                     actions = {
+                        if (aditionalItem != null) {
+                            aditionalItem()
+                        }
                         IconButton(onClick = onEditClick) {
                             Icon(
                                 painter = painterResource(id = R.drawable.edit),

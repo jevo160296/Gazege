@@ -1,5 +1,7 @@
 package com.jmml.gazege.core.entities
 
+import com.jmml.gazege.core.dao.PersonDao
+
 interface ITransactionListDetail {
     val transaction: Transaction
     val category: Category?
@@ -15,10 +17,6 @@ data class TransactionListItemDetails(
     override val destinationAccount: Account,
     override val transactionType: TransactionType
 ) : ITransactionListDetail {
-    fun toTransactionAndAccounts(): TransactionAndAccounts = TransactionAndAccounts(
-        transaction, sourceAccount, destinationAccount
-    )
-
     companion object {
         fun from(
             transactions: List<Transaction>,
@@ -120,6 +118,53 @@ data class TransactionListItemDetailsWithAccount(
                 }
             }
         }
+    }
+}
+
+data class TransactionListItemDetailsWithSign(
+    override val transaction: Transaction,
+    override val category: Category?,
+    override val sourceAccount: Account,
+    override val destinationAccount: Account,
+    override val transactionType: TransactionType,
+    val fromPersonId: Int?,
+    val toPersonId: Int?,
+    val sign: Int
+) : ITransactionListDetail {
+    companion object {
+        fun from(
+            transactions: List<Transaction>,
+            categories: List<Category>,
+            accounts: List<Account>,
+            principalPersonId: Int?,
+            toPersonId: Int?
+        ): List<TransactionListItemDetailsWithSign> = TransactionListItemDetails.from(
+            transactions,
+            categories,
+            accounts,
+            principalPersonId
+        )
+            .map { details ->
+                val sign = PersonDao.direction(
+                    principalPersonId,
+                    toPersonId,
+                    TransactionAndAccounts(
+                        details.transaction,
+                        details.sourceAccount,
+                        details.destinationAccount
+                    )
+                )
+                TransactionListItemDetailsWithSign(
+                    details.transaction,
+                    details.category,
+                    details.sourceAccount,
+                    details.destinationAccount,
+                    details.transactionType,
+                    principalPersonId,
+                    toPersonId,
+                    sign
+                )
+            }
     }
 }
 
