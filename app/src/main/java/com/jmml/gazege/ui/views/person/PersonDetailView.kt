@@ -24,6 +24,7 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.personaDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
@@ -46,18 +47,42 @@ fun PersonDetail(
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
 ) {
-    var modalController: BottomSheetController? by remember {
-        mutableStateOf(null)
-    }
     var justPendingTransactions: Boolean by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState()
     val transactionListItemDetails by viewModelPersonDetail.rememberPeopleTransactionListItemDetails(
         principalPerson.id,
         person.id,
         justPendingTransactions,
         deuda
     )
+
+    PersonDetailUI(
+        person = person,
+        deuda = deuda,
+        transactionListItemDetails = transactionListItemDetails,
+        justPendingTransactions = justPendingTransactions,
+        onJustPendingTransactionsChange = { justPendingTransactions = it },
+        onPersonAction = onPersonAction,
+        onTransactionAction = onTransactionAction
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PersonDetailUI(
+    person: Person,
+    deuda: Double,
+    transactionListItemDetails: List<TransactionListItemDetails>?,
+    justPendingTransactions: Boolean,
+    onJustPendingTransactionsChange: (Boolean) -> Unit,
+    onPersonAction: (person: Person, action: PersonAction) -> Unit,
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+) {
+    var modalController: BottomSheetController? by remember {
+        mutableStateOf(null)
+    }
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
     EntityDetail(
         modalController = modalController,
         title = person.name,
@@ -98,7 +123,7 @@ fun PersonDetail(
         ) {
             Switch(
                 checked = justPendingTransactions,
-                onCheckedChange = { justPendingTransactions = it },
+                onCheckedChange = { onJustPendingTransactionsChange(it) },
             )
             Text(text = stringResource(id = R.string.justPendingTransactions))
         }
