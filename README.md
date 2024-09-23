@@ -12,6 +12,7 @@ App para gestionar gastos.
 ~~~ mermaid
 erDiagram
     TRANSACTION
+    BILL
     ACCOUNT
     BUDGET
     CATEGORY
@@ -24,4 +25,6 @@ erDiagram
     ACCOUNT 1--1 ACCOUNT : parent
     BUDGET 1+--1 CATEGORY : has
     CATEGORY  1--1 CATEGORY : parent
+    BILL 1--1 PERSON : source
+    BILL 1--1 PERSON : destination
   ~~~
