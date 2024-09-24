@@ -78,6 +78,7 @@ fun CharSequence.unaccent(): String {
 
 private fun partialStringMatch(originalString: String, stringToMatch: String) =
     originalString
+        .trim()
         .unaccent()
         .matches(
             Regex(
