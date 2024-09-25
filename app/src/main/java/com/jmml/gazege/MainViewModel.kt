@@ -256,6 +256,7 @@ class MainViewModel(
     private val allPerson = repository.getPersons().shareInViewModel()
     private val allAccount = repository.getAccounts().shareInViewModel()
     private val allTransactions = repository.getTransactions(null, null).shareInViewModel()
+    private val allPromissoryNotes = repository.getPromissoryNotes().shareInViewModel()
     private val categories = repository.getCategories().shareInViewModel()
     private val budget = repository.getBudgets().shareInViewModel()
     private val principalPerson = allPerson

@@ -18,6 +18,7 @@ import com.jmml.gazege.core.entities.CategoryWithTransactions
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
@@ -55,11 +56,16 @@ class DatabaseSampleScope(
     val categoriesAmount: Int = 20,
     val transactionAmount: Int = 100000,
     val budgetAmount: Int = 50,
-    val principalPersonAccountAmount: Int = 100
+    val principalPersonAccountAmount: Int = 100,
+    val promissoryNoteAmount: Int = 20
 ) {
     val personSample by lazy { getPersonSample() }
+    val principalPersonSample by lazy {
+        personSample.minByOrNull { it.importance ?: Int.MAX_VALUE }
+    }
     val accountSample by lazy { getAccountSample(principalPersonAccountAmount, personSample) }
     val categorieSample by lazy { getCategoriesSample(categoriesAmount) }
+    val promissoryNoteSample by lazy { getPromissoryNoteSample(promissoryNoteAmount, personSample) }
     val transactionSample by lazy {
         getTransactionSample(
             accountSample,
@@ -208,7 +214,6 @@ private fun getBudgetSample(
         val categoryIndex = random.nextInt(categorySize)
         val frequencyTypeOrdinal = random.nextInt(frequencyTypeSize)
         val frequencyType = FrequencyType.values()[frequencyTypeOrdinal]
-        val budgetType = BudgetType.values().toList().shuffled(random).first()
         val frequency = random.nextInt(1, 5)
         val value = random.nextDouble(100.0, 500000.0)
         val categoryId = categorySample[categoryIndex].id!!
@@ -431,6 +436,26 @@ private fun getTransactionSample(
             category?.id,
             date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong()),
             null
+        )
+    }
+}
+
+private fun getPromissoryNoteSample(
+    promissoryNoteAmount: Int,
+    personSample: List<Person>
+): List<PromissoryNote>{
+    val random = java.util.Random(3)
+    return (0..promissoryNoteAmount).map {
+        val selectedPersons = personSample.shuffled(random).take(2)
+        val sourcePerson = selectedPersons[0]
+        val destinationPerson = selectedPersons[1]
+        PromissoryNote(
+            id = it,
+            amount = random.nextDouble() * (100000 - 1000) + 1000,
+            date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong()),
+            sourceId = sourcePerson.id ?: -1,
+            destinationId = destinationPerson.id ?: -1,
+            description = "Promissory note from ${sourcePerson} to ${destinationPerson}"
         )
     }
 }

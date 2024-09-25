@@ -11,11 +11,13 @@ import com.jmml.gazege.core.dao.AccountDao
 import com.jmml.gazege.core.dao.BudgetDao
 import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.dao.PersonDao
+import com.jmml.gazege.core.dao.PromissoryNoteDao
 import com.jmml.gazege.core.dao.TransactionDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.migrations.Migrate34
 import com.jmml.gazege.core.migrations.MigrateSpec56
@@ -26,9 +28,10 @@ import com.jmml.gazege.core.migrations.MigrateSpec56
         Account::class,
         Transaction::class,
         Category::class,
-        Budget::class
+        Budget::class,
+        PromissoryNote::class
     ],
-    version = 14,
+    version = 15,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 4, to = 5),
@@ -40,7 +43,8 @@ import com.jmml.gazege.core.migrations.MigrateSpec56
         AutoMigration(10, 11),
         AutoMigration(11, 12),
         AutoMigration(12, 13),
-        AutoMigration(13, 14)
+        AutoMigration(13, 14),
+        AutoMigration(14, 15)
     ]
 )
 @TypeConverters(Converters::class)
@@ -48,9 +52,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun personDao(): PersonDao
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
-
+    abstract fun promissoryNoteDao(): PromissoryNoteDao
     abstract fun categoryDao(): CategoryDao
-
     abstract fun budgetDao(): BudgetDao
 
     companion object {
