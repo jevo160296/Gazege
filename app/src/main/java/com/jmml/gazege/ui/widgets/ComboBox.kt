@@ -78,11 +78,10 @@ fun CharSequence.unaccent(): String {
 
 private fun partialStringMatch(originalString: String, stringToMatch: String) =
     originalString
-        .trim()
         .unaccent()
         .matches(
             Regex(
-                ".*${stringToMatch.unaccent()}.*",
+                ".*${stringToMatch.trim().unaccent()}.*",
                 setOf(
                     RegexOption.DOT_MATCHES_ALL,
                     RegexOption.IGNORE_CASE
