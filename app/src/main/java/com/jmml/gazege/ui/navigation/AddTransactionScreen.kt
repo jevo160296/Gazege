@@ -2,7 +2,7 @@ package com.jmml.gazege.ui.navigation
 
 import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
@@ -19,6 +19,7 @@ import com.jmml.gazege.ui.fragments.TransactionFormFragment
 import com.jmml.gazege.ui.views.AddAction
 import com.jmml.gazege.ui.views.AddPromissoryNoteAction
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteFormPage
 import com.jmml.zoo.clases.Result
 import java.time.LocalDate
 
@@ -133,8 +134,24 @@ fun NavGraphBuilder.screenAddPromissoryNote(
                 defaultValue = LocalDate.now().toInt()
             }
         )
-    ) {
-        Text("Add promissory note action")
+    ) { navBackStackEntry ->
+        val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
+            ?: LocalDate.now().let {
+                it.year * 100 + it.monthValue
+            }
+        PromissoryNoteFormPage(
+            contentPadding = PaddingValues(8.dp),
+            personList = viewModelAddPromissoryNote.rememberAllPerson().value,
+            onPromissoryNoteChanged = { promissoryNote, _ ->
+                viewModelAddPromissoryNote.insertPromissoryNote(promissoryNote)
+                onNavigateUp()
+            },
+            defaultDate = LocalDate.of(
+                yearMonthDay.div(10000),
+                yearMonthDay.mod(10000).div(100),
+                yearMonthDay.mod(100)
+            )
+        )
     }
 }
 
@@ -142,14 +159,15 @@ fun NavController.navigateToAddTransaction(
     date: LocalDate,
     transactionAction: AddAction
 ) {
+    val yearmonthday = date.toInt()
     when (transactionAction) {
         is AddTransactionAction -> {
-            val yearmonthday = date.toInt()
             val transactionaction = transactionAction.name
             navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
         }
-
-        is AddPromissoryNoteAction -> navigate("addPromissoryNote?")
+        is AddPromissoryNoteAction -> {
+            navigate("addPromissoryNote?yearmonthday=$yearmonthday")
+        }
     }
 }
 

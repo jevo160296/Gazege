@@ -48,6 +48,7 @@ fun PromissoryNoteFormPage(
     contentPadding: PaddingValues = PaddingValues(),
     promissoryNote: PromissoryNote? = null,
     personList: List<Person>,
+    defaultDate: LocalDate = LocalDate.now(),
     onPromissoryNoteChanged: (PromissoryNote, SnackbarHostState) -> Unit
 ) {
     val (promissoryNoteState, onPromissoryNoteStateChanged) = rememberSaveable(stateSaver = promissoryNoteSaver)
@@ -59,7 +60,7 @@ fun PromissoryNoteFormPage(
                 PartialPromissoryNote(
                     null,
                     0.0,
-                    LocalDate.now(),
+                    defaultDate,
                     null,
                     null,
                     ""

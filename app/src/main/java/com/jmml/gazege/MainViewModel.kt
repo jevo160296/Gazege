@@ -34,6 +34,7 @@ import com.jmml.gazege.core.entities.CategoryWithTransactions
 import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
@@ -921,6 +922,13 @@ class MainViewModel(
         onErrorAction: (Throwable) -> Unit = {}
     ) = viewModelScope.safeLaunch(onErrorAction) {
         repository.insertTransaction(*transaction)
+    }
+
+    fun insertPromissoryNote(
+        vararg promissorNote: PromissoryNote,
+        onErrorAction: (Throwable) -> Unit = {}
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertPromissoryNote(*promissorNote)
     }
 
     fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
@@ -1834,7 +1842,19 @@ class MainViewModel(
         )
     }
 
-    inner class ViewModelAddPromissoryNote
+    inner class ViewModelAddPromissoryNote {
+        @Composable
+        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
+
+        fun insertPromissoryNote(
+            promissoryNote: PromissoryNote,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) =
+            this@MainViewModel.insertPromissoryNote(
+                promissoryNote,
+                onErrorAction = onErrorAction
+            )
+    }
 
     inner class ViewModelEditAccount {
         @Composable
