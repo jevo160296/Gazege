@@ -69,7 +69,7 @@ import com.jmml.gazege.ui.templates.StickyHeaderLayout
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
-import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.gazege.ui.views.AddAction
 import com.jmml.gazege.ui.views.account.LoadedAccountPage
 import com.jmml.gazege.ui.views.person.LoadedPersonPage
 import com.jmml.gazege.ui.views.person.NoPrincipalPersonPersonPage
@@ -118,7 +118,7 @@ fun MainFragment(
     onAddAccountRequested: () -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     onAccountDetailRequested: (Account) -> Unit,
-    onAddTransactionRequested: (action: AddTransactionAction) -> Unit,
+    onAddTransactionRequested: (action: AddAction) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,

@@ -16,6 +16,8 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.ui.fragments.LoadingTransactionFormFragment
 import com.jmml.gazege.ui.fragments.TransactionFormFragment
+import com.jmml.gazege.ui.views.AddAction
+import com.jmml.gazege.ui.views.AddPromissoryNoteAction
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.zoo.clases.Result
 import java.time.LocalDate
@@ -113,13 +115,42 @@ fun NavGraphBuilder.screenAddTransaction(
     }
 }
 
+fun NavGraphBuilder.screenAddPromissoryNote(
+    viewModelAddPromissoryNote: MainViewModel.ViewModelAddPromissoryNote,
+    onNavigateUp: () -> Unit,
+    onNavigateToAddPerson: () -> Unit,
+    onDataLoaded: () -> Unit
+) {
+    composable(
+        "addPromissoryNote?yearmonthday={yearmonthday}",
+        deepLinks = listOf(navDeepLink {
+            uriPattern = "$URI?promissoryNoteAction={promissoryNoteAction}"
+            action = Intent.ACTION_VIEW
+        }),
+        arguments = listOf(
+            navArgument("yearmonthday") {
+                type = NavType.IntType
+                defaultValue = LocalDate.now().toInt()
+            }
+        )
+    ) {
+        Text("Add promissory note action")
+    }
+}
+
 fun NavController.navigateToAddTransaction(
     date: LocalDate,
-    transactionAction: AddTransactionAction
+    transactionAction: AddAction
 ) {
-    val yearmonthday = date.toInt()
-    val transactionaction = transactionAction.name
-    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
+    when (transactionAction) {
+        is AddTransactionAction -> {
+            val yearmonthday = date.toInt()
+            val transactionaction = transactionAction.name
+            navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
+        }
+
+        is AddPromissoryNoteAction -> navigate("addPromissoryNote?")
+    }
 }
 
 fun NavController.navigateToAddTransaction(

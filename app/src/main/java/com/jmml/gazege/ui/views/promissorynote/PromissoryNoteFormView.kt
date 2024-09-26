@@ -38,7 +38,6 @@ import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.Form
 import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
-import com.jmml.zoo.debug.recomposeHighlighter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -104,8 +103,7 @@ private fun PromissoryNoteForm(
     val focusRequester = remember { FocusRequester() }
     NumberField(
         modifier = Modifier
-            .focusRequester(focusRequester)
-            .recomposeHighlighter(),
+            .focusRequester(focusRequester),
         value = promissoryNote.amount ?: 0.0,
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(amount = it)) },
         label = { Text(stringResource(id = R.string.Valor)) },
@@ -117,7 +115,6 @@ private fun PromissoryNoteForm(
         keyboardActions = KeyboardActions(onDone = { onDoneAction() })
     )
     TextField(
-        modifier = Modifier.recomposeHighlighter(),
         value = promissoryNote.description ?: "",
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(description = it)) },
         label = { Text(text = stringResource(id = R.string.descripcion)) },
@@ -134,14 +131,12 @@ private fun PromissoryNoteForm(
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(date = it)) }
     )
     PersonComboBox(
-        modifier = Modifier.recomposeHighlighter(),
         personList = personList,
         selectedPerson = selectedSource,
         onDoneAction = onDoneAction,
         onClick = { onPromissoryNoteChanged(promissoryNote.copy(sourceId = it.id)) }
     )
     PersonComboBox(
-        modifier = Modifier.recomposeHighlighter(),
         personList = personList,
         selectedPerson = selectedDestination,
         onDoneAction = onDoneAction,

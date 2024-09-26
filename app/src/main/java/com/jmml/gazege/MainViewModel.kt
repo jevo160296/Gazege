@@ -1834,6 +1834,8 @@ class MainViewModel(
         )
     }
 
+    inner class ViewModelAddPromissoryNote
+
     inner class ViewModelEditAccount {
         @Composable
         fun rememberAccountAndOwnerWithTransactionsAndPockets() =
@@ -2518,6 +2520,7 @@ class MainViewModel(
     val viewModelAddAccount = ViewModelAddAccount()
     val viewModelAddPerson = ViewModelAddPerson()
     val viewModelAddTransaction = ViewModelAddTransaction()
+    val viewModelAddPromissoryNote = ViewModelAddPromissoryNote()
     val viewModelEditAccount = ViewModelEditAccount()
     val viewModelEditPerson = ViewModelEditPerson()
     val viewModelEditTransaction = ViewModelEditTransaction()

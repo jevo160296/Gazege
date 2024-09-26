@@ -16,20 +16,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.jmml.gazege.NavPosition
 import com.jmml.gazege.R
+import com.jmml.gazege.ui.views.AddAction
+import com.jmml.gazege.ui.views.AddPromissoryNoteAction
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.widgets.fab.ExpandableFAB
 import com.jmml.gazege.ui.widgets.fab.ExtendedFAB
 import com.jmml.zoo.ui.menu.DropDownMenuItem
 
 @Composable
-fun DynamicAddEntityFAB(
+inline fun <reified T : AddAction> DynamicAddEntityFAB(
     fabExpanded: Boolean,
-    onFabExpandedChanged: (Boolean) -> Unit,
+    crossinline onFabExpandedChanged: (Boolean) -> Unit,
     navPosition: NavPosition,
-    onAddPersonRequested: () -> Unit,
-    onAddAccountRequested: () -> Unit,
-    onAddTransactionRequested: (AddTransactionAction) -> Unit,
-    onAddCategoryRequested: () -> Unit
+    crossinline onAddPersonRequested: () -> Unit,
+    crossinline onAddAccountRequested: () -> Unit,
+    crossinline onAddTransactionRequested: (T) -> Unit,
+    crossinline onAddCategoryRequested: () -> Unit
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (fabExpanded) {
@@ -78,47 +80,65 @@ fun DynamicAddEntityFAB(
             }
         }
     ) {
-        DropDownMenuItem(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                onAddTransactionRequested(AddTransactionAction.ADD_TRANSFER)
-                onFabExpandedChanged(false)
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.transfer_icon),
-                    contentDescription = "Add"
-                )
-            },
-            label = { Text(text = stringResource(id = R.string.Transferencia)) }
-        )
-        DropDownMenuItem(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                onAddTransactionRequested(AddTransactionAction.ADD_EXPENSE)
-                onFabExpandedChanged(false)
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.gasto_icon),
-                    contentDescription = "Add"
-                )
-            },
-            label = { Text(text = stringResource(id = R.string.Gasto)) }
-        )
-        DropDownMenuItem(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                onAddTransactionRequested(AddTransactionAction.ADD_INCOME)
-                onFabExpandedChanged(false)
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ingreso_icon),
-                    contentDescription = "Add"
-                )
-            },
-            label = { Text(text = stringResource(id = R.string.Ingreso)) }
-        )
+        if (T::class == AddPromissoryNoteAction::class || T::class == AddAction::class) {
+            DropDownMenuItem(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onAddTransactionRequested(AddPromissoryNoteAction.ADD_PROMISSORY_NOTE as T)
+                    onFabExpandedChanged(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.promissory_note),
+                        contentDescription = "Promissory note"
+                    )
+                },
+                label = { Text(text = stringResource(id = R.string.promissory_note)) }
+            )
+        }
+        if (T::class == AddAction::class || T::class == AddTransactionAction::class) {
+            DropDownMenuItem(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onAddTransactionRequested(AddTransactionAction.ADD_TRANSFER as T)
+                    onFabExpandedChanged(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.transfer_icon),
+                        contentDescription = "Add"
+                    )
+                },
+                label = { Text(text = stringResource(id = R.string.Transferencia)) }
+            )
+            DropDownMenuItem(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onAddTransactionRequested(AddTransactionAction.ADD_EXPENSE as T)
+                    onFabExpandedChanged(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.gasto_icon),
+                        contentDescription = "Add"
+                    )
+                },
+                label = { Text(text = stringResource(id = R.string.Gasto)) }
+            )
+            DropDownMenuItem(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onAddTransactionRequested(AddTransactionAction.ADD_INCOME as T)
+                    onFabExpandedChanged(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ingreso_icon),
+                        contentDescription = "Add"
+                    )
+                },
+                label = { Text(text = stringResource(id = R.string.Ingreso)) }
+            )
+        }
     }
 }

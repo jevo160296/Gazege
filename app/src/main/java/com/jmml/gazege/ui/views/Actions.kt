@@ -5,10 +5,16 @@ enum class AccountAction {
     DELETE
 }
 
-enum class AddTransactionAction {
+sealed interface AddAction
+
+enum class AddTransactionAction : AddAction {
     ADD_EXPENSE,
     ADD_INCOME,
     ADD_TRANSFER
+}
+
+enum class AddPromissoryNoteAction : AddAction {
+    ADD_PROMISSORY_NOTE
 }
 
 enum class TransactionAction {

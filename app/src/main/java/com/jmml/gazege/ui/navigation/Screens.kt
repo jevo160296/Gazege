@@ -127,6 +127,12 @@ fun MainNavHost(
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onDataLoaded = onDataLoaded
             )
+            screenAddPromissoryNote(
+                viewModelAddPromissoryNote = mainViewModel.viewModelAddPromissoryNote,
+                onNavigateUp = { navController.navigateUpOrClose(onCloseApp) },
+                onNavigateToAddPerson = navController::navigateToAddPerson,
+                onDataLoaded = onDataLoaded
+            )
             screenEditTransaction(
                 viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
                 onNavigateUp = navController::navigateUp,
