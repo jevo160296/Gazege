@@ -2,6 +2,7 @@ package com.jmml.gazege.ui.views.promissorynote
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -102,12 +103,25 @@ private fun PromissoryNoteForm(
     val selectedSource = personList.firstOrNull { it.id == promissoryNote.sourceId }
     val selectedDestination = personList.firstOrNull { it.id == promissoryNote.destinationId }
     val focusRequester = remember { FocusRequester() }
+    PersonComboBox(
+        modifier = Modifier.focusRequester(focusRequester),
+        personList = personList,
+        selectedPerson = selectedSource,
+        onDoneAction = onDoneAction,
+        onClick = { onPromissoryNoteChanged(promissoryNote.copy(sourceId = it.id)) },
+        label = { Text(stringResource(R.string.Yo)) }
+    )
+    PersonComboBox(
+        personList = personList,
+        selectedPerson = selectedDestination,
+        onDoneAction = onDoneAction,
+        onClick = { onPromissoryNoteChanged(promissoryNote.copy(destinationId = it.id)) },
+        label = { Text(stringResource(R.string.debo_y_pagare_a_la_orden_de)) }
+    )
     NumberField(
-        modifier = Modifier
-            .focusRequester(focusRequester),
         value = promissoryNote.amount ?: 0.0,
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(amount = it)) },
-        label = { Text(stringResource(id = R.string.Valor)) },
+        label = { Text(stringResource(id = R.string.la_cantidad_de)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
@@ -118,7 +132,7 @@ private fun PromissoryNoteForm(
     TextField(
         value = promissoryNote.description ?: "",
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(description = it)) },
-        label = { Text(text = stringResource(id = R.string.descripcion)) },
+        label = { Text(text = stringResource(id = R.string.por_concepto_de)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
@@ -130,18 +144,6 @@ private fun PromissoryNoteForm(
     DatePicker(
         value = promissoryNote.date,
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(date = it)) }
-    )
-    PersonComboBox(
-        personList = personList,
-        selectedPerson = selectedSource,
-        onDoneAction = onDoneAction,
-        onClick = { onPromissoryNoteChanged(promissoryNote.copy(sourceId = it.id)) }
-    )
-    PersonComboBox(
-        personList = personList,
-        selectedPerson = selectedDestination,
-        onDoneAction = onDoneAction,
-        onClick = { onPromissoryNoteChanged(promissoryNote.copy(destinationId = it.id)) }
     )
     LaunchedEffect(key1 = Unit) {
         // Waits 100 milliseconds until request focus to avoid calling the ime when expandable fab expands
@@ -171,11 +173,13 @@ private fun PromissoryNotePreview() {
         )
         {
             DatabaseSample {
-                PromissoryNoteForm(
-                    promissoryNote = promissoryNote,
-                    onPromissoryNoteChanged = onPromissotyNoteChanged,
-                    personList = personSample
-                ) { }
+                Column {
+                    PromissoryNoteForm(
+                        promissoryNote = promissoryNote,
+                        onPromissoryNoteChanged = onPromissotyNoteChanged,
+                        personList = personSample
+                    ) { }
+                }
             }
         }
     }

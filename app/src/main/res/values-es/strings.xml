@@ -122,4 +122,9 @@
     <string name="Previous_step">Paso anterior</string>
     <string name="Next_step">Siguiente paso</string>
     <string name="promissory_note">Pagaré</string>
+    <string name="Yo">Yo</string>
+    <string name="debo_y_pagare_a_la_orden_de">debo y pagaré a la orden de</string>
+    <string name="la_cantidad_de">la cantidad de</string>
+    <string name="por_concepto_de">por concepto de</string>
+    <string name="Creado_el">Creado el</string>
 </resources>

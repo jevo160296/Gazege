@@ -122,4 +122,9 @@
     <string name="Previous_step">Previous step</string>
     <string name="Next_step">Next step</string>
     <string name="promissory_note">Promissory note</string>
+    <string name="Yo">I</string>
+    <string name="debo_y_pagare_a_la_orden_de">owe and will pay to the order of</string>
+    <string name="la_cantidad_de">the amount of</string>
+    <string name="por_concepto_de">for the concept of</string>
+    <string name="Creado_el">Created on</string>
 </resources>
