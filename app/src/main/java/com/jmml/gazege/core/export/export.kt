@@ -8,6 +8,7 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.zoo.extensions.closedrange.toSequence
 import org.apache.commons.csv.CSVFormat
@@ -117,6 +118,33 @@ fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction
                 }
             }
     }
+
+fun writePromissoryNotes(outputStream: OutputStream, promissoryNotes: List<PromissoryNote>) {
+    writeCsv(outputStream, promissoryNotes) { items ->
+        getCSVFormat()
+            .print(this)
+            .apply {
+                printRecord(
+                    "id",
+                    "amount",
+                    "date",
+                    "sourceId",
+                    "destinationId",
+                    "description"
+                )
+                items.forEach { note ->
+                    printRecord(
+                        note.id,
+                        note.amount,
+                        note.date,
+                        note.sourceId,
+                        note.destinationId,
+                        note.description
+                    )
+                }
+            }
+    }
+}
 
 fun writePersons(outputStream: OutputStream, persons: List<Person>) =
     writeCsv(outputStream, persons) { items ->
@@ -304,6 +332,7 @@ fun writeBudget(outputStream: OutputStream, budget: List<Budget>) =
 
 fun writeZipBackup(
     transactionsInputStream: InputStream,
+    promissoryNotesInputStream: InputStream,
     personsInputStream: InputStream,
     categoriesInputStream: InputStream,
     accountsInputStream: InputStream,
@@ -313,20 +342,21 @@ fun writeZipBackup(
     zipOutputStream.use { output ->
         listOf(
             transactionsInputStream,
+            promissoryNotesInputStream,
             personsInputStream,
             categoriesInputStream,
             budgetInputStream,
             accountsInputStream
-
         )
             .forEachIndexed { index, input ->
                 input.use { usedInput ->
                     val name = when (index) {
                         0 -> "transacciones.csv"
-                        1 -> "personas.csv"
-                        2 -> "categorias.csv"
-                        3 -> "presupuesto.csv"
-                        4 -> "cuentas.csv"
+                        1 -> "promissorynotes.csv"
+                        2 -> "personas.csv"
+                        3 -> "categorias.csv"
+                        4 -> "presupuesto.csv"
+                        5 -> "cuentas.csv"
                         else -> "unkown.csv"
                     }
                     BufferedInputStream(usedInput).use { input ->
@@ -391,6 +421,31 @@ fun readTransactionsFromCsv(inputStream: InputStream): List<Transaction> =
                     categoryId = item.categoryId.toIntOrNull(),
                     date = parseDate(item.date, formatter),
                     aNombreDe = item.aNombreDe.toIntOrNull()
+                )
+            }
+        }
+
+fun readPromissoryNotesFromCsv(inputStream: InputStream): List<PromissoryNote> =
+    readFromCsv(inputStream) { record, columnIndex, _ ->
+        object {
+            val id = record[columnIndex["id"] ?: 0]
+            val amount = record[columnIndex["amount"] ?: 0]
+            val date = record[columnIndex["date"] ?: 0]
+            val sourceId = record[columnIndex["sourceId"] ?: 0]
+            val destinationId = record[columnIndex["destinationId"] ?: 0]
+            val description = record[columnIndex["description"] ?: 0]
+        }
+    }
+        .let { items ->
+            val formatter = realizeFormatter(items.take(30).map { it.date }.toTypedArray())
+            items.map { item ->
+                PromissoryNote(
+                    id = item.id.toIntOrNull(),
+                    amount = item.amount.toDoubleOrNull() ?: 0.0,
+                    date = parseDate(item.date, formatter),
+                    sourceId = item.sourceId.toIntOrNull() ?: 0,
+                    destinationId = item.destinationId.toIntOrNull() ?: 0,
+                    description = item.description
                 )
             }
         }

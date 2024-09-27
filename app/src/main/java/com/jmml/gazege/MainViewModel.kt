@@ -46,12 +46,14 @@ import com.jmml.gazege.core.export.readAccountFromCsv
 import com.jmml.gazege.core.export.readBudgetFromCsv
 import com.jmml.gazege.core.export.readCategoryFromCsv
 import com.jmml.gazege.core.export.readPersonsFromCsv
+import com.jmml.gazege.core.export.readPromissoryNotesFromCsv
 import com.jmml.gazege.core.export.readTransactionsFromCsv
 import com.jmml.gazege.core.export.writeAccounts
 import com.jmml.gazege.core.export.writeBudget
 import com.jmml.gazege.core.export.writeCategories
 import com.jmml.gazege.core.export.writeCategoriesWithCalculatedData
 import com.jmml.gazege.core.export.writePersons
+import com.jmml.gazege.core.export.writePromissoryNotes
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
 import com.jmml.gazege.ui.Settings
@@ -1062,6 +1064,11 @@ class MainViewModel(
                 .firstOrNull()
                 ?: emptyList()
 
+        private suspend fun getPromissoryNotes() =
+            repository.getPromissoryNotes()
+                .firstOrNull()
+                ?: emptyList()
+
         private suspend fun getCategories() =
             repository.getCategories()
                 .firstOrNull()
@@ -1080,7 +1087,7 @@ class MainViewModel(
         fun exportData(outputStream: OutputStream) {
             val progressStatus = HistoricalProgressStatus.start(
                 "Exporting data",
-                totalWork = 8.0,
+                totalWork = 9.0,
                 defaultIncrement = 1.0
             ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
             viewModelScope.safeLaunch(
@@ -1089,14 +1096,21 @@ class MainViewModel(
                 }
             ) {
                 withContext(Dispatchers.IO) {
-                    progressStatus.incrementProgress("ConvertingPersons")
+                    progressStatus.incrementProgress("Converting persons")
                     val persons = getPersons()
                     val personsOutputStream = ByteArrayOutputStream()
                     personsOutputStream.use {
                         writePersons(it, persons)
                     }
 
-                    progressStatus.incrementProgress("Converting caategories")
+                    progressStatus.incrementProgress("Converting promissory notes")
+                    val promissoryNotes = getPromissoryNotes()
+                    val promissoryNotesOutputStream = ByteArrayOutputStream()
+                    promissoryNotesOutputStream.use {
+                        writePromissoryNotes(it, promissoryNotes)
+                    }
+
+                    progressStatus.incrementProgress("Converting categories")
                     val categories = getCategories()
                     val categoriesOutputStream = ByteArrayOutputStream()
                     categoriesOutputStream.use {
@@ -1133,11 +1147,14 @@ class MainViewModel(
                         ByteArrayInputStream(accountsOutputStream.toByteArray())
                     val transactionsInputStream =
                         ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                    val promissoryNotesInputStream =
+                        ByteArrayInputStream(promissoryNotesOutputStream.toByteArray())
                     progressStatus.incrementProgress("Compressing files")
                     ZipOutputStream(outputStream)
                         .use { zipOurpurStream ->
                             writeZipBackup(
                                 transactionsInputStream,
+                                promissoryNotesInputStream,
                                 personsInputStream,
                                 categoriesInputStream,
                                 accountsInputStream,
@@ -1157,6 +1174,7 @@ class MainViewModel(
                 0.0
             ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
             var transactions: List<Transaction>? = null
+            var promissoryNotes: List<PromissoryNote> = emptyList()
             var categories: List<Category>? = null
             var persons: List<Person>? = null
             var budget: List<Budget>? = null
@@ -1188,6 +1206,17 @@ class MainViewModel(
                                                 "Transactions loaded",
                                                 0.238
                                             )
+                                        }
+
+                                        "promissorynotes.csv" -> {
+                                            progressStatus.incrementProgress("Loading promissory notes")
+                                            zipInputStream.readBytes()
+                                                .run {
+                                                    inputStream().run {
+                                                        promissoryNotes =
+                                                            readPromissoryNotesFromCsv(this)
+                                                    }
+                                                }
                                         }
 
                                         "categorias.csv" -> {
@@ -1267,6 +1296,7 @@ class MainViewModel(
                         progressStatus.setCompletedWork("Deleting all data", 0.5)
                         deleteAll().invokeOnCompletion {
                             val totalSize = (persons?.size ?: 0) +
+                                    (promissoryNotes.size) +
                                     (accounts?.size ?: 0) +
                                     (categories?.size ?: 0) +
                                     (budget?.size ?: 0) +
@@ -1279,6 +1309,9 @@ class MainViewModel(
                                 "Person inserted",
                                 (persons?.size ?: 0).toDouble() / totalSize
                             )
+                            promissoryNotes.also { promissoryNotes ->
+                                insertPromissoryNote(*promissoryNotes.toTypedArray()) {}
+                            }
                             accounts?.also { accounts ->
                                 insertAccount(
                                     *accounts.toTypedArray(),
