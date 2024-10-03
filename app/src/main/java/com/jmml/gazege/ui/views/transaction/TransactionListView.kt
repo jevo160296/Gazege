@@ -128,7 +128,7 @@ fun <T : ITransactionListDetail> LazyListScope.transactionLazyListItems(
 }
 
 @Composable
-private fun TransactionViewHolder(
+fun TransactionViewHolder(
     transaction: TransactionListItemDetails
 ) {
     val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
@@ -217,7 +217,7 @@ private fun TransactionViewHolder(
 }
 
 @Composable
-private fun TransactionWithAccountViewHolder(
+fun TransactionWithAccountViewHolder(
     transaction: TransactionListItemDetailsWithAccount
 ) {
     val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
@@ -313,7 +313,7 @@ private fun TransactionWithAccountViewHolder(
 }
 
 @Composable
-private fun TransactionWithSignViewHolder(transaction: TransactionListItemDetailsWithSign) {
+fun TransactionWithSignViewHolder(transaction: TransactionListItemDetailsWithSign) {
     val iconText: @Composable (icon: Painter, text: String, color: Color) -> Unit =
         { icon, text, color ->
             Row(
@@ -409,7 +409,7 @@ private fun TransactionWithSignViewHolder(transaction: TransactionListItemDetail
 }
 
 @Composable
-private fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
+fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
     transaction: T,
     editTransaction: (T) -> Unit,
     delTransaction: (T) -> Unit

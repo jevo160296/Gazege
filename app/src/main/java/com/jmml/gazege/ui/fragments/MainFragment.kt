@@ -50,6 +50,7 @@ import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.data.SampleId
 import com.jmml.gazege.ui.DatabaseSample
@@ -71,10 +72,12 @@ import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.AddAction
 import com.jmml.gazege.ui.views.account.LoadedAccountPage
+import com.jmml.gazege.ui.views.document.LoadedDocumentListView
+import com.jmml.gazege.ui.views.document.LoadingDocumentListView
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentViewModel
 import com.jmml.gazege.ui.views.person.LoadedPersonPage
 import com.jmml.gazege.ui.views.person.NoPrincipalPersonPersonPage
-import com.jmml.gazege.ui.views.transaction.LoadedTransactionPage
-import com.jmml.gazege.ui.views.transaction.LoadingTransactionPage
 import com.jmml.gazege.ui.widgets.BooleanFilters
 import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.DoubleFilter
@@ -111,6 +114,7 @@ fun MainFragment(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delPromissoryNote: (PromissoryNote) -> Unit,
     delCategory: (Category) -> Unit,
     onAddPersonRequested: () -> Unit,
     onEditPersonRequested: (Person) -> Unit,
@@ -119,6 +123,7 @@ fun MainFragment(
     onEditAccountRequested: (Account) -> Unit,
     onAccountDetailRequested: (Account) -> Unit,
     onAddTransactionRequested: (action: AddAction) -> Unit,
+    onEditPromissoryNoteRequested: (PromissoryNote) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
@@ -338,6 +343,18 @@ fun MainFragment(
                     }
                 }
             },
+            delPromissoryNote = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = "Promissory note deleted",
+                        actionLabel = "Yes",
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delPromissoryNote(it)
+                    }
+                }
+            },
             delCategory = {
                 scope.launch {
                     val response = snackbarHostState.showSnackbar(
@@ -355,6 +372,7 @@ fun MainFragment(
             onEditAccountRequested = onEditAccountRequested,
             onAccountDetailRequested = onAccountDetailRequested,
             onEditTransactionRequested = onEditTransactionRequested,
+            onEditPromissoryNoteRequested = onEditPromissoryNoteRequested,
             onRangeChanged = onRangeChanged,
             onSaldoActualClick = onSaldoActualClick,
             onPersonFilterValueChanged = onPersonFilterValueChanged,
@@ -397,12 +415,14 @@ private fun MainFragmentResponsiveContent(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delPromissoryNote: (PromissoryNote) -> Unit,
     delCategory: (Category) -> Unit,
     onEditPersonRequested: (Person) -> Unit,
     onPersonDetailRequested: (Person) -> Unit,
     onEditAccountRequested: (Account) -> Unit,
     onAccountDetailRequested: (Account) -> Unit,
     onEditTransactionRequested: (Transaction) -> Unit,
+    onEditPromissoryNoteRequested: (PromissoryNote) -> Unit,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     onSaldoActualClick: () -> Unit,
     onPersonFilterValueChanged: (Boolean) -> Unit,
@@ -542,23 +562,49 @@ private fun MainFragmentResponsiveContent(
             Crossfade(targetState = filteredTransactionList, label = "CrosFade transactions") {
                 when (it) {
                     is Result.Success -> {
-                        LoadedTransactionPage(
-                            transactionList = it.data.transactionList,
-                            itemHolderPaddingValues = paddingValues,
+                        LoadedDocumentListView(
+                            documents = it.data.documentList,
+                            contentPadding = paddingValues,
                             state = transactionState,
-                            delTransaction = delTransaction,
-                            editTransaction = onEditTransactionRequested,
+                            delDocument = { document ->
+                                when (document) {
+                                    is TransactionDocumentViewModel -> delTransaction(document.transactionListItemDetails.transaction)
+                                    is PromissoryNoteDocumentViewModel -> delPromissoryNote(document.promissoryNoteViewModel.promissoryNote)
+                                }
+                            },
+                            editDocument = { document ->
+                                when (document) {
+                                    is TransactionDocumentViewModel -> onEditTransactionRequested(
+                                        document.transactionListItemDetails.transaction
+                                    )
+
+                                    is PromissoryNoteDocumentViewModel -> onEditPromissoryNoteRequested(
+                                        document.promissoryNoteViewModel.promissoryNote
+                                    )
+                                }
+                            },
                             onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
                             nestedScrollConnection = nestedScrollConnection,
                             onZeroElementsChanged = onZeroElementsChanged,
                             onFirstElementVisibleChanged = onFirstElementVisibleChanged
                         )
+//                        LoadedTransactionPage(
+//                            transactionList = it.data.transactionList,
+//                            itemHolderPaddingValues = paddingValues,
+//                            state = transactionState,
+//                            delTransaction = delTransaction,
+//                            editTransaction = onEditTransactionRequested,
+//                            onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
+//                            nestedScrollConnection = nestedScrollConnection,
+//                            onZeroElementsChanged = onZeroElementsChanged,
+//                            onFirstElementVisibleChanged = onFirstElementVisibleChanged
+//                        )
                     }
 
                     is Result.Error -> Text(text = "Error ${it.exception}")
-                    Result.Loading -> LoadingTransactionPage(
+                    Result.Loading -> LoadingDocumentListView(
                         onTitleSetted = { newTitle -> onTitleChanged(newTitle) },
-                        itemHolderPaddingValues = paddingValues
+                        contentPadding = paddingValues
                     )
                 }
             }
@@ -796,7 +842,9 @@ private fun DefaultPreview() {
                 onExportCategoryRequested = {},
                 showVertical = true,
                 showType = EditarCategoriasShowType.COMPACT,
-                categoriasState = EmptyEditarCategoriasState
+                categoriasState = EmptyEditarCategoriasState,
+                onEditPromissoryNoteRequested = {},
+                delPromissoryNote = {}
             )
         }
     }

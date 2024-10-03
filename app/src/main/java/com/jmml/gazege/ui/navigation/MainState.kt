@@ -6,6 +6,10 @@ import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.ui.views.document.IDocumentViewModel
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentViewModel
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteViewModel
 import java.time.LocalDate
 
 interface PersonSummaryState
@@ -160,7 +164,16 @@ interface TransactionDetailsState
 object LoadingTransactionsDetailsState : TransactionDetailsState
 
 data class LoadedTransactionDetailsState(
-    val transactionList: List<TransactionListItemDetails>
-) : TransactionDetailsState
+    val transactionList: List<TransactionListItemDetails>,
+    val promissoryNotesList: List<PromissoryNoteViewModel> = emptyList()
+) : TransactionDetailsState {
+    val documentList: List<IDocumentViewModel>
+
+    init {
+        val transactionListView = transactionList.map { TransactionDocumentViewModel(it) }
+        val promissoryNoteListView = promissoryNotesList.map { PromissoryNoteDocumentViewModel(it) }
+        documentList = (transactionListView + promissoryNoteListView).sortedByDescending { it.date }
+    }
+}
 
 fun loadingTransactionDetailsState(): TransactionDetailsState = LoadingTransactionsDetailsState

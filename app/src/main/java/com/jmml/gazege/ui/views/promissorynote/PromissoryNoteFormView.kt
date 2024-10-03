@@ -48,9 +48,10 @@ fun PromissoryNoteFormPage(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     promissoryNote: PromissoryNote? = null,
+    onPromissoryNoteSaveRequested: (PromissoryNote, SnackbarHostState) -> Unit,
     personList: List<Person>,
+    onAddPersonRequested: () -> Unit,
     defaultDate: LocalDate = LocalDate.now(),
-    onPromissoryNoteChanged: (PromissoryNote, SnackbarHostState) -> Unit
 ) {
     val (promissoryNoteState, onPromissoryNoteStateChanged) = rememberSaveable(stateSaver = promissoryNoteSaver)
     {
@@ -72,7 +73,7 @@ fun PromissoryNoteFormPage(
     val snackbarHostState = SnackbarHostState()
     val savePromissoryNote = {
         if (promissoryNoteState.isComplete()) {
-            onPromissoryNoteChanged(promissoryNoteState.toFull(), snackbarHostState)
+            onPromissoryNoteSaveRequested(promissoryNoteState.toFull(), snackbarHostState)
         }
     }
     Form(
@@ -200,13 +201,15 @@ private fun PromissoryNoteFormPagePreview() {
             DatabaseSample {
                 PromissoryNoteFormPage(
                     personList = personSample,
-                ) { promissoryNote, snackbarHostState ->
-                    coroutine.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Promissory note saved, desc: ${promissoryNote.description}"
-                        )
+                    onAddPersonRequested = { },
+                    onPromissoryNoteSaveRequested = { promissoryNote, snackbarHostState ->
+                        coroutine.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Promissory note saved, desc: ${promissoryNote.description}"
+                            )
+                        }
                     }
-                }
+                )
             }
         }
     }

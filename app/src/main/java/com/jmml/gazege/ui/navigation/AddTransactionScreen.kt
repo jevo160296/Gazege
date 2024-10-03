@@ -139,10 +139,16 @@ fun NavGraphBuilder.screenAddPromissoryNote(
             ?: LocalDate.now().let {
                 it.year * 100 + it.monthValue
             }
+        val personList by viewModelAddPromissoryNote.rememberAllPerson()
+        LaunchedEffect(key1 = personList.isNotEmpty()) {
+            if (personList.isNotEmpty()) {
+                onDataLoaded()
+            }
+        }
         PromissoryNoteFormPage(
             contentPadding = PaddingValues(8.dp),
-            personList = viewModelAddPromissoryNote.rememberAllPerson().value,
-            onPromissoryNoteChanged = { promissoryNote, _ ->
+            personList = personList,
+            onPromissoryNoteSaveRequested = { promissoryNote, _ ->
                 viewModelAddPromissoryNote.insertPromissoryNote(promissoryNote)
                 onNavigateUp()
             },
@@ -150,7 +156,8 @@ fun NavGraphBuilder.screenAddPromissoryNote(
                 yearMonthDay.div(10000),
                 yearMonthDay.mod(10000).div(100),
                 yearMonthDay.mod(100)
-            )
+            ),
+            onAddPersonRequested = onNavigateToAddPerson
         )
     }
 }

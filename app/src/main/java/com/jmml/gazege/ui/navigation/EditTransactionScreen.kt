@@ -1,7 +1,7 @@
 package com.jmml.gazege.ui.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -13,6 +13,7 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.ui.fragments.LoadingTransactionFormFragment
 import com.jmml.gazege.ui.fragments.TransactionFormFragment
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteFormPage
 import com.jmml.zoo.clases.Result
 import java.time.LocalDate
 
@@ -71,6 +72,44 @@ fun NavGraphBuilder.screenEditTransaction(
     }
 }
 
+fun NavGraphBuilder.screenEditPromissoryNote(
+    viewModelEditPromissoryNote: MainViewModel.ViewModelEditPromissoryNote,
+    onNavigateUp: () -> Unit,
+) {
+    composable(
+        "editPromissoryNote/{promissoryNoteId}",
+        arguments = listOf(navArgument("promissoryNoteId") {
+            type = NavType.IntType
+        })
+    ) { navBackStackEntry ->
+        val promissoryNoteId = navBackStackEntry.arguments?.getInt("promissoryNoteId")
+        val selectedPromissoryNote =
+            viewModelEditPromissoryNote.rememberPromissoryNote(promissoryNoteId).value
+        val personList = viewModelEditPromissoryNote.rememberAllPerson().value
+        when (selectedPromissoryNote) {
+            is Result.Error -> Text("Error: ${selectedPromissoryNote.exception.message}")
+            Result.Loading -> LoadingTransactionFormFragment()
+            is Result.Success -> when (personList) {
+                is Result.Error -> Text("${personList.exception.message}")
+                Result.Loading -> LoadingTransactionFormFragment()
+                is Result.Success -> PromissoryNoteFormPage(
+                    promissoryNote = selectedPromissoryNote.data,
+                    onPromissoryNoteSaveRequested = { promissoryNote, _ ->
+                        viewModelEditPromissoryNote.updatePromissoryNote(promissoryNote)
+                        onNavigateUp()
+                    },
+                    personList = personList.data,
+                    onAddPersonRequested = {}
+                )
+            }
+        }
+    }
+}
+
 fun NavController.navigateToEditTransaction(transactionId: Int?) {
     navigate("editTransaction/$transactionId")
+}
+
+fun NavController.navigateToEditPromissoryNote(promissoryNoteId: Int?) {
+    navigate("editPromissoryNote/$promissoryNoteId")
 }

@@ -80,6 +80,7 @@ fun MainNavHost(
                 onNavigateToAccountDetail = navController::navigateToAccountDetail,
                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
+                onNavigateToEditPromissoryNote = navController::navigateToEditPromissoryNote,
                 onNavigateToSettings = navController::navigateToSettings,
                 onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
                 onNavigateToAddCategory = navController::navigateToAddCategory,
@@ -137,6 +138,10 @@ fun MainNavHost(
                 viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount
+            )
+            screenEditPromissoryNote(
+                viewModelEditPromissoryNote = mainViewModel.viewModelEditPromissoryNote,
+                onNavigateUp = navController::navigateUp
             )
             screenSettings(
                 viewModelSettings = mainViewModel.viewModelSettings,
