@@ -2581,8 +2581,8 @@ class MainViewModel(
                             .sortedByDescending { it.date }
                         val promissoryNotes = combined.promissoryNotes
                             .filter {
-                                it.sourceId == principalPersonId ||
-                                        it.destinationId == principalPersonId
+                                it.sourceId == principalPersonId && it.destinationId == otherPersonId ||
+                                        it.destinationId == principalPersonId && it.sourceId == otherPersonId
                             }
                         val accounts = allAccount
                     }
