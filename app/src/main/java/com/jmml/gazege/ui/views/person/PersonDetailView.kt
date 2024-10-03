@@ -3,6 +3,7 @@ package com.jmml.gazege.ui.views.person
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -256,6 +257,7 @@ private fun PersonDetailUI(
             ) {
                 LoadedDocumentListView(
                     modifier = Modifier.padding(it),
+                    contentPadding = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
                     documents = documentListViewModel ?: emptyList(),
                     delDocument = {},
                     editDocument = {},
