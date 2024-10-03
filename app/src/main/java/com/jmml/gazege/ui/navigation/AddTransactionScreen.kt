@@ -139,10 +139,12 @@ fun NavGraphBuilder.screenAddPromissoryNote(
             ?: LocalDate.now().let {
                 it.year * 100 + it.monthValue
             }
-        val personList by viewModelAddPromissoryNote.rememberAllPerson()
-        LaunchedEffect(key1 = personList.isNotEmpty()) {
-            if (personList.isNotEmpty()) {
-                onDataLoaded()
+        val personList = viewModelAddPromissoryNote.rememberAllPerson().value
+        if (personList is Result.Success) {
+            LaunchedEffect(key1 = personList.data.isNotEmpty()) {
+                if (personList.data.isNotEmpty()) {
+                    onDataLoaded()
+                }
             }
         }
         PromissoryNoteFormPage(

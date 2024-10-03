@@ -39,6 +39,7 @@ import com.jmml.gazege.ui.widgets.DatePicker
 import com.jmml.gazege.ui.widgets.Form
 import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
+import com.jmml.zoo.clases.Result
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -49,7 +50,7 @@ fun PromissoryNoteFormPage(
     contentPadding: PaddingValues = PaddingValues(),
     promissoryNote: PromissoryNote? = null,
     onPromissoryNoteSaveRequested: (PromissoryNote, SnackbarHostState) -> Unit,
-    personList: List<Person>,
+    personList: Result<List<Person>>,
     onAddPersonRequested: () -> Unit,
     defaultDate: LocalDate = LocalDate.now(),
 ) {
@@ -98,11 +99,19 @@ fun PromissoryNoteFormPage(
 private fun PromissoryNoteForm(
     promissoryNote: PartialPromissoryNote,
     onPromissoryNoteChanged: (PartialPromissoryNote) -> Unit,
-    personList: List<Person>,
+    personList: Result<List<Person>>,
     onDoneAction: () -> Unit
 ) {
-    val selectedSource = personList.firstOrNull { it.id == promissoryNote.sourceId }
-    val selectedDestination = personList.firstOrNull { it.id == promissoryNote.destinationId }
+    val selectedSource = when (personList) {
+        is Result.Error -> null
+        Result.Loading -> null
+        is Result.Success -> personList.data.firstOrNull { it.id == promissoryNote.sourceId }
+    }
+    val selectedDestination = when (personList) {
+        is Result.Error -> null
+        Result.Loading -> null
+        is Result.Success -> personList.data.firstOrNull { it.id == promissoryNote.destinationId }
+    }
     val focusRequester = remember { FocusRequester() }
     PersonComboBox(
         modifier = Modifier.focusRequester(focusRequester),
@@ -178,7 +187,7 @@ private fun PromissoryNotePreview() {
                     PromissoryNoteForm(
                         promissoryNote = promissoryNote,
                         onPromissoryNoteChanged = onPromissotyNoteChanged,
-                        personList = personSample
+                        personList = Result.Success(personSample),
                     ) { }
                 }
             }
@@ -200,7 +209,7 @@ private fun PromissoryNoteFormPagePreview() {
         {
             DatabaseSample {
                 PromissoryNoteFormPage(
-                    personList = personSample,
+                    personList = Result.Success(personSample),
                     onAddPersonRequested = { },
                     onPromissoryNoteSaveRequested = { promissoryNote, snackbarHostState ->
                         coroutine.launch {

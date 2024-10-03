@@ -1950,7 +1950,12 @@ class MainViewModel(
 
     inner class ViewModelAddPromissoryNote {
         @Composable
-        fun rememberAllPerson() = allPerson.collectAsState(emptyList())
+        fun rememberAllPerson() = remember {
+            allPerson
+                .map { Result.Success(it) }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
 
         fun insertPromissoryNote(
             promissoryNote: PromissoryNote,
@@ -2080,7 +2085,7 @@ class MainViewModel(
             .collectAsState(Result.Loading)
 
         @Composable
-        fun rememberAllPerson() = remember() {
+        fun rememberAllPerson() = remember {
             allPerson
                 .map { Result.Success(it) }
                 .shareInViewModel()

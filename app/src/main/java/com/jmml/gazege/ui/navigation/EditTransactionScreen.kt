@@ -3,6 +3,7 @@ package com.jmml.gazege.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -10,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jmml.gazege.MainViewModel
+import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.ui.fragments.LoadingTransactionFormFragment
 import com.jmml.gazege.ui.fragments.TransactionFormFragment
@@ -89,19 +91,16 @@ fun NavGraphBuilder.screenEditPromissoryNote(
         when (selectedPromissoryNote) {
             is Result.Error -> Text("Error: ${selectedPromissoryNote.exception.message}")
             Result.Loading -> LoadingTransactionFormFragment()
-            is Result.Success -> when (personList) {
-                is Result.Error -> Text("${personList.exception.message}")
-                Result.Loading -> LoadingTransactionFormFragment()
-                is Result.Success -> PromissoryNoteFormPage(
-                    promissoryNote = selectedPromissoryNote.data,
-                    onPromissoryNoteSaveRequested = { promissoryNote, _ ->
-                        viewModelEditPromissoryNote.updatePromissoryNote(promissoryNote)
-                        onNavigateUp()
-                    },
-                    personList = personList.data,
-                    onAddPersonRequested = {}
-                )
-            }
+            is Result.Success -> PromissoryNoteFormPage(
+                contentPadding = PaddingValues(dimensionResource(R.dimen.DefaultPadding)),
+                promissoryNote = selectedPromissoryNote.data,
+                onPromissoryNoteSaveRequested = { promissoryNote, _ ->
+                    viewModelEditPromissoryNote.updatePromissoryNote(promissoryNote)
+                    onNavigateUp()
+                },
+                personList = personList,
+                onAddPersonRequested = {}
+            )
         }
     }
 }
