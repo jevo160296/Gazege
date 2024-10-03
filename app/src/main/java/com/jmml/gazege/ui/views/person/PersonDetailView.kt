@@ -223,6 +223,7 @@ private fun PersonDetailUI(
                             )
                         }
                     },
+                    contentPadding = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
                     onTitleSetted = {},
                     onZeroElementsChanged = {},
                     onFirstElementVisibleChanged = {}
