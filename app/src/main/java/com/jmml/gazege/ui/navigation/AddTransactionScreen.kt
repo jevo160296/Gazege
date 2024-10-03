@@ -2,7 +2,7 @@ package com.jmml.gazege.ui.navigation
 
 import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
@@ -16,7 +16,10 @@ import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.ui.fragments.LoadingTransactionFormFragment
 import com.jmml.gazege.ui.fragments.TransactionFormFragment
+import com.jmml.gazege.ui.views.AddAction
+import com.jmml.gazege.ui.views.AddPromissoryNoteAction
 import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteFormPage
 import com.jmml.zoo.clases.Result
 import java.time.LocalDate
 
@@ -113,13 +116,68 @@ fun NavGraphBuilder.screenAddTransaction(
     }
 }
 
+fun NavGraphBuilder.screenAddPromissoryNote(
+    viewModelAddPromissoryNote: MainViewModel.ViewModelAddPromissoryNote,
+    onNavigateUp: () -> Unit,
+    onNavigateToAddPerson: () -> Unit,
+    onDataLoaded: () -> Unit
+) {
+    composable(
+        "addPromissoryNote?yearmonthday={yearmonthday}",
+        deepLinks = listOf(navDeepLink {
+            uriPattern = "$URI?promissoryNoteAction={promissoryNoteAction}"
+            action = Intent.ACTION_VIEW
+        }),
+        arguments = listOf(
+            navArgument("yearmonthday") {
+                type = NavType.IntType
+                defaultValue = LocalDate.now().toInt()
+            }
+        )
+    ) { navBackStackEntry ->
+        val yearMonthDay = navBackStackEntry.arguments?.getInt("yearmonthday")
+            ?: LocalDate.now().let {
+                it.year * 100 + it.monthValue
+            }
+        val personList = viewModelAddPromissoryNote.rememberAllPerson().value
+        if (personList is Result.Success) {
+            LaunchedEffect(key1 = personList.data.isNotEmpty()) {
+                if (personList.data.isNotEmpty()) {
+                    onDataLoaded()
+                }
+            }
+        }
+        PromissoryNoteFormPage(
+            contentPadding = PaddingValues(8.dp),
+            personList = personList,
+            onPromissoryNoteSaveRequested = { promissoryNote, _ ->
+                viewModelAddPromissoryNote.insertPromissoryNote(promissoryNote)
+                onNavigateUp()
+            },
+            defaultDate = LocalDate.of(
+                yearMonthDay.div(10000),
+                yearMonthDay.mod(10000).div(100),
+                yearMonthDay.mod(100)
+            ),
+            onAddPersonRequested = onNavigateToAddPerson
+        )
+    }
+}
+
 fun NavController.navigateToAddTransaction(
     date: LocalDate,
-    transactionAction: AddTransactionAction
+    transactionAction: AddAction
 ) {
     val yearmonthday = date.toInt()
-    val transactionaction = transactionAction.name
-    navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
+    when (transactionAction) {
+        is AddTransactionAction -> {
+            val transactionaction = transactionAction.name
+            navigate("addTransaction?yearmonthday=$yearmonthday?transactionaction=$transactionaction?requestingAccountId=${-1}")
+        }
+        is AddPromissoryNoteAction -> {
+            navigate("addPromissoryNote?yearmonthday=$yearmonthday")
+        }
+    }
 }
 
 fun NavController.navigateToAddTransaction(

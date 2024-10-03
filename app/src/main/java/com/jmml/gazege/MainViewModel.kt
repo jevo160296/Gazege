@@ -34,6 +34,7 @@ import com.jmml.gazege.core.entities.CategoryWithTransactions
 import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
@@ -45,12 +46,14 @@ import com.jmml.gazege.core.export.readAccountFromCsv
 import com.jmml.gazege.core.export.readBudgetFromCsv
 import com.jmml.gazege.core.export.readCategoryFromCsv
 import com.jmml.gazege.core.export.readPersonsFromCsv
+import com.jmml.gazege.core.export.readPromissoryNotesFromCsv
 import com.jmml.gazege.core.export.readTransactionsFromCsv
 import com.jmml.gazege.core.export.writeAccounts
 import com.jmml.gazege.core.export.writeBudget
 import com.jmml.gazege.core.export.writeCategories
 import com.jmml.gazege.core.export.writeCategoriesWithCalculatedData
 import com.jmml.gazege.core.export.writePersons
+import com.jmml.gazege.core.export.writePromissoryNotes
 import com.jmml.gazege.core.export.writeTransactions
 import com.jmml.gazege.core.export.writeZipBackup
 import com.jmml.gazege.ui.Settings
@@ -69,6 +72,10 @@ import com.jmml.gazege.ui.progressStatus.IProgressStatus
 import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.savers.listStringSaver
 import com.jmml.gazege.ui.views.account.AccountDetailData
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteViewModel
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteWithSignViewModel
 import com.jmml.gazege.ui.widgets.BooleanFilters
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.INCOME_FILTER
@@ -256,6 +263,7 @@ class MainViewModel(
     private val allPerson = repository.getPersons().shareInViewModel()
     private val allAccount = repository.getAccounts().shareInViewModel()
     private val allTransactions = repository.getTransactions(null, null).shareInViewModel()
+    private val allPromissoryNotes = repository.getPromissoryNotes().shareInViewModel()
     private val categories = repository.getCategories().shareInViewModel()
     private val budget = repository.getBudgets().shareInViewModel()
     private val principalPerson = allPerson
@@ -609,6 +617,14 @@ class MainViewModel(
             .onStart { emit(Result.Loading) }
             .collect { emit(Result.Success(it)) }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val rangePromissoryNotes = range.transformLatest { range ->
+        repository
+            .getPromissoryNotes(range.first, range.second)
+            .onStart { emit(Result.Loading) }
+            .collect { emit(Result.Success(it)) }
+    }
     private val transactionAmountRangeValue =
         rangeTransactions.mapNotNull { transactionResult ->
             if (transactionResult is Result.Success) {
@@ -635,7 +651,8 @@ class MainViewModel(
         personWithAccounts
             .map { getPrincipalPersonWithAccounts(it) }
             .shareInViewModel()
-    private val filteredTransactionListitemDetails: SharedFlow<Result.Success<LoadedTransactionDetailsState>> =
+
+    private val filteredDocuments: SharedFlow<Result.Success<LoadedTransactionDetailsState>> =
         rangeTransactions
             .combineDefault(categories) { rangeTransactions, categories ->
                 object {
@@ -650,56 +667,108 @@ class MainViewModel(
                     val allAccount = allAccount
                 }
             }
+            .combineDefault(allPerson) { combined, allPerson ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = combined.allAccount
+                    val allPerson = allPerson
+                }
+            }
+            .combineDefault(rangePromissoryNotes) { combined, rangePromissoryNotes ->
+                object {
+                    val rangeTransactions = combined.rangeTransactions
+                    val categories = combined.categories
+                    val allAccount = combined.allAccount
+                    val allPerson = combined.allPerson
+                    val rangePromissoryNotes = rangePromissoryNotes
+                }
+            }
             .combineDefault(principalPerson) { combined, principalPerson ->
                 object {
                     val rangeTransactions = combined.rangeTransactions
                     val categories = combined.categories
                     val allAccount = combined.allAccount
+                    val allPerson = combined.allPerson
+                    val rangePromissoryNotes = combined.rangePromissoryNotes
                 }.run {
-                    if (rangeTransactions is Result.Success) {
+                    if (rangeTransactions is Result.Success && rangePromissoryNotes is Result.Success) {
                         Result.Success(
-                            TransactionListItemDetails.from(
-                                rangeTransactions.data,
-                                categories,
-                                allAccount,
-                                principalPerson?.id
-                            )
+                            object {
+                                val transactionItemDetails = TransactionListItemDetails.from(
+                                    rangeTransactions.data,
+                                    categories,
+                                    allAccount,
+                                    principalPerson?.id
+                                )
+                                val promissoryNotesViewModel = PromissoryNoteViewModel.from(
+                                    promissoryNotes = rangePromissoryNotes.data,
+                                    personList = allPerson,
+                                    principalPersonId = principalPerson?.id
+                                )
+                            }
                         )
                     } else Result.Loading
                 }
             }
             .combineDefault(transactionFilters) { filteredTransactions, filtersValue ->
                 if (filteredTransactions is Result.Success) {
+                    val transactionsWithFilters = filteredTransactions
+                        .data
+                        .transactionItemDetails
+                        .applyIncomeFilter(filtersValue[INCOME_FILTER])
+                        .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
+                        .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
                     Result.Success(
-                        filteredTransactions
-                            .data
-                            .applyIncomeFilter(filtersValue[INCOME_FILTER])
-                            .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
-                            .applyTransferFilter(filtersValue[TRANSFER_FILTER])
+                        object {
+                            val transactionsWithFilters = transactionsWithFilters
+                            val promissoryNotesViewModel = promissoryNotes
+                        }
                     )
                 } else Result.Loading
             }
             .combineDefault(categoriesFiltersValue) { filteredTransactions, filtersValue ->
                 if (filteredTransactions is Result.Success) {
+                    val transactionsWithFilters =
+                        filteredTransactions.data.transactionsWithFilters.applyCategoriesFilter(
+                            filtersValue
+                        )
+                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
                     Result.Success(
-                        filteredTransactions.data.applyCategoriesFilter(filtersValue)
+                        object {
+                            val transactionsWithFilters = transactionsWithFilters
+                            val promissoryNotesViewModel = promissoryNotes
+                        }
                     )
                 } else Result.Loading
             }
             .combineDefault(valueFilterValue) { filteredTransactions, valueFilterValue ->
                 if (filteredTransactions is Result.Success) {
+                    val transactionsWithFilters =
+                        filteredTransactions.data.transactionsWithFilters.applyValueFilter(
+                            valueFilterValue
+                        )
+                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
                     Result.Success(
-                        valueFilterValue.let {
-                            filteredTransactions.data.applyValueFilter(valueFilterValue)
+                        object {
+                            val transactionsWithFilters = transactionsWithFilters
+                            val promissoryNotesViewModel = promissoryNotes
                         }
                     )
                 } else Result.Loading
             }
             .combineDefault(descriptionFilterValue) { filteredTransactions, descriptionFilterValue ->
                 if (filteredTransactions is Result.Success) {
+                    val transactionsWithFilters =
+                        filteredTransactions.data.transactionsWithFilters.applyDescriptionFilter(
+                            descriptionFilterValue
+                        )
+                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
                     Result.Success(
                         LoadedTransactionDetailsState(
-                            filteredTransactions.data.applyDescriptionFilter(descriptionFilterValue)
+                            transactionList = transactionsWithFilters,
+                            promissoryNotesList = promissoryNotes
                         )
                     )
                 } else Result.Loading
@@ -793,6 +862,20 @@ class MainViewModel(
                     val incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual
                 }
             }
+            .combine(allPromissoryNotes) { combined, allPromissoryNotes ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory =
+                        combined.budgetWithCalculatedDataAndCategory
+                    val incluirPresupuestoEnSaldoActual = combined.incluirPresupuestoEnSaldoActual
+                    val incluirDeudasEnSaldoActual = combined.incluirDeudasEnSaldoActual
+                    val allPromissoryNotes = allPromissoryNotes
+                }
+            }
             .zDistinctUntilChanged { old, new ->
                 old === new ||
                         (
@@ -802,7 +885,8 @@ class MainViewModel(
                                         old.allTransactionAndAccountsAndCategory == new.allTransactionAndAccountsAndCategory &&
                                         old.budgetWithCalculatedDataAndCategory == new.budgetWithCalculatedDataAndCategory &&
                                         old.incluirPresupuestoEnSaldoActual == new.incluirPresupuestoEnSaldoActual &&
-                                        old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual
+                                        old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual &&
+                                        old.allPromissoryNotes == new.allPromissoryNotes
                                 )
             }
             .transform { combined ->
@@ -822,6 +906,7 @@ class MainViewModel(
                                         it.destinationAccount
                                     )
                                 },
+                            allPromissoryNotes = allPromissoryNotes,
                             budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
                             includeBudget = incluirPresupuestoEnSaldoActual,
                             includeDebts = incluirDeudasEnSaldoActual
@@ -922,12 +1007,27 @@ class MainViewModel(
         repository.insertTransaction(*transaction)
     }
 
+    fun insertPromissoryNote(
+        vararg promissorNote: PromissoryNote,
+        onErrorAction: (Throwable) -> Unit = {}
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertPromissoryNote(*promissorNote)
+    }
+
     fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.updateTransaction(transaction)
     }
 
+    fun updatePromissoryNote(promissoryNote: PromissoryNote) = viewModelScope.launch {
+        repository.updatePromissoryNote(promissoryNote)
+    }
+
     fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.deleteTransaction(transaction)
+    }
+
+    fun deletePromissoryNote(promissoryNote: PromissoryNote) = viewModelScope.launch {
+        repository.deletePromissoryNote(promissoryNote)
     }
 
     fun insertCategory(
@@ -1053,6 +1153,11 @@ class MainViewModel(
                 .firstOrNull()
                 ?: emptyList()
 
+        private suspend fun getPromissoryNotes() =
+            repository.getPromissoryNotes()
+                .firstOrNull()
+                ?: emptyList()
+
         private suspend fun getCategories() =
             repository.getCategories()
                 .firstOrNull()
@@ -1071,7 +1176,7 @@ class MainViewModel(
         fun exportData(outputStream: OutputStream) {
             val progressStatus = HistoricalProgressStatus.start(
                 "Exporting data",
-                totalWork = 8.0,
+                totalWork = 9.0,
                 defaultIncrement = 1.0
             ) { loadingDataState.postValue(it.toState(Type.EXPORT)) }
             viewModelScope.safeLaunch(
@@ -1080,14 +1185,21 @@ class MainViewModel(
                 }
             ) {
                 withContext(Dispatchers.IO) {
-                    progressStatus.incrementProgress("ConvertingPersons")
+                    progressStatus.incrementProgress("Converting persons")
                     val persons = getPersons()
                     val personsOutputStream = ByteArrayOutputStream()
                     personsOutputStream.use {
                         writePersons(it, persons)
                     }
 
-                    progressStatus.incrementProgress("Converting caategories")
+                    progressStatus.incrementProgress("Converting promissory notes")
+                    val promissoryNotes = getPromissoryNotes()
+                    val promissoryNotesOutputStream = ByteArrayOutputStream()
+                    promissoryNotesOutputStream.use {
+                        writePromissoryNotes(it, promissoryNotes)
+                    }
+
+                    progressStatus.incrementProgress("Converting categories")
                     val categories = getCategories()
                     val categoriesOutputStream = ByteArrayOutputStream()
                     categoriesOutputStream.use {
@@ -1124,11 +1236,14 @@ class MainViewModel(
                         ByteArrayInputStream(accountsOutputStream.toByteArray())
                     val transactionsInputStream =
                         ByteArrayInputStream(transactionsOutputStream.toByteArray())
+                    val promissoryNotesInputStream =
+                        ByteArrayInputStream(promissoryNotesOutputStream.toByteArray())
                     progressStatus.incrementProgress("Compressing files")
                     ZipOutputStream(outputStream)
                         .use { zipOurpurStream ->
                             writeZipBackup(
                                 transactionsInputStream,
+                                promissoryNotesInputStream,
                                 personsInputStream,
                                 categoriesInputStream,
                                 accountsInputStream,
@@ -1148,6 +1263,7 @@ class MainViewModel(
                 0.0
             ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
             var transactions: List<Transaction>? = null
+            var promissoryNotes: List<PromissoryNote> = emptyList()
             var categories: List<Category>? = null
             var persons: List<Person>? = null
             var budget: List<Budget>? = null
@@ -1179,6 +1295,17 @@ class MainViewModel(
                                                 "Transactions loaded",
                                                 0.238
                                             )
+                                        }
+
+                                        "promissorynotes.csv" -> {
+                                            progressStatus.incrementProgress("Loading promissory notes")
+                                            zipInputStream.readBytes()
+                                                .run {
+                                                    inputStream().run {
+                                                        promissoryNotes =
+                                                            readPromissoryNotesFromCsv(this)
+                                                    }
+                                                }
                                         }
 
                                         "categorias.csv" -> {
@@ -1258,6 +1385,7 @@ class MainViewModel(
                         progressStatus.setCompletedWork("Deleting all data", 0.5)
                         deleteAll().invokeOnCompletion {
                             val totalSize = (persons?.size ?: 0) +
+                                    (promissoryNotes.size) +
                                     (accounts?.size ?: 0) +
                                     (categories?.size ?: 0) +
                                     (budget?.size ?: 0) +
@@ -1270,6 +1398,9 @@ class MainViewModel(
                                 "Person inserted",
                                 (persons?.size ?: 0).toDouble() / totalSize
                             )
+                            promissoryNotes.also { promissoryNotes ->
+                                insertPromissoryNote(*promissoryNotes.toTypedArray()) {}
+                            }
                             accounts?.also { accounts ->
                                 insertAccount(
                                     *accounts.toTypedArray(),
@@ -1646,7 +1777,7 @@ class MainViewModel(
 
         @Composable
         fun rememberFilteredTransactionListItemDetails() =
-            filteredTransactionListitemDetails.collectAsState(Result.Loading)
+            filteredDocuments.collectAsState(Result.Loading)
 
         @Composable
         fun rememberPersonSummaryState() =
@@ -1691,6 +1822,9 @@ class MainViewModel(
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
+
+        fun deletePromissoryNote(promissoryNote: PromissoryNote) =
+            this@MainViewModel.deletePromissoryNote(promissoryNote)
 
         fun updateRange(startDate: LocalDate?, endDate: LocalDate?) =
             this@MainViewModel.updateRange(startDate, endDate)
@@ -1833,6 +1967,25 @@ class MainViewModel(
         )
     }
 
+    inner class ViewModelAddPromissoryNote {
+        @Composable
+        fun rememberAllPerson() = remember {
+            allPerson
+                .map { Result.Success(it) }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
+
+        fun insertPromissoryNote(
+            promissoryNote: PromissoryNote,
+            onErrorAction: (Throwable) -> Unit = {}
+        ) =
+            this@MainViewModel.insertPromissoryNote(
+                promissoryNote,
+                onErrorAction = onErrorAction
+            )
+    }
+
     inner class ViewModelEditAccount {
         @Composable
         fun rememberAccountAndOwnerWithTransactionsAndPockets() =
@@ -1934,6 +2087,32 @@ class MainViewModel(
 
         fun updateTransaction(transaction: Transaction) =
             this@MainViewModel.updateTransaction(transaction)
+    }
+
+    inner class ViewModelEditPromissoryNote {
+        @Composable
+        fun rememberPromissoryNote(promissoryNoteId: Int?) = remember(promissoryNoteId) {
+            allPromissoryNotes
+                .map {
+                    it
+                        .firstOrNull { it.id == promissoryNoteId }
+                        ?.let { Result.Success(it) }
+                        ?: Result.Error(Throwable("PromissoryNote not found"))
+                }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
+
+        @Composable
+        fun rememberAllPerson() = remember {
+            allPerson
+                .map { Result.Success(it) }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
+
+        fun updatePromissoryNote(promissoryNote: PromissoryNote) =
+            this@MainViewModel.updatePromissoryNote(promissoryNote)
     }
 
     inner class ViewModelSettings {
@@ -2381,49 +2560,74 @@ class MainViewModel(
             debt: Double
         ) = remember(principalPersonId, otherPersonId, justPendingTransactions, debt) {
             allTransactions
-                .combineDefault(allAccount) { allTransactions, allAccount ->
+                .combineDefault(allPromissoryNotes) { allTransactions, allPromissoryNotes ->
+                    object {
+                        val transactions = allTransactions
+                        val promissoryNotes = allPromissoryNotes
+                    }
+                }
+                .combineDefault(allAccount) { combined, allAccount ->
                     val personAccountsIds = allAccount
                         .filter { it.ownerId == otherPersonId }
                         .map { it.id }
                         .toSet()
                     object {
-                        val transactions = allTransactions
+                        val transactions = combined.transactions
                             .filter {
                                 it.aNombreDe == otherPersonId ||
                                         it.sourceId in personAccountsIds ||
                                         it.destinationId in personAccountsIds
                             }
                             .sortedByDescending { it.date }
+                        val promissoryNotes = combined.promissoryNotes
+                            .filter {
+                                it.sourceId == principalPersonId ||
+                                        it.destinationId == principalPersonId
+                            }
                         val accounts = allAccount
+                    }
+                }
+                .combineDefault(allPerson) { combined, allPerson ->
+                    object {
+                        val transactions = combined.transactions
+                        val promissoryNotes = combined.promissoryNotes
+                        val accounts = combined.accounts
+                        val personList = allPerson
                     }
                 }
                 .combineDefault(categories) { combined, categories ->
                     object {
                         val transactions = combined.transactions
                         val accounts = combined.accounts
+                        val promissoryNotes = combined.promissoryNotes
+                        val personList = combined.personList
                     }.run {
-                        val allTransactions = TransactionListItemDetailsWithSign.from(
+                        val allDocuments = (TransactionListItemDetailsWithSign.from(
                             transactions,
                             categories,
                             accounts,
                             principalPersonId,
                             otherPersonId
                         )
+                            .map { TransactionDocumentWithSignViewModel(it) } + PromissoryNoteWithSignViewModel.from(
+                            promissoryNotes,
+                            personList,
+                            principalPersonId,
+                            otherPersonId
+                        ).map { PromissoryNoteDocumentWithSignViewModel(it) })
+                            .sortedByDescending { it.id }
+                            .sortedByDescending { it.date }
                         if (justPendingTransactions) {
                             var cumSum = 0.0
-                            val sortedTransactions = allTransactions
-                                .sortedByDescending { it.transaction.id }
-                                .sortedByDescending { it.transaction.date }
-                            val filteredTransactions = sortedTransactions
+                            val filteredDocuments = allDocuments
                                 .takeWhile {
-                                    val sign = it.sign
                                     val condition = cumSum != debt
-                                    cumSum += it.transaction.amount * sign
+                                    cumSum += it.amount * it.sign
                                     condition
                                 }
-                            filteredTransactions
+                            filteredDocuments
                         } else {
-                            allTransactions
+                            allDocuments
                         }
                     }
                 }
@@ -2435,6 +2639,9 @@ class MainViewModel(
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
+
+        fun deletePromissoryNote(promissoryNote: PromissoryNote) =
+            this@MainViewModel.deletePromissoryNote(promissoryNote)
     }
 
     inner class ViewModelEditBudget {
@@ -2517,9 +2724,11 @@ class MainViewModel(
     val viewModelAddAccount = ViewModelAddAccount()
     val viewModelAddPerson = ViewModelAddPerson()
     val viewModelAddTransaction = ViewModelAddTransaction()
+    val viewModelAddPromissoryNote = ViewModelAddPromissoryNote()
     val viewModelEditAccount = ViewModelEditAccount()
     val viewModelEditPerson = ViewModelEditPerson()
     val viewModelEditTransaction = ViewModelEditTransaction()
+    val viewModelEditPromissoryNote = ViewModelEditPromissoryNote()
     val viewModelSettings = ViewModelSettings()
     val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()
     val viewModelAddCategory = ViewModelAddCategory()

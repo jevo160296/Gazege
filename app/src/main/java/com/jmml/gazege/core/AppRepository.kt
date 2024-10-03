@@ -5,11 +5,13 @@ import com.jmml.gazege.core.dao.AccountDao
 import com.jmml.gazege.core.dao.BudgetDao
 import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.dao.PersonDao
+import com.jmml.gazege.core.dao.PromissoryNoteDao
 import com.jmml.gazege.core.dao.TransactionDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -19,7 +21,8 @@ class AppRepository(
     private val accountDao: AccountDao,
     private val transactionDao: TransactionDao,
     private val categoryDao: CategoryDao,
-    private val budgetDao: BudgetDao
+    private val budgetDao: BudgetDao,
+    private val promissoryNoteDao: PromissoryNoteDao
 ) {
 
     // Room executes all queries on a separate thread.
@@ -45,6 +48,13 @@ class AppRepository(
 
     fun getBudgets(): Flow<List<Budget>> {
         return budgetDao.getAll()
+    }
+
+    fun getPromissoryNotes(
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null
+    ): Flow<List<PromissoryNote>>{
+        return promissoryNoteDao.getAll(startDate, endDate)
     }
 
     @WorkerThread
@@ -119,11 +129,27 @@ class AppRepository(
     }
 
     @WorkerThread
+    suspend fun insertPromissoryNote(vararg promissoryNote: PromissoryNote){
+        promissoryNoteDao.insertAll(*promissoryNote)
+    }
+
+    @WorkerThread
+    suspend fun updatePromissoryNote(promissoryNote: PromissoryNote){
+        promissoryNoteDao.update(promissoryNote)
+    }
+
+    @WorkerThread
+    suspend fun deletePromissoryNote(promissoryNote: PromissoryNote){
+        promissoryNoteDao.delete(promissoryNote)
+    }
+
+    @WorkerThread
     suspend fun deleteAllData() {
         accountDao.deleteAll()
         budgetDao.deleteAll()
         categoryDao.deleteAll()
         personDao.deleteAll()
         transactionDao.deleteAll()
+        promissoryNoteDao.deleteAll()
     }
 }

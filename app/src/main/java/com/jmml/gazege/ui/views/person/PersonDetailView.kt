@@ -3,13 +3,11 @@ package com.jmml.gazege.ui.views.person
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.ui.DatabaseSample
@@ -46,8 +45,15 @@ import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.BottomSheetController
 import com.jmml.gazege.ui.views.EntityDetail
 import com.jmml.gazege.ui.views.PersonAction
+import com.jmml.gazege.ui.views.PromissoryNoteAction
 import com.jmml.gazege.ui.views.TransactionAction
-import com.jmml.gazege.ui.views.transaction.LoadedTransactionPage
+import com.jmml.gazege.ui.views.document.IDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.document.LoadedDocumentListView
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteWithSignViewModel
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.SmallBody
 import com.jmml.zoo.extensions.numerical.toMoneyString
@@ -61,7 +67,8 @@ fun PersonDetail(
     viewModelPersonDetail: MainViewModel.ViewModelPersonDetail,
     deuda: Double,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
-    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    onPromissoryNoteAction: (promissoryNote: PromissoryNote, action: PromissoryNoteAction) -> Unit
 ) {
     var justPendingTransactions: Boolean by remember { mutableStateOf(true) }
     val transactionListItemDetails by viewModelPersonDetail.rememberPeopleTransactionListItemDetails(
@@ -74,11 +81,12 @@ fun PersonDetail(
     PersonDetailUI(
         person = person,
         deuda = deuda,
-        transactionListItemDetails = transactionListItemDetails,
+        documentListViewModel = transactionListItemDetails,
         justPendingTransactions = justPendingTransactions,
         onJustPendingTransactionsChange = { justPendingTransactions = it },
         onPersonAction = onPersonAction,
-        onTransactionAction = onTransactionAction
+        onTransactionAction = onTransactionAction,
+        onPromissoryNoteAction = onPromissoryNoteAction
     )
 }
 
@@ -87,11 +95,12 @@ fun PersonDetail(
 private fun PersonDetailUI(
     person: Person,
     deuda: Double,
-    transactionListItemDetails: List<TransactionListItemDetailsWithSign>?,
+    documentListViewModel: List<IDocumentWithSignViewModel>?,
     justPendingTransactions: Boolean,
     onJustPendingTransactionsChange: (Boolean) -> Unit,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
-    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit
+    onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    onPromissoryNoteAction: (promissoryNote: PromissoryNote, action: PromissoryNoteAction) -> Unit
 ) {
     var modalController: BottomSheetController? by remember {
         mutableStateOf(null)
@@ -156,22 +165,63 @@ private fun PersonDetailUI(
                     )
                     Text(text = stringResource(id = R.string.justPendingTransactions))
                 }
-                LoadedTransactionPage(
-                    transactionList = transactionListItemDetails ?: emptyList(),
-                    delTransaction = {
+                LoadedDocumentListView(
+                    documents = documentListViewModel ?: emptyList(),
+                    delDocument = {
                         modalController = BottomSheetController(
                             getMsg = {
                                 transactionDeleitionConfirmationBuilder()()
                             },
                             action = {
-                                onTransactionAction(it, TransactionAction.DELETE)
-                            }
-                        )
-                        scope.launch { sheetState.show() }
+                                when (it) {
+                                    is TransactionDocumentViewModel -> onTransactionAction(
+                                        it.transactionListItemDetails.transaction,
+                                        TransactionAction.DELETE
+                                    )
+
+                                    is PromissoryNoteDocumentViewModel -> onPromissoryNoteAction(
+                                        it.promissoryNoteViewModel.promissoryNote,
+                                        PromissoryNoteAction.DELETE
+                                    )
+
+                                    is PromissoryNoteDocumentWithSignViewModel -> onPromissoryNoteAction(
+                                        it.promissoryNoteWithSignViewModel.promissoryNote,
+                                        PromissoryNoteAction.DELETE
+                                    )
+
+                                    is TransactionDocumentWithSignViewModel -> onTransactionAction(
+                                        it.transactionListItemWithSign.transaction,
+                                        TransactionAction.DELETE
+                                    )
+                                }
+                            })
+                        scope.launch {
+                            sheetState.show()
+                        }
                     },
-                    editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
-                    state = rememberLazyListState(),
-                    itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    editDocument = { document ->
+                        when (document) {
+                            is PromissoryNoteDocumentWithSignViewModel -> onPromissoryNoteAction(
+                                document.promissoryNoteWithSignViewModel.promissoryNote,
+                                PromissoryNoteAction.EDIT
+                            )
+
+                            is TransactionDocumentWithSignViewModel -> onTransactionAction(
+                                document.transactionListItemWithSign.transaction,
+                                TransactionAction.EDIT
+                            )
+
+                            is PromissoryNoteDocumentViewModel -> onPromissoryNoteAction(
+                                document.promissoryNoteViewModel.promissoryNote,
+                                PromissoryNoteAction.EDIT
+                            )
+
+                            is TransactionDocumentViewModel -> onTransactionAction(
+                                document.transactionListItemDetails.transaction,
+                                TransactionAction.EDIT
+                            )
+                        }
+                    },
                     onTitleSetted = {},
                     onZeroElementsChanged = {},
                     onFirstElementVisibleChanged = {}
@@ -204,51 +254,49 @@ private fun PersonDetailUI(
                     }
                 }
             ) {
-                LoadedTransactionPage(
+                LoadedDocumentListView(
                     modifier = Modifier.padding(it),
-                    transactionList = transactionListItemDetails ?: emptyList(),
-                    delTransaction = {
-                        modalController = BottomSheetController(
-                            getMsg = {
-                                transactionDeleitionConfirmationBuilder()()
-                            },
-                            action = {
-                                onTransactionAction(it, TransactionAction.DELETE)
-                            }
-                        )
-                        scope.launch { sheetState.show() }
-                    },
-                    editTransaction = { onTransactionAction(it, TransactionAction.EDIT) },
-                    state = rememberLazyListState(),
-                    itemHolderPaddingValues = PaddingValues(horizontal = dimensionResource(id = R.dimen.DefaultPadding)),
+                    documents = documentListViewModel ?: emptyList(),
+                    delDocument = {},
+                    editDocument = {},
                     onTitleSetted = {},
                     onZeroElementsChanged = {},
                     onFirstElementVisibleChanged = {},
-                    transactionViewHolder = {
+                    documentViewHolder = {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                it.transaction.description,
+                                it.description,
                                 Modifier.weight(2f / 3f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Text(
-                                it.transaction.amount.toMoneyString(),
-                                Modifier.weight(1f / 3f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.End,
-                                color = (it.sign * it.transaction.amount).let { value ->
-                                    when {
-                                        value < 0 -> GazegeTheme.gazegeColorScheme.income
-                                        value > 0 -> GazegeTheme.gazegeColorScheme.outcome
-                                        else -> MaterialTheme.colorScheme.onBackground
+                            when (it) {
+                                is IDocumentWithSignViewModel -> Text(
+                                    it.amount.toMoneyString(),
+                                    Modifier.weight(1f / 3f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.End,
+                                    color = (it.sign * it.amount).let { value ->
+                                        when {
+                                            value < 0 -> GazegeTheme.gazegeColorScheme.income
+                                            value > 0 -> GazegeTheme.gazegeColorScheme.outcome
+                                            else -> MaterialTheme.colorScheme.onBackground
+                                        }
                                     }
-                                }
-                            )
+                                )
+
+                                else -> Text(
+                                    it.amount.toMoneyString(),
+                                    Modifier.weight(1f / 3f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.End
+                                )
+                            }
                         }
                     }
                 )
@@ -274,23 +322,30 @@ fun PreviewPersonDetail() {
                 val person = remember { this.personSample.firstOrNull() }
                 val person2 = remember { this.personSample.getOrNull(1) }
                 val transactionListItemDetails = remember {
-                    TransactionListItemDetailsWithSign.from(
-                        this.transactionSample,
-                        this.categorieSample,
-                        this.accountSample,
-                        person?.id,
-                        person2?.id
+                    PromissoryNoteWithSignViewModel.from(
+                        promissoryNotes = promissoryNoteSample,
+                        personList = personSample,
+                        principalPersonId = principalPersonSample?.id,
+                        toPersonId = person2?.id
                     )
+                        .map { PromissoryNoteDocumentWithSignViewModel(it) } + TransactionListItemDetailsWithSign.from(
+                        transactions = transactionSample,
+                        categories = categorieSample,
+                        accounts = accountSample,
+                        principalPersonId = principalPersonSample?.id,
+                        toPersonId = person2?.id
+                    ).map { TransactionDocumentWithSignViewModel(it) }
                 }
                 if (person != null) {
                     PersonDetailUI(
                         person = person,
                         deuda = 1000.0,
-                        transactionListItemDetails = transactionListItemDetails,
+                        documentListViewModel = transactionListItemDetails,
                         justPendingTransactions = justPendingTransactions,
                         onJustPendingTransactionsChange = onJustPendingTransactionsChange,
                         onPersonAction = { _, _ -> },
-                        onTransactionAction = { _, _ -> }
+                        onTransactionAction = { _, _ -> },
+                        onPromissoryNoteAction = { _, _ -> }
                     )
                 }
             }

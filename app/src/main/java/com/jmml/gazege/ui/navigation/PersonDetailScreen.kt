@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
 import com.jmml.gazege.ui.views.PersonAction
+import com.jmml.gazege.ui.views.PromissoryNoteAction
 import com.jmml.gazege.ui.views.TransactionAction
 import com.jmml.gazege.ui.views.person.PersonDetail
 import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
@@ -25,7 +26,8 @@ fun NavGraphBuilder.screenPersonDetail(
     viewModelPersonDetail: MainViewModel.ViewModelPersonDetail,
     onNavigateUp: () -> Unit,
     onNavigateToEditPerson: (Int?) -> Unit,
-    onNavigateToEditTransaction: (Int?) -> Unit
+    onNavigateToEditTransaction: (Int?) -> Unit,
+    onNavigateToEditPromissoryNote: (Int?) -> Unit
 ) {
     composable(
         "personDetail/{personId}",
@@ -64,6 +66,18 @@ fun NavGraphBuilder.screenPersonDetail(
                                 TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
                                 TransactionAction.DELETE -> viewModelPersonDetail.deleteTransaction(
                                     transaction
+                                )
+                            }
+                        },
+                        onPromissoryNoteAction = { promissoryNote, action ->
+                            val promissoryNoteId = promissoryNote.id
+                            when (action) {
+                                PromissoryNoteAction.EDIT -> onNavigateToEditPromissoryNote(
+                                    promissoryNoteId
+                                )
+
+                                PromissoryNoteAction.DELETE -> viewModelPersonDetail.deletePromissoryNote(
+                                    promissoryNote
                                 )
                             }
                         },

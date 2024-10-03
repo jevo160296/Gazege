@@ -19,7 +19,7 @@ import com.jmml.gazege.data.sample
 import com.jmml.gazege.ui.fragments.MainFragment
 import com.jmml.gazege.ui.theme.AppMode
 import com.jmml.gazege.ui.theme.GazegeTheme
-import com.jmml.gazege.ui.views.AddTransactionAction
+import com.jmml.gazege.ui.views.AddAction
 import com.jmml.zoo.clases.Result
 import com.jmml.zoo.extensions.localdate.endOfMonth
 import com.jmml.zoo.extensions.localdate.startOfMonth
@@ -35,8 +35,9 @@ fun NavGraphBuilder.screenMain(
     onNavigateToAddAccount: () -> Unit,
     onNavigateToEditAccount: (Int?) -> Unit,
     onNavigateToAccountDetail: (Int?) -> Unit,
-    onNavigateToAddTransaction: (date: LocalDate, action: AddTransactionAction) -> Unit,
+    onNavigateToAddTransaction: (date: LocalDate, action: AddAction) -> Unit,
     onNavigateToEditTransaction: (Int?) -> Unit,
+    onNavigateToEditPromissoryNote: (Int?) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSaldoActualSettings: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
@@ -92,6 +93,7 @@ fun NavGraphBuilder.screenMain(
                 delPerson = viewModelMain::deletePerson,
                 delAccount = viewModelMain::deleteAccount,
                 delTransaction = viewModelMain::deleteTransaction,
+                delPromissoryNote = viewModelMain::deletePromissoryNote,
                 delCategory = viewModelCategoryList::deleteCategory,
                 onAddPersonRequested = onNavigateToAddPerson,
                 onEditPersonRequested = { onNavigateToEditPerson(it.id) },
@@ -111,6 +113,7 @@ fun NavGraphBuilder.screenMain(
                     onNavigateToAddTransaction(date, it)
                 },
                 onEditTransactionRequested = { onNavigateToEditTransaction(it.id) },
+                onEditPromissoryNoteRequested = { onNavigateToEditPromissoryNote(it.id) },
                 onNavigateToAddCategory = onNavigateToAddCategory,
                 onNavigateToEditCategory = onNavigateToEditCategory,
                 onNavigateToAddBudget = onNavigateToAddBudget,

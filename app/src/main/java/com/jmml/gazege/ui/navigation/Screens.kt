@@ -80,6 +80,7 @@ fun MainNavHost(
                 onNavigateToAccountDetail = navController::navigateToAccountDetail,
                 onNavigateToAddTransaction = navController::navigateToAddTransaction,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
+                onNavigateToEditPromissoryNote = navController::navigateToEditPromissoryNote,
                 onNavigateToSettings = navController::navigateToSettings,
                 onNavigateToSaldoActualSettings = navController::navigateToSaldoActualSettings,
                 onNavigateToAddCategory = navController::navigateToAddCategory,
@@ -127,10 +128,20 @@ fun MainNavHost(
                 onNavigateToAddAccount = navController::navigateToAddAccount,
                 onDataLoaded = onDataLoaded
             )
+            screenAddPromissoryNote(
+                viewModelAddPromissoryNote = mainViewModel.viewModelAddPromissoryNote,
+                onNavigateUp = { navController.navigateUpOrClose(onCloseApp) },
+                onNavigateToAddPerson = navController::navigateToAddPerson,
+                onDataLoaded = onDataLoaded
+            )
             screenEditTransaction(
                 viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToAddAccount = navController::navigateToAddAccount
+            )
+            screenEditPromissoryNote(
+                viewModelEditPromissoryNote = mainViewModel.viewModelEditPromissoryNote,
+                onNavigateUp = navController::navigateUp
             )
             screenSettings(
                 viewModelSettings = mainViewModel.viewModelSettings,
@@ -173,7 +184,8 @@ fun MainNavHost(
                 viewModelPersonDetail = mainViewModel.viewModelPersonDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
-                onNavigateToEditPerson = navController::navigateToEditPerson
+                onNavigateToEditPerson = navController::navigateToEditPerson,
+                onNavigateToEditPromissoryNote = navController::navigateToEditPromissoryNote
             )
             screenEditBudget(
                 viewModelEditBudget = mainViewModel.viewModelEditBudget,

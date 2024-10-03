@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -150,14 +151,32 @@ interface PersonDao {
             else 0
         }
 
+        fun direction(
+            fromPersonId: Int?,
+            toPersonId: Int?,
+            promissoryNote: PromissoryNote
+        ): Int {
+            val sameDirection = fromPersonId == promissoryNote.sourceId &&
+                    toPersonId == promissoryNote.destinationId
+            val differentDirection = fromPersonId == promissoryNote.destinationId &&
+                    toPersonId == promissoryNote.sourceId
+            return if (sameDirection && !differentDirection) -1
+            else if (!sameDirection && differentDirection) 1
+            else 0
+        }
+
         private fun calculateFlujo(
             from: Person,
             to: Person,
-            transacciones: List<TransactionAndAccounts>
+            transacciones: List<TransactionAndAccounts>,
+            promissoryNotes: List<PromissoryNote>
         ): Double {
-            val values =
+            val valuesFromTransactions =
                 transacciones.map { it to direction(from.id, to.id, it) * it.transaction.amount }
-            return values.sumOf { it.second }
+            val valuesFromPromissoryNotes =
+                promissoryNotes.map { it to direction(from.id, to.id, it) * it.amount }
+            return valuesFromTransactions.sumOf { it.second } +
+                    valuesFromPromissoryNotes.sumOf { it.second }
         }
 
         /**
@@ -165,20 +184,12 @@ interface PersonDao {
          * dinero).
          */
         fun getFlujo(
-            person: PersonWithAccounts,
-            otherPersonWithAccounts: PersonWithAccounts,
-            transacciones: List<TransactionAndAccounts>
+            person: Person,
+            otherPersonWithAccounts: Person,
+            transacciones: List<TransactionAndAccounts>,
+            promissoryNotes: List<PromissoryNote>
         ): Double {
-            val backedFlujo = person.flujos[otherPersonWithAccounts.person]
-            val flujo = if (backedFlujo == null) {
-                val calculatedFlujo =
-                    calculateFlujo(person.person, otherPersonWithAccounts.person, transacciones)
-                person.flujos[otherPersonWithAccounts.person] = calculatedFlujo
-                calculatedFlujo
-            } else {
-                backedFlujo
-            }
-            return flujo
+            return calculateFlujo(person, otherPersonWithAccounts, transacciones, promissoryNotes)
         }
     }
 }

@@ -69,7 +69,8 @@ class MainActivity : ComponentActivity() {
             accountDao = database.accountDao(),
             transactionDao = database.transactionDao(),
             categoryDao = database.categoryDao(),
-            budgetDao = database.budgetDao()
+            budgetDao = database.budgetDao(),
+            promissoryNoteDao = database.promissoryNoteDao()
         )
     }
     private val settings by lazy { Settings(this) }
