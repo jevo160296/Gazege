@@ -81,7 +81,7 @@ fun PromissoryNoteFormPage(
         modifier = modifier,
         onSaveClicked = savePromissoryNote,
         isSavedButtonEnabled = promissoryNoteState.isComplete(),
-        title = "Promissory note",
+        title = stringResource(id = R.string.promissory_note),
         snackbarHostState = snackbarHostState,
         itemSpacing = dimensionResource(R.dimen.DefaultPadding),
         itemsColumnsModifier = Modifier.padding(contentPadding)
