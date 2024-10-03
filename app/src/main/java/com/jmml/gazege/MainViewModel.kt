@@ -764,7 +764,10 @@ class MainViewModel(
                         filteredTransactions.data.transactionsWithFilters.applyDescriptionFilter(
                             descriptionFilterValue
                         )
-                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
+                    val promissoryNotes = filteredTransactions
+                        .data
+                        .promissoryNotesViewModel
+                        .applyPromissoryDescriptionFilter(descriptionFilterValue)
                     Result.Success(
                         LoadedTransactionDetailsState(
                             transactionList = transactionsWithFilters,
@@ -2776,14 +2779,32 @@ class MainViewModel(
         suspend fun <T : ITransactionListDetail> List<T>.applyDescriptionFilter(
             descriptionFilter: TextFilter
         ) = withContext(Dispatchers.Default) {
+            val locale = Locale.getDefault()
+            val searchTokens = descriptionFilter.value
+                ?.lowercase(locale)
+                ?.split(" ")
+                ?.toSet()
+                ?.map { ".*$it.*".toRegex() }
             filter { transaction ->
-                val locale = Locale.getDefault()
-                val searchTokens = descriptionFilter.value
-                    ?.lowercase(locale)
-                    ?.split(" ")
-                    ?.toSet()
-                    ?.map { ".*$it.*".toRegex() }
                 val descriptionTokens = transaction.transaction.description
+                    .lowercase(locale)
+                searchTokens == null ||
+                        searchTokens
+                            .any { it.containsMatchIn(descriptionTokens) }
+            }
+        }
+
+        suspend fun List<PromissoryNoteViewModel>.applyPromissoryDescriptionFilter(
+            descriptionFilter: TextFilter
+        ) = withContext(Dispatchers.Default) {
+            val locale = Locale.getDefault()
+            val searchTokens = descriptionFilter.value
+                ?.lowercase(locale)
+                ?.split(" ")
+                ?.toSet()
+                ?.map { ".*$it.*".toRegex() }
+            filter { document ->
+                val descriptionTokens = document.promissoryNote.description
                     .lowercase(locale)
                 searchTokens == null ||
                         searchTokens
