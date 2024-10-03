@@ -859,6 +859,20 @@ class MainViewModel(
                     val incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual
                 }
             }
+            .combine(allPromissoryNotes) { combined, allPromissoryNotes ->
+                object {
+                    val principalPersonWithAccounts = combined.principalPersonWithAccounts
+                    val range = combined.range
+                    val personWithAccounts = combined.personWithAccounts
+                    val allTransactionAndAccountsAndCategory =
+                        combined.allTransactionAndAccountsAndCategory
+                    val budgetWithCalculatedDataAndCategory =
+                        combined.budgetWithCalculatedDataAndCategory
+                    val incluirPresupuestoEnSaldoActual = combined.incluirPresupuestoEnSaldoActual
+                    val incluirDeudasEnSaldoActual = combined.incluirDeudasEnSaldoActual
+                    val allPromissoryNotes = allPromissoryNotes
+                }
+            }
             .zDistinctUntilChanged { old, new ->
                 old === new ||
                         (
@@ -868,7 +882,8 @@ class MainViewModel(
                                         old.allTransactionAndAccountsAndCategory == new.allTransactionAndAccountsAndCategory &&
                                         old.budgetWithCalculatedDataAndCategory == new.budgetWithCalculatedDataAndCategory &&
                                         old.incluirPresupuestoEnSaldoActual == new.incluirPresupuestoEnSaldoActual &&
-                                        old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual
+                                        old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual &&
+                                        old.allPromissoryNotes == new.allPromissoryNotes
                                 )
             }
             .transform { combined ->
@@ -888,6 +903,7 @@ class MainViewModel(
                                         it.destinationAccount
                                     )
                                 },
+                            allPromissoryNotes = allPromissoryNotes,
                             budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
                             includeBudget = incluirPresupuestoEnSaldoActual,
                             includeDebts = incluirDeudasEnSaldoActual

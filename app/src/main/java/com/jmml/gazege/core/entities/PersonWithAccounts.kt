@@ -23,9 +23,6 @@ data class PersonWithAccounts(
     @Ignore
     var egresosCache: MutableMap<Pair<LocalDate?, LocalDate?>, Double> = mutableMapOf()
 
-    @Ignore
-    var flujos: MutableMap<Person, Double> = mutableMapOf()
-
     companion object {
         fun from(
             persons: List<Person>,

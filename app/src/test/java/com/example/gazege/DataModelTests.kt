@@ -81,7 +81,12 @@ class DataModelTests {
             for (otherPerson in personWithAccounts) {
                 val key = Pair(principalPerson.person.name, otherPerson.person.name)
                 flows[key] =
-                    PersonDao.getFlujo(principalPerson, otherPerson, transactionsAndAccounts)
+                    PersonDao.getFlujo(
+                        principalPerson.person,
+                        otherPerson.person,
+                        transactionsAndAccounts,
+                        emptyList()
+                    )
             }
         }
 

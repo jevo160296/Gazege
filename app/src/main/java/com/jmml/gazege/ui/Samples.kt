@@ -135,6 +135,7 @@ class DatabaseSampleScope(
             endDateSample,
             personWithAccountsSample,
             transactionAndAccountsSample,
+            promissoryNoteSample,
             categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
             includeBudgetSample,
             includeDebtsSample

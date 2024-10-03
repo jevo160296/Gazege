@@ -4,6 +4,7 @@ import com.jmml.gazege.core.dao.PersonDao
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
+import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.TransactionAndAccounts
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.ui.views.document.IDocumentViewModel
@@ -47,6 +48,7 @@ interface LoadedPersonSummaryState : PersonSummaryState {
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
+            allPromissoryNotes: List<PromissoryNote>,
             budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,
             includeDebts: Boolean
@@ -63,6 +65,7 @@ interface LoadedPersonSummaryState : PersonSummaryState {
                         endDate,
                         allPersons,
                         allTransactions,
+                        allPromissoryNotes,
                         budgetWithCalculatedDatumAndCategories,
                         includeBudget,
                         includeDebts
@@ -113,15 +116,17 @@ data class FullPersonSummaryState(
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
             allTransactions: List<TransactionAndAccounts>,
+            allPromissoryNotes: List<PromissoryNote>,
             budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,
             includeDebts: Boolean
         ): FullPersonSummaryState {
             val deudasFlujo = allPersons.associate { otherPerson ->
                 otherPerson.person to PersonDao.getFlujo(
-                    personWithAccounts,
-                    otherPerson,
-                    allTransactions
+                    personWithAccounts.person,
+                    otherPerson.person,
+                    allTransactions,
+                    allPromissoryNotes
                 )
             }
             val deudasTotal =
