@@ -255,7 +255,8 @@ fun LoadedSaldoActualSettings(
                             personList = personList,
                             onPersonStateChanged = onPersonStateChanged,
                             state = personListState,
-                            enabled = incluirDeudasEnSaldoActual
+                            enabled = incluirDeudasEnSaldoActual,
+                            contentPadding = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding))
                         )
                     }
                 }

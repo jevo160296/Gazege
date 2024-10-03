@@ -13,14 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -40,7 +37,6 @@ import com.jmml.gazege.ui.widgets.Form
 import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
 import com.jmml.zoo.clases.Result
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -112,9 +108,7 @@ private fun PromissoryNoteForm(
         Result.Loading -> null
         is Result.Success -> personList.data.firstOrNull { it.id == promissoryNote.destinationId }
     }
-    val focusRequester = remember { FocusRequester() }
     PersonComboBox(
-        modifier = Modifier.focusRequester(focusRequester),
         personList = personList,
         selectedPerson = selectedSource,
         onDoneAction = onDoneAction,
@@ -155,11 +149,6 @@ private fun PromissoryNoteForm(
         value = promissoryNote.date,
         onValueChange = { onPromissoryNoteChanged(promissoryNote.copy(date = it)) }
     )
-    LaunchedEffect(key1 = Unit) {
-        // Waits 100 milliseconds until request focus to avoid calling the ime when expandable fab expands
-        delay(100)
-        focusRequester.requestFocus()
-    }
 }
 
 @Preview
