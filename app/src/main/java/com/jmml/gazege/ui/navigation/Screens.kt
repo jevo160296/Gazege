@@ -184,7 +184,8 @@ fun MainNavHost(
                 viewModelPersonDetail = mainViewModel.viewModelPersonDetail,
                 onNavigateUp = navController::navigateUp,
                 onNavigateToEditTransaction = navController::navigateToEditTransaction,
-                onNavigateToEditPerson = navController::navigateToEditPerson
+                onNavigateToEditPerson = navController::navigateToEditPerson,
+                onNavigateToEditPromissoryNote = navController::navigateToEditPromissoryNote
             )
             screenEditBudget(
                 viewModelEditBudget = mainViewModel.viewModelEditBudget,

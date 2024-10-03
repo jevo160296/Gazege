@@ -1,14 +1,22 @@
 package com.jmml.gazege.ui.views.promissorynote
 
+import com.jmml.gazege.core.dao.PersonDao
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 
-data class PromissoryNoteViewModel(
-    val principalPersonId: Int?,
-    val promissoryNote: PromissoryNote,
-    val sourcePerson: Person,
+sealed interface IPromissoryNoteViewModel {
+    val principalPersonId: Int?
+    val promissoryNote: PromissoryNote
+    val sourcePerson: Person
     val destinationPerson: Person
-){
+}
+
+data class PromissoryNoteViewModel(
+    override val principalPersonId: Int?,
+    override val promissoryNote: PromissoryNote,
+    override val sourcePerson: Person,
+    override val destinationPerson: Person
+) : IPromissoryNoteViewModel {
     companion object{
         fun from(
             promissoryNotes: List<PromissoryNote>,
@@ -31,6 +39,41 @@ data class PromissoryNoteViewModel(
                         throw NoSuchElementException("sourcePerson or destinationPerson not found.")
                     }
                 }
+            }
+    }
+}
+
+data class PromissoryNoteWithSignViewModel(
+    override val principalPersonId: Int?,
+    override val promissoryNote: PromissoryNote,
+    override val sourcePerson: Person,
+    override val destinationPerson: Person,
+    val sign: Int
+) : IPromissoryNoteViewModel {
+    companion object {
+        fun from(
+            promissoryNotes: List<PromissoryNote>,
+            personList: List<Person>,
+            principalPersonId: Int?,
+            toPersonId: Int?
+        ): List<PromissoryNoteWithSignViewModel> = PromissoryNoteViewModel.from(
+            promissoryNotes = promissoryNotes,
+            personList = personList,
+            principalPersonId = principalPersonId
+        )
+            .map { details ->
+                val sign = PersonDao.direction(
+                    fromPersonId = principalPersonId,
+                    toPersonId = toPersonId,
+                    promissoryNote = details.promissoryNote
+                )
+                PromissoryNoteWithSignViewModel(
+                    principalPersonId = details.principalPersonId,
+                    promissoryNote = details.promissoryNote,
+                    sourcePerson = details.sourcePerson,
+                    destinationPerson = details.destinationPerson,
+                    sign = sign
+                )
             }
     }
 }

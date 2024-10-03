@@ -22,6 +22,11 @@ enum class TransactionAction {
     DELETE
 }
 
+enum class PromissoryNoteAction {
+    EDIT,
+    DELETE
+}
+
 enum class PersonAction {
     EDIT,
     DELETE

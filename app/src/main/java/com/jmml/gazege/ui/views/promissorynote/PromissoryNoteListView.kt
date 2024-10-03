@@ -101,10 +101,10 @@ fun LoadedPromissoryNoteListView(
 )
 
 @Composable
-fun DefaultPromissoryNoteViewHolder(
-    promissoryNote: PromissoryNoteViewModel?,
-    editPromissoryNote: (PromissoryNoteViewModel) -> Unit,
-    delPromissoryNote: (PromissoryNoteViewModel) -> Unit
+fun <T : IPromissoryNoteViewModel> DefaultPromissoryNoteViewHolder(
+    promissoryNote: T?,
+    editPromissoryNote: (T) -> Unit,
+    delPromissoryNote: (T) -> Unit
 ) {
      if(promissoryNote != null){
          val sourceId = promissoryNote.promissoryNote.sourceId
@@ -159,12 +159,24 @@ fun DefaultPromissoryNoteViewHolder(
                  ) {
                      icon()
                      LargeEmphasis(personName)
+                     LargeEmphasis(promissoryNote.promissoryNote.description)
                  }
-                 LargeBody(
-                     amount,
-                     modifier = Modifier.weight(0.3f),
-                     textAlign = TextAlign.End
-                 )
+                 when (promissoryNote) {
+                     is PromissoryNoteViewModel -> LargeBody(
+                         amount,
+                         modifier = Modifier.weight(0.3f),
+                         textAlign = TextAlign.End
+                     )
+
+                     is PromissoryNoteWithSignViewModel -> LargeBody(
+                         amount,
+                         modifier = Modifier.weight(0.3f),
+                         textAlign = TextAlign.End,
+                         color = if (promissoryNote.sign * promissoryNote.promissoryNote.amount < 0) GazegeTheme.gazegeColorScheme.income
+                         else if (promissoryNote.sign * promissoryNote.promissoryNote.amount > 0) GazegeTheme.gazegeColorScheme.outcome
+                         else MaterialTheme.colorScheme.onBackground
+                     )
+                 }
              }
              DropdownMenu(
                  expanded = menuIdExpanded == promissoryNote.promissoryNote.id,

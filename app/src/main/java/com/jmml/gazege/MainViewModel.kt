@@ -72,7 +72,10 @@ import com.jmml.gazege.ui.progressStatus.IProgressStatus
 import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.savers.listStringSaver
 import com.jmml.gazege.ui.views.account.AccountDetailData
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentWithSignViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentWithSignViewModel
 import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteViewModel
+import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteWithSignViewModel
 import com.jmml.gazege.ui.widgets.BooleanFilters
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.INCOME_FILTER
@@ -2557,49 +2560,74 @@ class MainViewModel(
             debt: Double
         ) = remember(principalPersonId, otherPersonId, justPendingTransactions, debt) {
             allTransactions
-                .combineDefault(allAccount) { allTransactions, allAccount ->
+                .combineDefault(allPromissoryNotes) { allTransactions, allPromissoryNotes ->
+                    object {
+                        val transactions = allTransactions
+                        val promissoryNotes = allPromissoryNotes
+                    }
+                }
+                .combineDefault(allAccount) { combined, allAccount ->
                     val personAccountsIds = allAccount
                         .filter { it.ownerId == otherPersonId }
                         .map { it.id }
                         .toSet()
                     object {
-                        val transactions = allTransactions
+                        val transactions = combined.transactions
                             .filter {
                                 it.aNombreDe == otherPersonId ||
                                         it.sourceId in personAccountsIds ||
                                         it.destinationId in personAccountsIds
                             }
                             .sortedByDescending { it.date }
+                        val promissoryNotes = combined.promissoryNotes
+                            .filter {
+                                it.sourceId == principalPersonId ||
+                                        it.destinationId == principalPersonId
+                            }
                         val accounts = allAccount
+                    }
+                }
+                .combineDefault(allPerson) { combined, allPerson ->
+                    object {
+                        val transactions = combined.transactions
+                        val promissoryNotes = combined.promissoryNotes
+                        val accounts = combined.accounts
+                        val personList = allPerson
                     }
                 }
                 .combineDefault(categories) { combined, categories ->
                     object {
                         val transactions = combined.transactions
                         val accounts = combined.accounts
+                        val promissoryNotes = combined.promissoryNotes
+                        val personList = combined.personList
                     }.run {
-                        val allTransactions = TransactionListItemDetailsWithSign.from(
+                        val allDocuments = (TransactionListItemDetailsWithSign.from(
                             transactions,
                             categories,
                             accounts,
                             principalPersonId,
                             otherPersonId
                         )
+                            .map { TransactionDocumentWithSignViewModel(it) } + PromissoryNoteWithSignViewModel.from(
+                            promissoryNotes,
+                            personList,
+                            principalPersonId,
+                            otherPersonId
+                        ).map { PromissoryNoteDocumentWithSignViewModel(it) })
+                            .sortedByDescending { it.id }
+                            .sortedByDescending { it.date }
                         if (justPendingTransactions) {
                             var cumSum = 0.0
-                            val sortedTransactions = allTransactions
-                                .sortedByDescending { it.transaction.id }
-                                .sortedByDescending { it.transaction.date }
-                            val filteredTransactions = sortedTransactions
+                            val filteredDocuments = allDocuments
                                 .takeWhile {
-                                    val sign = it.sign
                                     val condition = cumSum != debt
-                                    cumSum += it.transaction.amount * sign
+                                    cumSum += it.amount * it.sign
                                     condition
                                 }
-                            filteredTransactions
+                            filteredDocuments
                         } else {
-                            allTransactions
+                            allDocuments
                         }
                     }
                 }
@@ -2611,6 +2639,9 @@ class MainViewModel(
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
+
+        fun deletePromissoryNote(promissoryNote: PromissoryNote) =
+            this@MainViewModel.deletePromissoryNote(promissoryNote)
     }
 
     inner class ViewModelEditBudget {

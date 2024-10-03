@@ -75,7 +75,9 @@ import com.jmml.gazege.ui.views.account.LoadedAccountPage
 import com.jmml.gazege.ui.views.document.LoadedDocumentListView
 import com.jmml.gazege.ui.views.document.LoadingDocumentListView
 import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
+import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentWithSignViewModel
 import com.jmml.gazege.ui.views.document.TransactionDocumentViewModel
+import com.jmml.gazege.ui.views.document.TransactionDocumentWithSignViewModel
 import com.jmml.gazege.ui.views.person.LoadedPersonPage
 import com.jmml.gazege.ui.views.person.NoPrincipalPersonPersonPage
 import com.jmml.gazege.ui.widgets.BooleanFilters
@@ -570,6 +572,13 @@ private fun MainFragmentResponsiveContent(
                                 when (document) {
                                     is TransactionDocumentViewModel -> delTransaction(document.transactionListItemDetails.transaction)
                                     is PromissoryNoteDocumentViewModel -> delPromissoryNote(document.promissoryNoteViewModel.promissoryNote)
+                                    is PromissoryNoteDocumentWithSignViewModel -> delPromissoryNote(
+                                        document.promissoryNoteWithSignViewModel.promissoryNote
+                                    )
+
+                                    is TransactionDocumentWithSignViewModel -> delTransaction(
+                                        document.transactionListItemWithSign.transaction
+                                    )
                                 }
                             },
                             editDocument = { document ->
@@ -577,9 +586,15 @@ private fun MainFragmentResponsiveContent(
                                     is TransactionDocumentViewModel -> onEditTransactionRequested(
                                         document.transactionListItemDetails.transaction
                                     )
-
                                     is PromissoryNoteDocumentViewModel -> onEditPromissoryNoteRequested(
                                         document.promissoryNoteViewModel.promissoryNote
+                                    )
+                                    is PromissoryNoteDocumentWithSignViewModel -> onEditPromissoryNoteRequested(
+                                        document.promissoryNoteWithSignViewModel.promissoryNote
+                                    )
+
+                                    is TransactionDocumentWithSignViewModel -> onEditTransactionRequested(
+                                        document.transactionListItemWithSign.transaction
                                     )
                                 }
                             },

@@ -130,6 +130,18 @@ fun DefaultDocumentViewHolder(
                 editPromissoryNote = { editDocument(PromissoryNoteDocumentViewModel(it)) },
                 delPromissoryNote = { delDocument(PromissoryNoteDocumentViewModel(it)) }
             )
+
+            is PromissoryNoteDocumentWithSignViewModel -> DefaultPromissoryNoteViewHolder(
+                promissoryNote = document.promissoryNoteWithSignViewModel,
+                editPromissoryNote = { editDocument(PromissoryNoteDocumentWithSignViewModel(it)) },
+                delPromissoryNote = { delDocument(PromissoryNoteDocumentWithSignViewModel(it)) }
+            )
+
+            is TransactionDocumentWithSignViewModel -> TransactionGroupItemViewHolder(
+                transaction = document.transactionListItemWithSign,
+                delTransaction = { delDocument(TransactionDocumentWithSignViewModel(it)) },
+                editTransaction = { editDocument(TransactionDocumentWithSignViewModel(it)) }
+            )
         }
     } else {
         PulsatingCard(
