@@ -19,11 +19,11 @@ data class TransactionDocumentViewModel(
     override val date: LocalDate
         get() = transactionListItemDetails.transaction.date
     override val id: Int?
-        get() = transactionListItemDetails.transaction.id
+        get() = transactionListItemDetails.transaction.transaction.id
     override val amount: Double
-        get() = transactionListItemDetails.transaction.amount
+        get() = transactionListItemDetails.transaction.totalAmount
     override val description: String
-        get() = transactionListItemDetails.transaction.description
+        get() = transactionListItemDetails.transaction.descriptionString
 }
 
 data class PromissoryNoteDocumentViewModel(
@@ -49,7 +49,7 @@ data class TransactionDocumentWithSignViewModel(
     override val date: LocalDate
         get() = transactionListItemWithSign.transaction.date
     override val id: Int?
-        get() = transactionListItemWithSign.transaction.id
+        get() = transactionListItemWithSign.transaction.transactionDetailsId
     override val sign: Int
         get() = transactionListItemWithSign.sign
     override val amount: Double

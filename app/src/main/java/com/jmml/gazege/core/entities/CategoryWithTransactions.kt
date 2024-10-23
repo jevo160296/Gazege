@@ -2,8 +2,8 @@ package com.jmml.gazege.core.entities
 
 data class CategoryWithTransactions(
     val category: Category,
-    val inTransactions: List<Transaction>,
-    val outTransactions: List<Transaction>,
+    val inTransactions: List<TransactionAndDetails>,
+    val outTransactions: List<TransactionAndDetails>,
     val person: Person
 ) {
     val categoryId get() = category.id
@@ -18,9 +18,25 @@ data class CategoryWithTransactions(
                 .filter { it.account.ownerId == person.id }
             val indexedInTransactions = ownAccountAndOwnerWithTransactions
                 .flatMap { it.inTransactions }
+                .flatMap { transactionAndDetails ->
+                    transactionAndDetails.transactionDetails.map { detail ->
+                        TransactionAndDetails(
+                            transaction = transactionAndDetails.transaction,
+                            transactionDetails = detail,
+                        )
+                    }
+                }
                 .groupBy { it.categoryId }
             val indexedOutTransactions = ownAccountAndOwnerWithTransactions
                 .flatMap { it.outTransactions }
+                .flatMap { transactionAndDetails ->
+                    transactionAndDetails.transactionDetails.map { detail ->
+                        TransactionAndDetails(
+                            transaction = transactionAndDetails.transaction,
+                            transactionDetails = detail,
+                        )
+                    }
+                }
                 .groupBy { it.categoryId }
             val categoryWithTransactions = category
                 .map {

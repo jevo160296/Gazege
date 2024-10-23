@@ -57,7 +57,7 @@ interface AccountDao {
             return account.inTransactions
                 .filter { it.sourceId !in accountsToOmit.map { account -> account.id } }
                 .filter { it.date.isBetween(startDate, endDate) }
-                .sumOf { it.amount }
+                .sumOf { it.totalAmount }
         }
 
         private fun calculateChildrenIngresos(
@@ -85,7 +85,7 @@ interface AccountDao {
             return account.outTransactions
                 .filter { it.destinationId !in accountsToOmit.map { account -> account.id } }
                 .filter { it.date.isBetween(startDate, endDate) }
-                .sumOf { it.amount }
+                .sumOf { it.totalAmount }
         }
 
         private fun calculateChildrenEgresos(

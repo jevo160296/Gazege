@@ -20,9 +20,13 @@ import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionAndAccounts
-import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
+import com.jmml.gazege.core.entities.TransactionAndDetails
+import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
+import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccountsAndCategory
+import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails.Companion.toTransactionDetails
 import com.jmml.gazege.core.entities.WeekDays
 import com.jmml.gazege.ui.navigation.FullPersonSummaryState
 import java.time.LocalDate
@@ -73,9 +77,17 @@ class DatabaseSampleScope(
             transactionAmount
         )
     }
+    val transactionDetailsSample by lazy {
+        getTransactionDetailsSample(
+            accountSample,
+            categorieSample,
+            transactionAmount
+        )
+    }
     val transactionsAndAccountAndCategorySample by lazy {
         getTransactionAndAccountsAndCategorySample(
             transactionSample,
+            transactionDetailsSample,
             accountSample,
             categorieSample
         )
@@ -86,7 +98,8 @@ class DatabaseSampleScope(
         getAccountAndOwnerWithTransactionsSample(
             accountSample,
             personSample,
-            transactionSample
+            transactionSample,
+            transactionDetailsSample
         )
     }
     val accountAndOwnerSample by lazy {
@@ -125,8 +138,12 @@ class DatabaseSampleScope(
             accountAndOwnerWithTransactionsAndPocketsSample
         )
     }
-    val transactionAndAccountsSample: List<TransactionAndAccounts> by lazy {
-        TransactionAndAccounts.from(transactionSample, accountSample)
+    val transactionAndDetailsAndAccountsSamples: List<TransactionAndDetailsAndAccounts> by lazy {
+        TransactionAndDetailsAndAccounts.from(
+            transactionSample,
+            transactionDetailsSample,
+            accountSample
+        )
     }
     val personSummaryStateSample: FullPersonSummaryState by lazy {
         FullPersonSummaryState.from(
@@ -134,7 +151,7 @@ class DatabaseSampleScope(
             startDateSample,
             endDateSample,
             personWithAccountsSample,
-            transactionAndAccountsSample,
+            transactionAndDetailsAndAccountsSamples,
             promissoryNoteSample,
             categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
             includeBudgetSample,
@@ -146,6 +163,7 @@ class DatabaseSampleScope(
     val transactionListItemDetailsSample by lazy {
         getTransactionListItemDetailsSample(
             transactionSample,
+            transactionDetailsSample,
             categorieSample,
             accountSample,
             principalPerson = personSample[0]
@@ -342,9 +360,14 @@ private fun getAccountSample(
 private fun getAccountAndOwnerWithTransactionsSample(
     accountSample: List<Account>,
     personSample: List<Person>,
-    transactionSample: List<Transaction>
+    transactionSample: List<Transaction>,
+    transactionDetailsSample: List<TransactionDetails>
 ): List<AccountAndOwnerWithTransactions> {
-    return AccountAndOwnerWithTransactions.from(accountSample, personSample, transactionSample)
+    val transactionWithDetails = TransactionWithDetails.from(
+        transactionSample,
+        transactionDetailsSample
+    )
+    return AccountAndOwnerWithTransactions.from(accountSample, personSample, transactionWithDetails)
 }
 
 private fun getAccountAndOwnerSample(accountSample: List<Account>, personSample: List<Person>)
@@ -408,11 +431,11 @@ private fun getPersonWithAccountsSample(
     )
 }
 
-private fun getTransactionSample(
+private fun getTransactionAndDetailsSample(
     accountsSample: List<Account>,
     categoriesSample: List<Category>,
     transactionAmount: Int
-): List<Transaction> {
+): List<TransactionWithDetails> {
     val random = java.util.Random(3)
     return (0..transactionAmount).map {
         val selectedAccounts = accountsSample.shuffled(random).take(2)
@@ -426,19 +449,55 @@ private fun getTransactionSample(
                     null
                 }
             }
-        Transaction(
-            it,
-            (random.nextDouble() * (100000 - 1000)) + 1000,
-            "Esta es la transaccion $it, desde " +
-                    "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
-                    "categoría ${category?.name}",
-            sourceAccount.id ?: -1,
-            destinationAccount.id ?: -1,
-            category?.id,
-            date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong()),
-            null
+        TransactionWithDetails(
+            transaction = Transaction(
+                id = it,
+                sourceId = sourceAccount.id ?: -1,
+                destinationId = destinationAccount.id ?: -1,
+                date = LocalDate.now().withDayOfYear(1).plusDays(random.nextInt(365).toLong())
+            ),
+            transactionDetails = listOf(
+                TransactionDetails(
+                    id = it,
+                    transactionId = it,
+                    amount = (random.nextDouble() * (100000 - 1000)) + 1000,
+                    description = "Esta es la transaccion $it, desde " +
+                            "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
+                            "categoría ${category?.name}",
+                    categoryId = category?.id,
+                    aNombreDe = null
+                )
+            )
         )
     }
+}
+
+private fun getTransactionSample(
+    accountsSample: List<Account>,
+    categoriesSample: List<Category>,
+    transactionAmount: Int
+): List<Transaction> {
+    val transactionAndDetails = getTransactionAndDetailsSample(
+        accountsSample = accountsSample,
+        categoriesSample = categoriesSample,
+        transactionAmount = transactionAmount
+    )
+    return transactionAndDetails.map {
+        it.toTransaction()
+    }
+}
+
+private fun getTransactionDetailsSample(
+    accountsSample: List<Account>,
+    categoriesSample: List<Category>,
+    transactionAmount: Int
+): List<TransactionDetails> {
+    val transactionAndDetails = getTransactionAndDetailsSample(
+        accountsSample = accountsSample,
+        categoriesSample = categoriesSample,
+        transactionAmount = transactionAmount
+    )
+    return transactionAndDetails.flatMap { it.toTransactionDetails() }
 }
 
 private fun getPromissoryNoteSample(
@@ -463,21 +522,30 @@ private fun getPromissoryNoteSample(
 
 private fun getTransactionAndAccountsAndCategorySample(
     transactionSample: List<Transaction>,
+    transactionDetailsSample: List<TransactionDetails>,
     accountsSample: List<Account>,
     categoriesSample: List<Category>
-): List<TransactionAndAccountsAndCategory> {
-    return TransactionAndAccountsAndCategory.from(
-        transactionSample, accountsSample, categoriesSample
+): List<TransactionAndDetailsAndAccountsAndCategory> {
+    val transactionWithDetails = TransactionAndDetails.from(
+        transactionSample,
+        transactionDetailsSample
+    )
+    return TransactionAndDetailsAndAccountsAndCategory.from(
+        transactionWithDetails, accountsSample, categoriesSample
     )
 }
 
 private fun getTransactionListItemDetailsSample(
     transactions: List<Transaction>,
+    transactionDetails: List<TransactionDetails>,
     categories: List<Category>,
     accounts: List<Account>,
     principalPerson: Person?
 ): List<TransactionListItemDetails> = TransactionListItemDetails.from(
-    transactions,
+    TransactionWithDetails.from(
+        transactions,
+        transactionDetails
+    ),
     categories,
     accounts,
     principalPerson?.id

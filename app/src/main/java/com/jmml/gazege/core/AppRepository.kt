@@ -10,9 +10,13 @@ import com.jmml.gazege.core.dao.TransactionDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.NewTransactionWithDetails
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails.Companion.toTransactionDetails
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -38,7 +42,7 @@ class AppRepository(
     fun getTransactions(
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Flow<List<Transaction>> {
+    ): Flow<List<TransactionWithDetails>> {
         return transactionDao.getAll(startDate, endDate)
     }
 
@@ -88,18 +92,39 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun insertTransaction(vararg transaction: Transaction) {
-        transactionDao.insertAll(*transaction)
+    suspend fun insertTransaction(vararg transaction: NewTransactionWithDetails) {
+        transaction.forEach {
+            val id = transactionDao.insert(it.toTransaction())
+            transactionDao.insertAll(*it.toTransactionDetails(id.toInt()).toTypedArray())
+        }
     }
 
     @WorkerThread
-    suspend fun updateTransaction(transaction: Transaction) {
-        transactionDao.update(transaction)
+    suspend fun insertTransaction(vararg transaction: TransactionWithDetails) {
+        transactionDao.insertAll(*transaction.map { it.toTransaction() }.toTypedArray())
+        transactionDao.insertAll(*transaction.flatMap { it.toTransactionDetails() }.toTypedArray())
     }
 
     @WorkerThread
-    suspend fun deleteTransaction(transaction: Transaction) {
-        transactionDao.delete(transaction = transaction)
+    suspend fun updateTransaction(vararg transaction: TransactionWithDetails) {
+        transaction.forEach {
+            it.toTransactionDetails().forEach { transactionDetails ->
+                transactionDao.update(transactionDetails)
+            }
+            transactionDao.update(it.toTransaction())
+        }
+    }
+
+    @WorkerThread
+    suspend fun deleteTransaction(vararg transaction: Transaction) {
+        transaction.forEach {
+            transactionDao.delete(it)
+        }
+    }
+
+    @WorkerThread
+    suspend fun deleteTransactionDetails(vararg transaction: TransactionDetails) {
+        transaction.forEach { transactionDao.delete(it) }
     }
 
     @WorkerThread

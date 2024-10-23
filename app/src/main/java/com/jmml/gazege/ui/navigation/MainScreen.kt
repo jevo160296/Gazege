@@ -93,6 +93,7 @@ fun NavGraphBuilder.screenMain(
                 delPerson = viewModelMain::deletePerson,
                 delAccount = viewModelMain::deleteAccount,
                 delTransaction = viewModelMain::deleteTransaction,
+                delTransactionDetails = viewModelMain::delTransactionDetails,
                 delPromissoryNote = viewModelMain::deletePromissoryNote,
                 delCategory = viewModelCategoryList::deleteCategory,
                 onAddPersonRequested = onNavigateToAddPerson,
@@ -144,7 +145,7 @@ fun NavGraphBuilder.screenMain(
                 onExportCategoryRequested = onExportCategoryRequested,
                 showVertical = showVertical,
                 showType = viewModelCategoryList.rememberShowType().value,
-                categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value
+                categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value,
             )
         }
     }

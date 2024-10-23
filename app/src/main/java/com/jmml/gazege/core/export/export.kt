@@ -10,6 +10,9 @@ import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionAndDetails
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.zoo.extensions.closedrange.toSequence
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
@@ -83,7 +86,7 @@ fun <T> writeCsv(
         }
 }
 
-fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction>) =
+fun writeTransactions(outputStream: OutputStream, transactions: List<TransactionWithDetails>) =
     writeCsv(outputStream, transactions) { items ->
         var tick = LocalTime.now()
         var tack: LocalTime
@@ -91,7 +94,8 @@ fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction
             .print(this)
             .apply {
                 printRecord(
-                    "id",
+                    "transactionId",
+                    "transactionDetailsId",
                     "amount",
                     "description",
                     "sourceId",
@@ -100,13 +104,14 @@ fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction
                     "date",
                     "aNombreDe"
                 )
-                items.forEachIndexed { index, transaction ->
+                TransactionAndDetails.from(items).forEachIndexed { index, transaction ->
                     tack = LocalTime.now()
                     if (tack.minusSeconds(3) > tick) {
                         tick = LocalTime.now()
                     }
                     printRecord(
-                        transaction.id,
+                        transaction.transactionId,
+                        transaction.transactionDetailsId,
                         transaction.amount,
                         transaction.description,
                         transaction.sourceId,
@@ -396,10 +401,15 @@ fun <T> readFromCsv(
             }
         }
 
-fun readTransactionsFromCsv(inputStream: InputStream): List<Transaction> =
+fun readTransactionsFromCsv(inputStream: InputStream): List<TransactionWithDetails> =
     readFromCsv(inputStream) { record, columnIndex, _ ->
+        val hasId = columnIndex["id"] != null
         object {
-            val id = record[columnIndex["id"] ?: 0]
+            val transactionId =
+                if (hasId) record[columnIndex["id"] ?: 0] else record[columnIndex["transactionId"]
+                    ?: 0]
+            val transactionDetailsId = if (hasId) record[columnIndex["id"]
+                ?: 0] else record[columnIndex["transactionDetailsId"] ?: 0]
             val amount = record[columnIndex["amount"] ?: 0]
             val description = record[columnIndex["description"] ?: 0]
             val sourceId = record[columnIndex["sourceId"] ?: 0]
@@ -411,18 +421,28 @@ fun readTransactionsFromCsv(inputStream: InputStream): List<Transaction> =
     }
         .let { items ->
             val formatter = realizeFormatter(items.take(30).map { it.date }.toTypedArray())
-            items.map { item ->
-                Transaction(
-                    id = item.id.toIntOrNull(),
-                    amount = item.amount.toDoubleOrNull() ?: 0.0,
-                    description = item.description,
-                    sourceId = item.sourceId.toIntOrNull() ?: 0,
-                    destinationId = item.destinationId.toIntOrNull() ?: 0,
-                    categoryId = item.categoryId.toIntOrNull(),
-                    date = parseDate(item.date, formatter),
-                    aNombreDe = item.aNombreDe.toIntOrNull()
-                )
-            }
+            items
+                .groupBy { it.transactionId }
+                .map { (transactionId, items) ->
+                    val firstTransaction = items.first()
+                    val transaction = Transaction(
+                        id = transactionId.toIntOrNull() ?: 0,
+                        date = parseDate(firstTransaction.date, formatter),
+                        sourceId = firstTransaction.sourceId.toIntOrNull() ?: 0,
+                        destinationId = firstTransaction.destinationId.toIntOrNull() ?: 0
+                    )
+                    val transactionDetails = items.map { item ->
+                        TransactionDetails(
+                            transactionId = transaction.id ?: 0,
+                            id = item.transactionDetailsId.toIntOrNull() ?: 0,
+                            amount = item.amount.toDoubleOrNull() ?: 0.0,
+                            description = item.description,
+                            categoryId = item.categoryId.toIntOrNull(),
+                            aNombreDe = item.aNombreDe.toIntOrNull()
+                        )
+                    }
+                    TransactionWithDetails.from(transaction, transactionDetails)
+                }
         }
 
 fun readPromissoryNotesFromCsv(inputStream: InputStream): List<PromissoryNote> =

@@ -4,17 +4,17 @@ data class AccountAndOwnerWithTransactionsAndPockets(
     val accountAndOwnerWithTransactions: AccountAndOwnerWithTransactions,
     val pockets: List<AccountAndOwnerWithTransactionsAndPockets>
 ) {
-    val allOutTransactionsWithOutPocketTransactions: List<Transaction>
+    val allOutTransactionsWithOutPocketTransactions: List<TransactionWithDetails>
         get() = listOf(
             *accountAndOwnerWithTransactions.outTransactions.toTypedArray(),
             *pockets.flatMap { it.allOutTransactionsWithOutPocketTransactions }.toTypedArray()
         )
-    val allInTransactionsWithInPocketTransactions: List<Transaction>
+    val allInTransactionsWithInPocketTransactions: List<TransactionWithDetails>
         get() = listOf(
             *accountAndOwnerWithTransactions.inTransactions.toTypedArray(),
             *pockets.flatMap { it.allInTransactionsWithInPocketTransactions }.toTypedArray()
         )
-    val allTransactionsWithPocketTransactions: List<Transaction>
+    val allTransactionsWithPocketTransactions: List<TransactionWithDetails>
         get() = listOf(
             *accountAndOwnerWithTransactions.allTransactions.toTypedArray(),
             *pockets.flatMap { it.allTransactionsWithPocketTransactions }.toTypedArray()

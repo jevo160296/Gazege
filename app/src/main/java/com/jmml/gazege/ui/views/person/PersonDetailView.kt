@@ -37,6 +37,8 @@ import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionAndDetails
+import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
@@ -69,6 +71,7 @@ fun PersonDetail(
     deuda: Double,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    onTransactionDetailsAction: (transaction: TransactionDetails, action: TransactionAction) -> Unit,
     onPromissoryNoteAction: (promissoryNote: PromissoryNote, action: PromissoryNoteAction) -> Unit
 ) {
     var justPendingTransactions: Boolean by remember { mutableStateOf(true) }
@@ -87,6 +90,7 @@ fun PersonDetail(
         onJustPendingTransactionsChange = { justPendingTransactions = it },
         onPersonAction = onPersonAction,
         onTransactionAction = onTransactionAction,
+        onTransactionDetailsAction = onTransactionDetailsAction,
         onPromissoryNoteAction = onPromissoryNoteAction
     )
 }
@@ -101,6 +105,7 @@ private fun PersonDetailUI(
     onJustPendingTransactionsChange: (Boolean) -> Unit,
     onPersonAction: (person: Person, action: PersonAction) -> Unit,
     onTransactionAction: (transaction: Transaction, action: TransactionAction) -> Unit,
+    onTransactionDetailsAction: (transaction: TransactionDetails, action: TransactionAction) -> Unit,
     onPromissoryNoteAction: (promissoryNote: PromissoryNote, action: PromissoryNoteAction) -> Unit
 ) {
     var modalController: BottomSheetController? by remember {
@@ -176,7 +181,7 @@ private fun PersonDetailUI(
                             action = {
                                 when (it) {
                                     is TransactionDocumentViewModel -> onTransactionAction(
-                                        it.transactionListItemDetails.transaction,
+                                        it.transactionListItemDetails.transaction.transaction,
                                         TransactionAction.DELETE
                                     )
 
@@ -190,8 +195,8 @@ private fun PersonDetailUI(
                                         PromissoryNoteAction.DELETE
                                     )
 
-                                    is TransactionDocumentWithSignViewModel -> onTransactionAction(
-                                        it.transactionListItemWithSign.transaction,
+                                    is TransactionDocumentWithSignViewModel -> onTransactionDetailsAction(
+                                        it.transactionListItemWithSign.transaction.transactionDetails,
                                         TransactionAction.DELETE
                                     )
                                 }
@@ -207,8 +212,8 @@ private fun PersonDetailUI(
                                 PromissoryNoteAction.EDIT
                             )
 
-                            is TransactionDocumentWithSignViewModel -> onTransactionAction(
-                                document.transactionListItemWithSign.transaction,
+                            is TransactionDocumentWithSignViewModel -> onTransactionDetailsAction(
+                                document.transactionListItemWithSign.transaction.transactionDetails,
                                 TransactionAction.EDIT
                             )
 
@@ -218,7 +223,7 @@ private fun PersonDetailUI(
                             )
 
                             is TransactionDocumentViewModel -> onTransactionAction(
-                                document.transactionListItemDetails.transaction,
+                                document.transactionListItemDetails.transaction.transaction,
                                 TransactionAction.EDIT
                             )
                         }
@@ -332,7 +337,10 @@ fun PreviewPersonDetail() {
                         toPersonId = person2?.id
                     )
                         .map { PromissoryNoteDocumentWithSignViewModel(it) } + TransactionListItemDetailsWithSign.from(
-                        transactions = transactionSample,
+                        transactions = TransactionAndDetails.from(
+                            transactionSample,
+                            transactionDetailsSample
+                        ),
                         categories = categorieSample,
                         accounts = accountSample,
                         principalPersonId = principalPersonSample?.id,
@@ -348,7 +356,8 @@ fun PreviewPersonDetail() {
                         onJustPendingTransactionsChange = onJustPendingTransactionsChange,
                         onPersonAction = { _, _ -> },
                         onTransactionAction = { _, _ -> },
-                        onPromissoryNoteAction = { _, _ -> }
+                        onPromissoryNoteAction = { _, _ -> },
+                        onTransactionDetailsAction = { _, _ -> }
                     )
                 }
             }

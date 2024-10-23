@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -21,9 +20,12 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionAndAccounts
-import com.jmml.gazege.ui.savers.PartialTransaction
-import com.jmml.gazege.ui.savers.PartialTransactionAndAccounts
+import com.jmml.gazege.core.entities.TransactionWithDetails
+import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccounts
+import com.jmml.gazege.ui.savers.PartialTransactionDetails
+import com.jmml.gazege.ui.savers.PartialTransactionWithDetails
+import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
+import com.jmml.gazege.ui.savers.transactionDetailsListSaver
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.jmml.gazege.ui.widgets.Form
@@ -36,7 +38,7 @@ fun TransactionFormFragment(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
-    transactionAndAccounts: TransactionAndAccounts? = null,
+    transactionWithDetailsAndAccounts: TransactionWithDetailsAndAccounts? = null,
     accountList: List<AccountAndOwner>,
     personList: List<Person>,
     categoryList: List<Category>,
@@ -45,83 +47,79 @@ fun TransactionFormFragment(
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (Transaction, Boolean) -> Unit
+    onTransactionAndAccountsAdd: (TransactionWithDetails, Boolean) -> Unit
 ) {
-    val id by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.id) }
-    var amount by rememberSaveable(transactionAndAccounts) { mutableStateOf(transactionAndAccounts?.transaction?.amount) }
-    var description by rememberSaveable(transactionAndAccounts) {
+    val id by rememberSaveable(transactionWithDetailsAndAccounts) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.description ?: ""
+            transactionWithDetailsAndAccounts?.transaction?.transaction?.id
         )
     }
-    var sourceId by rememberSaveable(transactionAndAccounts, fixedSourceAccount) {
+    val transactionDetails =
+        rememberSaveable(transactionWithDetailsAndAccounts, saver = transactionDetailsListSaver) {
+            mutableStateListOf(
+                *(transactionWithDetailsAndAccounts?.transaction?.transactionDetails?.map {
+                    PartialTransactionDetails.from(
+                        it
+                    )
+                } ?: emptyList()).toTypedArray()
+            )
+        }
+    var sourceId by rememberSaveable(transactionWithDetailsAndAccounts, fixedSourceAccount) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.sourceId ?: fixedSourceAccount?.id
+            transactionWithDetailsAndAccounts?.transaction?.transaction?.sourceId
+                ?: fixedSourceAccount?.id
         )
     }
     var destinationId by rememberSaveable(
-        transactionAndAccounts,
+        transactionWithDetailsAndAccounts,
         fixedDestinationAccount
     ) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.destinationId ?: fixedDestinationAccount?.id
+            transactionWithDetailsAndAccounts?.transaction?.transaction?.destinationId
+                ?: fixedDestinationAccount?.id
         )
     }
-    var categoryId by rememberSaveable(transactionAndAccounts) {
+    var date by rememberSaveable(transactionWithDetailsAndAccounts, defaultDate) {
         mutableStateOf(
-            transactionAndAccounts?.transaction?.categoryId
-        )
-    }
-    var date by rememberSaveable(transactionAndAccounts, defaultDate) {
-        mutableStateOf(
-            transactionAndAccounts?.transaction?.date ?: defaultDate
-        )
-    }
-    var aNombreDe by rememberSaveable(transactionAndAccounts) {
-        mutableStateOf(
-            transactionAndAccounts?.transaction?.aNombreDe
+            transactionWithDetailsAndAccounts?.transaction?.transaction?.date ?: defaultDate
         )
     }
 
     val currentTransaction =
-        amount?.let { _amount ->
-            sourceId?.let { _sourceId ->
-                destinationId?.let { _destinationId ->
-                    date?.let { _date ->
-                        Transaction(
-                            id = id,
-                            amount = _amount,
-                            description = description,
-                            sourceId = _sourceId,
-                            destinationId = _destinationId,
-                            categoryId = categoryId,
-                            date = _date,
-                            aNombreDe = aNombreDe
-                        )
-                    }
+        sourceId?.let { sourceIdNotNull ->
+            destinationId?.let { destinationId ->
+                date?.let { date ->
+                    transactionDetails.takeIf { list -> list.all { it.isComplete() } }
+                        ?.let { transactionDetails ->
+                            TransactionWithDetails(
+                                transaction = Transaction(
+                                    id = id,
+                                    sourceId = sourceIdNotNull,
+                                    destinationId = destinationId,
+                                    date = date
+                                ),
+                                transactionDetails = transactionDetails.map { it.toFull() }
+                            )
+                        }
                 }
             }
         }
 
-    var realizarANombreDe by rememberSaveable(aNombreDe) {
-        mutableStateOf(aNombreDe != null)
-    }
     var addAnotherTransaction by rememberSaveable {
         mutableStateOf(false)
     }
     val completeState = currentTransaction != null
     val sourceAccount = accountList.firstOrNull { it.account.id == sourceId }
     val destinationAccount = accountList.firstOrNull { it.account.id == destinationId }
-    val focusRequester = remember { FocusRequester() }
-    val showAddAnotherTransactionButton = transactionAndAccounts == null
+    val showAddAnotherTransactionButton = transactionWithDetailsAndAccounts == null
     val saveTransaction: () -> Unit = {
         currentTransaction?.let { fullTransaction ->
             onTransactionAndAccountsAdd(fullTransaction, addAnotherTransaction)
             if (showAddAnotherTransactionButton) {
-                amount = null
+                transactionDetails.clear()
             }
         }
-        focusRequester.requestFocus()
+        //focusRequester.requestFocus()
     }
     val addTransactionAction: AddTransactionAction =
         if (sourceAccount?.account?.isIncome == true && destinationAccount?.account?.isOutcome != true) {
@@ -146,17 +144,14 @@ fun TransactionFormFragment(
         TransactionAndAccountsForm(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
-            transactionAndAccounts = PartialTransactionAndAccounts.from(
-                currentTransaction?.let { PartialTransaction.from(currentTransaction) }
-                    ?: PartialTransaction(
-                        id = id,
-                        amount = amount,
-                        description = description,
+            transactionAndAccounts = PartialTransactionWithDetailsAndAccounts.from(
+                currentTransaction?.let { PartialTransactionWithDetails.from(currentTransaction) }
+                    ?: PartialTransactionWithDetails(
+                        transactionId = id,
                         sourceId = sourceId,
                         destinationId = destinationId,
                         date = date,
-                        aNombreDe = aNombreDe,
-                        categoryId = categoryId
+                        transactionDetails = listOf(*transactionDetails.toTypedArray()),
                     ),
                 sourceAccount = sourceAccount?.account,
                 destinationAccount = destinationAccount?.account
@@ -164,25 +159,34 @@ fun TransactionFormFragment(
             accountList = accountList,
             onAccountAddRequested = onAccountAddRequested,
             onDateChanged = { date = it },
-            realizarANombreDe = realizarANombreDe,
-            onRealizarANombreDeChanged = { realizarANombreDe = it },
             personList = personList,
-            onRealizarAnombreDeIdChanged = { aNombreDe = it },
+            onRealizarAnombreDeIdChanged = { detailIndexId, personId ->
+                transactionDetails[detailIndexId] =
+                    transactionDetails[detailIndexId].copy(aNombreDe = personId)
+            },
             categoryList = categoryList,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             onDoneAction = saveTransaction,
             isComplete = completeState,
             showSourceAccountField = fixedSourceAccount == null,
             showDestinationAccountField = fixedDestinationAccount == null,
-            onAmountChanged = { amount = it },
-            onCategoryIdChanged = { categoryId = it },
-            onDescriptionChanged = { description = it },
+            onAmountChanged = { detailIndexId, amount ->
+                transactionDetails[detailIndexId] =
+                    transactionDetails[detailIndexId].copy(amount = amount)
+            },
+            onCategoryIdChanged = { detailIndexId, categoryId ->
+                transactionDetails[detailIndexId] =
+                    transactionDetails[detailIndexId].copy(categoryId = categoryId)
+            },
+            onDescriptionChanged = { detailIndexId, description ->
+                transactionDetails[detailIndexId] =
+                    transactionDetails[detailIndexId].copy(description = description)
+            },
             onDestinationAccountIdChanged = { destinationId = it },
             onSourceAccountIdChanged = { sourceId = it },
             showAddAnotherTransactionButton = showAddAnotherTransactionButton,
             addAnotherTransaction = addAnotherTransaction,
-            onAddAnotherTransactionChanged = { addAnotherTransaction = it },
-            focusRequester = focusRequester
+            onAddAnotherTransactionChanged = { addAnotherTransaction = it }
         )
     }
 }

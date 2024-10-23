@@ -111,7 +111,14 @@ data class AccountDetailData(
             *inTransactions.toTypedArray(),
             *outTransactions
                 .map {
-                    it.copy(transaction = it.transaction.copy(amount = -it.transaction.amount))
+                    it.copy(
+                        transaction = it.transaction.copy(
+                            transactionDetails = it.transaction.transactionDetails.map { details ->
+                                details.copy(
+                                    amount = -details.amount
+                                )
+                            })
+                    )
                 }
                 .toTypedArray()
         ))
@@ -456,14 +463,22 @@ private fun NotNullAccountDetail(
             }
             transactionLazyListItems(
                 transactionList = allTransactionsAndAccountsAndCategory,
-                editTransaction = { onTransactionAction(it.transaction, TransactionAction.EDIT) },
+                editTransaction = {
+                    onTransactionAction(
+                        it.transaction.transaction,
+                        TransactionAction.EDIT
+                    )
+                },
                 delTransaction = {
                     modalController = BottomSheetController(
                         getMsg = {
                             transactionDeleitionConfirmationBuilder()()
                         },
                         action = {
-                            onTransactionAction(it.transaction, TransactionAction.DELETE)
+                            onTransactionAction(
+                                it.transaction.transaction,
+                                TransactionAction.DELETE
+                            )
                         }
                     )
                     scope.launch { sheetState.show() }

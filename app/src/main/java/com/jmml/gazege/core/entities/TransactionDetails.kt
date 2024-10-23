@@ -34,6 +34,6 @@ data class TransactionDetails(
     val transactionId: Int,
     val amount: Double,
     val description: String,
-    val categoryId: Int,
+    val categoryId: Int?,
     val aNombreDe: Int?
 )

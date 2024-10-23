@@ -47,7 +47,7 @@ fun NavGraphBuilder.screenEditTransaction(
             accountAndOwnerWithTransactions is Result.Success && budgetWithCalculatedDataAndCategory is Result.Success -> TransactionFormFragment(
                 contentPadding = PaddingValues(8.dp),
                 itemSpacing = 8.dp,
-                transactionAndAccounts = selectedTransactionAndAccounts,
+                transactionWithDetailsAndAccounts = selectedTransactionAndAccounts,
                 accountList = accountAndOwnerWithTransactions.data.map {
                     AccountAndOwner(
                         it.account,

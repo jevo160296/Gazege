@@ -1,27 +1,27 @@
 package com.jmml.gazege.core.entities
 
-data class TransactionAndAccountsAndCategory(
-    val transaction: Transaction,
+data class TransactionAndDetailsAndAccountsAndCategory(
+    val transaction: TransactionAndDetails,
     val sourceAccount: Account,
     val destinationAccount: Account,
     val category: Category?
 ) {
-    fun toTransactionAndAccounts(): TransactionAndAccounts =
-        TransactionAndAccounts(transaction, sourceAccount, destinationAccount)
+    fun toTransactionAndDetailsAndAccounts(): TransactionAndDetailsAndAccounts =
+        TransactionAndDetailsAndAccounts(transaction, sourceAccount, destinationAccount)
 
     companion object {
         fun from(
-            transactions: List<Transaction>,
+            transactions: List<TransactionAndDetails>,
             accounts: List<Account>,
             categories: List<Category>
-        ): List<TransactionAndAccountsAndCategory> {
+        ): List<TransactionAndDetailsAndAccountsAndCategory> {
             val accountMap: Map<Int?, Account> = accounts.associateBy { it.id }
             val categoriesMap: Map<Int?, Category> = categories.associateBy { it.id }
-            return transactions.mapNotNull { transaction: Transaction ->
+            return transactions.mapNotNull { transaction: TransactionAndDetails ->
                 val sourceAccount = accountMap[transaction.sourceId]
                 val destinationAccount = accountMap[transaction.destinationId]
                 if (sourceAccount != null && destinationAccount != null) {
-                    TransactionAndAccountsAndCategory(
+                    TransactionAndDetailsAndAccountsAndCategory(
                         transaction,
                         sourceAccount = sourceAccount,
                         destinationAccount = destinationAccount,

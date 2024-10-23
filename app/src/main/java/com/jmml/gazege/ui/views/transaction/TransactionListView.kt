@@ -37,12 +37,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
-import com.jmml.gazege.core.entities.ITransactionListDetail
-import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.ITransactionListDetailGrouped
+import com.jmml.gazege.core.entities.ITransactionListDetailIndividual
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithAccount
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.core.entities.TransactionType
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.DateFormat
 import com.jmml.gazege.ui.doubleToMoneyString
@@ -58,12 +59,12 @@ import com.jmml.gazege.ui.widgets.PulsatingCard
 import com.jmml.gazege.ui.widgets.SmallEmphasis
 
 @Composable
-fun <T : ITransactionListDetail> LoadedTransactionPage(
+fun <T : ITransactionListDetailGrouped> LoadedTransactionPage(
     modifier: Modifier = Modifier,
     itemHolderPaddingValues: PaddingValues = PaddingValues(),
     transactionList: List<T>,
-    delTransaction: (Transaction) -> Unit,
-    editTransaction: (Transaction) -> Unit,
+    delTransaction: (TransactionWithDetails) -> Unit,
+    editTransaction: (TransactionWithDetails) -> Unit,
     state: LazyListState,
     nestedScrollConnection: NestedScrollConnection? = null,
     onTitleSetted: (String) -> Unit,
@@ -108,13 +109,13 @@ fun LoadingTransactionPage(
     }
 }
 
-fun transactionGroupSelector(transaction: Transaction): String =
+fun transactionGroupSelector(transaction: TransactionWithDetails): String =
     localDateToString(transaction.date, DateFormat.DAYMONTHYEAR)
 
 @Composable
 fun TransactionHeaderViewHolder(group: String) = DefaultGroupViewHolder(group)
 
-fun <T : ITransactionListDetail> LazyListScope.transactionLazyListItems(
+fun <T : ITransactionListDetailGrouped> LazyListScope.transactionLazyListItems(
     transactionList: List<T>,
     editTransaction: (T) -> Unit,
     delTransaction: (T) -> Unit,
@@ -177,12 +178,14 @@ fun TransactionViewHolder(
     val categoryRow: @Composable () -> Unit = @Composable {
         LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
         LargeBody(
-            text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+            text = transaction
+                .categoriesString
+                ?: stringResource(id = R.string.Sin_categoria)
         )
     }
     val descriptionRow: @Composable () -> Unit = @Composable {
         LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
-        LargeBody(text = transaction.transaction.description)
+        LargeBody(text = transaction.transaction.descriptionString)
     }
 
     Column {
@@ -210,7 +213,7 @@ fun TransactionViewHolder(
                     .weight(0.3f),
                 horizontalAlignment = Alignment.End
             ) {
-                LargeBody(text = doubleToMoneyString(transaction.transaction.amount))
+                LargeBody(text = doubleToMoneyString(transaction.transaction.totalAmount))
             }
         }
     }
@@ -266,12 +269,12 @@ fun TransactionWithAccountViewHolder(
     val categoryRow: @Composable () -> Unit = @Composable {
         LargeEmphasis(text = "${stringResource(id = R.string.Categoria)}: ")
         LargeBody(
-            text = transaction.category?.name ?: stringResource(id = R.string.Sin_categoria)
+            text = transaction.categoriesString ?: stringResource(id = R.string.Sin_categoria)
         )
     }
     val descriptionRow: @Composable () -> Unit = @Composable {
         LargeEmphasis(text = "${stringResource(id = R.string.descripcion)}: ")
-        LargeBody(text = transaction.transaction.description)
+        LargeBody(text = transaction.transaction.descriptionString)
     }
 
     Column {
@@ -300,7 +303,7 @@ fun TransactionWithAccountViewHolder(
                 horizontalAlignment = Alignment.End
             ) {
                 LargeBody(
-                    text = doubleToMoneyString(transaction.transaction.amount),
+                    text = doubleToMoneyString(transaction.transaction.totalAmount),
                     color = when (transaction.transactionAccountType) {
                         TransactionType.INCOME -> GazegeTheme.gazegeColorScheme.income
                         TransactionType.OUTCOME -> GazegeTheme.gazegeColorScheme.outcome
@@ -409,7 +412,7 @@ fun TransactionWithSignViewHolder(transaction: TransactionListItemDetailsWithSig
 }
 
 @Composable
-fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
+fun <T : ITransactionListDetailGrouped> TransactionGroupItemViewHolder(
     transaction: T,
     editTransaction: (T) -> Unit,
     delTransaction: (T) -> Unit
@@ -419,7 +422,7 @@ fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
     }
     ClickableListItemViewHolder(
         onItemTapped = { editTransaction(transaction) },
-        onItemLongPressed = { menuIdExpanded = transaction.transaction.id }
+        onItemLongPressed = { menuIdExpanded = transaction.transaction.transaction.id }
     ) {
         Box {
             when (transaction) {
@@ -427,12 +430,11 @@ fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
                 is TransactionListItemDetailsWithAccount -> TransactionWithAccountViewHolder(
                     transaction = transaction
                 )
-                is TransactionListItemDetailsWithSign -> TransactionWithSignViewHolder(transaction = transaction)
                 else -> throw Error("Transaction list type UI not implemented.")
             }
         }
         DropdownMenu(
-            expanded = menuIdExpanded == transaction.transaction.id,
+            expanded = menuIdExpanded == transaction.transaction.transaction.id,
             onDismissRequest = { menuIdExpanded = null }
         ) {
             DropdownMenuItem(
@@ -454,7 +456,48 @@ fun <T : ITransactionListDetail> TransactionGroupItemViewHolder(
 }
 
 @Composable
-private fun <T : ITransactionListDetail> LoadedTransactionRecyclerView(
+fun <T : ITransactionListDetailIndividual> TransactionGroupItemViewHolder(
+    transaction: T,
+    editTransaction: (T) -> Unit,
+    delTransaction: (T) -> Unit
+) {
+    var menuIdExpanded: Int? by remember {
+        mutableStateOf(null)
+    }
+    ClickableListItemViewHolder(
+        onItemTapped = { editTransaction(transaction) },
+        onItemLongPressed = { menuIdExpanded = transaction.transaction.transaction.id }
+    ) {
+        Box {
+            when (transaction) {
+                is TransactionListItemDetailsWithSign -> TransactionWithSignViewHolder(transaction = transaction)
+                else -> throw Error("Transaction list type UI not implemented.")
+            }
+        }
+        DropdownMenu(
+            expanded = menuIdExpanded == transaction.transaction.transaction.id,
+            onDismissRequest = { menuIdExpanded = null }
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Editar)) },
+                onClick = {
+                    menuIdExpanded = null
+                    editTransaction(transaction)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Eliminar)) },
+                onClick = {
+                    menuIdExpanded = null
+                    delTransaction(transaction)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun <T : ITransactionListDetailGrouped> LoadedTransactionRecyclerView(
     transactionList: List<T>,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),

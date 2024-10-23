@@ -35,6 +35,8 @@ import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactionsAndPockets
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.templates.ClickableTreeListItemViewHolder
@@ -335,26 +337,40 @@ private fun PreviewAccountItem() {
     val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions(
         owner = owner,
         account = account,
-        inTransactions = (1..100).map { trans_index ->
-            Transaction(
-                amount = (1 * trans_index).toDouble(),
-                description = "",
-                sourceId = 2,
-                destinationId = 1,
-                date = LocalDate.now(),
-                aNombreDe = null,
-                categoryId = null
+        inTransactions = (1..100).map { transIndex ->
+            TransactionWithDetails(
+                transaction = Transaction(
+                    sourceId = 2,
+                    destinationId = 1,
+                    date = LocalDate.now()
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        transactionId = 0,
+                        amount = (1 * transIndex).toDouble(),
+                        description = "",
+                        categoryId = null,
+                        aNombreDe = null
+                    )
+                )
             )
         },
-        outTransactions = (1..40).map { trans_index ->
-            Transaction(
-                amount = (1 * trans_index / (1 + trans_index)).toDouble(),
-                description = "",
-                sourceId = 1,
-                destinationId = 3,
-                date = LocalDate.now(),
-                aNombreDe = null,
-                categoryId = null
+        outTransactions = (1..40).map { transIndex ->
+            TransactionWithDetails(
+                transaction = Transaction(
+                    sourceId = 1,
+                    destinationId = 3,
+                    date = LocalDate.now()
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        transactionId = 0,
+                        amount = (1 * transIndex / (1 + transIndex)).toDouble(),
+                        description = "",
+                        categoryId = null,
+                        aNombreDe = null
+                    )
+                )
             )
         }
     )

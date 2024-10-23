@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,8 +17,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -33,7 +30,8 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
-import com.jmml.gazege.ui.savers.PartialTransactionAndAccounts
+import com.jmml.gazege.ui.savers.PartialTransactionDetails
+import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
 import com.jmml.gazege.ui.views.account.AccountDropDownMenu
 import com.jmml.gazege.ui.views.category.CategoryDropDown
 import com.jmml.gazege.ui.widgets.ComboBox
@@ -42,7 +40,6 @@ import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
 import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
-import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 @Composable
@@ -50,13 +47,11 @@ fun TransactionAndAccountsForm(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     itemSpacing: Dp = 0.dp,
-    transactionAndAccounts: PartialTransactionAndAccounts,
+    transactionAndAccounts: PartialTransactionWithDetailsAndAccounts,
     accountList: List<AccountAndOwner>,
     onAccountAddRequested: () -> Unit,
-    realizarANombreDe: Boolean,
-    onRealizarANombreDeChanged: (Boolean) -> Unit,
     personList: List<Person>,
-    onRealizarAnombreDeIdChanged: (Int?) -> Unit,
+    onRealizarAnombreDeIdChanged: (detailIndexId: Int, personId: Int?) -> Unit,
     categoryList: List<Category>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     onDoneAction: () -> Unit,
@@ -65,23 +60,18 @@ fun TransactionAndAccountsForm(
     onAddAnotherTransactionChanged: (Boolean) -> Unit,
     showSourceAccountField: Boolean = true,
     showDestinationAccountField: Boolean = true,
-    onAmountChanged: (Double) -> Unit,
-    onDescriptionChanged: (String) -> Unit,
+    onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
+    onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onSourceAccountIdChanged: (Int) -> Unit,
     onDestinationAccountIdChanged: (Int) -> Unit,
-    onCategoryIdChanged: (Int?) -> Unit,
+    onCategoryIdChanged: (detailIndexId: Int, categoryId: Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
-    focusRequester: FocusRequester = remember {
-        FocusRequester()
-    },
     showAddAnotherTransactionButton: Boolean
 ) {
-    val amount = transactionAndAccounts.transaction.amount ?: 0.0
-    val description = transactionAndAccounts.transaction.description ?: ""
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
     val date: LocalDate? = transactionAndAccounts.transaction.date
-    val selectedCategoryId = transactionAndAccounts.transaction.categoryId
+    val transactionDetails = transactionAndAccounts.transaction.transactionDetails
     val nextAction: ImeAction = if (isComplete) {
         ImeAction.Done
     } else {
@@ -117,8 +107,6 @@ fun TransactionAndAccountsForm(
             null
         )
     }
-    val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
 
     Column(
         modifier = modifier.padding(contentPadding),
@@ -135,30 +123,6 @@ fun TransactionAndAccountsForm(
                 Text(text = stringResource(R.string.AddAnotherTransaction))
             }
         }
-        NumberField(
-            modifier = Modifier.focusRequester(focusRequester),
-            value = amount,
-            onValueChange = { onAmountChanged(it) },
-            label = { Text(stringResource(id = R.string.Valor)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = nextAction
-            ),
-            keyboardActions = keyboardActions
-        )
-        TextField(
-            value = description,
-            onValueChange = { onDescriptionChanged(it) },
-            label = { Text(text = stringResource(id = R.string.descripcion)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = nextAction,
-                capitalization = KeyboardCapitalization.Sentences
-            ),
-            keyboardActions = keyboardActions
-        )
         if (showSourceAccountField) {
             AccountDropDownMenu(
                 accountsList = accountList,
@@ -202,52 +166,114 @@ fun TransactionAndAccountsForm(
                 onDateChanged(it)
             }
         )
-        if (categoryList.isNotEmpty()) {
-            CategoryDropDown(
-                categoryList = categoryList,
-                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-                selectedCategory = selectedCategory,
-                label = { Text(stringResource(id = R.string.Categoria)) },
-                keyboardOptions = KeyboardOptions(imeAction = nextAction),
-                keyboardActions = keyboardActions
-            ) { onCategoryIdChanged(it?.id) }
-        }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(checked = realizarANombreDe, onCheckedChange = {
-                if (!it) {
-                    onRealizarAnombreDeIdChanged(null)
-                }
-                onRealizarANombreDeChanged(it)
-            })
-            Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
-        }
-        if (realizarANombreDe) {
-            var dropDownExpanded by rememberSaveable {
-                mutableStateOf(false)
-            }
-            val selectedItem =
-                personList.firstOrNull { it.id == transactionAndAccounts.transaction.aNombreDe }
-            ComboBox(
-                dropDownExpanded = dropDownExpanded,
-                onExpandedChange = { dropDownExpanded = it },
-                options = personList,
-                selectedItem = selectedItem,
-                itemToString = { it?.name ?: "" },
-                onItemClick = { onRealizarAnombreDeIdChanged(it.id) },
-                label = { Text(stringResource(R.string.persona)) },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        transactionDetails.forEach {
+            TransactionDetailsForm(
+                transactionDetails = it,
+                transactionDetailsIndex = 0,
+                categoryList = categoryList,
+                personList = personList,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+                onAmountChanged = onAmountChanged,
+                onDescriptionChanged = onDescriptionChanged,
+                onCategoryIdChanged = onCategoryIdChanged,
+                onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
+                nextAction = nextAction,
                 keyboardActions = keyboardActions
             )
         }
     }
+}
 
-    LaunchedEffect(key1 = Unit) {
-        // Waits 100 milliseconds until request focus to avoid calling the ime when expandable fab expands
-        delay(100)
-        focusRequester.requestFocus()
+@Composable
+private fun TransactionDetailsForm(
+    contentPadding: PaddingValues = PaddingValues(),
+    transactionDetails: PartialTransactionDetails,
+    transactionDetailsIndex: Int,
+    categoryList: List<Category>,
+    personList: List<Person>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
+    onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
+    onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
+    onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
+    nextAction: ImeAction,
+    keyboardActions: KeyboardActions,
+) {
+    val amount = transactionDetails.amount ?: 0.0
+    val description = transactionDetails.description ?: ""
+    val aNombreDe = transactionDetails.aNombreDe
+    val selectedCategoryId = transactionDetails.categoryId
+
+    val selectedCategory =
+        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
+
+    var realizarANombreDe by rememberSaveable(aNombreDe) {
+        mutableStateOf(aNombreDe != null)
+    }
+
+    NumberField(
+        value = amount,
+        onValueChange = { onAmountChanged(transactionDetailsIndex, it) },
+        label = { Text(stringResource(id = R.string.Valor)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = nextAction
+        ),
+        keyboardActions = keyboardActions
+    )
+    TextField(
+        value = description,
+        onValueChange = { onDescriptionChanged(transactionDetailsIndex, it) },
+        label = { Text(text = stringResource(id = R.string.descripcion)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = nextAction,
+            capitalization = KeyboardCapitalization.Sentences
+        ),
+        keyboardActions = keyboardActions
+    )
+    if (categoryList.isNotEmpty()) {
+        CategoryDropDown(
+            categoryList = categoryList,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+            selectedCategory = selectedCategory,
+            label = { Text(stringResource(id = R.string.Categoria)) },
+            keyboardOptions = KeyboardOptions(imeAction = nextAction),
+            keyboardActions = keyboardActions
+        ) { onCategoryIdChanged(transactionDetailsIndex, it?.id) }
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(checked = realizarANombreDe, onCheckedChange = {
+            if (!it) {
+                onRealizarAnombreDeIdChanged(transactionDetailsIndex, null)
+            }
+            realizarANombreDe = it
+        })
+        Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
+    }
+    if (realizarANombreDe) {
+        var dropDownExpanded by rememberSaveable {
+            mutableStateOf(false)
+        }
+        val selectedItem =
+            personList.firstOrNull { it.id == aNombreDe }
+        ComboBox(
+            dropDownExpanded = dropDownExpanded,
+            onExpandedChange = { dropDownExpanded = it },
+            options = personList,
+            selectedItem = selectedItem,
+            itemToString = { it?.name ?: "" },
+            onItemClick = { onRealizarAnombreDeIdChanged(transactionDetailsIndex, it.id) },
+            label = { Text(stringResource(R.string.persona)) },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = keyboardActions
+        )
     }
 }
 

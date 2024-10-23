@@ -69,6 +69,15 @@ fun NavGraphBuilder.screenPersonDetail(
                                 )
                             }
                         },
+                        onTransactionDetailsAction = { transactionDetails, action ->
+                            val transactionId = transactionDetails.transactionId
+                            when (action) {
+                                TransactionAction.EDIT -> onNavigateToEditTransaction(transactionId)
+                                TransactionAction.DELETE -> viewModelPersonDetail.deleteTransactionDetails(
+                                    transactionDetails
+                                )
+                            }
+                        },
                         onPromissoryNoteAction = { promissoryNote, action ->
                             val promissoryNoteId = promissoryNote.id
                             when (action) {

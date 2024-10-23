@@ -9,7 +9,7 @@ import androidx.room.Update
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.PromissoryNote
-import com.jmml.gazege.core.entities.TransactionAndAccounts
+import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -118,7 +118,7 @@ interface PersonDao {
         fun direction(
             fromPersonId: Int?,
             toPersonId: Int?,
-            transaction: TransactionAndAccounts
+            transaction: TransactionAndDetailsAndAccounts
         ): Int {
             val sameDirection = transaction.transaction.aNombreDe == null &&
                     transaction.sourceAccount.ownerId == fromPersonId &&
@@ -168,7 +168,7 @@ interface PersonDao {
         private fun calculateFlujo(
             from: Person,
             to: Person,
-            transacciones: List<TransactionAndAccounts>,
+            transacciones: List<TransactionAndDetailsAndAccounts>,
             promissoryNotes: List<PromissoryNote>
         ): Double {
             val valuesFromTransactions =
@@ -186,7 +186,7 @@ interface PersonDao {
         fun getFlujo(
             person: Person,
             otherPersonWithAccounts: Person,
-            transacciones: List<TransactionAndAccounts>,
+            transacciones: List<TransactionAndDetailsAndAccounts>,
             promissoryNotes: List<PromissoryNote>
         ): Double {
             return calculateFlujo(person, otherPersonWithAccounts, transacciones, promissoryNotes)
