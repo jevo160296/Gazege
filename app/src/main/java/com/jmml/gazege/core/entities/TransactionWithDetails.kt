@@ -48,8 +48,6 @@ data class TransactionWithDetails(
             }
         }
 
-        fun TransactionWithDetails.toTransaction(): Transaction = transaction.copy()
-
         fun TransactionWithDetails.toTransactionDetails(): List<TransactionDetails> =
             transactionDetails.map { it.copy() }
 

@@ -6,9 +6,6 @@ data class TransactionAndDetailsAndAccountsAndCategory(
     val destinationAccount: Account,
     val category: Category?
 ) {
-    fun toTransactionAndDetailsAndAccounts(): TransactionAndDetailsAndAccounts =
-        TransactionAndDetailsAndAccounts(transaction, sourceAccount, destinationAccount)
-
     companion object {
         fun from(
             transactions: List<TransactionAndDetails>,

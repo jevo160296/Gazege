@@ -2,13 +2,11 @@ package com.jmml.gazege.ui.savers
 
 import android.os.Parcelable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndDetails
-import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
 import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccounts
@@ -89,16 +87,6 @@ data class PartialTransactionWithDetails(
     }
 
     companion object {
-        fun blankEntity(): PartialTransactionWithDetails {
-            return PartialTransactionWithDetails(
-                null,
-                null,
-                null,
-                null,
-                emptyList()
-            )
-        }
-
         fun from(transactionWithDetails: TransactionWithDetails): PartialTransactionWithDetails =
             transactionWithDetails.run {
                 PartialTransactionWithDetails(
@@ -142,44 +130,6 @@ data class PartialTransactionAndDetails(
             throw Exception()
         }
     }
-}
-
-data class PartialTransactionAndDetailsAndAccounts(
-    val transaction: PartialTransactionAndDetails,
-    val sourceAccount: Account?,
-    val destinationAccount: Account?
-) : PartialEntity<TransactionAndDetailsAndAccounts> {
-    override fun isComplete(): Boolean {
-        return transaction.isComplete() &&
-                sourceAccount != null &&
-                destinationAccount != null
-    }
-
-    override fun toFull(): TransactionAndDetailsAndAccounts {
-        if (isComplete()) {
-            return TransactionAndDetailsAndAccounts(
-                transaction = transaction.toFull(),
-                sourceAccount = sourceAccount!!,
-                destinationAccount = destinationAccount!!
-            )
-        } else {
-            throw Exception()
-        }
-    }
-
-    companion object {
-
-        fun from(
-            transaction: PartialTransactionAndDetails,
-            sourceAccount: Account?,
-            destinationAccount: Account?
-        ): PartialTransactionAndDetailsAndAccounts = PartialTransactionAndDetailsAndAccounts(
-            transaction = transaction,
-            sourceAccount = sourceAccount,
-            destinationAccount = destinationAccount
-        )
-    }
-
 }
 
 data class PartialTransactionWithDetailsAndAccounts(
@@ -249,29 +199,6 @@ data class ParcelableTransactionAndAccounts(
     val sourceAccount: ParcelableAccount?,
     val destinationAccount: ParcelableAccount?
 ) : Parcelable
-
-val transactionDetailsSaver = Saver<PartialTransactionDetails, ParcelableTransactionDetails>(
-    save = { state ->
-        ParcelableTransactionDetails(
-            id = state.id,
-            transactionId = state.transactionId,
-            amount = state.amount,
-            description = state.description,
-            categoryId = state.categoryId,
-            aNombreDe = state.aNombreDe
-        )
-    },
-    restore = { state ->
-        PartialTransactionDetails(
-            id = state.id,
-            transactionId = state.transactionId,
-            amount = state.amount,
-            description = state.description,
-            categoryId = state.categoryId,
-            aNombreDe = state.aNombreDe
-        )
-    }
-)
 
 val transactionDetailsListSaver =
     listSaver<SnapshotStateList<PartialTransactionDetails>, ParcelableTransactionDetails>(
