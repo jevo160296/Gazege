@@ -4,18 +4,25 @@ import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jmml.gazege.core.AppDatabase
-import com.jmml.gazege.core.entities.*
+import com.jmml.gazege.core.entities.Account
+import com.jmml.gazege.core.entities.BudgetType
+import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.Person
+import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.databaseSample
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
-import java.util.*
 import kotlin.random.Random
 
 /**
@@ -52,7 +59,8 @@ class AppDatabaseTest {
         val accInserted = database.accountDao().insertAll(*accountsIn.toTypedArray()).map{it.toInt()}
         val accInsertedSize = accInserted.size
         val initialTransactions = database.transactionDao().getAll().first()
-        val maxIdTransaction = initialTransactions.maxOfOrNull{it.transaction.id ?: 0} ?: 0
+        val maxIdTransaction =
+            initialTransactions.maxOfOrNull { it.transaction.transactionId ?: 0 } ?: 0
         val transactionsIn = (1..200).map{
             val amount = random.nextDouble(1000.0, 200000.0)
             val dia = random.nextInt(1, 28)
@@ -62,16 +70,24 @@ class AppDatabaseTest {
             val sourceId = accInserted[random.nextInt(0, accInsertedSize)]
             val destinationId = accInserted
                 .filter{it != sourceId}[random.nextInt(0, accInsertedSize - 1)]
-            Transaction(
-                id = maxIdTransaction + it,
-                amount = amount,
-                description = "",
-                sourceId = sourceId,
-                destinationId = destinationId,
-                date = fecha,
-                categoryId = null,
-                aNombreDe = null
-            )
+            TransactionWithDetails(
+                transaction = Transaction(
+                    id = maxIdTransaction + it,
+                    sourceId = sourceId,
+                    destinationId = destinationId,
+                    date = fecha
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        id = maxIdTransaction + it,
+                        transactionId = maxIdTransaction + it,
+                        amount = amount,
+                        description = "",
+                        categoryId = null,
+                        aNombreDe = null
+                    )
+                )
+            ).toTransaction()
         }
         database.transactionDao().insertAll(*transactionsIn.toTypedArray())
     }
@@ -192,16 +208,25 @@ class AppDatabaseTest {
                     val selected = random.nextInt(it.size)
                     it[selected].id
                 }
-            Transaction(
-                index++,
-                random.nextDouble(100.0, 500000.0),
-                description = "",
-                sourceId = sourceAccount ?: 0,
-                destinationId = destinationAccount ?: 1,
-                date = LocalDate.of(2023, 1, 1).plusDays(random.nextLong(365)),
-                aNombreDe = null,
-                categoryId = null
-            )
+            val newIndex = index++
+            TransactionWithDetails(
+                transaction = Transaction(
+                    id = newIndex,
+                    sourceId = sourceAccount ?: 0,
+                    destinationId = destinationAccount ?: 0,
+                    date = LocalDate.of(2023, 1, 1).plusDays(random.nextLong(365))
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        id = newIndex,
+                        transactionId = newIndex,
+                        amount = random.nextDouble(100.0, 500000.0),
+                        description = "",
+                        categoryId = null,
+                        aNombreDe = null
+                    )
+                )
+            ).toTransaction()
         }
         val newCategories: Array<Category> = (0..90).map {
             val parentId = when (it) {
@@ -395,7 +420,7 @@ class AppDatabaseTest {
         }
         val accounts = database.accountDao().getAll().first()
         val transactionsToAdd = arrayOf(
-            Transaction(
+            TransactionWithDetails.new(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[0].id ?: -1,
@@ -403,8 +428,8 @@ class AppDatabaseTest {
                 date = LocalDate.now(),
                 categoryId = null,
                 aNombreDe = null
-            ),
-            Transaction(
+            ).toTransaction(),
+            TransactionWithDetails.new(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[1].id ?: -1,
@@ -412,8 +437,8 @@ class AppDatabaseTest {
                 date = LocalDate.now(),
                 aNombreDe = null,
                 categoryId = null
-            ),
-            Transaction(
+            ).toTransaction(),
+            TransactionWithDetails.new(
                 amount = 10.0,
                 description = "Test",
                 sourceId = accounts[0].id ?: -1,
@@ -421,7 +446,7 @@ class AppDatabaseTest {
                 date = LocalDate.now(),
                 categoryId = null,
                 aNombreDe = null
-            )
+            ).toTransaction()
         )
         database.transactionDao().insertAll(*transactionsToAdd)
         val transactions = database.transactionDao().getAll().first()
