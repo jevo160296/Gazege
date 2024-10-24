@@ -7,6 +7,8 @@ import com.jmml.gazege.core.entities.BudgetType
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.databaseSample
 import com.jmml.gazege.ui.doubleToPercentageString
 import com.jmml.gazege.ui.progressStatus.HistoricalProgressStatus
@@ -42,7 +44,12 @@ private fun bigSample(
             { accountSample },
             { categorieSample },
             { budgetSample }
-        ) { transactionSample }
+        ) {
+            TransactionWithDetails.from(
+                transactionSample,
+                transactionDetailsSample
+            )
+        }
     }
 }
 
@@ -61,7 +68,12 @@ private fun smallSample(
             { accountSample },
             { categorieSample },
             { budgetSample },
-            { transactionSample }
+            {
+                TransactionWithDetails.from(
+                    transactionSample,
+                    transactionDetailsSample
+                )
+            }
         )
     }
 }
@@ -109,35 +121,59 @@ private fun categoriesSample(
         },
         {
             listOf(
-                Transaction(
-                    0,
-                    2500000.0,
-                    sourceId = 3,
-                    destinationId = 0,
-                    categoryId = 0,
-                    date = startOfMonth,
-                    aNombreDe = null,
-                    description = ""
+                TransactionWithDetails(
+                    transaction = Transaction(
+                        id = 0,
+                        sourceId = 3,
+                        destinationId = 0,
+                        date = startOfMonth
+                    ),
+                    transactionDetails = listOf(
+                        TransactionDetails(
+                            id = 0,
+                            transactionId = 0,
+                            amount = 2500000.0,
+                            description = "",
+                            categoryId = 0,
+                            aNombreDe = null
+                        )
+                    )
                 ),
-            Transaction(
-                1,
-                600000.0,
-                sourceId = 0,
-                destinationId = 4,
-                categoryId = 2,
-                date = startOfMonth,
-                aNombreDe = null,
-                description = ""
+                TransactionWithDetails(
+                    transaction = Transaction(
+                        id = 1,
+                        sourceId = 0,
+                        destinationId = 4,
+                        date = startOfMonth
+                    ),
+                    transactionDetails = listOf(
+                        TransactionDetails(
+                            id = 1,
+                            transactionId = 1,
+                            amount = 600000.0,
+                            description = "",
+                            categoryId = 2,
+                            aNombreDe = null
+                        )
+                    )
             ),
-                Transaction(
-                    2,
-                    20000.0,
-                    sourceId = 0,
-                    destinationId = 4,
-                    categoryId = 4,
-                    date = startOfMonth,
-                    aNombreDe = null,
-                    description = ""
+                TransactionWithDetails(
+                    transaction = Transaction(
+                        id = 2,
+                        sourceId = 0,
+                        destinationId = 4,
+                        date = startOfMonth
+                    ),
+                    transactionDetails = listOf(
+                        TransactionDetails(
+                            id = 2,
+                            transactionId = 2,
+                            amount = 20000.0,
+                            description = "",
+                            categoryId = 4,
+                            aNombreDe = null
+                        )
+                    )
                 )
             )
         }
@@ -187,15 +223,23 @@ private fun categoriesMultipleBudgetSample(
         },
         {
             listOf(
-                Transaction(
-                    0,
-                    1000000.0,
-                    sourceId = 3,
-                    destinationId = 0,
-                    categoryId = 0,
-                    date = startOfMonth,
-                    aNombreDe = null,
-                    description = ""
+                TransactionWithDetails(
+                    transaction = Transaction(
+                        id = 0,
+                        sourceId = 3,
+                        destinationId = 0,
+                        date = startOfMonth
+                    ),
+                    transactionDetails = listOf(
+                        TransactionDetails(
+                            id = 0,
+                            transactionId = 0,
+                            amount = 1000000.0,
+                            description = "",
+                            categoryId = 0,
+                            aNombreDe = null
+                        )
+                    )
                 )
             )
         }
@@ -241,7 +285,7 @@ private fun buildSample(
     accountSample: () -> List<Account>,
     categorieSample: () -> List<Category>,
     budgetSample: () -> List<Budget>,
-    transactionSample: () -> List<Transaction>
+    transactionSample: () -> List<TransactionWithDetails>
 ) {
     val progressStatus = HistoricalProgressStatus.start(
         "Building sample",

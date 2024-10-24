@@ -16,8 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.jmml.gazege.core.entities.ITransactionListDetail
+import com.jmml.gazege.core.entities.ITransactionListDetailGrouped
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.doubleToShortMoneyText
 import com.jmml.gazege.ui.theme.GazegeTheme
@@ -47,9 +49,9 @@ import java.time.LocalDate
 import java.time.Period
 
 data class PlotDataFromTransactions(
-    val transactionsListItemDetails: List<ITransactionListDetail>
-) : PlotData<List<ITransactionListDetail>> {
-    override val inputData: Array<List<ITransactionListDetail>>
+    val transactionsListItemDetails: List<ITransactionListDetailGrouped>
+) : PlotData<List<ITransactionListDetailGrouped>> {
+    override val inputData: Array<List<ITransactionListDetailGrouped>>
         get() = arrayOf(
             transactionsListItemDetails
         )
@@ -70,7 +72,7 @@ data class PlotDataFromTransactions(
 
     override fun dateMapper(date: LocalDate): Float = mapper?.get(date) ?: 0f
 
-    override fun generateList(inputData: List<ITransactionListDetail>): List<Pair<LocalDate, Double>> {
+    override fun generateList(inputData: List<ITransactionListDetailGrouped>): List<Pair<LocalDate, Double>> {
         val transactions = inputData.map { it.transaction }
         val minDate = dateRange?.start
         val maxDate = dateRange?.endInclusive
@@ -84,29 +86,45 @@ data class PlotDataFromTransactions(
             *if (minDate != null && maxDate != null) {
                 generateSequence(
                     seedFunction = {
-                        Transaction(
-                            null,
-                            0.0,
-                            "",
-                            -1,
-                            -1,
-                            null,
-                            minDate,
-                            null
+                        TransactionWithDetails(
+                            transaction = Transaction(
+                                null,
+                                -1,
+                                -1,
+                                minDate
+                            ),
+                            transactionDetails = listOf(
+                                TransactionDetails(
+                                    id = null,
+                                    transactionId = 0,
+                                    amount = 0.0,
+                                    description = "",
+                                    categoryId = null,
+                                    aNombreDe = null
+                                )
+                            )
                         )
                     },
                     nextFunction = { trx ->
                         val newDate = trx.date.plusDays(1)
                         if (newDate <= maxDate) {
-                            Transaction(
-                                null,
-                                0.0,
-                                "",
-                                -1,
-                                -1,
-                                null,
-                                newDate,
-                                null
+                            TransactionWithDetails(
+                                transaction = Transaction(
+                                    null,
+                                    -1,
+                                    -1,
+                                    newDate
+                                ),
+                                transactionDetails = listOf(
+                                    TransactionDetails(
+                                        id = null,
+                                        transactionId = 0,
+                                        amount = 0.0,
+                                        description = "",
+                                        categoryId = null,
+                                        aNombreDe = null
+                                    )
+                                )
                             )
                         } else {
                             null
@@ -123,7 +141,7 @@ data class PlotDataFromTransactions(
                     it.date
                 }
             }
-            .map { it.key to it.value.sumOf { trx -> trx.amount } }
+            .map { it.key to it.value.sumOf { trx -> trx.totalAmount } }
             .let { listOf(*it.toTypedArray()) }
             .sortedBy { it.first }
     }

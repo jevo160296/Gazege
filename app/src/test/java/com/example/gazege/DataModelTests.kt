@@ -9,8 +9,9 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
-import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionAndAccounts
+import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
+import com.jmml.gazege.core.entities.TransactionWithDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails.Companion.toTransactionDetails
 import com.jmml.gazege.core.entities.categories
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
@@ -40,7 +41,7 @@ class DataModelTests {
                 name = pair.second
             )
         }
-        val transactions: List<Transaction> = arrayOf(
+        val transactionDetails: List<TransactionWithDetails> = arrayOf(
             //Transaction(source, destination, amount)
             Triple(0, 2, 10000.0),
             Triple(1, 2, 20000.0),
@@ -48,8 +49,9 @@ class DataModelTests {
             Triple(4, 5, 2000.0),
             Triple(5, 2, 4000.0)
         ).mapIndexed { index, triple ->
-            Transaction(
-                id = index,
+            TransactionWithDetails(
+                transactionId = index,
+                transactionDetailsId = index,
                 amount = triple.third,
                 description = "",
                 sourceId = triple.first,
@@ -60,12 +62,14 @@ class DataModelTests {
             )
         }
 
-        val transactionsAndAccounts = TransactionAndAccounts.from(
-            transactions, accounts
+        val transactionsAndAccounts = TransactionAndDetailsAndAccounts.from(
+            transactions = transactionDetails.map { it.toTransaction() },
+            transactionDetails = transactionDetails.map { it.toTransactionDetails() },
+            accounts = accounts
         )
 
         val accountAndOwnerWithTransactions = AccountAndOwnerWithTransactions.from(
-            accounts, persons, transactions
+            accounts, persons, transactionDetails.map { it.toTransaction() }
         )
 
         val personWithAccounts: List<PersonWithAccounts> = PersonWithAccounts.from(

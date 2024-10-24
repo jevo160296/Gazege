@@ -9,6 +9,8 @@ import com.jmml.gazege.core.entities.BudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.core.entities.WeekDays
 import java.time.LocalDate
 
@@ -25,9 +27,9 @@ class BudgetWithCalculatedDataScope {
     private val incomeAccount = "INGRESO"
     private val outcomeAccount = "GASTO"
     private val accounts: MutableSet<Account> = mutableSetOf()
-    private val transactions = mutableListOf<Transaction>()
+    private val transactions = mutableListOf<TransactionWithDetails>()
 
-    private fun onTransactionAdd(transaction: Transaction) {
+    private fun onTransactionAdd(transaction: TransactionWithDetails) {
         transactions.add(transaction)
     }
 
@@ -127,26 +129,44 @@ class BudgetWithCalculatedDataScope {
             description: String,
             date: LocalDate
         ): SourceDestinationAccountScope = if (amount >= 0) {
-            Transaction(
-                transIndex++,
-                amount,
-                description,
-                sourceAccount.id ?: -1,
-                destinationAccount.id ?: -1,
-                category.id,
-                date,
-                null
+            val index = transIndex++
+            TransactionWithDetails(
+                transaction = Transaction(
+                    id = index,
+                    date = date,
+                    destinationId = destinationAccount.id ?: -1,
+                    sourceId = sourceAccount.id ?: -1
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        id = index,
+                        transactionId = index,
+                        amount = amount,
+                        description = description,
+                        categoryId = category.id,
+                        aNombreDe = null
+                    )
+                )
             )
         } else {
-            Transaction(
-                transIndex++,
-                amount,
-                description,
-                destinationAccount.id ?: -1,
-                sourceAccount.id ?: -1,
-                category.id,
-                date,
-                null
+            val index = transIndex++
+            TransactionWithDetails(
+                transaction = Transaction(
+                    id = index,
+                    date = date,
+                    destinationId = destinationAccount.id ?: -1,
+                    sourceId = sourceAccount.id ?: -1
+                ),
+                transactionDetails = listOf(
+                    TransactionDetails(
+                        id = index,
+                        transactionId = index,
+                        amount = amount,
+                        description = description,
+                        categoryId = category.id,
+                        aNombreDe = null
+                    )
+                )
             )
         }
             .run {

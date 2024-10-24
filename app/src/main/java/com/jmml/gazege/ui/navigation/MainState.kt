@@ -5,7 +5,7 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.PromissoryNote
-import com.jmml.gazege.core.entities.TransactionAndAccounts
+import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.ui.views.document.IDocumentViewModel
 import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
@@ -47,7 +47,7 @@ interface LoadedPersonSummaryState : PersonSummaryState {
             startDate: LocalDate?,
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
-            allTransactions: List<TransactionAndAccounts>,
+            allTransactions: List<TransactionAndDetailsAndAccounts>,
             allPromissoryNotes: List<PromissoryNote>,
             budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,
@@ -115,7 +115,7 @@ data class FullPersonSummaryState(
             startDate: LocalDate?,
             endDate: LocalDate?,
             allPersons: List<PersonWithAccounts>,
-            allTransactions: List<TransactionAndAccounts>,
+            allTransactions: List<TransactionAndDetailsAndAccounts>,
             allPromissoryNotes: List<PromissoryNote>,
             budgetWithCalculatedDatumAndCategories: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
             includeBudget: Boolean,

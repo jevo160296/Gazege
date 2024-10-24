@@ -54,7 +54,7 @@ fun DatePicker(
             value = date.format(formatter),
             onValueChange = {},
             readOnly = true,
-            enabled = false,
+            enabled = true,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
             },

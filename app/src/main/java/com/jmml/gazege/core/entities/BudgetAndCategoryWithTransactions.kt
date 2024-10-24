@@ -3,8 +3,8 @@ package com.jmml.gazege.core.entities
 data class BudgetAndCategoryWithTransactions(
     val budget: Budget,
     val category: Category,
-    val inTransactions: List<Transaction>,
-    val outTransactions: List<Transaction>,
+    val inTransactions: List<TransactionAndDetails>,
+    val outTransactions: List<TransactionAndDetails>,
     val person: Person
 ) {
     val categoryName get() = category.name
@@ -28,9 +28,25 @@ data class BudgetAndCategoryWithTransactions(
                 .filter { it.account.ownerId == person.id }
             val indexedInTransactions = ownAccountAndOwnerWithTransactions
                 .flatMap { it.inTransactions }
+                .flatMap { transactionAndDetails ->
+                    transactionAndDetails.transactionDetails.map {
+                        TransactionAndDetails(
+                            transaction = transactionAndDetails.transaction,
+                            transactionDetails = it
+                        )
+                    }
+                }
                 .groupBy { it.categoryId }
             val indexedOutTransactions = ownAccountAndOwnerWithTransactions
                 .flatMap { it.outTransactions }
+                .flatMap { transactionAndDetails ->
+                    transactionAndDetails.transactionDetails.map {
+                        TransactionAndDetails(
+                            transaction = transactionAndDetails.transaction,
+                            transactionDetails = it
+                        )
+                    }
+                }
                 .groupBy { it.categoryId }
             val categoryWithTransactions = category
                 .map {

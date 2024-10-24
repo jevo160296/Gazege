@@ -52,6 +52,7 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.data.SampleId
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
@@ -116,6 +117,7 @@ fun MainFragment(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delTransactionDetails: (TransactionDetails) -> Unit,
     delPromissoryNote: (PromissoryNote) -> Unit,
     delCategory: (Category) -> Unit,
     onAddPersonRequested: () -> Unit,
@@ -345,6 +347,18 @@ fun MainFragment(
                     }
                 }
             },
+            delTransactionDetails = {
+                scope.launch {
+                    val response = snackbarHostState.showSnackbar(
+                        message = transactionMessageBuilder(),
+                        actionLabel = "Yes",
+                        withDismissAction = true
+                    )
+                    if (response == SnackbarResult.ActionPerformed) {
+                        delTransactionDetails(it)
+                    }
+                }
+            },
             delPromissoryNote = {
                 scope.launch {
                     val response = snackbarHostState.showSnackbar(
@@ -417,6 +431,7 @@ private fun MainFragmentResponsiveContent(
     delPerson: (Person) -> Unit,
     delAccount: (Account) -> Unit,
     delTransaction: (Transaction) -> Unit,
+    delTransactionDetails: (TransactionDetails) -> Unit,
     delPromissoryNote: (PromissoryNote) -> Unit,
     delCategory: (Category) -> Unit,
     onEditPersonRequested: (Person) -> Unit,
@@ -570,21 +585,20 @@ private fun MainFragmentResponsiveContent(
                             state = transactionState,
                             delDocument = { document ->
                                 when (document) {
-                                    is TransactionDocumentViewModel -> delTransaction(document.transactionListItemDetails.transaction)
+                                    is TransactionDocumentViewModel -> delTransaction(document.transactionListItemDetails.transaction.transaction)
                                     is PromissoryNoteDocumentViewModel -> delPromissoryNote(document.promissoryNoteViewModel.promissoryNote)
                                     is PromissoryNoteDocumentWithSignViewModel -> delPromissoryNote(
                                         document.promissoryNoteWithSignViewModel.promissoryNote
                                     )
-
-                                    is TransactionDocumentWithSignViewModel -> delTransaction(
-                                        document.transactionListItemWithSign.transaction
+                                    is TransactionDocumentWithSignViewModel -> delTransactionDetails(
+                                        document.transactionListItemWithSign.transaction.transactionDetails
                                     )
                                 }
                             },
                             editDocument = { document ->
                                 when (document) {
                                     is TransactionDocumentViewModel -> onEditTransactionRequested(
-                                        document.transactionListItemDetails.transaction
+                                        document.transactionListItemDetails.transaction.transaction
                                     )
                                     is PromissoryNoteDocumentViewModel -> onEditPromissoryNoteRequested(
                                         document.promissoryNoteViewModel.promissoryNote
@@ -592,9 +606,8 @@ private fun MainFragmentResponsiveContent(
                                     is PromissoryNoteDocumentWithSignViewModel -> onEditPromissoryNoteRequested(
                                         document.promissoryNoteWithSignViewModel.promissoryNote
                                     )
-
                                     is TransactionDocumentWithSignViewModel -> onEditTransactionRequested(
-                                        document.transactionListItemWithSign.transaction
+                                        document.transactionListItemWithSign.transaction.transaction
                                     )
                                 }
                             },
@@ -796,7 +809,7 @@ private fun DefaultPreview() {
                 },
                 delTransaction = {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Del transaction ${it.amount}")
+                        snackbarHostState.showSnackbar("Del transaction ${it.date}")
                     }
                 },
                 delCategory = {},
@@ -829,7 +842,7 @@ private fun DefaultPreview() {
                 },
                 onEditTransactionRequested = {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Edit transaccion ${it.amount}")
+                        snackbarHostState.showSnackbar("Edit transaccion ${it.date}")
                     }
                 },
                 onNavigateToAddCategory = {},
@@ -859,7 +872,8 @@ private fun DefaultPreview() {
                 showType = EditarCategoriasShowType.COMPACT,
                 categoriasState = EmptyEditarCategoriasState,
                 onEditPromissoryNoteRequested = {},
-                delPromissoryNote = {}
+                delPromissoryNote = {},
+                delTransactionDetails = {}
             )
         }
     }

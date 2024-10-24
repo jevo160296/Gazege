@@ -19,6 +19,8 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
+import com.jmml.gazege.core.migrations.Migrate1516
 import com.jmml.gazege.core.migrations.Migrate34
 import com.jmml.gazege.core.migrations.MigrateSpec56
 
@@ -27,11 +29,12 @@ import com.jmml.gazege.core.migrations.MigrateSpec56
         Person::class,
         Account::class,
         Transaction::class,
+        TransactionDetails::class,
         Category::class,
         Budget::class,
         PromissoryNote::class
     ],
-    version = 15,
+    version = 16,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 4, to = 5),
@@ -64,6 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
                     Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
                         .fallbackToDestructiveMigrationFrom(1)
                         .addMigrations(Migrate34())
+                        .addMigrations(Migrate1516())
                         .build()
                 INSTANCE = instance
                 instance

@@ -105,13 +105,14 @@ fun NavGraphBuilder.screenAddTransaction(
                 ),
                 fixedSourceAccount = initialSourceAccount,
                 fixedDestinationAccount = initialDestinationAccount,
-                onAccountAddRequested = onNavigateToAddAccount
-            ) { newTransaction, addAnotherTransaction ->
-                viewModelAddTransaction.insertTransaction(newTransaction)
-                if (!addAnotherTransaction) {
-                    onNavigateUp()
+                onAccountAddRequested = onNavigateToAddAccount,
+                onTransactionAndDetailsAdd = { newTransaction, addAnotherTransaction ->
+                    viewModelAddTransaction.insertTransaction(newTransaction)
+                    if (!addAnotherTransaction) {
+                        onNavigateUp()
+                    }
                 }
-            }
+            )
         }
     }
 }

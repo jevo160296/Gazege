@@ -32,15 +32,21 @@ import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithTransactions
 import com.jmml.gazege.core.entities.ITransactionListDetail
+import com.jmml.gazege.core.entities.ITransactionListDetailGrouped
+import com.jmml.gazege.core.entities.NewTransactionWithDetails
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionAndAccounts
-import com.jmml.gazege.core.entities.TransactionAndAccountsAndCategory
+import com.jmml.gazege.core.entities.TransactionAndDetails
+import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetailsWithSign
 import com.jmml.gazege.core.entities.TransactionType
+import com.jmml.gazege.core.entities.TransactionWithDetails
+import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccounts
+import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccounts.Companion.toTransactionAndDetailsAndAccounts
+import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccountsAndCategory
 import com.jmml.gazege.core.entities.flattenWithLevel
 import com.jmml.gazege.core.export.readAccountFromCsv
 import com.jmml.gazege.core.export.readBudgetFromCsv
@@ -629,7 +635,9 @@ class MainViewModel(
         rangeTransactions.mapNotNull { transactionResult ->
             if (transactionResult is Result.Success) {
                 val transactions = transactionResult.data
-                val amountList = transactions.map { transaction -> transaction.amount }.distinct()
+                val amountList =
+                    transactions.flatMap { transaction -> transaction.transactionDetails.map { it.amount } }
+                        .distinct()
                 val max = (amountList.maxOrNull() ?: 0.0).toFloat()
                 val min = (amountList.minOrNull() ?: 0.0).toFloat()
                 min..max
@@ -782,7 +790,7 @@ class MainViewModel(
             }
             .shareInViewModel()
 
-    private val allTransactionAndAccountsAndCategory: SharedFlow<List<TransactionAndAccountsAndCategory>> =
+    private val allTransactionWithDetailsAndAccountsAndCategory: SharedFlow<List<TransactionWithDetailsAndAccountsAndCategory>> =
         allTransactions
             .combineDefault(allAccount) { allTransactions, allAccount ->
                 object {
@@ -792,7 +800,7 @@ class MainViewModel(
             }
             .combineDefault(categories) { combined, categories ->
                 combined.run {
-                    TransactionAndAccountsAndCategory.from(
+                    TransactionWithDetailsAndAccountsAndCategory.from(
                         allTransactions,
                         allAccount,
                         categories
@@ -818,12 +826,13 @@ class MainViewModel(
                     val personWithAccounts = personWithAccounts
                 }
             }
-            .combine(allTransactionAndAccountsAndCategory) { combined, allTransactionAndAccountsAndCategory ->
+            .combine(allTransactionWithDetailsAndAccountsAndCategory) { combined, allTransactionWithDetailsAndAccountsAndCategory ->
                 object {
                     val principalPersonWithAccounts = combined.principalPersonWithAccounts
                     val range = combined.range
                     val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory = allTransactionAndAccountsAndCategory
+                    val allTransactionWithDetailsAndAccountsAndCategory =
+                        allTransactionWithDetailsAndAccountsAndCategory
                 }
             }
             .combine(categoryWithSubcategoriesAndBudgetWithCalculatedData) { combined, budgetWithCalculatedDataAndCategory ->
@@ -832,8 +841,8 @@ class MainViewModel(
                         val principalPersonWithAccounts = combined.principalPersonWithAccounts
                         val range = combined.range
                         val personWithAccounts = combined.personWithAccounts
-                        val allTransactionAndAccountsAndCategory =
-                            combined.allTransactionAndAccountsAndCategory
+                        val allTransactionWithDetailsAndAccountsAndCategory =
+                            combined.allTransactionWithDetailsAndAccountsAndCategory
                         val budgetWithCalculatedDataAndCategory =
                             budgetWithCalculatedDataAndCategory.data
                     }
@@ -845,8 +854,8 @@ class MainViewModel(
                     val principalPersonWithAccounts = combined.principalPersonWithAccounts
                     val range = combined.range
                     val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory =
-                        combined.allTransactionAndAccountsAndCategory
+                    val allTransactionWithDetailsAndAccountsAndCategory =
+                        combined.allTransactionWithDetailsAndAccountsAndCategory
                     val budgetWithCalculatedDataAndCategory =
                         combined.budgetWithCalculatedDataAndCategory
                     val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
@@ -857,8 +866,8 @@ class MainViewModel(
                     val principalPersonWithAccounts = combined.principalPersonWithAccounts
                     val range = combined.range
                     val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory =
-                        combined.allTransactionAndAccountsAndCategory
+                    val allTransactionWithDetailsAndAccountsAndCategory =
+                        combined.allTransactionWithDetailsAndAccountsAndCategory
                     val budgetWithCalculatedDataAndCategory =
                         combined.budgetWithCalculatedDataAndCategory
                     val incluirPresupuestoEnSaldoActual = combined.incluirPresupuestoEnSaldoActual
@@ -870,8 +879,8 @@ class MainViewModel(
                     val principalPersonWithAccounts = combined.principalPersonWithAccounts
                     val range = combined.range
                     val personWithAccounts = combined.personWithAccounts
-                    val allTransactionAndAccountsAndCategory =
-                        combined.allTransactionAndAccountsAndCategory
+                    val allTransactionWithDetailsAndAccountsAndCategory =
+                        combined.allTransactionWithDetailsAndAccountsAndCategory
                     val budgetWithCalculatedDataAndCategory =
                         combined.budgetWithCalculatedDataAndCategory
                     val incluirPresupuestoEnSaldoActual = combined.incluirPresupuestoEnSaldoActual
@@ -885,7 +894,7 @@ class MainViewModel(
                                 old.principalPersonWithAccounts == new.principalPersonWithAccounts &&
                                         old.range == new.range &&
                                         old.personWithAccounts == new.personWithAccounts &&
-                                        old.allTransactionAndAccountsAndCategory == new.allTransactionAndAccountsAndCategory &&
+                                        old.allTransactionWithDetailsAndAccountsAndCategory == new.allTransactionWithDetailsAndAccountsAndCategory &&
                                         old.budgetWithCalculatedDataAndCategory == new.budgetWithCalculatedDataAndCategory &&
                                         old.incluirPresupuestoEnSaldoActual == new.incluirPresupuestoEnSaldoActual &&
                                         old.incluirDeudasEnSaldoActual == new.incluirDeudasEnSaldoActual &&
@@ -901,14 +910,15 @@ class MainViewModel(
                             range.first,
                             range.second,
                             allPersons = personWithAccounts,
-                            allTransactions = allTransactionAndAccountsAndCategory
+                            allTransactions = allTransactionWithDetailsAndAccountsAndCategory
                                 .map {
-                                    TransactionAndAccounts(
+                                    TransactionWithDetailsAndAccounts(
                                         it.transaction,
                                         it.sourceAccount,
                                         it.destinationAccount
                                     )
-                                },
+                                }
+                                .toTransactionAndDetailsAndAccounts(),
                             allPromissoryNotes = allPromissoryNotes,
                             budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
                             includeBudget = incluirPresupuestoEnSaldoActual,
@@ -979,7 +989,7 @@ class MainViewModel(
     ) = viewModelScope.launch {
         if (amount != 0.0) {
             val transaccionAjuste = if (amount > 0) {
-                Transaction(
+                TransactionWithDetails.new(
                     amount = amount,
                     description = "Ajuste",
                     sourceId = incomeAccountId,
@@ -989,7 +999,7 @@ class MainViewModel(
                     categoryId = null
                 )
             } else {
-                Transaction(
+                TransactionWithDetails.new(
                     amount = -amount,
                     description = "Ajuste",
                     sourceId = accountId,
@@ -1004,7 +1014,14 @@ class MainViewModel(
     }
 
     fun insertTransaction(
-        vararg transaction: Transaction,
+        vararg transaction: NewTransactionWithDetails,
+        onErrorAction: (Throwable) -> Unit = {}
+    ) = viewModelScope.safeLaunch(onErrorAction) {
+        repository.insertTransaction(*transaction)
+    }
+
+    fun insertTransaction(
+        vararg transaction: TransactionWithDetails,
         onErrorAction: (Throwable) -> Unit = {}
     ) = viewModelScope.safeLaunch(onErrorAction) {
         repository.insertTransaction(*transaction)
@@ -1017,8 +1034,8 @@ class MainViewModel(
         repository.insertPromissoryNote(*promissorNote)
     }
 
-    fun updateTransaction(transaction: Transaction) = viewModelScope.launch {
-        repository.updateTransaction(transaction)
+    fun updateTransaction(transaction: NewTransactionWithDetails) = viewModelScope.launch {
+        repository.upsertTransaction(transaction)
     }
 
     fun updatePromissoryNote(promissoryNote: PromissoryNote) = viewModelScope.launch {
@@ -1027,6 +1044,10 @@ class MainViewModel(
 
     fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.deleteTransaction(transaction)
+    }
+
+    fun deleteTransactionDetails(transactionDetails: TransactionDetails) = viewModelScope.launch {
+        repository.deleteTransactionDetails(transactionDetails)
     }
 
     fun deletePromissoryNote(promissoryNote: PromissoryNote) = viewModelScope.launch {
@@ -1265,7 +1286,7 @@ class MainViewModel(
                 1.0,
                 0.0
             ) { loadingDataState.postValue(it.toState(Type.IMPORT)) }
-            var transactions: List<Transaction>? = null
+            var transactions: List<TransactionWithDetails>? = null
             var promissoryNotes: List<PromissoryNote> = emptyList()
             var categories: List<Category>? = null
             var persons: List<Person>? = null
@@ -1519,7 +1540,7 @@ class MainViewModel(
             )
 
         fun insertTransaction(
-            vararg transaction: Transaction,
+            vararg transaction: TransactionWithDetails,
             onErrorAction: (Throwable) -> Unit = {}
         ) =
             this@MainViewModel.insertTransaction(
@@ -1826,6 +1847,9 @@ class MainViewModel(
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
 
+        fun delTransactionDetails(transactionDetails: TransactionDetails) =
+            this@MainViewModel.deleteTransactionDetails(transactionDetails)
+
         fun deletePromissoryNote(promissoryNote: PromissoryNote) =
             this@MainViewModel.deletePromissoryNote(promissoryNote)
 
@@ -1962,7 +1986,7 @@ class MainViewModel(
                 .collectAsState(emptyList())
 
         fun insertTransaction(
-            vararg transaction: Transaction,
+            vararg transaction: NewTransactionWithDetails,
             onErrorAction: (Throwable) -> Unit = {}
         ) = this@MainViewModel.insertTransaction(
             *transaction,
@@ -2055,12 +2079,13 @@ class MainViewModel(
 
     inner class ViewModelEditTransaction {
         @Composable
-        fun rememberTransactionAndAccounts(transactionId: Int?) = remember(transactionId) {
-            allTransactionAndAccountsAndCategory
+        fun rememberTransactionAndAccounts(transactionId: Int?):
+                State<TransactionWithDetailsAndAccounts?> = remember(transactionId) {
+            allTransactionWithDetailsAndAccountsAndCategory
                 .map { transactionAndAccountAndCategory ->
                     transactionAndAccountAndCategory
-                        .firstOrNull { it.transaction.id == transactionId }
-                        ?.toTransactionAndAccounts()
+                        .firstOrNull { it.transaction.transaction.id == transactionId }
+                        ?.toTransactionWithDetailsAndAccounts()
                 }
                 .shareInViewModel()
         }
@@ -2088,7 +2113,7 @@ class MainViewModel(
         }
             .collectAsState(Result.Loading)
 
-        fun updateTransaction(transaction: Transaction) =
+        fun updateTransaction(transaction: NewTransactionWithDetails) =
             this@MainViewModel.updateTransaction(transaction)
     }
 
@@ -2345,10 +2370,10 @@ class MainViewModel(
                         val transactions = accountDetail.allTransactionsWithPocketTransactions
                         val min = transactions
                             .filter { it.date.isBetween(range.first, range.second) }
-                            .minOfOrNull { it.amount.toFloat() } ?: 0f
+                            .minOfOrNull { it.totalAmount.toFloat() } ?: 0f
                         val max = transactions
                             .filter { it.date.isBetween(range.first, range.second) }
-                            .maxOfOrNull { it.amount.toFloat() } ?: 0f
+                            .maxOfOrNull { it.totalAmount.toFloat() } ?: 0f
                         _accountValueFilter
                             .updateAndGet {
                                 accountValueFilter.copy(range = min..max)
@@ -2575,7 +2600,7 @@ class MainViewModel(
                         .map { it.id }
                         .toSet()
                     object {
-                        val transactions = combined.transactions
+                        val transactions = TransactionAndDetails.from(combined.transactions)
                             .filter {
                                 it.aNombreDe == otherPersonId ||
                                         it.sourceId in personAccountsIds ||
@@ -2642,6 +2667,9 @@ class MainViewModel(
 
         fun deleteTransaction(transaction: Transaction) =
             this@MainViewModel.deleteTransaction(transaction)
+
+        fun deleteTransactionDetails(transactionDetails: TransactionDetails) =
+            this@MainViewModel.deleteTransactionDetails(transactionDetails)
 
         fun deletePromissoryNote(promissoryNote: PromissoryNote) =
             this@MainViewModel.deletePromissoryNote(promissoryNote)
@@ -2768,15 +2796,19 @@ class MainViewModel(
             }
         }
 
-        suspend fun <T : ITransactionListDetail> List<T>.applyCategoriesFilter(
+        suspend fun <T : ITransactionListDetailGrouped> List<T>.applyCategoriesFilter(
             filters: BooleanFilters<Int?, Pair<String, Int>>
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
-                filters.values.getOrDefault(transaction.category?.id, filters.defaultValue)
+                transaction.categories
+                    .takeIf { it.isNotEmpty() }
+                    ?.any {
+                        filters.values.getOrDefault(it.id, filters.defaultValue)
+                    } ?: filters.values.getOrDefault(null, filters.defaultValue)
             }
         }
 
-        suspend fun <T : ITransactionListDetail> List<T>.applyDescriptionFilter(
+        suspend fun <T : ITransactionListDetailGrouped> List<T>.applyDescriptionFilter(
             descriptionFilter: TextFilter
         ) = withContext(Dispatchers.Default) {
             val locale = Locale.getDefault()
@@ -2786,7 +2818,7 @@ class MainViewModel(
                 ?.toSet()
                 ?.map { ".*$it.*".toRegex() }
             filter { transaction ->
-                val descriptionTokens = transaction.transaction.description
+                val descriptionTokens = transaction.descriptions.joinToString(separator = " ")
                     .lowercase(locale)
                 searchTokens == null ||
                         searchTokens
@@ -2812,13 +2844,13 @@ class MainViewModel(
             }
         }
 
-        suspend fun <T : ITransactionListDetail> List<T>.applyValueFilter(
+        suspend fun <T : ITransactionListDetailGrouped> List<T>.applyValueFilter(
             filterValue: DoubleFilter
         ) = withContext(Dispatchers.Default) {
             filterValue
                 .value?.let {
                     filter { transaction ->
-                        filterValue.value.contains(transaction.transaction.amount.toFloat())
+                        filterValue.value.contains(transaction.totalAmount.toFloat())
                     }
                 } ?: this@applyValueFilter
         }

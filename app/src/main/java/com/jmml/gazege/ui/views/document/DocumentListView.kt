@@ -27,8 +27,10 @@ import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
 import com.jmml.gazege.core.entities.Transaction
+import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.core.entities.TransactionListItemDetails
 import com.jmml.gazege.core.entities.TransactionType
+import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.ui.DateFormat
 import com.jmml.gazege.ui.localDateToString
 import com.jmml.gazege.ui.templates.GroupedLazyList
@@ -177,14 +179,21 @@ private fun LoadedDocumentListViewPreview() {
     val documentList = listOf(
         TransactionDocumentViewModel(
             TransactionListItemDetails(
-                transaction = Transaction(
-                    amount = 100.0, date =
-                    LocalDate.now(),
-                    description = "",
-                    sourceId = 0,
-                    destinationId = 0,
-                    aNombreDe = 0,
-                    categoryId = 0
+                transaction = TransactionWithDetails(
+                    transaction = Transaction(
+                        date = LocalDate.now(),
+                        sourceId = 0,
+                        destinationId = 0
+                    ),
+                    transactionDetails = listOf(
+                        TransactionDetails(
+                            amount = 100.0,
+                            description = "",
+                            categoryId = 0,
+                            transactionId = 0,
+                            aNombreDe = 0
+                        )
+                    )
                 ),
                 sourceAccount = Account(
                     name = "Source account",
@@ -194,7 +203,7 @@ private fun LoadedDocumentListViewPreview() {
                     name = "Destination account",
                     ownerId = 0,
                 ),
-                category = null,
+                categories = emptyList(),
                 transactionType = TransactionType.INCOME
             )
         ),

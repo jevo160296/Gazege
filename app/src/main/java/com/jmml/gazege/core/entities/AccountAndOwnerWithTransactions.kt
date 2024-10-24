@@ -16,12 +16,12 @@ data class AccountAndOwnerWithTransactions(
         parentColumn = "id",
         entityColumn = "sourceId"
     )
-    val outTransactions: List<Transaction>,
+    val outTransactions: List<TransactionWithDetails>,
     @Relation(
         parentColumn = "id",
         entityColumn = "destinationId"
     )
-    val inTransactions: List<Transaction>,
+    val inTransactions: List<TransactionWithDetails>,
 ) {
     @Ignore
     var total: Double = Double.NaN
@@ -29,7 +29,7 @@ data class AccountAndOwnerWithTransactions(
     @Ignore
     var range: Pair<LocalDate?, LocalDate?>? = null
 
-    val allTransactions: List<Transaction>
+    val allTransactions: List<TransactionWithDetails>
         get() = listOf(
             *inTransactions.toTypedArray(),
             *outTransactions.toTypedArray()
@@ -39,7 +39,7 @@ data class AccountAndOwnerWithTransactions(
         fun from(
             accounts: List<Account>,
             owners: List<Person>,
-            transactions: List<Transaction>
+            transactions: List<TransactionWithDetails>
         ): List<AccountAndOwnerWithTransactions> {
             return accounts.map { account ->
                 AccountAndOwnerWithTransactions(

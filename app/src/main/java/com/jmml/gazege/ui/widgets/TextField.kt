@@ -67,7 +67,9 @@ fun TextField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         trailingIcon = trailingIcon,
-        visualTransformation = visualTransformation
+        visualTransformation = visualTransformation,
+        enabled = enabled,
+        readOnly = readOnly
     )
 }
 
@@ -147,7 +149,9 @@ fun NumberField(
         ),
         keyboardActions = keyboardActions,
         visualTransformation = numberTransformation,
-        trailingIcon = trailingIcon
+        trailingIcon = trailingIcon,
+        enabled = enabled,
+        readOnly = readOnly
     )
 }
 
