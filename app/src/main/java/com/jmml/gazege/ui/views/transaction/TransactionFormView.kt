@@ -1,13 +1,21 @@
 package com.jmml.gazege.ui.views.transaction
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +25,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -30,7 +40,7 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
-import com.jmml.gazege.ui.savers.PartialTransactionDetails
+import com.jmml.gazege.ui.savers.PartialNewTransactionDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
 import com.jmml.gazege.ui.views.account.AccountDropDownMenu
 import com.jmml.gazege.ui.views.category.CategoryDropDown
@@ -60,6 +70,8 @@ fun TransactionAndAccountsForm(
     onAddAnotherTransactionChanged: (Boolean) -> Unit,
     showSourceAccountField: Boolean = true,
     showDestinationAccountField: Boolean = true,
+    onAddTransactionDetailRequested: () -> Unit,
+    onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onSourceAccountIdChanged: (Int) -> Unit,
@@ -167,19 +179,94 @@ fun TransactionAndAccountsForm(
             }
         )
 
-        transactionDetails.forEach {
-            TransactionDetailsForm(
-                transactionDetails = it,
-                transactionDetailsIndex = 0,
-                categoryList = categoryList,
-                personList = personList,
-                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-                onAmountChanged = onAmountChanged,
-                onDescriptionChanged = onDescriptionChanged,
-                onCategoryIdChanged = onCategoryIdChanged,
-                onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
-                nextAction = nextAction,
-                keyboardActions = keyboardActions
+        TransactionDetailListForm(
+            transactionDetails = transactionDetails,
+            categoryList = categoryList,
+            personList = personList,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+            onAmountChanged = onAmountChanged,
+            onDescriptionChanged = onDescriptionChanged,
+            onCategoryIdChanged = onCategoryIdChanged,
+            onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
+            nextAction = nextAction,
+            keyboardActions = keyboardActions,
+            onAddTransactionDetailRequested = onAddTransactionDetailRequested,
+            onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.TransactionDetailListForm(
+    contentPadding: PaddingValues = PaddingValues(),
+    transactionDetails: List<PartialNewTransactionDetails>,
+    categoryList: List<Category>,
+    personList: List<Person>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    onAddTransactionDetailRequested: () -> Unit,
+    onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
+    onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
+    onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
+    onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
+    onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
+    nextAction: ImeAction,
+    keyboardActions: KeyboardActions,
+) {
+    var isSplitted by remember(transactionDetails.count()) {
+        mutableStateOf(transactionDetails.count() > 1)
+    }
+    val innerContentPadding =
+        if (isSplitted) PaddingValues(start = dimensionResource(R.dimen.DefaultPadding) * 2)
+        else PaddingValues()
+
+    if (isSplitted) {
+        NumberField(
+            value = transactionDetails.sumOf { it.amount ?: 0.0 },
+            enabled = false,
+            readOnly = true,
+            onValueChange = {},
+            label = { Text(stringResource(id = R.string.Valor)) },
+            singleLine = true,
+        )
+    }
+
+    val cantElements = transactionDetails.count()
+    transactionDetails.forEachIndexed { index, it ->
+        val isBetweenElements = index + 1 < cantElements
+        TransactionDetailsForm(
+            contentPadding = innerContentPadding,
+            transactionDetails = it,
+            transactionDetailsIndex = index,
+            categoryList = categoryList,
+            personList = personList,
+            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+            isSplitted = isSplitted,
+            onSplittedChanged = { isSplitted = it },
+            onAmountChanged = onAmountChanged,
+            onDescriptionChanged = onDescriptionChanged,
+            onCategoryIdChanged = onCategoryIdChanged,
+            onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
+            onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+            nextAction = nextAction,
+            keyboardActions = keyboardActions
+        )
+        if (isBetweenElements) {
+            Spacer(
+                Modifier
+                    .height(1.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+        }
+    }
+    if (isSplitted) {
+        IconButton(
+            modifier = Modifier.align(Alignment.End),
+            onClick = onAddTransactionDetailRequested
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_baseline_add_24),
+                contentDescription = "Add"
             )
         }
     }
@@ -188,15 +275,18 @@ fun TransactionAndAccountsForm(
 @Composable
 private fun TransactionDetailsForm(
     contentPadding: PaddingValues = PaddingValues(),
-    transactionDetails: PartialTransactionDetails,
+    transactionDetails: PartialNewTransactionDetails,
     transactionDetailsIndex: Int,
     categoryList: List<Category>,
     personList: List<Person>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    isSplitted: Boolean,
+    onSplittedChanged: (newSplitted: Boolean) -> Unit,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
+    onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
     nextAction: ImeAction,
     keyboardActions: KeyboardActions,
 ) {
@@ -213,6 +303,7 @@ private fun TransactionDetailsForm(
     }
 
     NumberField(
+        modifier = Modifier.padding(contentPadding),
         value = amount,
         onValueChange = { onAmountChanged(transactionDetailsIndex, it) },
         label = { Text(stringResource(id = R.string.Valor)) },
@@ -221,9 +312,21 @@ private fun TransactionDetailsForm(
             keyboardType = KeyboardType.Number,
             imeAction = nextAction
         ),
-        keyboardActions = keyboardActions
+        keyboardActions = keyboardActions,
+        trailingIcon = if (isSplitted) {
+            null
+        } else {
+            {
+                IconButton(onClick = {
+                    onSplittedChanged(true)
+                }) {
+                    Icon(painterResource(R.drawable.split_24), "Split")
+                }
+            }
+        }
     )
     TextField(
+        modifier = Modifier.padding(contentPadding),
         value = description,
         onValueChange = { onDescriptionChanged(transactionDetailsIndex, it) },
         label = { Text(text = stringResource(id = R.string.descripcion)) },
@@ -237,6 +340,7 @@ private fun TransactionDetailsForm(
     )
     if (categoryList.isNotEmpty()) {
         CategoryDropDown(
+            modifier = Modifier.padding(contentPadding),
             categoryList = categoryList,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             selectedCategory = selectedCategory,
@@ -247,15 +351,35 @@ private fun TransactionDetailsForm(
     }
 
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(contentPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Checkbox(checked = realizarANombreDe, onCheckedChange = {
-            if (!it) {
-                onRealizarAnombreDeIdChanged(transactionDetailsIndex, null)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = realizarANombreDe,
+                onCheckedChange = {
+                    if (!it) {
+                        onRealizarAnombreDeIdChanged(transactionDetailsIndex, null)
+                    }
+                    realizarANombreDe = it
+                })
+            Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
+        }
+        IconButton(
+            onClick = {
+                onRemoveTransactionDetailRequested(transactionDetailsIndex)
             }
-            realizarANombreDe = it
-        })
-        Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.delete),
+                contentDescription = "Add"
+            )
+        }
     }
     if (realizarANombreDe) {
         var dropDownExpanded by rememberSaveable {
@@ -264,6 +388,7 @@ private fun TransactionDetailsForm(
         val selectedItem =
             personList.firstOrNull { it.id == aNombreDe }
         ComboBox(
+            modifier = Modifier.padding(contentPadding),
             dropDownExpanded = dropDownExpanded,
             onExpandedChange = { dropDownExpanded = it },
             options = personList,

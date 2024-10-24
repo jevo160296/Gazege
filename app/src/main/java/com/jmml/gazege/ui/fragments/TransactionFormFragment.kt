@@ -18,14 +18,14 @@ import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.AccountAndOwner
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.jmml.gazege.core.entities.NewTransactionWithDetails
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.Transaction
-import com.jmml.gazege.core.entities.TransactionWithDetails
 import com.jmml.gazege.core.entities.TransactionWithDetailsAndAccounts
-import com.jmml.gazege.ui.savers.PartialTransactionDetails
+import com.jmml.gazege.ui.savers.PartialNewTransactionDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
-import com.jmml.gazege.ui.savers.transactionDetailsListSaver
+import com.jmml.gazege.ui.savers.newTransactionDetailsListSaver
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.jmml.gazege.ui.widgets.Form
@@ -47,7 +47,7 @@ fun TransactionFormFragment(
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndAccountsAdd: (TransactionWithDetails, Boolean) -> Unit
+    onTransactionAndDetailsAdd: (transaction: NewTransactionWithDetails, addAnotherTransaction: Boolean) -> Unit
 ) {
     val id by rememberSaveable(transactionWithDetailsAndAccounts) {
         mutableStateOf(
@@ -55,13 +55,15 @@ fun TransactionFormFragment(
         )
     }
     val transactionDetails =
-        rememberSaveable(transactionWithDetailsAndAccounts, saver = transactionDetailsListSaver) {
+        rememberSaveable(
+            transactionWithDetailsAndAccounts,
+            saver = newTransactionDetailsListSaver
+        ) {
             mutableStateListOf(
                 *(transactionWithDetailsAndAccounts?.transaction?.transactionDetails?.map {
-                    PartialTransactionDetails.from(
-                        it
-                    )
-                } ?: emptyList()).toTypedArray()
+                    PartialNewTransactionDetails.from(it)
+                }.takeIf { it?.isNotEmpty() == true }
+                    ?: listOf(PartialNewTransactionDetails.new())).toTypedArray()
             )
         }
     var sourceId by rememberSaveable(transactionWithDetailsAndAccounts, fixedSourceAccount) {
@@ -91,19 +93,22 @@ fun TransactionFormFragment(
                 date?.let { date ->
                     transactionDetails.takeIf { list -> list.all { it.isComplete() } }
                         ?.let { transactionDetails ->
-                            TransactionWithDetails(
-                                transaction = Transaction(
-                                    id = id,
-                                    sourceId = sourceIdNotNull,
-                                    destinationId = destinationId,
-                                    date = date
-                                ),
-                                transactionDetails = transactionDetails.map { it.toFull() }
+                            Transaction(
+                                id = id,
+                                sourceId = sourceIdNotNull,
+                                destinationId = destinationId,
+                                date = date
                             )
                         }
                 }
             }
         }
+
+    val currentTransactionDetails =
+        transactionDetails.takeIf { list -> list.all { it.isComplete() } }
+            ?.let { completeDetails ->
+                completeDetails.map { it.toFull() }
+            }
 
     var addAnotherTransaction by rememberSaveable {
         mutableStateOf(false)
@@ -114,12 +119,19 @@ fun TransactionFormFragment(
     val showAddAnotherTransactionButton = transactionWithDetailsAndAccounts == null
     val saveTransaction: () -> Unit = {
         currentTransaction?.let { fullTransaction ->
-            onTransactionAndAccountsAdd(fullTransaction, addAnotherTransaction)
-            if (showAddAnotherTransactionButton) {
-                transactionDetails.clear()
+            currentTransactionDetails?.let { fullCurrentTransactionDetails ->
+                onTransactionAndDetailsAdd(
+                    NewTransactionWithDetails(
+                        fullTransaction,
+                        fullCurrentTransactionDetails
+                    ), addAnotherTransaction
+                )
+                if (showAddAnotherTransactionButton) {
+                    transactionDetails.clear()
+                    transactionDetails.add(PartialNewTransactionDetails.new())
+                }
             }
         }
-        //focusRequester.requestFocus()
     }
     val addTransactionAction: AddTransactionAction =
         if (sourceAccount?.account?.isIncome == true && destinationAccount?.account?.isOutcome != true) {
@@ -145,7 +157,12 @@ fun TransactionFormFragment(
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
             transactionAndAccounts = PartialTransactionWithDetailsAndAccounts.from(
-                currentTransaction?.let { PartialTransactionWithDetails.from(currentTransaction) }
+                transaction = currentTransaction?.let {
+                    PartialTransactionWithDetails.from(
+                        transaction = it,
+                        transactionDetails = transactionDetails
+                    )
+                }
                     ?: PartialTransactionWithDetails(
                         transactionId = id,
                         sourceId = sourceId,
@@ -171,22 +188,39 @@ fun TransactionFormFragment(
             showSourceAccountField = fixedSourceAccount == null,
             showDestinationAccountField = fixedDestinationAccount == null,
             onAmountChanged = { detailIndexId, amount ->
-                transactionDetails[detailIndexId] =
-                    transactionDetails[detailIndexId].copy(amount = amount)
+                if (detailIndexId < transactionDetails.count()) {
+                    transactionDetails[detailIndexId] =
+                        transactionDetails[detailIndexId].copy(amount = amount)
+                }
             },
             onCategoryIdChanged = { detailIndexId, categoryId ->
-                transactionDetails[detailIndexId] =
-                    transactionDetails[detailIndexId].copy(categoryId = categoryId)
+                if (detailIndexId < transactionDetails.count()) {
+                    transactionDetails[detailIndexId] =
+                        transactionDetails[detailIndexId].copy(categoryId = categoryId)
+                }
             },
             onDescriptionChanged = { detailIndexId, description ->
-                transactionDetails[detailIndexId] =
-                    transactionDetails[detailIndexId].copy(description = description)
+                if (detailIndexId < transactionDetails.count()) {
+                    transactionDetails[detailIndexId] =
+                        transactionDetails[detailIndexId].copy(description = description)
+                }
             },
             onDestinationAccountIdChanged = { destinationId = it },
             onSourceAccountIdChanged = { sourceId = it },
             showAddAnotherTransactionButton = showAddAnotherTransactionButton,
             addAnotherTransaction = addAnotherTransaction,
-            onAddAnotherTransactionChanged = { addAnotherTransaction = it }
+            onAddAnotherTransactionChanged = { addAnotherTransaction = it },
+            onAddTransactionDetailRequested = {
+                transactionDetails.add(PartialNewTransactionDetails.new())
+            },
+            onRemoveTransactionDetailRequested = {
+                if (it < transactionDetails.count()) {
+                    transactionDetails.removeAt(it)
+                    if (transactionDetails.isEmpty()) {
+                        transactionDetails.add(PartialNewTransactionDetails.new())
+                    }
+                }
+            }
         )
     }
 }

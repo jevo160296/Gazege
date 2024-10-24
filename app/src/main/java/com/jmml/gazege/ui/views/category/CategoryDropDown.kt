@@ -48,6 +48,7 @@ data class CategoryNode(
 
 @Composable
 fun CategoryDropDown(
+    modifier: Modifier = Modifier,
     categoryList: List<Category>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     selectedCategory: CategoryWithSubcategoriesAndBudgetWithCalculatedData?,
@@ -75,6 +76,7 @@ fun CategoryDropDown(
         }
     }
     TreeComboBox(
+        modifier = modifier,
         dropDownExpanded = dropDownExpanded,
         onExpandedChange = {
             dropDownExpanded = !dropDownExpanded

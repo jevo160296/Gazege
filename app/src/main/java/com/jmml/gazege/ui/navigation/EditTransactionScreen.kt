@@ -57,11 +57,12 @@ fun NavGraphBuilder.screenEditTransaction(
                 personList = allPerson,
                 categoryList = categories,
                 budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
-                onAccountAddRequested = onNavigateToAddAccount
-            ) { editedTransaction, _ ->
-                viewModelEditTransaction.updateTransaction(editedTransaction)
-                onNavigateUp()
-            }
+                onAccountAddRequested = onNavigateToAddAccount,
+                onTransactionAndDetailsAdd = { editedTransaction, _ ->
+                    viewModelEditTransaction.updateTransaction(editedTransaction)
+                    onNavigateUp()
+                }
+            )
 
             accountAndOwnerWithTransactions is Result.Error || budgetWithCalculatedDataAndCategory is Result.Error -> Text(
                 text =

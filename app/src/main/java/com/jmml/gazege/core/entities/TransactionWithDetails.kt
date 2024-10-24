@@ -16,7 +16,9 @@ data class TransactionWithDetails(
     val sourceId: Int get() = transaction.sourceId
     val destinationId: Int get() = transaction.destinationId
     val totalAmount: Double get() = transactionDetails.sumOf { it.amount }
-    val descriptionString: String get() = transactionDetails.joinToString(", ") { it.description }
+    val descriptionString: String
+        get() = transactionDetails.filter { it.description.isNotEmpty() }
+            .joinToString(", ") { it.description }
 
     fun toTransaction() = transaction.copy()
 
@@ -85,6 +87,7 @@ data class NewTransactionWithDetails(
     fun toTransactionDetails(transactionId: Int): List<TransactionDetails> =
         transactionDetails.map {
             TransactionDetails(
+                id = it.id,
                 transactionId = transactionId,
                 amount = it.amount,
                 description = it.description,
@@ -95,6 +98,8 @@ data class NewTransactionWithDetails(
 }
 
 data class NewTransactionDetails(
+    val id: Int? = null,
+    val transactionId: Int? = null,
     val amount: Double,
     val description: String,
     val categoryId: Int?,

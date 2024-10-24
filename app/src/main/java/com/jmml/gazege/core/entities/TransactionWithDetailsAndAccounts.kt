@@ -55,3 +55,9 @@ data class TransactionWithDetailsAndAccounts(
         }
     }
 }
+
+data class NewTransactionWithDetailsAndAccounts(
+    val transaction: NewTransactionWithDetails,
+    val sourceAccount: Account,
+    val destinationAccount: Account
+)

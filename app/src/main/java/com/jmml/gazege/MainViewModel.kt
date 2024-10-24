@@ -1034,8 +1034,8 @@ class MainViewModel(
         repository.insertPromissoryNote(*promissorNote)
     }
 
-    fun updateTransaction(transaction: TransactionWithDetails) = viewModelScope.launch {
-        repository.updateTransaction(transaction)
+    fun updateTransaction(transaction: NewTransactionWithDetails) = viewModelScope.launch {
+        repository.upsertTransaction(transaction)
     }
 
     fun updatePromissoryNote(promissoryNote: PromissoryNote) = viewModelScope.launch {
@@ -1986,7 +1986,7 @@ class MainViewModel(
                 .collectAsState(emptyList())
 
         fun insertTransaction(
-            vararg transaction: TransactionWithDetails,
+            vararg transaction: NewTransactionWithDetails,
             onErrorAction: (Throwable) -> Unit = {}
         ) = this@MainViewModel.insertTransaction(
             *transaction,
@@ -2113,7 +2113,7 @@ class MainViewModel(
         }
             .collectAsState(Result.Loading)
 
-        fun updateTransaction(transaction: TransactionWithDetails) =
+        fun updateTransaction(transaction: NewTransactionWithDetails) =
             this@MainViewModel.updateTransaction(transaction)
     }
 
@@ -2800,9 +2800,11 @@ class MainViewModel(
             filters: BooleanFilters<Int?, Pair<String, Int>>
         ) = withContext(Dispatchers.Default) {
             filter { transaction ->
-                transaction.categories.any {
-                    filters.values.getOrDefault(it.id, filters.defaultValue)
-                }
+                transaction.categories
+                    .takeIf { it.isNotEmpty() }
+                    ?.any {
+                        filters.values.getOrDefault(it.id, filters.defaultValue)
+                    } ?: filters.values.getOrDefault(null, filters.defaultValue)
             }
         }
 

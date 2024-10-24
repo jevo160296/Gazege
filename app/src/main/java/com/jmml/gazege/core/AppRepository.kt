@@ -106,12 +106,12 @@ class AppRepository(
     }
 
     @WorkerThread
-    suspend fun updateTransaction(vararg transaction: TransactionWithDetails) {
+    suspend fun upsertTransaction(vararg transaction: NewTransactionWithDetails) {
         transaction.forEach {
-            it.toTransactionDetails().forEach { transactionDetails ->
-                transactionDao.update(transactionDetails)
+            it.toTransactionDetails(it.transaction.id!!).forEach { transactionDetails ->
+                transactionDao.upsert(transactionDetails)
             }
-            transactionDao.update(it.toTransaction())
+            transactionDao.upsert(it.toTransaction())
         }
     }
 
