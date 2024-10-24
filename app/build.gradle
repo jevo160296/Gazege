@@ -38,7 +38,7 @@ android {
         minSdk 29
         targetSdk 34
         versionCode 103
-        versionName '1.17.0'
+        versionName '1.18.0-alpha'
 
         sourceSets {
             androidTest.assets.srcDirs +=
