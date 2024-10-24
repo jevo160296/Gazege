@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
 import com.jmml.gazege.core.entities.TransactionDetails
@@ -45,11 +45,11 @@ interface TransactionDao {
     @Insert
     suspend fun insertAll(vararg transactionDetails: TransactionDetails): List<Long>
 
-    @Update
-    suspend fun update(transaction: Transaction)
+    @Upsert
+    suspend fun upsert(transaction: Transaction)
 
-    @Update
-    suspend fun update(transactionDetails: TransactionDetails)
+    @Upsert
+    suspend fun upsert(transactionDetails: TransactionDetails)
 
     @Delete
     suspend fun delete(transaction: Transaction): Int
