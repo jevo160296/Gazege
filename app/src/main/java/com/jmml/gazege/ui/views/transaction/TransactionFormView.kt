@@ -1,5 +1,6 @@
 package com.jmml.gazege.ui.views.transaction
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -370,15 +371,17 @@ private fun TransactionDetailsForm(
                 })
             Text(text = stringResource(R.string.Realizar_a_nombre_de_otra_persona))
         }
-        IconButton(
-            onClick = {
-                onRemoveTransactionDetailRequested(transactionDetailsIndex)
+        AnimatedVisibility(visible = isSplitted) {
+            IconButton(
+                onClick = {
+                    onRemoveTransactionDetailRequested(transactionDetailsIndex)
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.delete),
+                    contentDescription = "Add"
+                )
             }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.delete),
-                contentDescription = "Add"
-            )
         }
     }
     if (realizarANombreDe) {
