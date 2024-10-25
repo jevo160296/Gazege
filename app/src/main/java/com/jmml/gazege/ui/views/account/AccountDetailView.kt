@@ -360,6 +360,7 @@ private fun NotNullAccountDetail(
                     text =
                     stringResource(id = R.string.Propietario) +
                             " ${account.owner.name}",
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
                 )
                 Filter(
@@ -417,7 +418,10 @@ private fun NotNullAccountDetail(
                             null
                         }
                     )
-                    LargeEmphasis(text = stringResource(id = R.string.MostrarGraficos))
+                    LargeEmphasis(
+                        text = stringResource(id = R.string.MostrarGraficos),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
         }
