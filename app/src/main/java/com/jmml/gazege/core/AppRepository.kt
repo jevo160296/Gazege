@@ -108,10 +108,14 @@ class AppRepository(
     @WorkerThread
     suspend fun upsertTransaction(vararg transaction: NewTransactionWithDetails) {
         transaction.forEach {
-            it.toTransactionDetails(it.transaction.id!!).forEach { transactionDetails ->
-                transactionDao.upsert(transactionDetails)
+            //Delete all transaction details associated with specified transaction.
+            it.transaction.id?.let { id ->
+                transactionDao.deleteTransactionDetailsById(id)
+                it.toTransactionDetails(id).forEach { transactionDetails ->
+                    transactionDao.upsert(transactionDetails)
+                }
+                transactionDao.upsert(it.toTransaction())
             }
-            transactionDao.upsert(it.toTransaction())
         }
     }
 

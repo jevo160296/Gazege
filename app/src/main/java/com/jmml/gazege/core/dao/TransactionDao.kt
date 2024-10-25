@@ -67,6 +67,11 @@ interface TransactionDao {
     )
     suspend fun deleteAllTransactionsDetails()
 
+    @Query(
+        "DELETE FROM TransactionDetails WHERE transactionId = :transactionId"
+    )
+    suspend fun deleteTransactionDetailsById(transactionId: Int)
+
     suspend fun deleteAll() {
         deleteAllTransactionsDetails()
         deleteAllTransactions()
