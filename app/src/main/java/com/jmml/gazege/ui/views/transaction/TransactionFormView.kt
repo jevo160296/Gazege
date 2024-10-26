@@ -32,9 +32,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
@@ -44,12 +46,14 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.recursiveFirstOrNull
+import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.savers.PartialNewTransactionDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
 import com.jmml.gazege.ui.views.account.AccountDropDownMenu
 import com.jmml.gazege.ui.views.category.CategoryDropDown
 import com.jmml.gazege.ui.widgets.ComboBox
 import com.jmml.gazege.ui.widgets.DatePicker
+import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
 import com.jmml.gazege.ui.widgets.treeview.Node
@@ -95,7 +99,11 @@ fun TransactionAndAccountsForm(
     } else {
         ImeAction.Next
     }
+    val isNewTransaction = transactionAndAccounts.transaction.transactionId == null
     val keyboardActions = remember { KeyboardActions(onDone = { onDoneAction() }) }
+    val (editDetails, onEditDetailsChange) = rememberSaveable(isNewTransaction) {
+        mutableStateOf(isNewTransaction)
+    }
 
     val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
     val selectedDestination = accountList.firstOrNull { it.account.id == selectedDestinationId }
@@ -185,26 +193,32 @@ fun TransactionAndAccountsForm(
             }
         )
 
-        TransactionDetailListForm(
-            transactionDetails = transactionDetails,
-            categoryList = categoryList,
-            personList = personList,
-            budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-            onAmountChanged = onAmountChanged,
-            onDescriptionChanged = onDescriptionChanged,
-            onCategoryIdChanged = onCategoryIdChanged,
-            onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
-            nextAction = nextAction,
-            keyboardActions = keyboardActions,
-            onAddTransactionDetailRequested = onAddTransactionDetailRequested,
-            onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
-            focusRequester = focusRequester
-        )
-        LaunchedEffect(transactionAndAccounts.transaction.transactionId == null) {
-            delay(100)
-            if (transactionAndAccounts.transaction.transactionId == null) {
-                focusRequester.requestFocus()
+        if (editDetails) {
+            TransactionDetailListForm(
+                transactionDetails = transactionDetails,
+                categoryList = categoryList,
+                personList = personList,
+                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+                onAmountChanged = onAmountChanged,
+                onDescriptionChanged = onDescriptionChanged,
+                onCategoryIdChanged = onCategoryIdChanged,
+                onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
+                nextAction = nextAction,
+                keyboardActions = keyboardActions,
+                onAddTransactionDetailRequested = onAddTransactionDetailRequested,
+                onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+                focusRequester = focusRequester
+            )
+            LaunchedEffect(isNewTransaction) {
+                delay(100)
+                if (isNewTransaction) focusRequester.requestFocus()
             }
+        } else {
+            TransactionListDetailListView(
+                transactionDetails = transactionDetails,
+                categoryList = categoryList,
+                onEditRequested = { onEditDetailsChange(true) }
+            )
         }
     }
 }
@@ -284,6 +298,91 @@ private fun ColumnScope.TransactionDetailListForm(
                 contentDescription = "Add"
             )
         }
+    }
+}
+
+@Composable
+private fun TransactionListDetailListView(
+    contentPadding: PaddingValues = PaddingValues(),
+    transactionDetails: List<PartialNewTransactionDetails>,
+    categoryList: List<Category>,
+    onEditRequested: () -> Unit
+) {
+    val totalAmount = remember(transactionDetails) { transactionDetails.sumOf { it.amount ?: 0.0 } }
+    val categoryMap = remember(categoryList) { categoryList.associateBy { it.id } }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        MediumHeadline(
+            modifier = Modifier.padding(contentPadding),
+            text = stringResource(R.string.Items)
+        )
+        IconButton(onClick = onEditRequested) {
+            Icon(
+                painter = painterResource(R.drawable.edit),
+                contentDescription = "Edit"
+            )
+        }
+    }
+    TransactionDetailsRow()
+    val transactionCant = transactionDetails.count()
+    transactionDetails.forEachIndexed { index, it ->
+        val isBetweenElements = index + 1 < transactionCant
+        val category = categoryMap[it.categoryId]
+        TransactionDetailsRow(
+            modifier = Modifier.fillMaxWidth(),
+            description = it.description,
+            category = category?.name ?: stringResource(R.string.Sin_categoria),
+            amount = doubleToMoneyString(it.amount ?: 0.0)
+        )
+        if (isBetweenElements) {
+            Spacer(
+                Modifier
+                    .height(1.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+        }
+    }
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.secondary,
+        fontWeight = FontWeight.Bold,
+        text = "Total: ${doubleToMoneyString(totalAmount)}",
+        textAlign = TextAlign.End
+    )
+}
+
+@Composable
+private fun TransactionDetailsRow(
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    category: String? = null,
+    amount: String? = null
+) {
+    var descriptionString: String
+    var categoryString: String
+    var amountString: String
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        if (description != null && category != null && amount != null) {
+            descriptionString = description
+            categoryString = category
+            amountString = amount
+        } else {
+            descriptionString = stringResource(id = R.string.descripcion)
+            categoryString = stringResource(id = R.string.Categoria)
+            amountString = stringResource(id = R.string.Valor)
+        }
+        Text(descriptionString, modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+        Text(categoryString, modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+        Text(amountString, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
     }
 }
 
