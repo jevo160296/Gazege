@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +54,7 @@ import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
 import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 @Composable
@@ -79,7 +83,8 @@ fun TransactionAndAccountsForm(
     onDestinationAccountIdChanged: (Int) -> Unit,
     onCategoryIdChanged: (detailIndexId: Int, categoryId: Int?) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
-    showAddAnotherTransactionButton: Boolean
+    showAddAnotherTransactionButton: Boolean,
+    focusRequester: FocusRequester
 ) {
     val selectedSourceId = transactionAndAccounts.sourceAccount?.id
     val selectedDestinationId = transactionAndAccounts.destinationAccount?.id
@@ -192,8 +197,15 @@ fun TransactionAndAccountsForm(
             nextAction = nextAction,
             keyboardActions = keyboardActions,
             onAddTransactionDetailRequested = onAddTransactionDetailRequested,
-            onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested
+            onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+            focusRequester = focusRequester
         )
+        LaunchedEffect(transactionAndAccounts.transaction.transactionId == null) {
+            delay(100)
+            if (transactionAndAccounts.transaction.transactionId == null) {
+                focusRequester.requestFocus()
+            }
+        }
     }
 }
 
@@ -212,6 +224,7 @@ private fun ColumnScope.TransactionDetailListForm(
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
     nextAction: ImeAction,
     keyboardActions: KeyboardActions,
+    focusRequester: FocusRequester
 ) {
     var isSplitted by remember(transactionDetails.count()) {
         mutableStateOf(transactionDetails.count() > 1)
@@ -249,7 +262,8 @@ private fun ColumnScope.TransactionDetailListForm(
             onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
             onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
             nextAction = nextAction,
-            keyboardActions = keyboardActions
+            keyboardActions = keyboardActions,
+            focusRequester = focusRequester
         )
         if (isBetweenElements) {
             Spacer(
@@ -290,6 +304,7 @@ private fun TransactionDetailsForm(
     onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
     nextAction: ImeAction,
     keyboardActions: KeyboardActions,
+    focusRequester: FocusRequester? = null
 ) {
     val amount = transactionDetails.amount ?: 0.0
     val description = transactionDetails.description ?: ""
@@ -303,8 +318,12 @@ private fun TransactionDetailsForm(
         mutableStateOf(aNombreDe != null)
     }
 
+    val focusModifier = focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier
+
     NumberField(
-        modifier = Modifier.padding(contentPadding),
+        modifier = Modifier
+            .padding(contentPadding)
+            .then(focusModifier),
         value = amount,
         onValueChange = { onAmountChanged(transactionDetailsIndex, it) },
         label = { Text(stringResource(id = R.string.Valor)) },
