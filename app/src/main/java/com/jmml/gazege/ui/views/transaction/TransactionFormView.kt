@@ -1,6 +1,8 @@
 package com.jmml.gazege.ui.views.transaction
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -154,42 +156,44 @@ fun TransactionAndAccountsForm(
                 Text(text = stringResource(R.string.AddAnotherTransaction))
             }
         }
-        if (isSplitted) {
-            NumberField(
-                modifier = Modifier.focusRequester(focusRequester),
-                value = transactionDetails.sumOf { it.amount ?: 0.0 },
-                enabled = false,
-                readOnly = true,
-                onValueChange = {},
-                label = { Text(stringResource(id = R.string.Valor)) },
-                singleLine = true,
-            )
-        } else {
-            NumberField(
-                modifier = Modifier.focusRequester(focusRequester),
-                value = transactionDetails.sumOf { it.amount ?: 0.0 },
-                onValueChange = {
-                    if (transactionDetails.isEmpty()) onAddTransactionDetailRequested()
-                    onAmountChanged(0, it)
-                },
-                label = { Text(stringResource(id = R.string.Valor)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = nextAction
-                ),
-                keyboardActions = keyboardActions,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        isSplitted = true
-                    }) {
-                        Icon(painterResource(R.drawable.split_24), "Split")
+        Crossfade(isSplitted, label = "Crossfade") { currentIsSplitted ->
+            if (currentIsSplitted) {
+                NumberField(
+                    modifier = Modifier.focusRequester(focusRequester),
+                    value = transactionDetails.sumOf { it.amount ?: 0.0 },
+                    enabled = false,
+                    readOnly = true,
+                    onValueChange = {},
+                    label = { Text(stringResource(id = R.string.Valor)) },
+                    singleLine = true,
+                )
+            } else {
+                NumberField(
+                    modifier = Modifier.focusRequester(focusRequester),
+                    value = transactionDetails.sumOf { it.amount ?: 0.0 },
+                    onValueChange = {
+                        if (transactionDetails.isEmpty()) onAddTransactionDetailRequested()
+                        onAmountChanged(0, it)
+                    },
+                    label = { Text(stringResource(id = R.string.Valor)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = nextAction
+                    ),
+                    keyboardActions = keyboardActions,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            isSplitted = true
+                        }) {
+                            Icon(painterResource(R.drawable.split_24), "Split")
+                        }
                     }
+                )
+                LaunchedEffect(isNewTransaction) {
+                    delay(100)
+                    if (isNewTransaction) focusRequester.requestFocus()
                 }
-            )
-            LaunchedEffect(isNewTransaction) {
-                delay(100)
-                if (isNewTransaction) focusRequester.requestFocus()
             }
         }
         if (showSourceAccountField) {
@@ -236,28 +240,34 @@ fun TransactionAndAccountsForm(
             }
         )
 
-        if (editDetails) {
-            TransactionDetailListForm(
-                transactionDetails = transactionDetails,
-                categoryList = categoryList,
-                personList = personList,
-                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
-                onAmountChanged = onAmountChanged,
-                onDescriptionChanged = onDescriptionChanged,
-                onCategoryIdChanged = onCategoryIdChanged,
-                onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
-                nextAction = nextAction,
-                keyboardActions = keyboardActions,
-                onAddTransactionDetailRequested = onAddTransactionDetailRequested,
-                onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
-                isSplitted = isSplitted
-            )
-        } else {
-            TransactionListDetailListView(
-                transactionDetails = transactionDetails,
-                categoryList = categoryList,
-                onEditRequested = { onEditDetailsChange(true) }
-            )
+        Crossfade(editDetails, label = "Crossfade") { currentEditDetails ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
+                if (currentEditDetails) {
+                    TransactionDetailListForm(
+                        transactionDetails = transactionDetails,
+                        categoryList = categoryList,
+                        personList = personList,
+                        budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
+                        onAmountChanged = onAmountChanged,
+                        onDescriptionChanged = onDescriptionChanged,
+                        onCategoryIdChanged = onCategoryIdChanged,
+                        onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
+                        nextAction = nextAction,
+                        keyboardActions = keyboardActions,
+                        onAddTransactionDetailRequested = onAddTransactionDetailRequested,
+                        onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+                        isSplitted = isSplitted
+                    )
+                } else {
+                    TransactionListDetailListView(
+                        transactionDetails = transactionDetails,
+                        categoryList = categoryList,
+                        onEditRequested = { onEditDetailsChange(true) }
+                    )
+                }
+            }
         }
     }
 }
@@ -279,9 +289,11 @@ private fun ColumnScope.TransactionDetailListForm(
     nextAction: ImeAction,
     keyboardActions: KeyboardActions
 ) {
-    val innerContentPadding =
-        if (isSplitted) PaddingValues(start = dimensionResource(R.dimen.DefaultPadding) * 2)
-        else PaddingValues()
+    val innerContentPaddingValue by animateDpAsState(
+        if (isSplitted) dimensionResource(R.dimen.DefaultPadding) * 2 else 0.dp,
+        label = "AnimatedContentPaddingValue"
+    )
+    val innerContentPadding = PaddingValues(start = innerContentPaddingValue)
 
     val cantElements = transactionDetails.count()
     transactionDetails.forEachIndexed { index, it ->
@@ -311,9 +323,11 @@ private fun ColumnScope.TransactionDetailListForm(
             )
         }
     }
-    if (isSplitted) {
+    AnimatedVisibility(
+        isSplitted,
+        modifier = Modifier.align(Alignment.End)
+    ) {
         IconButton(
-            modifier = Modifier.align(Alignment.End),
             onClick = onAddTransactionDetailRequested
         ) {
             Icon(
@@ -438,7 +452,7 @@ private fun TransactionDetailsForm(
         mutableStateOf(aNombreDe != null)
     }
 
-    if (isSplitted) {
+    AnimatedVisibility(visible = isSplitted) {
         NumberField(
             modifier = Modifier
                 .padding(contentPadding),
@@ -511,7 +525,7 @@ private fun TransactionDetailsForm(
             }
         }
     }
-    if (realizarANombreDe) {
+    AnimatedVisibility(realizarANombreDe) {
         var dropDownExpanded by rememberSaveable {
             mutableStateOf(false)
         }
