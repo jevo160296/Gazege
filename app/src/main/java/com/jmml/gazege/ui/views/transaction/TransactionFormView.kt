@@ -100,9 +100,14 @@ fun TransactionAndAccountsForm(
         ImeAction.Next
     }
     val isNewTransaction = transactionAndAccounts.transaction.transactionId == null
+
+    var isSplitted by remember(transactionDetails.count()) {
+        mutableStateOf(transactionDetails.count() > 1)
+    }
     val keyboardActions = remember { KeyboardActions(onDone = { onDoneAction() }) }
+
     val (editDetails, onEditDetailsChange) = rememberSaveable(isNewTransaction) {
-        mutableStateOf(isNewTransaction)
+        mutableStateOf(isNewTransaction || !isSplitted)
     }
 
     val selectedSource = accountList.firstOrNull { it.account.id == selectedSourceId }
@@ -147,6 +152,44 @@ fun TransactionAndAccountsForm(
                     onCheckedChange = onAddAnotherTransactionChanged
                 )
                 Text(text = stringResource(R.string.AddAnotherTransaction))
+            }
+        }
+        if (isSplitted) {
+            NumberField(
+                modifier = Modifier.focusRequester(focusRequester),
+                value = transactionDetails.sumOf { it.amount ?: 0.0 },
+                enabled = false,
+                readOnly = true,
+                onValueChange = {},
+                label = { Text(stringResource(id = R.string.Valor)) },
+                singleLine = true,
+            )
+        } else {
+            NumberField(
+                modifier = Modifier.focusRequester(focusRequester),
+                value = transactionDetails.sumOf { it.amount ?: 0.0 },
+                onValueChange = {
+                    if (transactionDetails.isEmpty()) onAddTransactionDetailRequested()
+                    onAmountChanged(0, it)
+                },
+                label = { Text(stringResource(id = R.string.Valor)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = nextAction
+                ),
+                keyboardActions = keyboardActions,
+                trailingIcon = {
+                    IconButton(onClick = {
+                        isSplitted = true
+                    }) {
+                        Icon(painterResource(R.drawable.split_24), "Split")
+                    }
+                }
+            )
+            LaunchedEffect(isNewTransaction) {
+                delay(100)
+                if (isNewTransaction) focusRequester.requestFocus()
             }
         }
         if (showSourceAccountField) {
@@ -207,12 +250,8 @@ fun TransactionAndAccountsForm(
                 keyboardActions = keyboardActions,
                 onAddTransactionDetailRequested = onAddTransactionDetailRequested,
                 onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
-                focusRequester = focusRequester
+                isSplitted = isSplitted
             )
-            LaunchedEffect(isNewTransaction) {
-                delay(100)
-                if (isNewTransaction) focusRequester.requestFocus()
-            }
         } else {
             TransactionListDetailListView(
                 transactionDetails = transactionDetails,
@@ -230,6 +269,7 @@ private fun ColumnScope.TransactionDetailListForm(
     categoryList: List<Category>,
     personList: List<Person>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    isSplitted: Boolean,
     onAddTransactionDetailRequested: () -> Unit,
     onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
@@ -237,26 +277,11 @@ private fun ColumnScope.TransactionDetailListForm(
     onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
     nextAction: ImeAction,
-    keyboardActions: KeyboardActions,
-    focusRequester: FocusRequester
+    keyboardActions: KeyboardActions
 ) {
-    var isSplitted by remember(transactionDetails.count()) {
-        mutableStateOf(transactionDetails.count() > 1)
-    }
     val innerContentPadding =
         if (isSplitted) PaddingValues(start = dimensionResource(R.dimen.DefaultPadding) * 2)
         else PaddingValues()
-
-    if (isSplitted) {
-        NumberField(
-            value = transactionDetails.sumOf { it.amount ?: 0.0 },
-            enabled = false,
-            readOnly = true,
-            onValueChange = {},
-            label = { Text(stringResource(id = R.string.Valor)) },
-            singleLine = true,
-        )
-    }
 
     val cantElements = transactionDetails.count()
     transactionDetails.forEachIndexed { index, it ->
@@ -269,15 +294,13 @@ private fun ColumnScope.TransactionDetailListForm(
             personList = personList,
             budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory,
             isSplitted = isSplitted,
-            onSplittedChanged = { isSplitted = it },
             onAmountChanged = onAmountChanged,
             onDescriptionChanged = onDescriptionChanged,
             onCategoryIdChanged = onCategoryIdChanged,
             onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
             onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
             nextAction = nextAction,
-            keyboardActions = keyboardActions,
-            focusRequester = focusRequester
+            keyboardActions = keyboardActions
         )
         if (isBetweenElements) {
             Spacer(
@@ -395,15 +418,13 @@ private fun TransactionDetailsForm(
     personList: List<Person>,
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
     isSplitted: Boolean,
-    onSplittedChanged: (newSplitted: Boolean) -> Unit,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
     onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
     nextAction: ImeAction,
-    keyboardActions: KeyboardActions,
-    focusRequester: FocusRequester? = null
+    keyboardActions: KeyboardActions
 ) {
     val amount = transactionDetails.amount ?: 0.0
     val description = transactionDetails.description ?: ""
@@ -417,33 +438,21 @@ private fun TransactionDetailsForm(
         mutableStateOf(aNombreDe != null)
     }
 
-    val focusModifier = focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier
-
-    NumberField(
-        modifier = Modifier
-            .padding(contentPadding)
-            .then(focusModifier),
-        value = amount,
-        onValueChange = { onAmountChanged(transactionDetailsIndex, it) },
-        label = { Text(stringResource(id = R.string.Valor)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = nextAction
-        ),
-        keyboardActions = keyboardActions,
-        trailingIcon = if (isSplitted) {
-            null
-        } else {
-            {
-                IconButton(onClick = {
-                    onSplittedChanged(true)
-                }) {
-                    Icon(painterResource(R.drawable.split_24), "Split")
-                }
-            }
-        }
-    )
+    if (isSplitted) {
+        NumberField(
+            modifier = Modifier
+                .padding(contentPadding),
+            value = amount,
+            onValueChange = { onAmountChanged(transactionDetailsIndex, it) },
+            label = { Text(stringResource(id = R.string.Valor)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = nextAction
+            ),
+            keyboardActions = keyboardActions
+        )
+    }
     TextField(
         modifier = Modifier.padding(contentPadding),
         value = description,
