@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jmml.gazege.MainViewModel
 import com.jmml.gazege.R
+import com.jmml.gazege.ui.fragments.EmptySummaryStateUI
+import com.jmml.gazege.ui.fragments.ReloadingPersonSummaryStateUI
 import com.jmml.gazege.ui.views.PersonAction
 import com.jmml.gazege.ui.views.PromissoryNoteAction
 import com.jmml.gazege.ui.views.TransactionAction
@@ -109,6 +111,9 @@ fun NavGraphBuilder.screenPersonDetail(
                     Text(stringResource(id = R.string.LoadingPersonSummaryView))
                 }
             }
+
+            EmptyPersonSummaryState -> EmptySummaryStateUI()
+            is ReloadingPersonSummaryState -> ReloadingPersonSummaryStateUI()
         }
     }
 }

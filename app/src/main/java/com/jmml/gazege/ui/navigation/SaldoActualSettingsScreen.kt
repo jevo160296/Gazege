@@ -19,49 +19,57 @@ fun NavGraphBuilder.screenSaldoActualSettings(
     viewModelSaldoActualSettings: MainViewModel.ViewModelSaldoActualSettings
 ) {
     composable("saldoActualSettings") {
-        val accountAndOwnerWithTransactions =
-            viewModelSaldoActualSettings.rememberAccountAndOwnerWithTransactions().value
-        val personSummaryState by viewModelSaldoActualSettings.rememberPersonSummaryState()
-        val principalPerson by viewModelSaldoActualSettings.rememberPrincipalPerson()
-        val personList by viewModelSaldoActualSettings.rememberPersonList(principalPersonId = principalPerson?.id)
-        val incluirPresupuestoEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirPresupuestoEnSaldoActualFlow()
-        val incluirDeudasEnSaldoActual by viewModelSaldoActualSettings.rememberSettingsIncluirDeudasEnSaldoActualFlow()
-        val coroutineScope = rememberCoroutineScope()
-
+        val currentCashSettingsState =
+            viewModelSaldoActualSettings.rememberCurrentCashSettingsState().value
         var saving: Int by remember { mutableIntStateOf(0) }
-        when (accountAndOwnerWithTransactions) {
-            is Result.Error -> Text("Error ${accountAndOwnerWithTransactions.exception}")
+
+        when (currentCashSettingsState) {
+            is Result.Error -> Text("Error ${currentCashSettingsState.exception}")
             Result.Loading -> LoadingSaldoActualSettings()
-            is Result.Success -> SaldoActualSettings(
-                accountAndOwnerWithTransactions.data.filter { it.owner.id == principalPerson?.id },
-                personList = personList,
-                summaryState = personSummaryState,
-                saving = saving,
-                incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
-                incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
-                onIncluirDeudasEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirDeudasEnSaldoActualFlow,
-                onIncluirPresupuestoEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirPresupuestoEnSaldoActualFlow,
-                onPersonStateChanged = { person, nuevoValor ->
-                    saving += 1
-                    coroutineScope.launch {
-                        viewModelSaldoActualSettings
-                            .updatePerson(person.copy(debtsIncludedInTotal = nuevoValor)) {}.join()
-                    }.invokeOnCompletion {
-                        if (it?.cause == null) {
+            is Result.Success -> {
+                val accountAndOwnerWithTransactions =
+                    currentCashSettingsState.data.accountAndOwnerWithTransactions
+                val personSummaryState = currentCashSettingsState.data.personSummaryState
+                val principalPerson = currentCashSettingsState.data.principalPerson
+                val personList = currentCashSettingsState.data.personList
+                val incluirPresupuestoEnSaldoActual =
+                    currentCashSettingsState.data.incluirPresupuestoEnSaldoActual
+                val incluirDeudasEnSaldoActual =
+                    currentCashSettingsState.data.incluirDeudasEnSaldoActual
+                val coroutineScope = rememberCoroutineScope()
+                SaldoActualSettings(
+                    accountAndOwnerWithTransactions.filter { it.owner.id == principalPerson?.id },
+                    personList = personList,
+                    summaryState = personSummaryState,
+                    saving = saving,
+                    incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
+                    incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+                    onIncluirDeudasEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirDeudasEnSaldoActualFlow,
+                    onIncluirPresupuestoEnSaldoActualChanged = viewModelSaldoActualSettings::settingsIncluirPresupuestoEnSaldoActualFlow,
+                    onPersonStateChanged = { person, nuevoValor ->
+                        saving += 1
+                        coroutineScope.launch {
+                            viewModelSaldoActualSettings
+                                .updatePerson(person.copy(debtsIncludedInTotal = nuevoValor)) {}
+                                .join()
+                        }.invokeOnCompletion {
+                            if (it?.cause == null) {
+                                saving -= 1
+                            }
+                        }
+                    },
+                    onUpdateSeleccion = { account, nuevoEstado ->
+                        saving += 1
+                        coroutineScope.launch {
+                            viewModelSaldoActualSettings.updateAccount(
+                                account = account.copy(includedInTotal = nuevoEstado),
+                                onErrorAction = {},
+                                onCompleitionAction = {}).join()
+                        }.invokeOnCompletion {
                             saving -= 1
                         }
                     }
-                }
-            ) { account, nuevoEstado ->
-                saving += 1
-                coroutineScope.launch {
-                    viewModelSaldoActualSettings.updateAccount(
-                        account = account.copy(includedInTotal = nuevoEstado),
-                        onErrorAction = {},
-                        onCompleitionAction = {}).join()
-                }.invokeOnCompletion {
-                    saving -= 1
-                }
+                )
             }
         }
     }
