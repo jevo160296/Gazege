@@ -65,10 +65,14 @@ import com.jmml.gazege.core.export.writeZipBackup
 import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.clockFlow
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
+import com.jmml.gazege.ui.navigation.CurrentCashSettingsState
 import com.jmml.gazege.ui.navigation.EditarCategoriasState
+import com.jmml.gazege.ui.navigation.EmptyPersonSummaryState
+import com.jmml.gazege.ui.navigation.FullPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
 import com.jmml.gazege.ui.navigation.LoadedPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
+import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.loadingPersonSummaryState
@@ -2196,32 +2200,78 @@ class MainViewModel(
 
     inner class ViewModelSaldoActualSettings {
         @Composable
-        fun rememberAccountAndOwnerWithTransactions() =
-            accountAndOwnerWithTransactions.collectAsState(Result.Loading)
-
-        @Composable
-        fun rememberPersonList(principalPersonId: Int?) = remember(principalPersonId) {
-            allPerson
-                .map { personList ->
-                    personList.filter { it.id == null || it.id != principalPersonId }
+        fun rememberCurrentCashSettingsState() = remember {
+            accountAndOwnerWithTransactions
+                .combine(principalPerson) { accountAndOwnerWithTransactions, principalPerson ->
+                    object {
+                        val accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+                        val principalPerson = principalPerson
+                    }
                 }
+                .combine(allPerson) { combined, allPerson ->
+                    val principalPersonId = combined.principalPerson?.id
+                    object {
+                        val accountAndOwnerWithTransactions =
+                            combined.accountAndOwnerWithTransactions
+                        val principalPerson = combined.principalPerson
+                        val allPerson =
+                            allPerson.filter { it.id == null || it.id != principalPersonId }
+                    }
+                }
+                .combine(personSummaryState) { combined, personSummaryState ->
+                    object {
+                        val accountAndOwnerWithTransactions =
+                            combined.accountAndOwnerWithTransactions
+                        val principalPerson = combined.principalPerson
+                        val allPerson = combined.allPerson
+                        val personSummaryState = personSummaryState
+                    }
+                }
+                .combine(incluirPresupuestoEnSaldoActual) { combined, incluirPresupuestoEnSaldoActual ->
+                    object {
+                        val accountAndOwnerWithTransactions =
+                            combined.accountAndOwnerWithTransactions
+                        val allPerson = combined.allPerson
+                        val personSummaryState = combined.personSummaryState
+                        val principalPerson = combined.principalPerson
+                        val incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual
+                    }
+                }
+                .combine(incluirDeudasEnSaldoActual) { combined, incluirDeudasEnSaldoActual ->
+                    object {
+                        val accountAndOwnerWithTransactions =
+                            combined.accountAndOwnerWithTransactions
+                        val allPerson = combined.allPerson
+                        val personSummaryState = combined.personSummaryState
+                        val principalPerson = combined.principalPerson
+                        val incluirPresupuestoEnSaldoActual =
+                            combined.incluirPresupuestoEnSaldoActual
+                    }.run {
+                        when (accountAndOwnerWithTransactions) {
+                            is Result.Error -> Result.Error(accountAndOwnerWithTransactions.exception)
+                            Result.Loading -> null
+                            is Result.Success -> when (personSummaryState) {
+                                EmptyPersonSummaryState -> null
+                                is FullPersonSummaryState -> Result.Success(
+                                    CurrentCashSettingsState(
+                                        accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.data,
+                                        personList = allPerson,
+                                        personSummaryState = personSummaryState,
+                                        principalPerson = principalPerson,
+                                        incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+                                        incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual
+                                    )
+                                )
+
+                                is ReloadingPersonSummaryState -> null
+                                LoadingPersonSummaryState -> null
+                            }
+                        }
+                    }
+                }
+                .filterNotNull()
                 .shareInViewModel()
-        }.collectAsState(initial = emptyList())
-
-        @Composable
-        fun rememberPersonSummaryState() =
-            personSummaryState.collectAsState(cachedPersonSummaryState)
-
-        @Composable
-        fun rememberPrincipalPerson() = principalPerson.collectAsState(null)
-
-        @Composable
-        fun rememberSettingsIncluirPresupuestoEnSaldoActualFlow() =
-            incluirPresupuestoEnSaldoActual.collectAsState(false)
-
-        @Composable
-        fun rememberSettingsIncluirDeudasEnSaldoActualFlow() =
-            incluirDeudasEnSaldoActual.collectAsState(false)
+        }.collectAsState(Result.Loading)
 
         fun settingsIncluirPresupuestoEnSaldoActualFlow(newValue: Boolean) =
             this@MainViewModel.settingsIncluirPresupuestoEnSaldoActualFlow(newValue)

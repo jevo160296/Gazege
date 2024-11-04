@@ -545,6 +545,8 @@ private fun MainFragmentResponsiveContent(
                         onSaldoActualClick = onSaldoActualClick
                     )
                 }
+
+                EmptyPersonSummaryState -> EmptySummaryStateUI()
             }
         }
     }
@@ -706,6 +708,8 @@ private fun MainFragmentResponsiveContent(
                         Text(stringResource(id = R.string.LoadingPersonSummaryView))
                     }
                 }
+
+                is ReloadingPersonSummaryState -> ReloadingPersonSummaryStateUI()
             }
         }
     }

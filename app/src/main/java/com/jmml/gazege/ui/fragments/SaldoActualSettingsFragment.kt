@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -44,8 +43,6 @@ import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.navigation.FullPersonSummaryState
-import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
-import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.templates.StickyHeaderLayout
 import com.jmml.gazege.ui.views.account.AccountSelectionPage
 import com.jmml.gazege.ui.views.person.PersonSelectionPage
@@ -58,7 +55,7 @@ import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 fun SaldoActualSettings(
     accountList: List<AccountAndOwnerWithTransactions>,
     personList: List<Person>,
-    summaryState: PersonSummaryState,
+    summaryState: FullPersonSummaryState,
     saving: Int,
     incluirPresupuestoEnSaldoActual: Boolean,
     incluirDeudasEnSaldoActual: Boolean,
@@ -70,36 +67,22 @@ fun SaldoActualSettings(
     val (selectedPage, onSelectedPageChange) = rememberSaveable { mutableIntStateOf(0) }
     val accountListState = rememberTreeState()
     val personListState = rememberLazyListState()
-    Crossfade(
-        modifier = Modifier.fillMaxSize(),
-        targetState = summaryState,
-        label = "CrossFade"
-    ) {
-        when (it) {
-            is FullPersonSummaryState -> {
-                LoadedSaldoActualSettings(
-                    accountList = accountList,
-                    summaryState = it,
-                    personList = personList,
-                    saving = saving,
-                    selectedPage = selectedPage,
-                    incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
-                    incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
-                    accountListState = accountListState,
-                    personListState = personListState,
-                    onSelectedPageChange = onSelectedPageChange,
-                    onIncluirPresupuestoEnSaldoActualChanged = onIncluirPresupuestoEnSaldoActualChanged,
-                    onIncluirDeudasEnSaldoActualChanged = onIncluirDeudasEnSaldoActualChanged,
-                    onPersonStateChanged = onPersonStateChanged,
-                    onUpdateSeleccion = onUpdateSeleccion
-                )
-            }
-
-            is LoadingPersonSummaryState -> {
-                LoadingSaldoActualSettings()
-            }
-        }
-    }
+    LoadedSaldoActualSettings(
+        accountList = accountList,
+        summaryState = summaryState,
+        personList = personList,
+        saving = saving,
+        selectedPage = selectedPage,
+        incluirPresupuestoEnSaldoActual = incluirPresupuestoEnSaldoActual,
+        incluirDeudasEnSaldoActual = incluirDeudasEnSaldoActual,
+        accountListState = accountListState,
+        personListState = personListState,
+        onSelectedPageChange = onSelectedPageChange,
+        onIncluirPresupuestoEnSaldoActualChanged = onIncluirPresupuestoEnSaldoActualChanged,
+        onIncluirDeudasEnSaldoActualChanged = onIncluirDeudasEnSaldoActualChanged,
+        onPersonStateChanged = onPersonStateChanged,
+        onUpdateSeleccion = onUpdateSeleccion
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -269,4 +252,14 @@ fun LoadedSaldoActualSettings(
 fun LoadingSaldoActualSettings() {
     // TODO Develop UI for loading saldo actual
     Text(text = "Loading")
+}
+
+@Composable
+fun EmptySummaryStateUI() {
+    Text("No hay datos")
+}
+
+@Composable
+fun ReloadingPersonSummaryStateUI() {
+    Text("Reloading...")
 }

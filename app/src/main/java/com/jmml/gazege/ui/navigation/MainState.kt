@@ -1,6 +1,7 @@
 package com.jmml.gazege.ui.navigation
 
 import com.jmml.gazege.core.dao.PersonDao
+import com.jmml.gazege.core.entities.AccountAndOwnerWithTransactions
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
@@ -13,7 +14,7 @@ import com.jmml.gazege.ui.views.document.TransactionDocumentViewModel
 import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteViewModel
 import java.time.LocalDate
 
-interface PersonSummaryState
+sealed interface PersonSummaryState
 
 object LoadingPersonSummaryState : PersonSummaryState
 object EmptyPersonSummaryState : LoadedPersonSummaryState {
@@ -32,7 +33,7 @@ object EmptyPersonSummaryState : LoadedPersonSummaryState {
 
 }
 
-interface LoadedPersonSummaryState : PersonSummaryState {
+sealed interface LoadedPersonSummaryState : PersonSummaryState {
     val saldoActual: Double
     val ingresos: Double
     val egresos: Double
@@ -182,3 +183,12 @@ data class LoadedTransactionDetailsState(
 }
 
 fun loadingTransactionDetailsState(): TransactionDetailsState = LoadingTransactionsDetailsState
+
+data class CurrentCashSettingsState(
+    val accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>,
+    val personList: List<Person>,
+    val personSummaryState: FullPersonSummaryState,
+    val principalPerson: Person?,
+    val incluirPresupuestoEnSaldoActual: Boolean,
+    val incluirDeudasEnSaldoActual: Boolean
+)
