@@ -47,7 +47,6 @@ import com.jmml.gazege.core.entities.AccountAndOwnerWithPockets
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
-import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.savers.PartialNewTransactionDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
@@ -446,7 +445,7 @@ private fun TransactionDetailsForm(
     val selectedCategoryId = transactionDetails.categoryId
 
     val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
+        categoryList.firstOrNull { it.id == selectedCategoryId }
 
     var realizarANombreDe by rememberSaveable(aNombreDe) {
         mutableStateOf(aNombreDe != null)

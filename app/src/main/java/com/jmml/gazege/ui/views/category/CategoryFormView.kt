@@ -37,7 +37,6 @@ import com.jmml.gazege.core.entities.BudgetType
 import com.jmml.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
-import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.savers.PartialCategory
 import com.jmml.gazege.ui.savers.categorySaver
 import com.jmml.gazege.ui.views.budget.BudgetRecyclerView
@@ -74,8 +73,7 @@ fun CategoryForm(
     val scope = rememberCoroutineScope()
 
     val snackbarHostState = SnackbarHostState()
-    val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == partialCategory.parentId }
+    val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
 
     val focusRequester = remember { FocusRequester() }

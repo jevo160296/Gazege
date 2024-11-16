@@ -37,7 +37,6 @@ import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.WeekDays
-import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryDropDown
 import com.jmml.gazege.ui.widgets.ComboBox
@@ -81,7 +80,7 @@ fun BudgetFormView(
     var descripcion by rememberSaveable(budget) { mutableStateOf(budget?.description ?: "") }
 
     val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
+        categories.firstOrNull { it.id == selectedCategoryId }
     val budgetId = budget?.id
     val weekDays = WeekDays(weekDaysDays)
     val sign = if (isGasto) {
