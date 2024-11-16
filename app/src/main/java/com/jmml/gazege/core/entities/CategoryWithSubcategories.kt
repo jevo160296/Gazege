@@ -75,3 +75,9 @@ internal fun categories(
             categoryWithSubCategories()
             this
         }.subCategories.toList()
+
+fun List<CategoryWithSubCategories>.recursiveFirstOrNull(predicate: (CategoryWithSubCategories) -> Boolean):
+        CategoryWithSubCategories? =
+    this.firstOrNull(predicate) ?: this.firstNotNullOfOrNull {
+        it.subCategories.recursiveFirstOrNull(predicate)
+    }
