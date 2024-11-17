@@ -19,12 +19,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,13 +36,16 @@ import androidx.compose.ui.res.stringResource
 import com.jmml.gazege.R
 import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.sumOrNull
 import com.jmml.gazege.ui.doubleToMoneyString
-import com.jmml.gazege.ui.navigation.EmptyEditarCategoriasState
-import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.jmml.gazege.ui.navigation.ICategoriesView
+import com.jmml.gazege.ui.navigation.LoadedCategoriesDataView
+import com.jmml.gazege.ui.navigation.LoadedCategoriesWithBudgetDataView
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryListView
+import com.jmml.gazege.ui.views.category.CategoryWithBudgetListView
 import com.jmml.gazege.ui.views.category.ahorroExcesoTexto
 import com.jmml.gazege.ui.views.category.excessColor
 import com.jmml.gazege.ui.views.category.faltaPagarRecibirTexto
@@ -55,33 +56,36 @@ import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import com.jmml.zoo.ui.state.ZProgressIndicator
 
 @Composable
-fun EmptyEditarCategorias(
-    paddingValues: PaddingValues,
-    editarCategoriasState: EmptyEditarCategoriasState
-) {
-    Column(modifier = Modifier.padding(paddingValues)) {
+fun LoadingEditarCategorias(paddingValues: PaddingValues) {
+    Column(
+        modifier = Modifier
+            .padding(
+                start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
+                end = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
+            )
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.DefaultPadding)),
             modifier = Modifier
                 .padding(bottom = dimensionResource(id = R.dimen.DefaultPadding))
-                .padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
+                //.padding(horizontal = dimensionResource(id = R.dimen.DefaultPadding))
                 .height(IntrinsicSize.Min)
         ) {
             DataView(
-                title = faltaPagarRecibirTexto(value = editarCategoriasState.leftToPay),
-                value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                title = faltaPagarRecibirTexto(value = 0.0),
+                value = doubleToMoneyString(0.0),
                 modifier = Modifier.weight(1f)
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_total),
-                value = doubleToMoneyString(editarCategoriasState.netFlow),
+                value = doubleToMoneyString(0.0),
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(1f)
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_categorizado),
-                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                value = doubleToMoneyString(0.0),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -97,7 +101,7 @@ fun EmptyEditarCategorias(
 @Composable
 fun LoadedEditarCategorias(
     paddingValues: PaddingValues,
-    editarCategoriasState: LoadedEditarCategoriasState,
+    editarCategoriasState: ICategoriesView,
     nestedScrollConnection: NestedScrollConnection,
     state: TreeState = rememberTreeState(),
     onEditCategoryRequested: (Category) -> Unit,
@@ -109,34 +113,164 @@ fun LoadedEditarCategorias(
     onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit,
     onShowTypeChanged: (newValue: EditarCategoriasShowType) -> Unit
 ) {
-    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData> =
-        editarCategoriasState.categoriesWithCalculatedData
+    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?
+    val categories: List<CategoryWithSubCategories>?
+    val initialExpectation: Double
+    val totalCompleition: Double
+    val totalAhorroExceso: Double
+    val leftToPay: Double
+    val realTotalFlow: Double
+    val listIsempty: Boolean
 
-    val initialExpectation = remember(editarCategoriasState) {
-        editarCategoriasState.categoriesWithCalculatedData
-            .map { it.aggregatedBudget + it.childrenAggregatedBudget }
-            .sumOrNull()
-            ?.expectedTotalFlow
-            ?: 0.0
+    when (editarCategoriasState) {
+        is LoadedCategoriesDataView -> {
+            categories = editarCategoriasState.categoriesWithSubCategories
+            categoriesWithCalculatedData = null
+            initialExpectation = 0.0
+            totalCompleition = 0.0
+            totalAhorroExceso = 0.0
+            leftToPay = 0.0
+            realTotalFlow = 0.0
+            listIsempty = categories.isEmpty()
+        }
+
+        is LoadedCategoriesWithBudgetDataView -> {
+            categoriesWithCalculatedData = editarCategoriasState.categoriesWithCalculatedData
+            categories = null
+            initialExpectation = remember(editarCategoriasState) {
+                editarCategoriasState.categoriesWithCalculatedData
+                    .map { it.aggregatedBudget + it.childrenAggregatedBudget }
+                    .sumOrNull()
+                    ?.expectedTotalFlow
+                    ?: 0.0
+            }
+            totalCompleition = remember(editarCategoriasState) {
+                CategoryDao.calculateCategoryCompleition(
+                    editarCategoriasState.realTotalFlow,
+                    initialExpectation
+                )
+            }
+            totalAhorroExceso = CategoryDao.calculateAhorroExceso(
+                editarCategoriasState.realTotalFlow,
+                initialExpectation
+            )
+            leftToPay = editarCategoriasState.leftToPay
+            realTotalFlow = editarCategoriasState.realTotalFlow
+            listIsempty = categoriesWithCalculatedData.isEmpty()
+        }
     }
-    val totalCompleition = remember(editarCategoriasState) {
-        CategoryDao.calculateCategoryCompleition(
-            editarCategoriasState.realTotalFlow,
-            initialExpectation
-        )
+
+    val hasZeroElements: Boolean by rememberSaveable(listIsempty) {
+        onZeroElementsChanged(listIsempty)
+        mutableStateOf(listIsempty)
     }
-    val totalAhorroExceso = CategoryDao.calculateAhorroExceso(
-        editarCategoriasState.realTotalFlow,
-        initialExpectation
-    )
+
+    LoadedEditarCategoriasUI(
+        paddingValues = paddingValues,
+        nestedScrollConnection = nestedScrollConnection,
+        leftToPay = leftToPay,
+        totalAhorroExceso = totalAhorroExceso,
+        realTotalFlow = realTotalFlow,
+        hasZeroElements = hasZeroElements
+    ) {
+        if (categoriesWithCalculatedData != null) {
+            Row(
+                Modifier
+                    .fillMaxWidth(1f)
+                    .pointerInput(1) {
+                        detectDragGestures { change, dragAmount ->
+                            if (hasZeroElements.not()) {
+                                change.consume()
+                                nestedScrollConnection.onPreScroll(
+                                    dragAmount,
+                                    NestedScrollSource.Wheel
+                                )
+                            }
+                        }
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    dimensionResource(id = R.dimen.DefaultPadding),
+                    alignment = Alignment.End
+                )
+            ) {
+                FilledTonalIconToggleButton(
+                    checked = showType == EditarCategoriasShowType.GRAPHICAL,
+                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.show_graphical),
+                        contentDescription = ""
+                    )
+                }
+                FilledTonalIconToggleButton(
+                    checked = showType == EditarCategoriasShowType.EXPANDED,
+                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.show_expanded),
+                        contentDescription = ""
+                    )
+                }
+                FilledTonalIconToggleButton(
+                    checked = showType == EditarCategoriasShowType.COMPACT,
+                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.show_compact),
+                        contentDescription = ""
+                    )
+                }
+            }
+            ZProgressIndicator(
+                compleition = totalCompleition,
+                labelString = stringResource(id = R.string.Progreso),
+                color = GazegeTheme.gazegeColorScheme.neutral,
+                excessColor = excessColor(value = totalAhorroExceso)
+            )
+            CategoryWithBudgetListView(
+                categoriesWithCalculatedData = categoriesWithCalculatedData,
+                editCategory = onEditCategoryRequested,
+                delCategory = onDeleteCategoryRequested,
+                exportCategory = onExportCategoryRequested,
+                onSetBudgetRequested = onSetBudgetRequested,
+                paddingValues = paddingValues,
+                showType = showType,
+                nestedScrollConnection = nestedScrollConnection,
+                onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
+                state = state
+            )
+        } else if (categories != null) {
+            CategoryListView(
+                paddingValues = paddingValues,
+                nestedScrollConnection = nestedScrollConnection,
+                state = state,
+                onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
+                categoryWithSubCategories = categories,
+                editCategory = onEditCategoryRequested,
+                delCategory = onDeleteCategoryRequested,
+                exportCategory = onExportCategoryRequested
+            )
+        } else {
+            Text("Categories and categories with budget is null.")
+        }
+    }
+}
+
+@Composable
+private fun LoadedEditarCategoriasUI(
+    paddingValues: PaddingValues,
+    nestedScrollConnection: NestedScrollConnection,
+    leftToPay: Double,
+    totalAhorroExceso: Double,
+    realTotalFlow: Double,
+    hasZeroElements: Boolean,
+    categoryListView: @Composable () -> Unit
+) {
     val layoutDirection = LocalLayoutDirection.current
-    var hasZeroElements: Boolean? by rememberSaveable { mutableStateOf(null) }
-
-    LaunchedEffect(categoriesWithCalculatedData.isEmpty()) {
-        val newValue = categoriesWithCalculatedData.isEmpty()
-        hasZeroElements = newValue
-        onZeroElementsChanged(newValue)
-    }
 
     Column(
         modifier = Modifier.padding(
@@ -151,7 +285,7 @@ fun LoadedEditarCategorias(
                 .height(IntrinsicSize.Min)
                 .pointerInput(1) {
                     detectDragGestures { change, dragAmount ->
-                        if (hasZeroElements?.not() == true) {
+                        if (hasZeroElements.not()) {
                             change.consume()
                             nestedScrollConnection.onPreScroll(
                                 dragAmount,
@@ -163,8 +297,8 @@ fun LoadedEditarCategorias(
 
         ) {
             DataView(
-                title = faltaPagarRecibirTexto(editarCategoriasState.leftToPay),
-                value = doubleToMoneyString(editarCategoriasState.leftToPay),
+                title = faltaPagarRecibirTexto(leftToPay),
+                value = doubleToMoneyString(leftToPay),
                 enabled = false,
                 modifier = Modifier.weight(1f)
             )
@@ -176,80 +310,12 @@ fun LoadedEditarCategorias(
             )
             DataView(
                 title = stringResource(id = R.string.Flujo_categorizado),
-                value = doubleToMoneyString(editarCategoriasState.realTotalFlow),
+                value = doubleToMoneyString(realTotalFlow),
                 enabled = false,
                 modifier = Modifier.weight(1f),
             )
         }
-        Row(
-            Modifier
-                .fillMaxWidth(1f)
-                .pointerInput(1) {
-                    detectDragGestures { change, dragAmount ->
-                        if (hasZeroElements?.not() == true) {
-                            change.consume()
-                            nestedScrollConnection.onPreScroll(
-                                dragAmount,
-                                NestedScrollSource.Wheel
-                            )
-                        }
-                    }
-                },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(
-                dimensionResource(id = R.dimen.DefaultPadding),
-                alignment = Alignment.End
-            )
-        ) {
-            FilledTonalIconToggleButton(
-                checked = showType == EditarCategoriasShowType.GRAPHICAL,
-                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.GRAPHICAL) },
-                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.show_graphical),
-                    contentDescription = ""
-                )
-            }
-            FilledTonalIconToggleButton(
-                checked = showType == EditarCategoriasShowType.EXPANDED,
-                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.EXPANDED) },
-                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.show_expanded),
-                    contentDescription = ""
-                )
-            }
-            FilledTonalIconToggleButton(
-                checked = showType == EditarCategoriasShowType.COMPACT,
-                onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
-                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.show_compact),
-                    contentDescription = ""
-                )
-            }
-        }
-        ZProgressIndicator(
-            compleition = totalCompleition,
-            labelString = stringResource(id = R.string.Progreso),
-            color = GazegeTheme.gazegeColorScheme.neutral,
-            excessColor = excessColor(value = totalAhorroExceso)
-        )
-        CategoryListView(
-            categoriesWithCalculatedData = categoriesWithCalculatedData,
-            editCategory = onEditCategoryRequested,
-            delCategory = onDeleteCategoryRequested,
-            exportCategory = onExportCategoryRequested,
-            onSetBudgetRequested = onSetBudgetRequested,
-            paddingValues = paddingValues,
-            showType = showType,
-            nestedScrollConnection = nestedScrollConnection,
-            onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
-            state = state
-        )
+        categoryListView()
     }
 }
 

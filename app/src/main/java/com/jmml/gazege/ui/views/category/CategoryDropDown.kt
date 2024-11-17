@@ -52,7 +52,7 @@ data class CategoryNode(
 fun CategoryDropDown(
     modifier: Modifier = Modifier,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     selectedCategory: Category?,
     label: @Composable () -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -62,7 +62,7 @@ fun CategoryDropDown(
     var dropDownExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    if (budgetWithCalculatedDataAndCategory.isNotEmpty()) {
+    if (budgetWithCalculatedDataAndCategory != null) {
         val categoryToBudgetWithCalculatedData =
             remember(budgetWithCalculatedDataAndCategory, categoryList) {
                 categoryList.associateWith { category ->

@@ -57,7 +57,7 @@ import kotlin.math.withSign
 fun BudgetFormView(
     budget: Budget?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     onSaveBudget: (Budget) -> Unit
 ) {
     var isGasto by rememberSaveable(budget) {

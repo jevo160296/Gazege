@@ -56,11 +56,9 @@ import com.jmml.gazege.core.entities.TransactionDetails
 import com.jmml.gazege.data.SampleId
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
-import com.jmml.gazege.ui.navigation.EditarCategoriasState
-import com.jmml.gazege.ui.navigation.EmptyEditarCategoriasState
 import com.jmml.gazege.ui.navigation.EmptyPersonSummaryState
 import com.jmml.gazege.ui.navigation.FullPersonSummaryState
-import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.jmml.gazege.ui.navigation.ICategoriesView
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
@@ -148,7 +146,7 @@ fun MainFragment(
     onExportCategoryRequested: (Category) -> Unit,
     showVertical: Boolean,
     showType: EditarCategoriasShowType,
-    categoriasState: EditarCategoriasState
+    categoriasState: Result<ICategoriesView>
 ) {
     val transactionState = rememberLazyListState()
     val accountState = rememberTreeState()
@@ -460,7 +458,7 @@ private fun MainFragmentResponsiveContent(
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     showType: EditarCategoriasShowType,
-    categoriasState: EditarCategoriasState,
+    categoriasState: Result<ICategoriesView>,
     onShowTypeChanged: (EditarCategoriasShowType) -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
@@ -553,26 +551,25 @@ private fun MainFragmentResponsiveContent(
 
     val categoriasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         onTitleChanged(stringResource(id = R.string.Categorias))
-        when (categoriasState) {
-            is LoadedEditarCategoriasState -> LoadedEditarCategorias(
-                editarCategoriasState = categoriasState,
-                paddingValues = paddingValues,
-                onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
-                onDeleteCategoryRequested = { delCategory(it) },
-                onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
-                onExportCategoryRequested = onExportCategoryRequested,
-                showType = showType,
-                onShowTypeChanged = onShowTypeChanged,
-                nestedScrollConnection = nestedScrollConnection,
-                onZeroElementsChanged = onZeroElementsChanged,
-                state = categoryState,
-                onFirstElementVisibleChanged = onFirstElementVisibleChanged
-            )
-
-            is EmptyEditarCategoriasState -> EmptyEditarCategorias(
-                editarCategoriasState = categoriasState,
-                paddingValues = paddingValues
-            )
+        Crossfade(categoriasState, label = "CrossFade") { state ->
+            when (state) {
+                is Result.Error -> Text("Error: ${state.exception.message}")
+                Result.Loading -> LoadingEditarCategorias(paddingValues = paddingValues)
+                is Result.Success -> LoadedEditarCategorias(
+                    editarCategoriasState = state.data,
+                    paddingValues = paddingValues,
+                    onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
+                    onDeleteCategoryRequested = { delCategory(it) },
+                    onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
+                    onExportCategoryRequested = onExportCategoryRequested,
+                    showType = showType,
+                    onShowTypeChanged = onShowTypeChanged,
+                    nestedScrollConnection = nestedScrollConnection,
+                    onZeroElementsChanged = onZeroElementsChanged,
+                    state = categoryState,
+                    onFirstElementVisibleChanged = onFirstElementVisibleChanged
+                )
+            }
         }
     }
 
@@ -874,7 +871,7 @@ private fun DefaultPreview() {
                 onExportCategoryRequested = {},
                 showVertical = true,
                 showType = EditarCategoriasShowType.COMPACT,
-                categoriasState = EmptyEditarCategoriasState,
+                categoriasState = Result.Loading,
                 onEditPromissoryNoteRequested = {},
                 delPromissoryNote = {},
                 delTransactionDetails = {}

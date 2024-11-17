@@ -44,7 +44,7 @@ fun TransactionFormFragment(
     accountList: List<AccountAndOwner>,
     personList: List<Person>,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     defaultDate: LocalDate? = null,
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,

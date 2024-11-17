@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 fun CategoryForm(
     categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
     onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
     onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
