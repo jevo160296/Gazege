@@ -551,25 +551,23 @@ private fun MainFragmentResponsiveContent(
 
     val categoriasPage = @Composable { nestedScrollConnection: NestedScrollConnection ->
         onTitleChanged(stringResource(id = R.string.Categorias))
-        Crossfade(categoriasState, label = "CrossFade") { state ->
-            when (state) {
-                is Result.Error -> Text("Error: ${state.exception.message}")
-                Result.Loading -> LoadingEditarCategorias(paddingValues = paddingValues)
-                is Result.Success -> LoadedEditarCategorias(
-                    editarCategoriasState = state.data,
-                    paddingValues = paddingValues,
-                    onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
-                    onDeleteCategoryRequested = { delCategory(it) },
-                    onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
-                    onExportCategoryRequested = onExportCategoryRequested,
-                    showType = showType,
-                    onShowTypeChanged = onShowTypeChanged,
-                    nestedScrollConnection = nestedScrollConnection,
-                    onZeroElementsChanged = onZeroElementsChanged,
-                    state = categoryState,
-                    onFirstElementVisibleChanged = onFirstElementVisibleChanged
-                )
-            }
+        when (categoriasState) {
+            is Result.Error -> Text("Error: ${categoriasState.exception.message}")
+            Result.Loading -> LoadingEditarCategorias(paddingValues = paddingValues)
+            is Result.Success -> LoadedEditarCategorias(
+                editarCategoriasState = categoriasState.data,
+                paddingValues = paddingValues,
+                onEditCategoryRequested = { onNavigateToEditCategory(it.id) },
+                onDeleteCategoryRequested = { delCategory(it) },
+                onSetBudgetRequested = { onNavigateToAddBudget(it.id) },
+                onExportCategoryRequested = onExportCategoryRequested,
+                showType = showType,
+                onShowTypeChanged = onShowTypeChanged,
+                nestedScrollConnection = nestedScrollConnection,
+                onZeroElementsChanged = onZeroElementsChanged,
+                state = categoryState,
+                onFirstElementVisibleChanged = onFirstElementVisibleChanged
+            )
         }
     }
 

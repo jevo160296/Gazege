@@ -6,12 +6,43 @@ import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalcu
 
 sealed interface ICategoriesView
 
-data class LoadedCategoriesWithBudgetDataView(
-    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
-    val leftToPay: Double,
-    val realTotalFlow: Double,
+sealed interface ICategoriesWithBudgetDataView : ICategoriesView {
+    val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
+    val leftToPay: Double
+    val realTotalFlow: Double
     val netFlow: Double
-) : ICategoriesView {
+}
+
+sealed interface ICategoriesDataView : ICategoriesView {
+    val categoriesWithSubCategories: List<CategoryWithSubCategories>
+}
+
+data class ReloadingCategoriesWithBudgetDataView(
+    override val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    override val leftToPay: Double,
+    override val realTotalFlow: Double,
+    override val netFlow: Double
+) : ICategoriesWithBudgetDataView {
+    companion object {
+        fun from(LoadedCategoriesWithBudgetDataView: LoadedCategoriesWithBudgetDataView) =
+            LoadedCategoriesWithBudgetDataView.run {
+                ReloadingCategoriesWithBudgetDataView(
+                    categoriesWithCalculatedData = categoriesWithCalculatedData,
+                    leftToPay = leftToPay,
+                    realTotalFlow = realTotalFlow,
+                    netFlow = netFlow
+                )
+            }
+
+    }
+}
+
+data class LoadedCategoriesWithBudgetDataView(
+    override val categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    override val leftToPay: Double,
+    override val realTotalFlow: Double,
+    override val netFlow: Double
+) : ICategoriesWithBudgetDataView {
     companion object {
         fun from(
             categoriesWithCalculatedData: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>
@@ -46,9 +77,22 @@ data class LoadedCategoriesWithBudgetDataView(
     }
 }
 
+data class ReloadingCategoriesDataView(
+    override val categoriesWithSubCategories: List<CategoryWithSubCategories>
+) : ICategoriesDataView {
+    companion object {
+        fun from(loadedCategoriesDataView: LoadedCategoriesDataView) =
+            loadedCategoriesDataView.run {
+                ReloadingCategoriesDataView(
+                    categoriesWithSubCategories = categoriesWithSubCategories
+                )
+            }
+    }
+}
+
 data class LoadedCategoriesDataView(
-    val categoriesWithSubCategories: List<CategoryWithSubCategories>
-) : ICategoriesView {
+    override val categoriesWithSubCategories: List<CategoryWithSubCategories>
+) : ICategoriesDataView {
     companion object {
         fun from(
             categories: List<Category>

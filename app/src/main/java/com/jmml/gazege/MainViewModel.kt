@@ -75,6 +75,8 @@ import com.jmml.gazege.ui.navigation.LoadedPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
+import com.jmml.gazege.ui.navigation.ReloadingCategoriesDataView
+import com.jmml.gazege.ui.navigation.ReloadingCategoriesWithBudgetDataView
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.loadingPersonSummaryState
 import com.jmml.gazege.ui.progressStatus.HistoricalProgressStatus
@@ -532,6 +534,11 @@ class MainViewModel(
             }
             .shareInViewModel()
 
+    private var cachedReloadingCategoriesWithBudgetDataView: ReloadingCategoriesWithBudgetDataView? =
+        null
+
+    private var cachedReloadingCategoriesDataView: ReloadingCategoriesDataView? = null
+
     private val editarCategoriasState: SharedFlow<Result<ICategoriesView>> =
         budgetWithCalculatedDataAndCategory
             .combineDefault(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
@@ -556,15 +563,26 @@ class MainViewModel(
                                 categoryWithCalculatedDataMap
                             )
                         )
+                        cachedReloadingCategoriesWithBudgetDataView =
+                            ReloadingCategoriesWithBudgetDataView.from(state)
+                        cachedReloadingCategoriesDataView = null
                         Result.Success(state)
                     } else {
                         val state = LoadedCategoriesDataView(combined.categoriesWithSubCategories)
+                        cachedReloadingCategoriesWithBudgetDataView = null
+                        cachedReloadingCategoriesDataView = ReloadingCategoriesDataView.from(state)
                         Result.Success(state)
                     }
                 } else {
-                    Result.Loading
+                    cachedReloadingCategoriesWithBudgetDataView
+                        ?.let {
+                            Result.Success(it)
+                        } ?: cachedReloadingCategoriesDataView?.let {
+                        Result.Success(it)
+                    }
                 }
             }
+            .filterNotNull()
             .shareInViewModel()
 
     private val transactionFilters: MutableStateFlow<BooleanFilters<String, Nothing>> =
