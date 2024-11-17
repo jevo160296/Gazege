@@ -143,7 +143,7 @@ private fun CategoryAndBudgetViewHolder(
 @Composable
 private fun CategoryViewHolder(
     categoryName: String
-) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
+) = Column(modifier = Modifier.padding(24.dp)) {
     LargeEmphasis(text = categoryName)
 }
 
@@ -259,7 +259,7 @@ fun CategoryListView(
             onItemLongPressed = { menuIdExpanded = node.id() },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
-            scope.ClickableCategoriesViewHolder(
+            ClickableCategoriesViewHolder(
                 editCategory = editCategory,
                 delCategory = delCategory,
                 exportCategory = exportCategory,
@@ -378,7 +378,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
 }
 
 @Composable
-fun TreeScope<CategoryWithSubCategories, CategoryNode>.ClickableCategoriesViewHolder(
+fun ClickableCategoriesViewHolder(
     editCategory: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
     exportCategory: (category: Category) -> Unit,
@@ -389,9 +389,7 @@ fun TreeScope<CategoryWithSubCategories, CategoryNode>.ClickableCategoriesViewHo
     val category = node.content.category
 
     Box {
-        CategoryViewHolder(
-            categoryName = category.name
-        )
+        CategoryViewHolder(categoryName = category.name)
         DropdownMenu(
             expanded = menuIdExpanded == node.id(),
             onDismissRequest = { onMenuIdExpandedChanged(null) }
