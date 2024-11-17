@@ -1,5 +1,12 @@
 package com.jmml.gazege.ui.fragments
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,9 +47,9 @@ import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.sumOrNull
 import com.jmml.gazege.ui.doubleToMoneyString
+import com.jmml.gazege.ui.navigation.ICategoriesDataView
 import com.jmml.gazege.ui.navigation.ICategoriesView
-import com.jmml.gazege.ui.navigation.LoadedCategoriesDataView
-import com.jmml.gazege.ui.navigation.LoadedCategoriesWithBudgetDataView
+import com.jmml.gazege.ui.navigation.ICategoriesWithBudgetDataView
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryListView
 import com.jmml.gazege.ui.views.category.CategoryWithBudgetListView
@@ -123,7 +130,7 @@ fun LoadedEditarCategorias(
     val listIsempty: Boolean
 
     when (editarCategoriasState) {
-        is LoadedCategoriesDataView -> {
+        is ICategoriesDataView -> {
             categories = editarCategoriasState.categoriesWithSubCategories
             categoriesWithCalculatedData = null
             initialExpectation = 0.0
@@ -134,7 +141,7 @@ fun LoadedEditarCategorias(
             listIsempty = categories.isEmpty()
         }
 
-        is LoadedCategoriesWithBudgetDataView -> {
+        is ICategoriesWithBudgetDataView -> {
             categoriesWithCalculatedData = editarCategoriasState.categoriesWithCalculatedData
             categories = null
             initialExpectation = remember(editarCategoriasState) {
@@ -160,6 +167,20 @@ fun LoadedEditarCategorias(
         }
     }
 
+    val animatedTotalCompleition by animateFloatAsState(
+        totalCompleition.toFloat(),
+        label = "AnimateTotalCompleition"
+    )
+    val animatedLeftToPay by animateFloatAsState(leftToPay.toFloat(), label = "AnimateLeftToPay")
+    val animatedTotalAhorroExceso by animateFloatAsState(
+        totalAhorroExceso.toFloat(),
+        label = "AnimateTotalAhorroExceso"
+    )
+    val animatedRealTotalFlow by animateFloatAsState(
+        realTotalFlow.toFloat(),
+        label = "AnimateRealTotalFlow"
+    )
+
     val hasZeroElements: Boolean by rememberSaveable(listIsempty) {
         onZeroElementsChanged(listIsempty)
         mutableStateOf(listIsempty)
@@ -168,12 +189,16 @@ fun LoadedEditarCategorias(
     LoadedEditarCategoriasUI(
         paddingValues = paddingValues,
         nestedScrollConnection = nestedScrollConnection,
-        leftToPay = leftToPay,
-        totalAhorroExceso = totalAhorroExceso,
-        realTotalFlow = realTotalFlow,
+        leftToPay = animatedLeftToPay.toDouble(),
+        totalAhorroExceso = animatedTotalAhorroExceso.toDouble(),
+        realTotalFlow = animatedRealTotalFlow.toDouble(),
         hasZeroElements = hasZeroElements
     ) {
-        if (categoriesWithCalculatedData != null) {
+        AnimatedVisibility(
+            visible = categoriesWithCalculatedData != null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
             Row(
                 Modifier
                     .fillMaxWidth(1f)
@@ -225,37 +250,51 @@ fun LoadedEditarCategorias(
                     )
                 }
             }
-            ZProgressIndicator(
-                compleition = totalCompleition,
-                labelString = stringResource(id = R.string.Progreso),
-                color = GazegeTheme.gazegeColorScheme.neutral,
-                excessColor = excessColor(value = totalAhorroExceso)
-            )
-            CategoryWithBudgetListView(
-                categoriesWithCalculatedData = categoriesWithCalculatedData,
-                editCategory = onEditCategoryRequested,
-                delCategory = onDeleteCategoryRequested,
-                exportCategory = onExportCategoryRequested,
-                onSetBudgetRequested = onSetBudgetRequested,
-                paddingValues = paddingValues,
-                showType = showType,
-                nestedScrollConnection = nestedScrollConnection,
-                onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
-                state = state
-            )
-        } else if (categories != null) {
-            CategoryListView(
-                paddingValues = paddingValues,
-                nestedScrollConnection = nestedScrollConnection,
-                state = state,
-                onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
-                categoryWithSubCategories = categories,
-                editCategory = onEditCategoryRequested,
-                delCategory = onDeleteCategoryRequested,
-                exportCategory = onExportCategoryRequested
-            )
-        } else {
-            Text("Categories and categories with budget is null.")
+        }
+        AnimatedVisibility(
+            visible = categoriesWithCalculatedData != null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column {
+                ZProgressIndicator(
+                    compleition = animatedTotalCompleition.toDouble(),
+                    labelString = stringResource(id = R.string.Progreso),
+                    color = GazegeTheme.gazegeColorScheme.neutral,
+                    excessColor = excessColor(value = totalAhorroExceso)
+                )
+            }
+        }
+        Crossfade(Pair(categoriesWithCalculatedData, categories), label = "CrossFade") {
+            val innerCategoriesWithCalculatedData = it.first
+            val innerCategories = it.second
+            if (innerCategoriesWithCalculatedData != null) {
+                CategoryWithBudgetListView(
+                    categoriesWithCalculatedData = innerCategoriesWithCalculatedData,
+                    editCategory = onEditCategoryRequested,
+                    delCategory = onDeleteCategoryRequested,
+                    exportCategory = onExportCategoryRequested,
+                    onSetBudgetRequested = onSetBudgetRequested,
+                    paddingValues = paddingValues,
+                    showType = showType,
+                    nestedScrollConnection = nestedScrollConnection,
+                    onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
+                    state = state
+                )
+            } else if (innerCategories != null) {
+                CategoryListView(
+                    paddingValues = paddingValues,
+                    nestedScrollConnection = nestedScrollConnection,
+                    state = state,
+                    onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
+                    categoryWithSubCategories = innerCategories,
+                    editCategory = onEditCategoryRequested,
+                    delCategory = onDeleteCategoryRequested,
+                    exportCategory = onExportCategoryRequested
+                )
+            } else {
+                Text("Categories and categories with budget is null.")
+            }
         }
     }
 }
