@@ -16,6 +16,7 @@ data class BudgetAndCategoryWithTransactions(
     val budgetFrequencyType get() = budget.frequencyType
     val budgetValue get() = budget.value
     val budgetEachClass get() = budget.eachClass
+    val budgetDescription get() = budget.description
 
     companion object {
         fun from(

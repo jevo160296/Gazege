@@ -2355,10 +2355,19 @@ class MainViewModel(
         fun rememberBudgetAndCategoryWithCalculatedData() =
             remember {
                 budgetWithCalculatedDataAndCategory
-                    .mapNotNull { if (it is Result.Success) it.data else null }
+                    .map { if (it is Result.Success) it.data else null }
                     .shareInViewModel()
             }
-                .collectAsState(emptyList())
+                .collectAsState(null)
+
+        @Composable
+        fun rememberBudgetAndCategoryWithTransactions() =
+            remember {
+                budgetAndCategoryWithTransactions
+                    .map { Result.Success(it) }
+                    .shareInViewModel()
+            }
+                .collectAsState(Result.Loading)
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =

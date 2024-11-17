@@ -22,7 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.jmml.gazege.R
 import com.jmml.gazege.core.entities.BudgetWithCalculatedDataAndCategory
-import com.jmml.gazege.ui.views.budget.BudgetRecyclerView
+import com.jmml.gazege.ui.views.budget.BudgetWithDataRecyclerView
 import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.gazege.ui.widgets.fab.FAB
 import kotlinx.coroutines.launch
@@ -67,13 +67,13 @@ fun EditBudgetFragment(
             top = padding.calculateTopPadding(),
             bottom = dimensionResource(id = R.dimen.FABDefaultSpace)
         )
-        BudgetRecyclerView(
+        BudgetWithDataRecyclerView(
             modifier = Modifier.systemBarsPadding(),
             itemHolderPaddingValues = itemHolderPaddingValues,
             budget = budget,
-            onBudgetDetailRequested = { it.budgetId?.let { id -> onGetBudgetDetailRequested(id) } },
+            onBudgetDetailRequested = { it.id?.let { id -> onGetBudgetDetailRequested(id) } },
             onBudgetDeleteRequested = {
-                it.budgetId?.let { id ->
+                it.id?.let { id ->
                     scope.launch {
                         val response = snackbarHostState.showSnackbar(
                             message = confirmationMessage,
@@ -86,7 +86,7 @@ fun EditBudgetFragment(
                     }
                 }
             },
-            onBudgetEditRequested = { it.budgetId?.let { id -> onEditBudgetRequested(id) } }
+            onBudgetEditRequested = { it.id?.let { id -> onEditBudgetRequested(id) } }
         )
     }
 }
