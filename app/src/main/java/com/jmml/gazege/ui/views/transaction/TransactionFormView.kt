@@ -47,7 +47,6 @@ import com.jmml.gazege.core.entities.AccountAndOwnerWithPockets
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Person
-import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.savers.PartialNewTransactionDetails
 import com.jmml.gazege.ui.savers.PartialTransactionWithDetailsAndAccounts
@@ -74,7 +73,7 @@ fun TransactionAndAccountsForm(
     personList: List<Person>,
     onRealizarAnombreDeIdChanged: (detailIndexId: Int, personId: Int?) -> Unit,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     onDoneAction: () -> Unit,
     isComplete: Boolean,
     addAnotherTransaction: Boolean,
@@ -278,7 +277,7 @@ private fun ColumnScope.TransactionDetailListForm(
     transactionDetails: List<PartialNewTransactionDetails>,
     categoryList: List<Category>,
     personList: List<Person>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     isSplitted: Boolean,
     onAddTransactionDetailRequested: () -> Unit,
     onRemoveTransactionDetailRequested: (transactionIndex: Int) -> Unit,
@@ -430,7 +429,7 @@ private fun TransactionDetailsForm(
     transactionDetailsIndex: Int,
     categoryList: List<Category>,
     personList: List<Person>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     isSplitted: Boolean,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
@@ -446,7 +445,7 @@ private fun TransactionDetailsForm(
     val selectedCategoryId = transactionDetails.categoryId
 
     val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == selectedCategoryId }
+        categoryList.firstOrNull { it.id == selectedCategoryId }
 
     var realizarANombreDe by rememberSaveable(aNombreDe) {
         mutableStateOf(aNombreDe != null)

@@ -66,17 +66,17 @@ import com.jmml.gazege.ui.Settings
 import com.jmml.gazege.ui.clockFlow
 import com.jmml.gazege.ui.fragments.EditarCategoriasShowType
 import com.jmml.gazege.ui.navigation.CurrentCashSettingsState
-import com.jmml.gazege.ui.navigation.EditarCategoriasState
 import com.jmml.gazege.ui.navigation.EmptyPersonSummaryState
 import com.jmml.gazege.ui.navigation.FullPersonSummaryState
-import com.jmml.gazege.ui.navigation.LoadedEditarCategoriasState
+import com.jmml.gazege.ui.navigation.ICategoriesView
+import com.jmml.gazege.ui.navigation.LoadedCategoriesDataView
+import com.jmml.gazege.ui.navigation.LoadedCategoriesWithBudgetDataView
 import com.jmml.gazege.ui.navigation.LoadedPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
 import com.jmml.gazege.ui.navigation.ReloadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.loadingPersonSummaryState
-import com.jmml.gazege.ui.navigation.nullCategoriasState
 import com.jmml.gazege.ui.progressStatus.HistoricalProgressStatus
 import com.jmml.gazege.ui.progressStatus.IProgressStatus
 import com.jmml.gazege.ui.progressStatus.Status
@@ -411,7 +411,7 @@ class MainViewModel(
         }
         .shareInViewModel()
 
-    private val budgetWithCalculatedData: SharedFlow<Result<List<BudgetWithCalculatedData>>> =
+    private val budgetWithCalculatedData: SharedFlow<Result<List<BudgetWithCalculatedData>?>> =
         budgetAndCategoryWithTransactions
             .combine(range) { budgetAndCategoryWithTransactions, range ->
                 object {
@@ -435,14 +435,14 @@ class MainViewModel(
                             endDate
                         )
                     } else {
-                        emptyList()
+                        null
                     }
                 }
                 emit(Result.Success(result))
             }
             .shareInViewModel()
 
-    private val categoryWithCalculatedData: SharedFlow<Result<List<CategoryWithCalculatedData>>> =
+    private val categoryWithCalculatedData: SharedFlow<Result<List<CategoryWithCalculatedData>?>> =
         categoryWithTransactions
             .combine(range) { categoryWithTransactions, range ->
                 object {
@@ -466,7 +466,7 @@ class MainViewModel(
                                 endDate = endDate
                             )
                         } else {
-                            emptyList()
+                            null
                         }
                     )
                 }
@@ -474,15 +474,17 @@ class MainViewModel(
             }
             .shareInViewModel()
 
-    private val budgetWithCalculatedDataAndCategory: SharedFlow<Result<List<BudgetWithCalculatedDataAndCategory>>> =
+    private val budgetWithCalculatedDataAndCategory: SharedFlow<Result<List<BudgetWithCalculatedDataAndCategory>?>> =
         budgetWithCalculatedData
             .combineDefault(categories) { budgetWithCalculatedData, categories ->
                 when (budgetWithCalculatedData) {
                     is Result.Success -> Result.Success(
-                        BudgetWithCalculatedDataAndCategory.from(
-                            budgetWithCalculatedData.data,
-                            categories
-                        )
+                        budgetWithCalculatedData.data?.let {
+                            BudgetWithCalculatedDataAndCategory.from(
+                                it,
+                                categories
+                            )
+                        }
                     )
 
                     is Result.Error -> budgetWithCalculatedData
@@ -492,7 +494,7 @@ class MainViewModel(
             .shareInViewModel()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val categoryWithSubcategoriesAndBudgetWithCalculatedData: SharedFlow<Result<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>>> =
+    val categoryWithSubcategoriesAndBudgetWithCalculatedData: SharedFlow<Result<List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?>> =
         categoryWithCalculatedData
             .combine(budgetWithCalculatedDataAndCategory) { categoryWithCalculatedData, budgetWithCalculatedDataAndCategory ->
                 object {
@@ -510,20 +512,27 @@ class MainViewModel(
             }
             .mapLatest { combined ->
                 if (combined.categoryWithCalculatedData is Result.Success && combined.budgetWithCalculatedDataAndCategory is Result.Success) {
-                    Result.Success(
-                        CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                            budgetWithCalculatedDataAndCategory = combined.budgetWithCalculatedDataAndCategory.data,
-                            categoriesWithSubcategories = combined.categoriesWithSubcategories,
-                            categoriesWithCalculatedData = combined.categoryWithCalculatedData.data.associateBy {
-                                it.category.id ?: 0
-                            }
+                    val categoryWithCategoryDataData = combined.categoryWithCalculatedData.data
+                    val budgetWithCalculatedDataAndCategoryData =
+                        combined.budgetWithCalculatedDataAndCategory.data
+                    if (categoryWithCategoryDataData != null && budgetWithCalculatedDataAndCategoryData != null) {
+                        Result.Success(
+                            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategoryData,
+                                categoriesWithSubcategories = combined.categoriesWithSubcategories,
+                                categoriesWithCalculatedData = categoryWithCategoryDataData.associateBy {
+                                    it.category.id ?: 0
+                                }
+                            )
                         )
-                    )
+                    } else {
+                        Result.Success(null)
+                    }
                 } else Result.Loading
             }
             .shareInViewModel()
 
-    private val editarCategoriasState: SharedFlow<EditarCategoriasState> =
+    private val editarCategoriasState: SharedFlow<Result<ICategoriesView>> =
         budgetWithCalculatedDataAndCategory
             .combineDefault(categoriesWithSubCategories) { budgetWithCalculatedDataAndCategory, categoriesWithSubCategories ->
                 object {
@@ -533,18 +542,29 @@ class MainViewModel(
             }
             .combineDefault(categoryWithCalculatedData) { combined, categoryWithCalculatedData ->
                 if (categoryWithCalculatedData is Result.Success && combined.budgetWithCalculatedDataAndCategory is Result.Success) {
-                    val categoryWithCalculatedDataMap =
-                        categoryWithCalculatedData.data.associateBy { it.category.id ?: 0 }
-                    LoadedEditarCategoriasState.from(
-                        CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
-                            combined.budgetWithCalculatedDataAndCategory.data,
-                            combined.categoriesWithSubCategories,
-                            categoryWithCalculatedDataMap
+                    val categoryWithCalculatedDataData = categoryWithCalculatedData.data
+                    val budgetWithCalculatedDataAndCategoryData =
+                        combined.budgetWithCalculatedDataAndCategory.data
+
+                    if (categoryWithCalculatedDataData != null && budgetWithCalculatedDataAndCategoryData != null) {
+                        val categoryWithCalculatedDataMap =
+                            categoryWithCalculatedDataData.associateBy { it.category.id ?: 0 }
+                        val state = LoadedCategoriesWithBudgetDataView.from(
+                            CategoryWithSubcategoriesAndBudgetWithCalculatedData.from(
+                                budgetWithCalculatedDataAndCategoryData,
+                                combined.categoriesWithSubCategories,
+                                categoryWithCalculatedDataMap
+                            )
                         )
-                    )
-                } else null
+                        Result.Success(state)
+                    } else {
+                        val state = LoadedCategoriesDataView(combined.categoriesWithSubCategories)
+                        Result.Success(state)
+                    }
+                } else {
+                    Result.Loading
+                }
             }
-            .filterNotNull()
             .shareInViewModel()
 
     private val transactionFilters: MutableStateFlow<BooleanFilters<String, Nothing>> =
@@ -924,7 +944,8 @@ class MainViewModel(
                                 }
                                 .toTransactionAndDetailsAndAccounts(),
                             allPromissoryNotes = allPromissoryNotes,
-                            budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory,
+                            budgetWithCalculatedDatumAndCategories = budgetWithCalculatedDataAndCategory
+                                ?: emptyList(),
                             includeBudget = incluirPresupuestoEnSaldoActual,
                             includeDebts = incluirDeudasEnSaldoActual
                         )
@@ -1888,7 +1909,7 @@ class MainViewModel(
 
         @Composable
         fun rememberEditarCategoriasState() =
-            editarCategoriasState.collectAsState(nullCategoriasState())
+            editarCategoriasState.collectAsState(Result.Loading)
 
         fun updateShowType(newValue: EditarCategoriasShowType) = _showPlot.postValue(newValue)
 
@@ -2334,10 +2355,19 @@ class MainViewModel(
         fun rememberBudgetAndCategoryWithCalculatedData() =
             remember {
                 budgetWithCalculatedDataAndCategory
-                    .mapNotNull { if (it is Result.Success) it.data else null }
+                    .map { if (it is Result.Success) it.data else null }
                     .shareInViewModel()
             }
-                .collectAsState(emptyList())
+                .collectAsState(null)
+
+        @Composable
+        fun rememberBudgetAndCategoryWithTransactions() =
+            remember {
+                budgetAndCategoryWithTransactions
+                    .map { Result.Success(it) }
+                    .shareInViewModel()
+            }
+                .collectAsState(Result.Loading)
 
         @Composable
         fun rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData() =

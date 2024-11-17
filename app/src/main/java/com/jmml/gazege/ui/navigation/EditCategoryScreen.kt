@@ -1,7 +1,7 @@
 package com.jmml.gazege.ui.navigation
 
 import android.database.sqlite.SQLiteConstraintException
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
@@ -34,51 +34,63 @@ fun NavGraphBuilder.screenEditCategory(
         val budgetWithCalculatedDataAndCategory =
             viewModelEditCategory.rememberCategoryWithSubcategoriesAndBudgetWithCalculatedData().value
         val budgetAndCategoryWithCalculatedData by viewModelEditCategory.rememberBudgetAndCategoryWithCalculatedData()
+        val budgetAndCategoryWithTransactions =
+            viewModelEditCategory.rememberBudgetAndCategoryWithTransactions().value
 
         val coroutineScope = rememberCoroutineScope()
 
         val categoryId = navStack.arguments?.getInt("categoryId")
         val category = categories.firstOrNull { it.id == categoryId }
 
-        val categoryBudget =
-            budgetAndCategoryWithCalculatedData.filter { it.category.id == categoryId }
+        val categoryBudgetWithCalculatedData =
+            budgetAndCategoryWithCalculatedData?.filter { it.category.id == categoryId }
         when (budgetWithCalculatedDataAndCategory) {
             is Result.Error -> Text(text = "Error ${budgetWithCalculatedDataAndCategory.exception}")
             Result.Loading -> LoadingCategoryForm()
-            is Result.Success -> CategoryForm(
-                category?.let { Pair(category, categoryBudget) },
-                categories,
-                budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
-                onCategorySave = { newCategory, state ->
-                    viewModelEditCategory.updateCategory(
-                        newCategory,
-                        onCompleitionAction = onNavigateUp
-                    ) { error ->
-                        val msg = when (error) {
-                            is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
-                                "${newCategory.name} ya existe."
-                            } else {
-                                "CONSTRAINT ERROR"
-                            }
-
-                            else -> error.toString()
-                        }
-                        coroutineScope.launch {
-                            state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
-                        }
-                    }
-                },
-                onBudgetDeleteRequested = { viewModelEditCategory.deleteBudget(it.budget.budget) },
-                onBudgetDetailRequested = {},
-                onBudgetEditRequested = { budget ->
-                    budget.budgetId?.let {
-                        onNavigateToEditOneBudgetRequested(
-                            it
+            is Result.Success -> when (budgetAndCategoryWithTransactions) {
+                is Result.Error -> Text(text = "Error ${budgetAndCategoryWithTransactions.exception}")
+                Result.Loading -> LoadingCategoryForm()
+                is Result.Success -> CategoryForm(
+                    category?.let {
+                        Triple(
+                            category,
+                            budgetAndCategoryWithTransactions.data.filter { it.category.id == categoryId },
+                            categoryBudgetWithCalculatedData
                         )
-                    }
-                },
-                onBudgetAddRequested = onNavigateToAddOneBudgetRequested
-            )
+                    },
+                    categories,
+                    budgetWithCalculatedDataAndCategory = budgetWithCalculatedDataAndCategory.data,
+                    onCategorySave = { newCategory, state ->
+                        viewModelEditCategory.updateCategory(
+                            newCategory,
+                            onCompleitionAction = onNavigateUp
+                        ) { error ->
+                            val msg = when (error) {
+                                is SQLiteConstraintException -> if (newCategory.name in categories.map { it.name }) {
+                                    "${newCategory.name} ya existe."
+                                } else {
+                                    "CONSTRAINT ERROR"
+                                }
+
+                                else -> error.toString()
+                            }
+                            coroutineScope.launch {
+                                state.showSnackbar("Error agregando ${newCategory.name}: \n$msg")
+                            }
+                        }
+                    },
+                    onBudgetDeleteRequested = { viewModelEditCategory.deleteBudget(it) },
+                    onBudgetDetailRequested = {},
+                    onBudgetEditRequested = { budget ->
+                        budget.id?.let {
+                            onNavigateToEditOneBudgetRequested(
+                                it
+                            )
+                        }
+                    },
+                    onBudgetAddRequested = onNavigateToAddOneBudgetRequested
+                )
+            }
         }
     }
 }

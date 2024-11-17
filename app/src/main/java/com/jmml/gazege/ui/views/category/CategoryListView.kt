@@ -35,6 +35,7 @@ import com.jmml.gazege.R
 import com.jmml.gazege.core.dao.CategoryDao
 import com.jmml.gazege.core.entities.BudgetWithCalculatedData
 import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.plot.CategoryPlot
 import com.jmml.gazege.ui.DatabaseSample
@@ -140,6 +141,13 @@ private fun CategoryAndBudgetViewHolder(
 }
 
 @Composable
+private fun CategoryViewHolder(
+    categoryName: String
+) = Column(modifier = Modifier.padding(24.dp)) {
+    LargeEmphasis(text = categoryName)
+}
+
+@Composable
 private fun EmptyCategoryAndBudgetViewHolder(
     category: Category,
     onSetBudgetRequested: () -> Unit
@@ -162,7 +170,7 @@ private fun EmptyCategoryAndBudgetViewHolder(
     }
 
 @Composable
-fun CategoryListView(
+fun CategoryWithBudgetListView(
     paddingValues: PaddingValues,
     nestedScrollConnection: NestedScrollConnection,
     state: TreeState = rememberTreeState(),
@@ -200,7 +208,7 @@ fun CategoryListView(
             onItemLongPressed = { menuIdExpanded = node.id() },
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
-            scope.ClickableCategoriesViewHolder(
+            scope.ClickableCategoriesWithBudgetViewHolder(
                 onSetBudgetRequested = onSetBudgetRequested,
                 editCategory = editCategory,
                 delCategory = delCategory,
@@ -215,7 +223,56 @@ fun CategoryListView(
 }
 
 @Composable
-fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWithBudgetNode>.ClickableCategoriesViewHolder(
+fun CategoryListView(
+    paddingValues: PaddingValues,
+    nestedScrollConnection: NestedScrollConnection,
+    state: TreeState = rememberTreeState(),
+    onFirstElementsVisibleChanged: (isVisible: Boolean) -> Unit,
+    categoryWithSubCategories: List<CategoryWithSubCategories>,
+    editCategory: (category: Category) -> Unit,
+    delCategory: (category: Category) -> Unit,
+    exportCategory: (category: Category) -> Unit
+) {
+    val nodes = remember(categoryWithSubCategories) {
+        categoryWithSubCategories.map {
+            CategoryNode(it)
+        }
+    }
+    var menuIdExpanded: NodeId? by remember {
+        mutableStateOf(null)
+    }
+    val firstElementIsVisible by remember { derivedStateOf { state.listState.firstVisibleItemIndex == 0 } }
+    LaunchedEffect(firstElementIsVisible) { onFirstElementsVisibleChanged(firstElementIsVisible) }
+    SimpleTreeList(
+        modifier = Modifier.nestedScroll(nestedScrollConnection),
+        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
+        itemSpacing = dimensionResource(id = R.dimen.DefaultPadding) * 2,
+        nodes = nodes,
+        state = state
+    ) { node, scope ->
+        ClickableTreeListItemViewHolder(
+            level = node.level,
+            showExpandIcon = node.children.isNotEmpty(),
+            isExpanded = scope.isExpanded(node),
+            onIsExpandedChanged = { scope.toggleExpanded(node) },
+            onItemTapped = { editCategory(node.content.category) },
+            onItemLongPressed = { menuIdExpanded = node.id() },
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        ) {
+            ClickableCategoriesViewHolder(
+                editCategory = editCategory,
+                delCategory = delCategory,
+                exportCategory = exportCategory,
+                menuIdExpanded = menuIdExpanded,
+                onMenuIdExpandedChanged = { menuIdExpanded = it },
+                node = node
+            )
+        }
+    }
+}
+
+@Composable
+fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWithBudgetNode>.ClickableCategoriesWithBudgetViewHolder(
     onSetBudgetRequested: (category: Category) -> Unit,
     editCategory: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
@@ -320,13 +377,53 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
     }
 }
 
+@Composable
+fun ClickableCategoriesViewHolder(
+    editCategory: (category: Category) -> Unit,
+    delCategory: (category: Category) -> Unit,
+    exportCategory: (category: Category) -> Unit,
+    menuIdExpanded: NodeId?,
+    onMenuIdExpandedChanged: (NodeId?) -> Unit,
+    node: CategoryNode
+) {
+    val category = node.content.category
+
+    Box {
+        CategoryViewHolder(categoryName = category.name)
+        DropdownMenu(
+            expanded = menuIdExpanded == node.id(),
+            onDismissRequest = { onMenuIdExpandedChanged(null) }
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Editar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    editCategory(node.content.category)
+                })
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Eliminar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    delCategory(node.content.category)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.Exportar)) },
+                onClick = {
+                    onMenuIdExpandedChanged(null)
+                    exportCategory(node.content.category)
+                })
+        }
+    }
+}
+
 @Preview(widthDp = 600, heightDp = 720)
 @Composable
 private fun CategoryListPreview() {
     DatabaseSample {
         GazegeTheme {
             Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-                CategoryListView(
+                CategoryWithBudgetListView(
                     paddingValues = PaddingValues(),
                     categoriesWithCalculatedData = categoryWithSubcategoriesAndBudgetWithCalculatedDataSample,
                     editCategory = {},

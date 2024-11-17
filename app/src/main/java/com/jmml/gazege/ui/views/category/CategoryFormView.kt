@@ -33,14 +33,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.jmml.gazege.R
+import com.jmml.gazege.core.entities.Budget
+import com.jmml.gazege.core.entities.BudgetAndCategoryWithTransactions
 import com.jmml.gazege.core.entities.BudgetType
 import com.jmml.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
-import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.savers.PartialCategory
 import com.jmml.gazege.ui.savers.categorySaver
 import com.jmml.gazege.ui.views.budget.BudgetRecyclerView
+import com.jmml.gazege.ui.views.budget.BudgetWithDataRecyclerView
 import com.jmml.gazege.ui.widgets.Form
 import com.jmml.gazege.ui.widgets.LargeBody
 import com.jmml.gazege.ui.widgets.MediumHeadline
@@ -49,17 +51,18 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CategoryForm(
-    categoryMap: Pair<Category, List<BudgetWithCalculatedDataAndCategory>>?,
+    categoryMap: Triple<Category, List<BudgetAndCategoryWithTransactions>, List<BudgetWithCalculatedDataAndCategory>?>?,
     categories: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     onCategorySave: (Category, SnackbarHostState) -> Unit,
-    onBudgetDetailRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
-    onBudgetEditRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
-    onBudgetDeleteRequested: (BudgetWithCalculatedDataAndCategory) -> Unit,
+    onBudgetDetailRequested: (Budget) -> Unit,
+    onBudgetEditRequested: (Budget) -> Unit,
+    onBudgetDeleteRequested: (Budget) -> Unit,
     onBudgetAddRequested: ((Category) -> Unit)?
 ) {
     val category = categoryMap?.first
-    val budgetData = categoryMap?.second?.takeIf { it.isNotEmpty() }
+    val budget = categoryMap?.second
+    val budgetData = categoryMap?.third
     var partialCategory by rememberSaveable(
         stateSaver = categorySaver
     ) {
@@ -74,8 +77,7 @@ fun CategoryForm(
     val scope = rememberCoroutineScope()
 
     val snackbarHostState = SnackbarHostState()
-    val selectedCategory =
-        budgetWithCalculatedDataAndCategory.recursiveFirstOrNull { it.category.category.id == partialCategory.parentId }
+    val selectedCategory = categories.firstOrNull { it.id == partialCategory.parentId }
     val filteredCategories = categories.filter { it.id != partialCategory.id }
 
     val focusRequester = remember { FocusRequester() }
@@ -133,9 +135,36 @@ fun CategoryForm(
                 )
             )
             val siText = stringResource(id = R.string.Si)
-            BudgetRecyclerView(
+            BudgetWithDataRecyclerView(
                 itemHolderPaddingValues = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
                 budget = budgetData,
+                onBudgetDetailRequested = onBudgetDetailRequested,
+                onBudgetDeleteRequested = {
+                    scope.launch {
+                        val response = snackbarHostState.showSnackbar(
+                            message = mensaje,
+                            actionLabel = siText,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Indefinite
+                        )
+                        if (response == SnackbarResult.ActionPerformed) {
+                            onBudgetDeleteRequested(it)
+                        }
+                    }
+                },
+                onBudgetEditRequested = onBudgetEditRequested,
+                modifier = Modifier.heightIn(max = 1024.dp)
+            )
+        } else if (budget != null) {
+            val mensaje = stringResource(id = R.string.confirma_la_eliminacion_de).format(
+                stringResource(
+                    id = R.string.Presupuesto
+                )
+            )
+            val siText = stringResource(id = R.string.Si)
+            BudgetRecyclerView(
+                itemHolderPaddingValues = PaddingValues(dimensionResource(id = R.dimen.DefaultPadding)),
+                budget = budget,
                 onBudgetDetailRequested = onBudgetDetailRequested,
                 onBudgetDeleteRequested = {
                     scope.launch {

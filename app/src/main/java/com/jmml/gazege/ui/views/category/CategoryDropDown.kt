@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.core.entities.Category
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
+import com.jmml.gazege.core.entities.recursiveFirstOrNull
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
 import com.jmml.gazege.ui.widgets.TreeComboBox
@@ -50,50 +52,100 @@ data class CategoryNode(
 fun CategoryDropDown(
     modifier: Modifier = Modifier,
     categoryList: List<Category>,
-    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>,
-    selectedCategory: CategoryWithSubcategoriesAndBudgetWithCalculatedData?,
+    budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
+    selectedCategory: Category?,
     label: @Composable () -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     onItemClick: (Category?) -> Unit
 ) {
-    val selectedNode = selectedCategory
-        ?.let { CategoryWithBudgetNode(it) }
-    val categoryWithBudgetNodes: List<CategoryWithBudgetNode> = budgetWithCalculatedDataAndCategory
-        .map {
-            CategoryWithBudgetNode(it)
-        }
     var dropDownExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    val itemToString = { it: CategoryWithBudgetNode? ->
-        val category = it?.content?.category
-        if (category == null) {
-            ""
-        } else {
-            val leftToPayToday = it.content.leftToPayToday
-            "${category.name}: ${doubleToMoneyString(leftToPayToday)}"
+    if (budgetWithCalculatedDataAndCategory != null) {
+        val categoryToBudgetWithCalculatedData =
+            remember(budgetWithCalculatedDataAndCategory, categoryList) {
+                categoryList.associateWith { category ->
+                    budgetWithCalculatedDataAndCategory.recursiveFirstOrNull {
+                        it.category.id == category.id
+                    }
+                }
+            }
+        val selectedBudgetNode = selectedCategory
+            ?.let { CategoryWithBudgetNode(categoryToBudgetWithCalculatedData[selectedCategory]!!) }
+        val categoryWithBudgetNodes: List<CategoryWithBudgetNode> =
+            budgetWithCalculatedDataAndCategory
+                .map {
+                    CategoryWithBudgetNode(it)
+                }
+        val budgetToString = { it: CategoryWithBudgetNode? ->
+            val category = it?.content?.category
+            if (category == null) {
+                ""
+            } else {
+                val leftToPayToday = it.content.leftToPayToday
+                "${category.name}: ${doubleToMoneyString(leftToPayToday)}"
+            }
         }
+        TreeComboBox(
+            modifier = modifier,
+            dropDownExpanded = dropDownExpanded,
+            onExpandedChange = {
+                dropDownExpanded = !dropDownExpanded
+            },
+            options = categoryWithBudgetNodes,
+            selectedItem = selectedBudgetNode,
+            itemToString = budgetToString,
+            label = label,
+            onItemClick = { onItemClick(it.content.category.category) },
+            canClearSelection = true,
+            onClearSelectionClicked = {
+                onItemClick(null)
+            },
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            nodeEnabled = { true }
+        )
+    } else {
+        val categoryWithSubCategories = remember(categoryList) {
+            CategoryWithSubCategories.from(categoryList)
+        }
+        val categoryToCategoryWithSubCategories =
+            remember(categoryWithSubCategories, categoryList) {
+                categoryList.associateWith { category ->
+                    categoryWithSubCategories.recursiveFirstOrNull {
+                        it.category.id == category.id
+                    }
+                }
+            }
+        val selectedCategoryNode = selectedCategory
+            ?.let { CategoryNode(categoryToCategoryWithSubCategories[selectedCategory]!!) }
+        val categoryNodes: List<CategoryNode> = categoryWithSubCategories
+            .map { CategoryNode(it) }
+        val categoryToString = { it: CategoryNode? ->
+            val category = it?.content?.category
+            category?.name ?: ""
+        }
+        TreeComboBox(
+            modifier = modifier,
+            dropDownExpanded = dropDownExpanded,
+            onExpandedChange = {
+                dropDownExpanded = !dropDownExpanded
+            },
+            options = categoryNodes,
+            selectedItem = selectedCategoryNode,
+            itemToString = categoryToString,
+            label = label,
+            onItemClick = { onItemClick(it.content.category) },
+            canClearSelection = true,
+            onClearSelectionClicked = {
+                onItemClick(null)
+            },
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            nodeEnabled = { true }
+        )
     }
-    TreeComboBox(
-        modifier = modifier,
-        dropDownExpanded = dropDownExpanded,
-        onExpandedChange = {
-            dropDownExpanded = !dropDownExpanded
-        },
-        options = categoryWithBudgetNodes,
-        selectedItem = selectedNode,
-        itemToString = itemToString,
-        label = label,
-        onItemClick = { onItemClick(it.content.category.category) },
-        canClearSelection = true,
-        onClearSelectionClicked = {
-            onItemClick(null)
-        },
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        nodeEnabled = { true }
-    )
 }
 
 @Preview

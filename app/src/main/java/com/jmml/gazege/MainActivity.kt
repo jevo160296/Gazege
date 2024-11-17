@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity() {
                         .firstOrNull()
                         ?.let { (categoryId, categories) ->
                             categories
-                                .recursiveFirstOrNull { it.category.category.id == categoryId }
+                                ?.recursiveFirstOrNull { it.category.category.id == categoryId }
                                 ?.let { categoryToExport ->
                                     uri?.let {
                                         contentResolver.openOutputStream(uri)?.let { outputStream ->

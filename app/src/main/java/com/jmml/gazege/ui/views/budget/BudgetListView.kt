@@ -28,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.jmml.gazege.R
+import com.jmml.gazege.core.entities.Budget
+import com.jmml.gazege.core.entities.BudgetAndCategoryWithTransactions
 import com.jmml.gazege.core.entities.BudgetWithCalculatedDataAndCategory
 import com.jmml.gazege.ui.DatabaseSample
 import com.jmml.gazege.ui.doubleToMoneyString
@@ -36,7 +38,7 @@ import com.jmml.gazege.ui.templates.SimpleLazyList
 import com.jmml.gazege.ui.theme.GazegeTheme
 
 @Composable
-private fun BudgetViewHolder(
+private fun BudgetWithDataViewHolder(
     budget: BudgetWithCalculatedDataAndCategory
 ) {
     val overlineText =
@@ -68,13 +70,38 @@ private fun BudgetViewHolder(
 }
 
 @Composable
-fun BudgetRecyclerView(
+private fun BudgetViewHolder(
+    budget: BudgetAndCategoryWithTransactions
+) {
+    val overlineText =
+        " ${doubleToMoneyString(budget.budgetValue)} each ${budget.budgetFrequency}, period ${budget.budgetFrequencyType}\n"
+    val descripcionText = stringResource(id = R.string.descripcion)
+    val supportingView = @Composable {
+        Column(Modifier.fillMaxWidth()) {
+            Text(
+                text = "$descripcionText ${budget.budgetDescription}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+
+    ListItem(
+        overlineContent = { Text(text = overlineText) },
+        headlineContent = { },
+        supportingContent = { supportingView() },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+    )
+}
+
+@Composable
+fun BudgetWithDataRecyclerView(
     modifier: Modifier,
     itemHolderPaddingValues: PaddingValues,
     budget: List<BudgetWithCalculatedDataAndCategory>,
-    onBudgetDetailRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit,
-    onBudgetDeleteRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit,
-    onBudgetEditRequested: (budget: BudgetWithCalculatedDataAndCategory) -> Unit
+    onBudgetDetailRequested: (budget: Budget) -> Unit,
+    onBudgetDeleteRequested: (budget: Budget) -> Unit,
+    onBudgetEditRequested: (budget: Budget) -> Unit
 ) {
     val state = rememberLazyListState()
     var menuIdExpanded: Int? by remember {
@@ -87,11 +114,11 @@ fun BudgetRecyclerView(
         items = budget
     ) {
         ClickableListItemViewHolder(
-            onItemTapped = { onBudgetDetailRequested(it) },
+            onItemTapped = { onBudgetDetailRequested(it.budget.budget) },
             onItemLongPressed = { menuIdExpanded = it.budgetId }
         ) {
             Box {
-                BudgetViewHolder(
+                BudgetWithDataViewHolder(
                     budget = it
                 )
                 DropdownMenu(
@@ -101,13 +128,60 @@ fun BudgetRecyclerView(
                         text = { Text(text = stringResource(R.string.Editar)) },
                         onClick = {
                             menuIdExpanded = null
-                            onBudgetEditRequested(it)
+                            onBudgetEditRequested(it.budget.budget)
                         })
                     DropdownMenuItem(
                         text = { Text(text = stringResource(R.string.Eliminar)) },
                         onClick = {
                             menuIdExpanded = null
-                            onBudgetDeleteRequested(it)
+                            onBudgetDeleteRequested(it.budget.budget)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BudgetRecyclerView(
+    modifier: Modifier,
+    itemHolderPaddingValues: PaddingValues,
+    budget: List<BudgetAndCategoryWithTransactions>,
+    onBudgetDetailRequested: (budget: Budget) -> Unit,
+    onBudgetDeleteRequested: (budget: Budget) -> Unit,
+    onBudgetEditRequested: (budget: Budget) -> Unit
+) {
+    val state = rememberLazyListState()
+    var menuIdExpanded: Int? by remember {
+        mutableStateOf(null)
+    }
+    SimpleLazyList(
+        modifier = modifier,
+        state = state,
+        contentPadding = itemHolderPaddingValues,
+        items = budget
+    ) {
+        ClickableListItemViewHolder(
+            onItemTapped = { onBudgetDetailRequested(it.budget) },
+            onItemLongPressed = { menuIdExpanded = it.budgetId }
+        ) {
+            Box {
+                BudgetViewHolder(budget = it)
+                DropdownMenu(
+                    expanded = menuIdExpanded == it.budgetId,
+                    onDismissRequest = { menuIdExpanded = null }) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.Editar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            onBudgetEditRequested(it.budget)
+                        })
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.Eliminar)) },
+                        onClick = {
+                            menuIdExpanded = null
+                            onBudgetDeleteRequested(it.budget)
                         }
                     )
                 }
@@ -133,7 +207,7 @@ private fun BudgetPreview() {
                     HorizontalDivider()
                     Text("$startDateSample")
                     Text("$endDateSample")
-                    BudgetRecyclerView(
+                    BudgetWithDataRecyclerView(
                         modifier = Modifier,
                         itemHolderPaddingValues = PaddingValues(),
                         budget = budgetAndCategoryWithCalculatedDataSample,
