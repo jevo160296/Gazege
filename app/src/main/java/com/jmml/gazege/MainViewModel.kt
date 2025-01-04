@@ -84,6 +84,7 @@ import com.jmml.gazege.ui.progressStatus.IProgressStatus
 import com.jmml.gazege.ui.progressStatus.Status
 import com.jmml.gazege.ui.savers.listStringSaver
 import com.jmml.gazege.ui.views.account.AccountDetailData
+import com.jmml.gazege.ui.views.category.CompactShow
 import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentWithSignViewModel
 import com.jmml.gazege.ui.views.document.TransactionDocumentWithSignViewModel
 import com.jmml.gazege.ui.views.promissorynote.PromissoryNoteViewModel
@@ -272,6 +273,7 @@ class MainViewModel(
         settings.getCategoryIdToExportFlow().shareInViewModel()
     val useDynamicColor = settings.getUseDynamicColor().shareInViewModel()
     val showOnBoarding = settings.getShowOnBoardingFlow().shareInViewModel()
+    val compactShow = settings.getCompactShow().shareInViewModel()
     private val allPerson = repository.getPersons().shareInViewModel()
     private val allAccount = repository.getAccounts().shareInViewModel()
     private val allTransactions = repository.getTransactions(null, null).shareInViewModel()
@@ -1162,6 +1164,10 @@ class MainViewModel(
         settings.setUseDynamicColor(newValue)
     }
 
+    fun settingsCompactShowFlow(newValue: CompactShow) = viewModelScope.launch {
+        settings.setCompactShow(newValue)
+    }
+
     private fun getPrincipalPerson(personList: List<Person>): Person? {
         return if (personList.isEmpty()) {
             null
@@ -1926,10 +1932,17 @@ class MainViewModel(
             _showPlot.observeAsState(initial = EditarCategoriasShowType.COMPACT)
 
         @Composable
+        fun rememberCompactShow() =
+            compactShow.collectAsState(null)
+
+        @Composable
         fun rememberEditarCategoriasState() =
             editarCategoriasState.collectAsState(Result.Loading)
 
         fun updateShowType(newValue: EditarCategoriasShowType) = _showPlot.postValue(newValue)
+
+        fun updateCompactShow(newValue: CompactShow) =
+            this@MainViewModel.settingsCompactShowFlow(newValue)
 
         fun deleteCategory(category: Category) = this@MainViewModel.deleteCategory(category)
     }

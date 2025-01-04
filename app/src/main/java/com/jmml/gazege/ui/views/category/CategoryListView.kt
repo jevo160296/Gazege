@@ -90,10 +90,22 @@ private fun CategoryAndBudgetViewHolder(
     pastForecast: Map<LocalDate, Double>,
     futureForecast: Map<LocalDate, Double>,
     dateRange: ClosedRange<LocalDate>,
-    showType: EditarCategoriasShowType
+    showType: EditarCategoriasShowType,
+    compactShow: CompactShow
 ) = Column(modifier = Modifier.padding(dimensionResource(id = R.dimen.DefaultPadding))) {
-    val expandedVisibility =
-        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED)
+    val leftToPayVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.LEFT_TO_PAY)
+    val flujoCategorizadoVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.CATEGORIZED_FLOW)
+    val flujoTotalVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.TOTAL_FLOW)
+    val estimacionInicialVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.INITIAL_EXPECTATION)
+    val ahorroExcesoVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.AHORRO_EXCESO)
+    val disponibleHoyVisibility =
+        dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.EXPANDED || compactShow == CompactShow.AVAILABLE_TODAY)
+
     val graphicalVisibility =
         dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.GRAPHICAL)
     val ahorroExceso = CategoryDao.calculateAhorroExceso(realTotalFlow, initialExpectation)
@@ -107,21 +119,21 @@ private fun CategoryAndBudgetViewHolder(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            expandedVisibility { Text(faltaPagarRecibirTexto(value = leftToPay)) }
-            expandedVisibility { Text(stringResource(id = R.string.Flujo_categorizado)) }
-            expandedVisibility { Text(stringResource(id = R.string.Flujo_total)) }
-            expandedVisibility { Text(stringResource(id = R.string.estimacion_inicial)) }
-            expandedVisibility { Text(ahorroExcesoTexto(value = ahorroExceso)) }
-            Text(stringResource(id = R.string.Disponible_hoy))
+            leftToPayVisibility { Text(faltaPagarRecibirTexto(value = leftToPay)) }
+            flujoCategorizadoVisibility { Text(stringResource(id = R.string.Flujo_categorizado)) }
+            flujoTotalVisibility { Text(stringResource(id = R.string.Flujo_total)) }
+            estimacionInicialVisibility { Text(stringResource(id = R.string.estimacion_inicial)) }
+            ahorroExcesoVisibility { Text(ahorroExcesoTexto(value = ahorroExceso)) }
+            disponibleHoyVisibility { Text(stringResource(id = R.string.Disponible_hoy)) }
         }
         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.DefaultPadding)))
         Column {
-            expandedVisibility { Text(doubleToMoneyString(leftToPay)) }
-            expandedVisibility { Text(doubleToMoneyString(realTotalFlow)) }
-            expandedVisibility { Text(doubleToMoneyString(expectedTotalFlow)) }
-            expandedVisibility { Text(doubleToMoneyString(initialExpectation)) }
-            expandedVisibility { Text(doubleToMoneyString(ahorroExceso)) }
-            Text(doubleToMoneyString(availableToday))
+            leftToPayVisibility { Text(doubleToMoneyString(leftToPay)) }
+            flujoCategorizadoVisibility { Text(doubleToMoneyString(realTotalFlow)) }
+            flujoTotalVisibility { Text(doubleToMoneyString(expectedTotalFlow)) }
+            estimacionInicialVisibility { Text(doubleToMoneyString(initialExpectation)) }
+            ahorroExcesoVisibility { Text(doubleToMoneyString(ahorroExceso)) }
+            disponibleHoyVisibility { Text(doubleToMoneyString(availableToday)) }
         }
     }
     graphicalVisibility { Text(stringResource(id = R.string.Pronostico)) }
@@ -180,6 +192,7 @@ fun CategoryWithBudgetListView(
     onSetBudgetRequested: (category: Category) -> Unit,
     delCategory: (category: Category) -> Unit,
     showType: EditarCategoriasShowType,
+    compactShow: CompactShow,
     exportCategory: (category: Category) -> Unit
 ) {
     val nodes = remember(categoriesWithCalculatedData) {
@@ -216,7 +229,8 @@ fun CategoryWithBudgetListView(
                 menuIdExpanded = menuIdExpanded,
                 onMenuIdExpandedChanged = { menuIdExpanded = it },
                 node = node,
-                showType = showType
+                showType = showType,
+                compactShow = compactShow
             )
         }
     }
@@ -280,6 +294,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
     menuIdExpanded: NodeId?,
     onMenuIdExpandedChanged: (NodeId?) -> Unit,
     showType: EditarCategoriasShowType,
+    compactShow: CompactShow,
     node: CategoryWithBudgetNode
 ) {
     val categoryWithCalculatedData = node.content
@@ -343,7 +358,8 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 pastForecast = pastForecast,
                 futureForecast = futureForecast,
                 dateRange = dateRange,
-                showType = showType
+                showType = showType,
+                compactShow = compactShow
             )
         } else {
             EmptyCategoryAndBudgetViewHolder(
@@ -432,9 +448,19 @@ private fun CategoryListPreview() {
                     exportCategory = {},
                     showType = EditarCategoriasShowType.EXPANDED,
                     nestedScrollConnection = object : NestedScrollConnection {},
-                    onFirstElementsVisibleChanged = {}
+                    onFirstElementsVisibleChanged = {},
+                    compactShow = CompactShow.AVAILABLE_TODAY
                 )
             }
         }
     }
+}
+
+enum class CompactShow {
+    AVAILABLE_TODAY,
+    LEFT_TO_PAY,
+    CATEGORIZED_FLOW,
+    TOTAL_FLOW,
+    INITIAL_EXPECTATION,
+    AHORRO_EXCESO
 }
