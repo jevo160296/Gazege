@@ -71,6 +71,7 @@ import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.transactionDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.views.AddAction
 import com.jmml.gazege.ui.views.account.LoadedAccountPage
+import com.jmml.gazege.ui.views.category.CompactShow
 import com.jmml.gazege.ui.views.document.LoadedDocumentListView
 import com.jmml.gazege.ui.views.document.LoadingDocumentListView
 import com.jmml.gazege.ui.views.document.PromissoryNoteDocumentViewModel
@@ -146,6 +147,8 @@ fun MainFragment(
     onExportCategoryRequested: (Category) -> Unit,
     showVertical: Boolean,
     showType: EditarCategoriasShowType,
+    compactShow: CompactShow?,
+    onCompactShowChanged: (CompactShow) -> Unit,
     categoriasState: Result<ICategoriesView>
 ) {
     val transactionState = rememberLazyListState()
@@ -412,7 +415,9 @@ fun MainFragment(
             onNavigateToEditCategory = onNavigateToEditCategory,
             onNavigateToAddBudget = onNavigateToAddBudget,
             onExportCategoryRequested = onExportCategoryRequested,
-            showVertical = showVertical
+            showVertical = showVertical,
+            compactShow = compactShow,
+            onCompactShowChanged = onCompactShowChanged
         )
     }
 }
@@ -458,6 +463,8 @@ private fun MainFragmentResponsiveContent(
     descriptionFilterState: TextFilter,
     onDescriptionFilterStateChanged: (TextFilter) -> Unit,
     showType: EditarCategoriasShowType,
+    compactShow: CompactShow?,
+    onCompactShowChanged: (CompactShow) -> Unit,
     categoriasState: Result<ICategoriesView>,
     onShowTypeChanged: (EditarCategoriasShowType) -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
@@ -566,7 +573,9 @@ private fun MainFragmentResponsiveContent(
                 nestedScrollConnection = nestedScrollConnection,
                 onZeroElementsChanged = onZeroElementsChanged,
                 state = categoryState,
-                onFirstElementVisibleChanged = onFirstElementVisibleChanged
+                onFirstElementVisibleChanged = onFirstElementVisibleChanged,
+                compactShow = compactShow,
+                onCompactShowChanged = onCompactShowChanged
             )
         }
     }
@@ -872,7 +881,9 @@ private fun DefaultPreview() {
                 categoriasState = Result.Loading,
                 onEditPromissoryNoteRequested = {},
                 delPromissoryNote = {},
-                delTransactionDetails = {}
+                delTransactionDetails = {},
+                compactShow = CompactShow.AHORRO_EXCESO,
+                onCompactShowChanged = {}
             )
         }
     }

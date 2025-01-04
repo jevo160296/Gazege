@@ -145,6 +145,8 @@ fun NavGraphBuilder.screenMain(
                 onExportCategoryRequested = onExportCategoryRequested,
                 showVertical = showVertical,
                 showType = viewModelCategoryList.rememberShowType().value,
+                compactShow = viewModelCategoryList.rememberCompactShow().value,
+                onCompactShowChanged = viewModelCategoryList::updateCompactShow,
                 categoriasState = viewModelCategoryList.rememberEditarCategoriasState().value,
             )
         }

@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,10 +54,12 @@ import com.jmml.gazege.ui.navigation.ICategoriesWithBudgetDataView
 import com.jmml.gazege.ui.theme.GazegeTheme
 import com.jmml.gazege.ui.views.category.CategoryListView
 import com.jmml.gazege.ui.views.category.CategoryWithBudgetListView
+import com.jmml.gazege.ui.views.category.CompactShow
 import com.jmml.gazege.ui.views.category.ahorroExcesoTexto
 import com.jmml.gazege.ui.views.category.excessColor
 import com.jmml.gazege.ui.views.category.faltaPagarRecibirTexto
 import com.jmml.gazege.ui.widgets.DataView
+import com.jmml.gazege.ui.widgets.input.ExpandableIconToggleButton
 import com.jmml.gazege.ui.widgets.treeview.TreeState
 import com.jmml.gazege.ui.widgets.treeview.rememberTreeState
 import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
@@ -116,6 +119,8 @@ fun LoadedEditarCategorias(
     onExportCategoryRequested: (Category) -> Unit,
     onDeleteCategoryRequested: (Category) -> Unit,
     showType: EditarCategoriasShowType,
+    compactShow: CompactShow?,
+    onCompactShowChanged: (CompactShow) -> Unit,
     onZeroElementsChanged: (Boolean) -> Unit,
     onFirstElementVisibleChanged: (isVisible: Boolean) -> Unit,
     onShowTypeChanged: (newValue: EditarCategoriasShowType) -> Unit
@@ -185,6 +190,20 @@ fun LoadedEditarCategorias(
         onZeroElementsChanged(listIsempty)
         mutableStateOf(listIsempty)
     }
+    var compactDropDownExpanded by rememberSaveable { mutableStateOf(false) }
+    val options = mapOf(
+        stringResource(id = R.string.Disponible_hoy) to CompactShow.AVAILABLE_TODAY,
+        faltaPagarRecibirTexto(value = 0.0) to CompactShow.LEFT_TO_PAY,
+        stringResource(id = R.string.Flujo_categorizado) to CompactShow.CATEGORIZED_FLOW,
+        stringResource(id = R.string.Flujo_total) to CompactShow.TOTAL_FLOW,
+        stringResource(id = R.string.estimacion_inicial) to CompactShow.INITIAL_EXPECTATION,
+        ahorroExcesoTexto(value = 0.0) to CompactShow.AHORRO_EXCESO,
+    )
+    val inverseOptions = options.map { (label, compactShow) ->
+        compactShow to label
+    }.toMap()
+
+    val selectedOption = inverseOptions[compactShow] ?: ""
 
     LoadedEditarCategoriasUI(
         paddingValues = paddingValues,
@@ -239,16 +258,31 @@ fun LoadedEditarCategorias(
                         contentDescription = ""
                     )
                 }
-                FilledTonalIconToggleButton(
+                ExpandableIconToggleButton(
                     checked = showType == EditarCategoriasShowType.COMPACT,
-                    onCheckedChange = { onShowTypeChanged(EditarCategoriasShowType.COMPACT) },
-                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.show_compact),
-                        contentDescription = ""
-                    )
-                }
+                    expanded = showType == EditarCategoriasShowType.COMPACT,
+                    dropDownExpanded = compactDropDownExpanded,
+                    options = options.keys.toList(),
+                    onOptionSelected = {
+                        onCompactShowChanged(options[it] ?: CompactShow.LEFT_TO_PAY)
+                        compactDropDownExpanded = false
+                    },
+                    onDropDownExpandedChange = { if (!it) compactDropDownExpanded = false },
+                    onCheckedChange = {
+                        if (it) onShowTypeChanged(EditarCategoriasShowType.COMPACT)
+                        else compactDropDownExpanded = true
+                    },
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent),
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.show_compact),
+                            contentDescription = ""
+                        )
+                    },
+                    text = {
+                        Text(selectedOption)
+                    }
+                )
             }
         }
         AnimatedVisibility(
@@ -277,6 +311,7 @@ fun LoadedEditarCategorias(
                     onSetBudgetRequested = onSetBudgetRequested,
                     paddingValues = paddingValues,
                     showType = showType,
+                    compactShow = compactShow ?: CompactShow.LEFT_TO_PAY,
                     nestedScrollConnection = nestedScrollConnection,
                     onFirstElementsVisibleChanged = onFirstElementVisibleChanged,
                     state = state
