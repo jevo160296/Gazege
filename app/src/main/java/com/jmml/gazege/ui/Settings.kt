@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.jmml.gazege.ui.views.category.CompactShow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -18,6 +20,7 @@ val INCLUIR_DEUDAS_EN_SALDO_ACTUAL_FLOW = booleanPreferencesKey("incluir_deudas"
 val CATEGORY_ID_TO_EXPORT = intPreferencesKey("category_id_to_export")
 val SHOW_ON_BOARDING = booleanPreferencesKey("show_on_boarding")
 val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
+val COMPACT_SHOW = stringPreferencesKey("compact_show")
 
 data class Settings(
     val context: Context
@@ -47,6 +50,13 @@ data class Settings(
             preferences[USE_DYNAMIC_COLOR] ?: false
         }
 
+    fun getCompactShow(): Flow<CompactShow> = context.dataStore.data
+        .map { preferences ->
+            val rawValue = preferences[COMPACT_SHOW] ?: ""
+            val values = CompactShow.values()
+            values.find { it.name == rawValue } ?: values.first()
+        }
+
     suspend fun setIncluirPresupuestoEnSaldoActualFlow(valor: Boolean) {
         context.dataStore.edit { settings ->
             settings[INCLUIR_PRESUPUESTO_EN_SALDO_ACTUAL_FLOW] = valor
@@ -74,6 +84,12 @@ data class Settings(
     suspend fun setUseDynamicColor(valor: Boolean) {
         context.dataStore.edit { settings ->
             settings[USE_DYNAMIC_COLOR] = valor
+        }
+    }
+
+    suspend fun setCompactShow(valor: CompactShow) {
+        context.dataStore.edit { settings ->
+            settings[COMPACT_SHOW] = valor.name
         }
     }
 }
