@@ -108,7 +108,7 @@ private fun CategoryAndBudgetViewHolder(
 
     val graphicalVisibility =
         dynamicVisibilityTemplate(showType >= EditarCategoriasShowType.GRAPHICAL)
-    val ahorroExceso = CategoryDao.calculateAhorroExceso(realTotalFlow, initialExpectation)
+    val ahorroExceso = CategoryDao.calculateAhorroExceso(expectedTotalFlow, initialExpectation)
 
     LargeEmphasis(text = categoryName)
     Row(
@@ -350,7 +350,7 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
             CategoryAndBudgetViewHolder(
                 categoryName = category.name,
                 leftToPay = leftToPay,
-                expectedTotalFlow = realFlow + leftToPay,
+                expectedTotalFlow = CategoryDao.calculateExpectedTotalFlow(realFlow, leftToPay),
                 realTotalFlow = realFlow,
                 initialExpectation = initialExpectation,
                 availableToday = availableToday,

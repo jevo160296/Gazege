@@ -163,7 +163,10 @@ fun LoadedEditarCategorias(
                 )
             }
             totalAhorroExceso = CategoryDao.calculateAhorroExceso(
-                editarCategoriasState.realTotalFlow,
+                CategoryDao.calculateExpectedTotalFlow(
+                    editarCategoriasState.realTotalFlow,
+                    editarCategoriasState.leftToPay
+                ),
                 initialExpectation
             )
             leftToPay = editarCategoriasState.leftToPay
