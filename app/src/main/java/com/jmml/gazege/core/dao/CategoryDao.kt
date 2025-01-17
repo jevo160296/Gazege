@@ -63,5 +63,7 @@ interface CategoryDao {
 
         fun calculateAhorroExceso(realTotalFlow: Double, initialExpectation: Double): Double =
             realTotalFlow - initialExpectation
+        fun calculateExpectedTotalFlow(realFlow: Double, leftToPay: Double): Double =
+            realFlow + leftToPay
     }
 }
