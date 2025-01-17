@@ -59,6 +59,7 @@ import com.jmml.gazege.ui.accountDeleitionConfirmationBuilder
 import com.jmml.gazege.ui.navigation.EmptyPersonSummaryState
 import com.jmml.gazege.ui.navigation.FullPersonSummaryState
 import com.jmml.gazege.ui.navigation.ICategoriesView
+import com.jmml.gazege.ui.navigation.LoadedPersonSummaryState
 import com.jmml.gazege.ui.navigation.LoadedTransactionDetailsState
 import com.jmml.gazege.ui.navigation.LoadingPersonSummaryState
 import com.jmml.gazege.ui.navigation.PersonSummaryState
@@ -520,39 +521,27 @@ private fun MainFragmentResponsiveContent(
     }
 
     val personMonthSummaryView = @Composable {
-        Crossfade(targetState = principalPersonSummaryState, label = "CrossFadePerson") {
-            when (it) {
-                is ReloadingPersonSummaryState -> {
-                    EmptyPersonMonthSummaryView(
-                        modifier = Modifier.fillMaxWidth(),
-                        saldoActual = it.saldoActual,
-                        ingresos = it.ingresos,
-                        egresos = it.egresos,
-                        flujo = it.flujo,
-                        onSaldoActualClick = onSaldoActualClick
-                    )
-                }
-
-                is FullPersonSummaryState -> {
-                    LoadedPersonMonthSummaryView(
-                        modifier = Modifier.fillMaxWidth(),
-                        saldoActual = it.saldoActual,
-                        ingresos = it.ingresos,
-                        egresos = it.egresos,
-                        flujo = it.flujo,
-                        onSaldoActualClick = onSaldoActualClick
-                    )
-                }
-
-                is LoadingPersonSummaryState -> {
-                    EmptyPersonMonthSummaryView(
-                        modifier = Modifier.fillMaxWidth(),
-                        onSaldoActualClick = onSaldoActualClick
-                    )
-                }
-
-                EmptyPersonSummaryState -> EmptySummaryStateUI()
+        when (principalPersonSummaryState) {
+            is LoadedPersonSummaryState -> {
+                LoadedPersonMonthSummaryView(
+                    modifier = Modifier.fillMaxWidth(),
+                    saldoActual = principalPersonSummaryState.saldoActual,
+                    ingresos = principalPersonSummaryState.ingresos,
+                    egresos = principalPersonSummaryState.egresos,
+                    flujo = principalPersonSummaryState.flujo,
+                    loading = principalPersonSummaryState is ReloadingPersonSummaryState,
+                    onSaldoActualClick = onSaldoActualClick
+                )
             }
+
+            is LoadingPersonSummaryState -> {
+                EmptyPersonMonthSummaryView(
+                    modifier = Modifier.fillMaxWidth(),
+                    onSaldoActualClick = onSaldoActualClick
+                )
+            }
+
+            EmptyPersonSummaryState -> EmptySummaryStateUI()
         }
     }
 
