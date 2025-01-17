@@ -3,6 +3,7 @@ package com.jmml.gazege.ui.widgets
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -76,6 +77,7 @@ fun LoadingDataView(
     value: String? = null,
     enabled: Boolean = true,
     colors: CardColors = CardDefaults.cardColors(),
+    isLoading: Boolean = true,
     onClick: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition("Infinite transition")
@@ -95,7 +97,11 @@ fun LoadingDataView(
     Card(
         modifier = modifier
             .height(42.dp)
-            .alpha(alpha),
+            .apply {
+                if (isLoading) {
+                    alpha(alpha)
+                }
+            },
         colors = colors,
         enabled = enabled,
         onClick = onClick
@@ -182,6 +188,7 @@ fun LoadedPersonMonthSummaryView(
     ingresos: Double,
     egresos: Double,
     flujo: Double,
+    loading: Boolean,
     onSaldoActualClick: () -> Unit
 ) {
     val enabledColors = CardDefaults.cardColors(
@@ -191,6 +198,10 @@ fun LoadedPersonMonthSummaryView(
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
     )
     val disabledColors = CardDefaults.cardColors()
+    val animatedSaldoActual by animateFloatAsState(saldoActual.toFloat(), label = "")
+    val animatedIngresos by animateFloatAsState(ingresos.toFloat(), label = "")
+    val animatedEgresos by animateFloatAsState(egresos.toFloat(), label = "")
+    val animatedFlujo by animateFloatAsState(flujo.toFloat(), label = "")
     Column(
         modifier = modifier
             .padding(8.dp),
@@ -201,12 +212,13 @@ fun LoadedPersonMonthSummaryView(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            DataView(
+            LoadingDataView(
                 title = stringResource(R.string.Saldo_actual),
                 bigTitle = true,
-                value = doubleToMoneyString(saldoActual),
+                value = doubleToMoneyString(animatedSaldoActual.toDouble()),
                 modifier = Modifier.weight(1f),
                 colors = enabledColors,
+                isLoading = loading,
                 onClick = onSaldoActualClick
             )
         }
@@ -215,26 +227,29 @@ fun LoadedPersonMonthSummaryView(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            DataView(
+            LoadingDataView(
                 title = stringResource(R.string.Ingresos),
-                value = doubleToMoneyString(ingresos),
+                value = doubleToMoneyString(animatedIngresos.toDouble()),
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                colors = disabledColors
+                colors = disabledColors,
+                isLoading = loading
             )
-            DataView(
+            LoadingDataView(
                 title = stringResource(id = R.string.Gastos),
-                value = doubleToMoneyString(egresos),
+                value = doubleToMoneyString(animatedEgresos.toDouble()),
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                colors = disabledColors
+                colors = disabledColors,
+                isLoading = loading
             )
-            DataView(
+            LoadingDataView(
                 title = stringResource(R.string.Flujo),
-                value = doubleToMoneyString(flujo),
+                value = doubleToMoneyString(animatedFlujo.toDouble()),
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                colors = disabledColors
+                colors = disabledColors,
+                isLoading = loading
             )
         }
     }
