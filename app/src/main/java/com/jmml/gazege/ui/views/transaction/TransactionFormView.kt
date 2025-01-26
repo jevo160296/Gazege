@@ -59,6 +59,7 @@ import com.jmml.gazege.ui.widgets.NumberField
 import com.jmml.gazege.ui.widgets.TextField
 import com.jmml.gazege.ui.widgets.treeview.Node
 import com.jmml.gazege.ui.widgets.treeview.NodeId
+import com.jmml.zoo.ui.input.ButtonField
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 
@@ -326,7 +327,7 @@ private fun ColumnScope.TransactionDetailListForm(
         isSplitted,
         modifier = Modifier.align(Alignment.End)
     ) {
-        IconButton(
+        ButtonField(
             onClick = onAddTransactionDetailRequested
         ) {
             Icon(
