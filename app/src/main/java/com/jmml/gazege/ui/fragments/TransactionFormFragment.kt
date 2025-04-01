@@ -3,6 +3,10 @@ package com.jmml.gazege.ui.fragments
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -12,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -31,10 +36,12 @@ import com.jmml.gazege.ui.savers.newTransactionDetailsListSaver
 import com.jmml.gazege.ui.views.AddTransactionAction
 import com.jmml.gazege.ui.views.transaction.TransactionAndAccountsForm
 import com.jmml.gazege.ui.widgets.Form
+import com.jmml.gazege.ui.widgets.MediumHeadline
 import com.jmml.zoo.ui.state.ZIndefiniteCircularProgressIndicator
 import java.time.LocalDate
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionFormFragment(
     modifier: Modifier = Modifier,
@@ -49,7 +56,8 @@ fun TransactionFormFragment(
     fixedSourceAccount: Account? = null,
     fixedDestinationAccount: Account? = null,
     onAccountAddRequested: () -> Unit,
-    onTransactionAndDetailsAdd: (transaction: NewTransactionWithDetails, addAnotherTransaction: Boolean) -> Unit
+    onTransactionAndDetailsAdd: (transaction: NewTransactionWithDetails, addAnotherTransaction: Boolean) -> Unit,
+    onSharingRequested: (transactionId: Int) -> Unit
 ) {
     val id by rememberSaveable(transactionWithDetailsAndAccounts) {
         mutableStateOf(
@@ -148,13 +156,48 @@ fun TransactionFormFragment(
     Form(
         modifier = modifier,
         isSavedButtonEnabled = completeState,
-        title = stringResource(
-            when (addTransactionAction) {
-                AddTransactionAction.ADD_EXPENSE -> R.string.Gasto
-                AddTransactionAction.ADD_INCOME -> R.string.Ingreso
-                AddTransactionAction.ADD_TRANSFER -> R.string.Transaccion
-            }
-        ),
+        title = {
+            TopAppBar(
+                title = {
+                    MediumHeadline(
+                        stringResource(
+                            when (addTransactionAction) {
+                                AddTransactionAction.ADD_EXPENSE -> R.string.Gasto
+                                AddTransactionAction.ADD_INCOME -> R.string.Ingreso
+                                AddTransactionAction.ADD_TRANSFER -> R.string.Transaccion
+                            }
+                        )
+                    )
+                },
+                actions = {
+                    id.let {
+                        if (it != null) {
+                            IconButton(
+                                enabled = true,
+                                onClick = {
+                                    onSharingRequested(it)
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.wifi_tethering_24),
+                                    contentDescription = "Start sharing."
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                enabled = false,
+                                onClick = {}
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.wifi_tethering_24),
+                                    contentDescription = "Start sharing."
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+        },
         onSaveClicked = saveTransaction
     ) {
         TransactionAndAccountsForm(

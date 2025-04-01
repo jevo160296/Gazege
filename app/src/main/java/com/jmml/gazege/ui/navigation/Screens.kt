@@ -126,6 +126,7 @@ fun MainNavHost(
                 viewModelAddTransaction = mainViewModel.viewModelAddTransaction,
                 onNavigateUp = { navController.navigateUpOrClose { onCloseApp() } },
                 onNavigateToAddAccount = navController::navigateToAddAccount,
+                onNavigateToSharingTransaction = navController::navigateToShareTransaction,
                 onDataLoaded = onDataLoaded
             )
             screenAddPromissoryNote(
@@ -137,7 +138,11 @@ fun MainNavHost(
             screenEditTransaction(
                 viewModelEditTransaction = mainViewModel.viewModelEditTransaction,
                 onNavigateUp = navController::navigateUp,
-                onNavigateToAddAccount = navController::navigateToAddAccount
+                onNavigateToAddAccount = navController::navigateToAddAccount,
+                onNavigateToSharingTransaction = navController::navigateToShareTransaction
+            )
+            screenShareTransaction(
+                viewModelShareTransaction = mainViewModel.viewModelShareTransaction
             )
             screenEditPromissoryNote(
                 viewModelEditPromissoryNote = mainViewModel.viewModelEditPromissoryNote,

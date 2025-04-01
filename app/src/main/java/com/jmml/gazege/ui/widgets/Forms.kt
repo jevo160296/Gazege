@@ -40,6 +40,34 @@ fun Form(
     itemsColumnsModifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    Form(
+        modifier = modifier,
+        onSaveClicked = onSaveClicked,
+        isSavedButtonEnabled = isSavedButtonEnabled,
+        title = {
+            TopAppBar(
+                title = { MediumHeadline(title) }
+            )
+        },
+        snackbarHostState = snackbarHostState,
+        itemSpacing = itemSpacing,
+        itemsColumnsModifier = itemsColumnsModifier,
+        content = content
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Form(
+    modifier: Modifier = Modifier,
+    onSaveClicked: () -> Unit,
+    isSavedButtonEnabled: Boolean,
+    title: @Composable () -> Unit = { TopAppBar(title = { MediumHeadline("Form") }) },
+    snackbarHostState: SnackbarHostState? = null,
+    itemSpacing: Dp = 0.dp,
+    itemsColumnsModifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -64,11 +92,7 @@ fun Form(
                 }
             }
         },
-        topBar = {
-            TopAppBar(
-                title = { MediumHeadline(title) }
-            )
-        }
+        topBar = title
     ) {
         Box(modifier = Modifier.padding(it)) {
             Column(

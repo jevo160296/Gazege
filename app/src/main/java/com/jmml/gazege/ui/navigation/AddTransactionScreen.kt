@@ -27,6 +27,7 @@ fun NavGraphBuilder.screenAddTransaction(
     viewModelAddTransaction: MainViewModel.ViewModelAddTransaction,
     onNavigateUp: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
+    onNavigateToSharingTransaction: (transactionId: Int) -> Unit,
     onDataLoaded: () -> Unit
 ) {
     composable(
@@ -111,7 +112,8 @@ fun NavGraphBuilder.screenAddTransaction(
                     if (!addAnotherTransaction) {
                         onNavigateUp()
                     }
-                }
+                },
+                onSharingRequested = onNavigateToSharingTransaction
             )
         }
     }

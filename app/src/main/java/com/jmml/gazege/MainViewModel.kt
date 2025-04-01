@@ -2197,6 +2197,22 @@ class MainViewModel(
             this@MainViewModel.updateTransaction(transaction)
     }
 
+    inner class ViewModelShareTransaction {
+        @Composable
+        fun rememberTransaction(transactionId: Int?):
+                State<Result<TransactionWithDetails>> = remember(transactionId) {
+            allTransactions
+                .map { transactions ->
+                    transactions
+                        .firstOrNull { it.transaction.id == transactionId }
+                        ?.let { Result.Success(it) }
+                        ?: Result.Error(Throwable("Transaction not found"))
+                }
+                .shareInViewModel()
+        }
+            .collectAsState(Result.Loading)
+    }
+
     inner class ViewModelEditPromissoryNote {
         @Composable
         fun rememberPromissoryNote(promissoryNoteId: Int?) = remember(promissoryNoteId) {
@@ -2895,6 +2911,7 @@ class MainViewModel(
     val viewModelEditAccount = ViewModelEditAccount()
     val viewModelEditPerson = ViewModelEditPerson()
     val viewModelEditTransaction = ViewModelEditTransaction()
+    val viewModelShareTransaction = ViewModelShareTransaction()
     val viewModelEditPromissoryNote = ViewModelEditPromissoryNote()
     val viewModelSettings = ViewModelSettings()
     val viewModelSaldoActualSettings = ViewModelSaldoActualSettings()

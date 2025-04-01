@@ -23,7 +23,8 @@ fun LocalDate.toInt() = let { it.year * 10000 + it.monthValue * 100 + it.dayOfMo
 fun NavGraphBuilder.screenEditTransaction(
     viewModelEditTransaction: MainViewModel.ViewModelEditTransaction,
     onNavigateUp: () -> Unit,
-    onNavigateToAddAccount: () -> Unit
+    onNavigateToAddAccount: () -> Unit,
+    onNavigateToSharingTransaction: (transactionId: Int) -> Unit,
 ) {
     composable(
         "editTransaction/{transactionId}",
@@ -61,7 +62,8 @@ fun NavGraphBuilder.screenEditTransaction(
                 onTransactionAndDetailsAdd = { editedTransaction, _ ->
                     viewModelEditTransaction.updateTransaction(editedTransaction)
                     onNavigateUp()
-                }
+                },
+                onSharingRequested = onNavigateToSharingTransaction
             )
 
             accountAndOwnerWithTransactions is Result.Error || budgetWithCalculatedDataAndCategory is Result.Error -> Text(
