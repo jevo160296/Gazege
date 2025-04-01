@@ -84,7 +84,8 @@ class AppDatabaseTest {
                         amount = amount,
                         description = "",
                         categoryId = null,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             ).toTransaction()
@@ -223,7 +224,8 @@ class AppDatabaseTest {
                         amount = random.nextDouble(100.0, 500000.0),
                         description = "",
                         categoryId = null,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             ).toTransaction()
@@ -427,7 +429,8 @@ class AppDatabaseTest {
                 destinationId = accounts[1].id ?: -1,
                 date = LocalDate.now(),
                 categoryId = null,
-                aNombreDe = null
+                aNombreDe = null,
+                budgetDate = null
             ).toTransaction(),
             TransactionWithDetails.new(
                 amount = 10.0,
@@ -436,7 +439,8 @@ class AppDatabaseTest {
                 destinationId = accounts[0].id ?: -1,
                 date = LocalDate.now(),
                 aNombreDe = null,
-                categoryId = null
+                categoryId = null,
+                budgetDate = null
             ).toTransaction(),
             TransactionWithDetails.new(
                 amount = 10.0,
@@ -445,7 +449,8 @@ class AppDatabaseTest {
                 destinationId = accounts[1].id ?: -1,
                 date = LocalDate.now(),
                 categoryId = null,
-                aNombreDe = null
+                aNombreDe = null,
+                budgetDate = null
             ).toTransaction()
         )
         database.transactionDao().insertAll(*transactionsToAdd)

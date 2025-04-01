@@ -135,7 +135,8 @@ private fun categoriesSample(
                             amount = 2500000.0,
                             description = "",
                             categoryId = 0,
-                            aNombreDe = null
+                            aNombreDe = null,
+                            budgetDate = null
                         )
                     )
                 ),
@@ -153,7 +154,8 @@ private fun categoriesSample(
                             amount = 600000.0,
                             description = "",
                             categoryId = 2,
-                            aNombreDe = null
+                            aNombreDe = null,
+                            budgetDate = null
                         )
                     )
             ),
@@ -171,7 +173,8 @@ private fun categoriesSample(
                             amount = 20000.0,
                             description = "",
                             categoryId = 4,
-                            aNombreDe = null
+                            aNombreDe = null,
+                            budgetDate = null
                         )
                     )
                 )
@@ -237,7 +240,8 @@ private fun categoriesMultipleBudgetSample(
                             amount = 1000000.0,
                             description = "",
                             categoryId = 0,
-                            aNombreDe = null
+                            aNombreDe = null,
+                            budgetDate = null
                         )
                     )
                 )

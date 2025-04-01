@@ -102,7 +102,8 @@ fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction
                     "destinationId",
                     "categoryId",
                     "date",
-                    "aNombreDe"
+                    "aNombreDe",
+                    "budgetDate"
                 )
                 TransactionAndDetails.from(items).forEachIndexed { index, transaction ->
                     tack = LocalTime.now()
@@ -118,7 +119,8 @@ fun writeTransactions(outputStream: OutputStream, transactions: List<Transaction
                         transaction.destinationId,
                         transaction.categoryId,
                         transaction.date,
-                        transaction.aNombreDe
+                        transaction.aNombreDe,
+                        transaction.budgetDate
                     )
                 }
             }
@@ -404,6 +406,7 @@ fun <T> readFromCsv(
 fun readTransactionsFromCsv(inputStream: InputStream): List<TransactionWithDetails> =
     readFromCsv(inputStream) { record, columnIndex, _ ->
         val hasId = columnIndex["id"] != null
+        val hasBudgetDate = columnIndex["budgetDate"] != null
         object {
             val transactionId =
                 if (hasId) record[columnIndex["id"] ?: 0] else record[columnIndex["transactionId"]
@@ -417,6 +420,7 @@ fun readTransactionsFromCsv(inputStream: InputStream): List<TransactionWithDetai
             val categoryId = record[columnIndex["categoryId"] ?: 0]
             val date = record[columnIndex["date"] ?: 0]
             val aNombreDe = record[columnIndex["aNombreDe"] ?: 0]
+            val budgetDate = if (hasBudgetDate) record[columnIndex["budgetDate"] ?: 0] else null
         }
     }
         .let { items ->
@@ -438,7 +442,8 @@ fun readTransactionsFromCsv(inputStream: InputStream): List<TransactionWithDetai
                             amount = item.amount.toDoubleOrNull() ?: 0.0,
                             description = item.description,
                             categoryId = item.categoryId.toIntOrNull(),
-                            aNombreDe = item.aNombreDe.toIntOrNull()
+                            aNombreDe = item.aNombreDe.toIntOrNull(),
+                            budgetDate = item.budgetDate?.let { parseDate(it, formatter) }
                         )
                     }
                     TransactionWithDetails.from(transaction, transactionDetails)

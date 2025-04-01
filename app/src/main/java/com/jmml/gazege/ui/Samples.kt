@@ -465,7 +465,8 @@ private fun getTransactionAndDetailsSample(
                             "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
                             "categoría ${category?.name}",
                     categoryId = category?.id,
-                    aNombreDe = null
+                    aNombreDe = null,
+                    budgetDate = null
                 )
             )
         )

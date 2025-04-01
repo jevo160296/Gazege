@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
+import com.jmml.gazege.core.entities.ExtendedTransaction
 import com.jmml.gazege.core.entities.Transaction
 import com.jmml.gazege.core.entities.TransactionAndDetailsAndAccounts
 import com.jmml.gazege.core.entities.TransactionDetails
@@ -32,6 +33,24 @@ interface TransactionDao {
     """
     )
     fun getAll(startDate: LocalDate?, endDate: LocalDate?): Flow<List<TransactionWithDetails>>
+
+    @androidx.room.Transaction
+    @Query(
+        """
+        SELECT 
+            T.id,T.sourceId,T.destinationId,T.date,
+            TD.id as transactionDetailId,TD.amount,TD.description,TD.categoryId,TD.aNombreDe,TD.budgetDate
+        FROM TransactionDetails AS TD INNER JOIN `Transaction` AS T ON TD.transactionId = T.id
+        WHERE 
+            (:budgetStartDate is null OR COALESCE(TD.budgetDate, T.date) >= :budgetStartDate) AND 
+            (:budgetEndDate is null OR COALESCE(TD.budgetDate, T.date) <= :budgetEndDate)
+        ORDER BY T.date DESC, T.id DESC
+    """
+    )
+    fun getAllForBudget(
+        budgetStartDate: LocalDate?,
+        budgetEndDate: LocalDate?
+    ): Flow<List<ExtendedTransaction>>
 
     @Insert
     suspend fun insert(transaction: Transaction): Long

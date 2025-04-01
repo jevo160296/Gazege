@@ -1041,7 +1041,8 @@ class MainViewModel(
                     destinationId = accountId,
                     date = today,
                     aNombreDe = null,
-                    categoryId = null
+                    categoryId = null,
+                    budgetDate = null
                 )
             } else {
                 TransactionWithDetails.new(
@@ -1051,7 +1052,8 @@ class MainViewModel(
                     destinationId = outcomeAccountId,
                     date = today,
                     aNombreDe = null,
-                    categoryId = null
+                    categoryId = null,
+                    budgetDate = null
                 )
             }
             repository.insertTransaction(transaccionAjuste)
