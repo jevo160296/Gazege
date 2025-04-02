@@ -462,37 +462,8 @@ private fun TransactionDetailsForm(
         mutableStateOf(aNombreDe != null)
     }
 
-    var budgetDateDifferent by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    Row(
-        modifier = Modifier.padding(contentPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = budgetDateDifferent,
-            onCheckedChange = {
-                if (!it) {
-                    onBudgetDateChanged(transactionDetailsIndex, null)
-                } else {
-                    onBudgetDateChanged(transactionDetailsIndex, transactionDate)
-                }
-                budgetDateDifferent = it
-            })
-        Text(text = stringResource(R.string.Budget_date_different))
-    }
-
-    AnimatedVisibility(
-        modifier = Modifier.padding(contentPadding),
-        visible = budgetDateDifferent
-    ) {
-        DatePicker(
-            value = budgetDate,
-            defaultValue = null,
-            onValueChange = { onBudgetDateChanged(transactionDetailsIndex, it) },
-            label = { Text(stringResource(id = R.string.Budget_date)) },
-        )
+    var budgetDateDifferent by rememberSaveable(budgetDate) {
+        mutableStateOf(budgetDate != null)
     }
 
     AnimatedVisibility(visible = isSplitted) {
@@ -534,7 +505,33 @@ private fun TransactionDetailsForm(
             keyboardActions = keyboardActions
         ) { onCategoryIdChanged(transactionDetailsIndex, it?.id) }
     }
-
+    Row(
+        modifier = Modifier.padding(contentPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = budgetDateDifferent,
+            onCheckedChange = {
+                if (!it) {
+                    onBudgetDateChanged(transactionDetailsIndex, null)
+                } else {
+                    onBudgetDateChanged(transactionDetailsIndex, transactionDate)
+                }
+                budgetDateDifferent = it
+            })
+        Text(text = stringResource(R.string.Budget_date_different))
+    }
+    AnimatedVisibility(
+        modifier = Modifier.padding(contentPadding),
+        visible = budgetDateDifferent
+    ) {
+        DatePicker(
+            value = budgetDate,
+            defaultValue = null,
+            onValueChange = { onBudgetDateChanged(transactionDetailsIndex, it) },
+            label = { Text(stringResource(id = R.string.Budget_date)) },
+        )
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
