@@ -94,6 +94,7 @@ import com.jmml.gazege.ui.widgets.BooleanFilters
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.INCOME_FILTER
 import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
+import com.jmml.gazege.ui.widgets.PROMISSORY_NOTE_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
@@ -608,7 +609,7 @@ class MainViewModel(
     private val transactionFilters: MutableStateFlow<BooleanFilters<String, Nothing>> =
         MutableStateFlow(
             booleanFilterOf(
-                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER, PROMISSORY_NOTE_FILTER),
                 true
             )
         )
@@ -789,7 +790,10 @@ class MainViewModel(
                         .applyIncomeFilter(filtersValue[INCOME_FILTER])
                         .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
                         .applyTransferFilter(filtersValue[TRANSFER_FILTER])
-                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
+                    val promissoryNotes = filteredTransactions
+                        .data
+                        .promissoryNotesViewModel
+                        .applyPromissoryNoteFilter(filtersValue[PROMISSORY_NOTE_FILTER])
                     Result.Success(
                         object {
                             val transactionsWithFilters = transactionsWithFilters
@@ -1886,7 +1890,7 @@ class MainViewModel(
         fun rememberTransactionFiltersValue() = transactionFilters
             .collectAsState(
                 booleanFilterOf(
-                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER, PROMISSORY_NOTE_FILTER),
                     true
                 )
             )
@@ -2924,6 +2928,16 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter {
                 it.transactionType != TransactionType.TRANSFER || transferFilterValue
+            }
+        }
+
+        suspend fun List<PromissoryNoteViewModel>.applyPromissoryNoteFilter(
+            promissoryNoteFilterValue: Boolean
+        ) = withContext(Dispatchers.Default) {
+            if (promissoryNoteFilterValue) {
+                this@applyPromissoryNoteFilter
+            } else {
+                emptyList<PromissoryNoteViewModel>()
             }
         }
 
