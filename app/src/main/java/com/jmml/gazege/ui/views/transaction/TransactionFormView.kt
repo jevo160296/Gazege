@@ -467,6 +467,7 @@ private fun TransactionDetailsForm(
     }
 
     Row(
+        modifier = Modifier.padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
@@ -482,7 +483,10 @@ private fun TransactionDetailsForm(
         Text(text = stringResource(R.string.Budget_date_different))
     }
 
-    AnimatedVisibility(visible = budgetDateDifferent) {
+    AnimatedVisibility(
+        modifier = Modifier.padding(contentPadding),
+        visible = budgetDateDifferent
+    ) {
         DatePicker(
             value = budgetDate,
             defaultValue = null,
