@@ -325,6 +325,22 @@ fun Filter(
                                             )
                                         }
                                     )
+                                    GFilterChip(
+                                        selected = transactionFilters[PROMISSORY_NOTE_FILTER],
+                                        onClick = {
+                                            onTransactionFiltersChanged(
+                                                transactionFilters.switchOrDefault(
+                                                    PROMISSORY_NOTE_FILTER
+                                                )
+                                            )
+                                        },
+                                        label = {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.promissory_note),
+                                                contentDescription = "Filter promissory notes"
+                                            )
+                                        }
+                                    )
                                 }
                                 Row(
                                     modifier = Modifier.align(Alignment.Start),
@@ -617,6 +633,7 @@ fun rangeToString(startDate: LocalDate?, endDate: LocalDate?) =
 const val INCOME_FILTER = "INCOME"
 const val OUTCOME_FILTER = "OUTCOME"
 const val TRANSFER_FILTER = "TRANSFER"
+const val PROMISSORY_NOTE_FILTER = "PROMISSORYNOTE"
 
 interface Filter<T : Filter<T>> {
     fun allFiltered(): Boolean

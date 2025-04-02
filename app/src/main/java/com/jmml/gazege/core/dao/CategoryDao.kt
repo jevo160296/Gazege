@@ -45,10 +45,10 @@ interface CategoryDao {
             endDate: LocalDate
         ) = categoryWithTransactions.let {
             it.inTransactions
-                .filter { trx -> trx.date.isBetween(startDate, endDate) }
+                .filter { trx -> trx.budgetDate.isBetween(startDate, endDate) }
                 .sumOf { trx -> trx.amount } -
                     it.outTransactions
-                        .filter { trx -> trx.date.isBetween(startDate, endDate) }
+                        .filter { trx -> trx.budgetDate.isBetween(startDate, endDate) }
                         .sumOf { trx -> trx.amount }
         }
 

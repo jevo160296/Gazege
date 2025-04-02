@@ -191,7 +191,8 @@ private fun LoadedDocumentListViewPreview() {
                             description = "",
                             categoryId = 0,
                             transactionId = 0,
-                            aNombreDe = 0
+                            aNombreDe = 0,
+                            budgetDate = null
                         )
                     )
                 ),

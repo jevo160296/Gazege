@@ -209,6 +209,12 @@ fun TransactionFormFragment(
                         transactionDetails[detailIndexId].copy(description = description)
                 }
             },
+            onBudgetDateChanged = { detailIndexId, date ->
+                if (detailIndexId < transactionDetails.count()) {
+                    transactionDetails[detailIndexId] =
+                        transactionDetails[detailIndexId].copy(budgetDate = date)
+                }
+            },
             onDestinationAccountIdChanged = { destinationId = it },
             onSourceAccountIdChanged = { sourceId = it },
             showAddAnotherTransactionButton = showAddAnotherTransactionButton,

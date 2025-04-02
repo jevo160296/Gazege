@@ -100,7 +100,8 @@ data class PlotDataFromTransactions(
                                     amount = 0.0,
                                     description = "",
                                     categoryId = null,
-                                    aNombreDe = null
+                                    aNombreDe = null,
+                                    budgetDate = null
                                 )
                             )
                         )
@@ -122,7 +123,8 @@ data class PlotDataFromTransactions(
                                         amount = 0.0,
                                         description = "",
                                         categoryId = null,
-                                        aNombreDe = null
+                                        aNombreDe = null,
+                                        budgetDate = null
                                     )
                                 )
                             )

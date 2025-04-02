@@ -21,7 +21,8 @@ data class PartialTransactionDetails(
     val amount: Double?,
     val description: String?,
     val categoryId: Int?,
-    val aNombreDe: Int?
+    val aNombreDe: Int?,
+    val budgetDate: LocalDate?
 ) : PartialEntity<TransactionDetails> {
     override fun isComplete(): Boolean {
         return amount != null &&
@@ -36,7 +37,8 @@ data class PartialTransactionDetails(
                 amount = amount!!.toDouble(),
                 description = description ?: "",
                 categoryId = categoryId,
-                aNombreDe = aNombreDe
+                aNombreDe = aNombreDe,
+                budgetDate = budgetDate
             )
         } else {
             throw Exception()
@@ -52,7 +54,8 @@ data class PartialTransactionDetails(
                     amount = amount,
                     description = description,
                     categoryId = categoryId,
-                    aNombreDe = aNombreDe
+                    aNombreDe = aNombreDe,
+                    budgetDate = budgetDate
                 )
             }
 
@@ -61,7 +64,8 @@ data class PartialTransactionDetails(
             amount = null,
             description = null,
             categoryId = null,
-            aNombreDe = null
+            aNombreDe = null,
+            budgetDate = null
         )
     }
 }
@@ -72,7 +76,8 @@ data class PartialNewTransactionDetails(
     val amount: Double?,
     val description: String?,
     val categoryId: Int?,
-    val aNombreDe: Int?
+    val aNombreDe: Int?,
+    val budgetDate: LocalDate?
 ) : PartialEntity<NewTransactionDetails> {
     override fun isComplete(): Boolean {
         return amount != null
@@ -86,7 +91,8 @@ data class PartialNewTransactionDetails(
                 amount = amount!!.toDouble(),
                 description = description ?: "",
                 categoryId = categoryId,
-                aNombreDe = aNombreDe
+                aNombreDe = aNombreDe,
+                budgetDate = budgetDate
             )
         } else {
             throw Exception()
@@ -101,7 +107,8 @@ data class PartialNewTransactionDetails(
                 amount = transactionDetails.amount,
                 description = transactionDetails.description,
                 categoryId = transactionDetails.categoryId,
-                aNombreDe = transactionDetails.aNombreDe
+                aNombreDe = transactionDetails.aNombreDe,
+                budgetDate = transactionDetails.budgetDate
             )
 
         fun new() = PartialNewTransactionDetails(
@@ -110,7 +117,8 @@ data class PartialNewTransactionDetails(
             amount = null,
             description = null,
             categoryId = null,
-            aNombreDe = null
+            aNombreDe = null,
+            budgetDate = null
         )
     }
 }
@@ -272,7 +280,8 @@ data class ParcelableNewTransactionDetails(
     var amount: Double?,
     var description: String?,
     var categoryId: Int?,
-    var aNombreDe: Int?
+    var aNombreDe: Int?,
+    var budgetDate: LocalDate?
 ) : Parcelable
 
 @Parcelize
@@ -292,7 +301,8 @@ val newTransactionDetailsListSaver =
                     amount = it.amount,
                     description = it.description,
                     categoryId = it.categoryId,
-                    aNombreDe = it.aNombreDe
+                    aNombreDe = it.aNombreDe,
+                    budgetDate = it.budgetDate
                 )
             }
         },
@@ -305,7 +315,8 @@ val newTransactionDetailsListSaver =
                         amount = it.amount,
                         description = it.description,
                         categoryId = it.categoryId,
-                        aNombreDe = it.aNombreDe
+                        aNombreDe = it.aNombreDe,
+                        budgetDate = it.budgetDate
                     )
                 }.toTypedArray()
             )

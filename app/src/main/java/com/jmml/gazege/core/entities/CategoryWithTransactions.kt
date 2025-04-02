@@ -2,8 +2,8 @@ package com.jmml.gazege.core.entities
 
 data class CategoryWithTransactions(
     val category: Category,
-    val inTransactions: List<TransactionAndDetails>,
-    val outTransactions: List<TransactionAndDetails>,
+    val inTransactions: List<ExtendedTransaction>,
+    val outTransactions: List<ExtendedTransaction>,
     val person: Person
 ) {
     val categoryId get() = category.id
@@ -12,55 +12,46 @@ data class CategoryWithTransactions(
         fun from(
             category: List<Category>,
             person: Person,
-            accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+            accounts: List<Account>,
+            extendedTransactions: List<ExtendedTransaction>
         ): List<CategoryWithTransactions> {
-            val ownAccountAndOwnerWithTransactions = accountAndOwnerWithTransactions
-                .filter { it.account.ownerId == person.id }
-            val indexedInTransactions = ownAccountAndOwnerWithTransactions
-                .flatMap { it.inTransactions }
-                .flatMap { transactionAndDetails ->
-                    transactionAndDetails.transactionDetails.map { detail ->
-                        TransactionAndDetails(
-                            transaction = transactionAndDetails.transaction,
-                            transactionDetails = detail,
-                        )
-                    }
-                }
-                .groupBy { it.categoryId }
-            val indexedOutTransactions = ownAccountAndOwnerWithTransactions
-                .flatMap { it.outTransactions }
-                .flatMap { transactionAndDetails ->
-                    transactionAndDetails.transactionDetails.map { detail ->
-                        TransactionAndDetails(
-                            transaction = transactionAndDetails.transaction,
-                            transactionDetails = detail,
-                        )
-                    }
-                }
-                .groupBy { it.categoryId }
-            val categoryWithTransactions = category
+            val ownerId = person.id
+            val ownAccountIds = accounts
+                .filter { it.ownerId == ownerId }
+                .map { it.id }
+                .toSet()
+
+            val classifiedTransactions = extendedTransactions
                 .map {
-                    Triple(
-                        it,
-                        indexedInTransactions[it.id] ?: emptyList(),
-                        indexedOutTransactions[it.id] ?: emptyList()
-                    )
+                    val sourceAccountIsOwned = ownAccountIds.contains(it.sourceId)
+                    val destinationAccountIsOwned = ownAccountIds.contains(it.destinationId)
+
+                    val classification =
+                        if (sourceAccountIsOwned && destinationAccountIsOwned) {
+                            0
+                        } else if (!sourceAccountIsOwned && !destinationAccountIsOwned) {
+                            0
+                        } else if (sourceAccountIsOwned) {
+                            -1
+                        } else {
+                            1
+                        }
+                    classification to it
                 }
-                .associateBy {
-                    it.first.id
-                }
-            return category
-                .mapNotNull {
-                    val selectedCategoryWithTransactions = categoryWithTransactions[it.id]
-                    selectedCategoryWithTransactions?.first?.let { category ->
-                        CategoryWithTransactions(
-                            category,
-                            selectedCategoryWithTransactions.second,
-                            selectedCategoryWithTransactions.third,
-                            person
-                        )
-                    }
-                }
+                .groupBy { it.first }
+                .mapValues { it.value.map { it.second } }
+            val inTransactions = (classifiedTransactions[1] ?: emptyList())
+                .groupBy { it.categoryId }
+            val outTransactions = (classifiedTransactions[-1] ?: emptyList())
+                .groupBy { it.categoryId }
+            return category.map {
+                CategoryWithTransactions(
+                    category = it,
+                    inTransactions = inTransactions[it.id] ?: emptyList(),
+                    outTransactions = outTransactions[it.id] ?: emptyList(),
+                    person = person
+                )
+            }
         }
     }
 }
