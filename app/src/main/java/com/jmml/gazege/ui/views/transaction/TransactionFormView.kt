@@ -88,6 +88,7 @@ fun TransactionAndAccountsForm(
     onSourceAccountIdChanged: (Int) -> Unit,
     onDestinationAccountIdChanged: (Int) -> Unit,
     onCategoryIdChanged: (detailIndexId: Int, categoryId: Int?) -> Unit,
+    onBudgetDateChanged: (detailIndexId: Int, newDate: LocalDate?) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
     showAddAnotherTransactionButton: Boolean,
     focusRequester: FocusRequester
@@ -246,6 +247,7 @@ fun TransactionAndAccountsForm(
             ) {
                 if (currentEditDetails) {
                     TransactionDetailListForm(
+                        transactionDate = date,
                         transactionDetails = transactionDetails,
                         categoryList = categoryList,
                         personList = personList,
@@ -258,6 +260,7 @@ fun TransactionAndAccountsForm(
                         keyboardActions = keyboardActions,
                         onAddTransactionDetailRequested = onAddTransactionDetailRequested,
                         onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+                        onBudgetDateChanged = onBudgetDateChanged,
                         isSplitted = isSplitted
                     )
                 } else {
@@ -275,6 +278,7 @@ fun TransactionAndAccountsForm(
 @Composable
 private fun ColumnScope.TransactionDetailListForm(
     contentPadding: PaddingValues = PaddingValues(),
+    transactionDate: LocalDate?,
     transactionDetails: List<PartialNewTransactionDetails>,
     categoryList: List<Category>,
     personList: List<Person>,
@@ -286,6 +290,7 @@ private fun ColumnScope.TransactionDetailListForm(
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
+    onBudgetDateChanged: (detailIndexId: Int, newDate: LocalDate?) -> Unit,
     nextAction: ImeAction,
     keyboardActions: KeyboardActions
 ) {
@@ -300,6 +305,7 @@ private fun ColumnScope.TransactionDetailListForm(
         val isBetweenElements = index + 1 < cantElements
         TransactionDetailsForm(
             contentPadding = innerContentPadding,
+            transactionDate = transactionDate,
             transactionDetails = it,
             transactionDetailsIndex = index,
             categoryList = categoryList,
@@ -311,6 +317,7 @@ private fun ColumnScope.TransactionDetailListForm(
             onCategoryIdChanged = onCategoryIdChanged,
             onRealizarAnombreDeIdChanged = onRealizarAnombreDeIdChanged,
             onRemoveTransactionDetailRequested = onRemoveTransactionDetailRequested,
+            onBudgetDateChanged = onBudgetDateChanged,
             nextAction = nextAction,
             keyboardActions = keyboardActions
         )
@@ -426,6 +433,7 @@ private fun TransactionDetailsRow(
 @Composable
 private fun TransactionDetailsForm(
     contentPadding: PaddingValues = PaddingValues(),
+    transactionDate: LocalDate?,
     transactionDetails: PartialNewTransactionDetails,
     transactionDetailsIndex: Int,
     categoryList: List<Category>,
@@ -433,6 +441,7 @@ private fun TransactionDetailsForm(
     budgetWithCalculatedDataAndCategory: List<CategoryWithSubcategoriesAndBudgetWithCalculatedData>?,
     isSplitted: Boolean,
     onAmountChanged: (detailIndexId: Int, newAmount: Double) -> Unit,
+    onBudgetDateChanged: (detailIndexId: Int, newDate: LocalDate?) -> Unit,
     onDescriptionChanged: (detailIndexId: Int, newDescription: String) -> Unit,
     onCategoryIdChanged: (transactionDetailIndex: Int, categoryId: Int?) -> Unit,
     onRealizarAnombreDeIdChanged: (transactionDetailIndex: Int, personId: Int?) -> Unit,
@@ -444,12 +453,42 @@ private fun TransactionDetailsForm(
     val description = transactionDetails.description ?: ""
     val aNombreDe = transactionDetails.aNombreDe
     val selectedCategoryId = transactionDetails.categoryId
+    val budgetDate = transactionDetails.budgetDate
 
     val selectedCategory =
         categoryList.firstOrNull { it.id == selectedCategoryId }
 
     var realizarANombreDe by rememberSaveable(aNombreDe) {
         mutableStateOf(aNombreDe != null)
+    }
+
+    var budgetDateDifferent by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = budgetDateDifferent,
+            onCheckedChange = {
+                if (!it) {
+                    onBudgetDateChanged(transactionDetailsIndex, null)
+                } else {
+                    onBudgetDateChanged(transactionDetailsIndex, transactionDate)
+                }
+                budgetDateDifferent = it
+            })
+        Text(text = stringResource(R.string.Budget_date_different))
+    }
+
+    AnimatedVisibility(visible = budgetDateDifferent) {
+        DatePicker(
+            value = budgetDate,
+            defaultValue = null,
+            onValueChange = { onBudgetDateChanged(transactionDetailsIndex, it) },
+            label = { Text(stringResource(id = R.string.Budget_date)) },
+        )
     }
 
     AnimatedVisibility(visible = isSplitted) {

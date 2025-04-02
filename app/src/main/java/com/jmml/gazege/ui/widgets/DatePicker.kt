@@ -27,7 +27,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun DatePicker(
     value: LocalDate?,
+    defaultValue: LocalDate? = LocalDate.now(),
     onValueChange: (LocalDate) -> Unit = {},
+    label: @Composable (() -> Unit)? = { Text(stringResource(R.string.Fecha)) },
     pattern: String = "yyyy-MM-dd",
 ) {
     var dropDownExpanded by remember {
@@ -36,7 +38,7 @@ fun DatePicker(
     var dateDialogShowing by remember {
         mutableStateOf(false)
     }
-    val date: LocalDate = value ?: LocalDate.now()
+    val date: LocalDate? = value ?: defaultValue
     val formatter = DateTimeFormatter.ofPattern(pattern)
 
     ExposedDropdownMenuBox(
@@ -51,14 +53,14 @@ fun DatePicker(
     ) {
         TextField(
             modifier = Modifier.menuAnchor(),
-            value = date.format(formatter),
+            value = date?.format(formatter) ?: stringResource(R.string.Select_a_date),
             onValueChange = {},
             readOnly = true,
             enabled = true,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded)
             },
-            label = { Text(stringResource(R.string.Fecha)) },
+            label = label,
             colors = ExposedDropdownMenuDefaults.textFieldColors()
         )
     }

@@ -128,4 +128,7 @@
     <string name="por_concepto_de">por concepto de</string>
     <string name="Creado_el">Creado el</string>
     <string name="Items">Artículos</string>
+    <string name="Budget_date">Fecha de presupuesto</string>
+    <string name="Select_a_date">Selecciona una fecha</string>
+    <string name="Budget_date_different">Fecha de presupuesto es diferente.</string>
 </resources>
