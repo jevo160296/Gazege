@@ -443,7 +443,8 @@ fun readTransactionsFromCsv(inputStream: InputStream): List<TransactionWithDetai
                             description = item.description,
                             categoryId = item.categoryId.toIntOrNull(),
                             aNombreDe = item.aNombreDe.toIntOrNull(),
-                            budgetDate = item.budgetDate?.let { parseDate(it, formatter) }
+                            budgetDate = item.budgetDate?.takeIf { it.isNotEmpty() }
+                                ?.let { parseDate(it, formatter) }
                         )
                     }
                     TransactionWithDetails.from(transaction, transactionDetails)
