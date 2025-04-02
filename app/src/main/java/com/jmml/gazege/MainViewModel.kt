@@ -31,6 +31,7 @@ import com.jmml.gazege.core.entities.CategoryWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithTransactions
+import com.jmml.gazege.core.entities.ExtendedTransaction
 import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.ITransactionListDetailGrouped
 import com.jmml.gazege.core.entities.NewTransactionWithDetails
@@ -377,30 +378,6 @@ class MainViewModel(
             .filterNotNull()
             .shareInViewModel()
 
-    private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
-        categories
-            .combineDefault(principalPerson) { categories, principalPerson ->
-                object {
-                    val categories = categories
-                    val principalPerson = principalPerson
-                }
-            }
-            .combineDefault(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
-                if (combined.principalPerson != null) {
-                    if (accountAndOwnerWithTransactions is Result.Success) {
-                        CategoryWithTransactions.from(
-                            category = combined.categories,
-                            person = combined.principalPerson,
-                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.data
-                        )
-                    } else null
-                } else {
-                    emptyList()
-                }
-            }
-            .filterNotNull()
-            .shareInViewModel()
-
     private val initialRange = today.map { today ->
         today.withDayOfMonth(1).let {
             Pair(it, it.plusMonths(1L).minusDays(1L))
@@ -444,6 +421,47 @@ class MainViewModel(
                 }
                 emit(Result.Success(result))
             }
+            .shareInViewModel()
+
+    private val budgetTransactions: SharedFlow<List<ExtendedTransaction>> =
+        repository.getBudgetTransactions(null, null).shareInViewModel()
+
+    private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
+        categories
+            .combineDefault(principalPerson) { categories, principalPerson ->
+                object {
+                    val categories = categories
+                    val principalPerson = principalPerson
+                }
+            }
+            .combineDefault(allAccount) { combined, allAccount ->
+                object {
+                    val categories = combined.categories
+                    val principalPerson = combined.principalPerson
+                    val accounts = allAccount
+                }
+            }
+            .combineDefault(budgetTransactions) { combined, budgetTransactions ->
+                object {
+                    val categories = combined.categories
+                    val principalPerson = combined.principalPerson
+                    val accounts = combined.accounts
+                    val extendedTransactions = budgetTransactions
+                }
+            }
+            .map { combined ->
+                if (combined.principalPerson != null) {
+                    CategoryWithTransactions.from(
+                        category = combined.categories,
+                        person = combined.principalPerson,
+                        accounts = combined.accounts,
+                        extendedTransactions = combined.extendedTransactions
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+            .filterNotNull()
             .shareInViewModel()
 
     private val categoryWithCalculatedData: SharedFlow<Result<List<CategoryWithCalculatedData>?>> =

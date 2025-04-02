@@ -39,7 +39,7 @@ interface TransactionDao {
         """
         SELECT 
             T.id,T.sourceId,T.destinationId,T.date,
-            TD.id as transactionDetailId,TD.amount,TD.description,TD.categoryId,TD.aNombreDe,TD.budgetDate
+            TD.id as transactionDetailId,TD.amount,TD.description,TD.categoryId,TD.aNombreDe,COALESCE(TD.budgetDate, T.date) as budgetDate
         FROM TransactionDetails AS TD INNER JOIN `Transaction` AS T ON TD.transactionId = T.id
         WHERE 
             (:budgetStartDate is null OR COALESCE(TD.budgetDate, T.date) >= :budgetStartDate) AND 

@@ -1,9 +1,7 @@
 package com.jmml.gazege.core.entities
 
-import androidx.room.Entity
 import java.time.LocalDate
 
-@Entity
 data class ExtendedTransaction(
     val id: Int,
     val sourceId: Int,
@@ -14,5 +12,5 @@ data class ExtendedTransaction(
     val description: String,
     val categoryId: Int?,
     val aNombreDe: Int?,
-    val budgetDate: LocalDate?
+    val budgetDate: LocalDate
 )
