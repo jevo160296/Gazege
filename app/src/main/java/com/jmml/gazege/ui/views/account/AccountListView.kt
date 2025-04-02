@@ -350,7 +350,8 @@ private fun PreviewAccountItem() {
                         amount = (1 * transIndex).toDouble(),
                         description = "",
                         categoryId = null,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             )
@@ -368,7 +369,8 @@ private fun PreviewAccountItem() {
                         amount = (1 * transIndex / (1 + transIndex)).toDouble(),
                         description = "",
                         categoryId = null,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             )

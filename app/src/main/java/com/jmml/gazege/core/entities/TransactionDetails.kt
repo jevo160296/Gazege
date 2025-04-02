@@ -3,6 +3,7 @@ package com.jmml.gazege.core.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.time.LocalDate
 
 @Entity(
     foreignKeys = [
@@ -35,5 +36,6 @@ data class TransactionDetails(
     val amount: Double,
     val description: String,
     val categoryId: Int?,
-    val aNombreDe: Int?
+    val aNombreDe: Int?,
+    val budgetDate: LocalDate?
 )

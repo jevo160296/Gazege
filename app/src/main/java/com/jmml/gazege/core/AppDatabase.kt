@@ -34,7 +34,7 @@ import com.jmml.gazege.core.migrations.MigrateSpec56
         Budget::class,
         PromissoryNote::class
     ],
-    version = 16,
+    version = 17,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 4, to = 5),
@@ -47,7 +47,8 @@ import com.jmml.gazege.core.migrations.MigrateSpec56
         AutoMigration(11, 12),
         AutoMigration(12, 13),
         AutoMigration(13, 14),
-        AutoMigration(14, 15)
+        AutoMigration(14, 15),
+        AutoMigration(16, 17)
     ]
 )
 @TypeConverters(Converters::class)

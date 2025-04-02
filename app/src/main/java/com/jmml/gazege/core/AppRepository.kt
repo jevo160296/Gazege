@@ -10,6 +10,7 @@ import com.jmml.gazege.core.dao.TransactionDao
 import com.jmml.gazege.core.entities.Account
 import com.jmml.gazege.core.entities.Budget
 import com.jmml.gazege.core.entities.Category
+import com.jmml.gazege.core.entities.ExtendedTransaction
 import com.jmml.gazege.core.entities.NewTransactionWithDetails
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PromissoryNote
@@ -44,6 +45,13 @@ class AppRepository(
         endDate: LocalDate?
     ): Flow<List<TransactionWithDetails>> {
         return transactionDao.getAll(startDate, endDate)
+    }
+
+    fun getBudgetTransactions(
+        budgetStartDate: LocalDate?,
+        budgetEndDate: LocalDate?
+    ): Flow<List<ExtendedTransaction>> {
+        return transactionDao.getAllForBudget(budgetStartDate, budgetEndDate)
     }
 
     fun getCategories(): Flow<List<Category>> {

@@ -15,6 +15,7 @@ import com.jmml.gazege.core.entities.CategoryWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithTransactions
+import com.jmml.gazege.core.entities.ExtendedTransaction
 import com.jmml.gazege.core.entities.FrequencyType
 import com.jmml.gazege.core.entities.Person
 import com.jmml.gazege.core.entities.PersonWithAccounts
@@ -177,7 +178,8 @@ class DatabaseSampleScope(
         getCategoryWithTransactionsSample(
             categorieSample,
             personSample[0],
-            accountAndOwnerWithTransactionsSample
+            accountSample,
+            emptyList()
         )
     }
 
@@ -214,11 +216,13 @@ private fun getBudgetAndCategoryWithTransactionsSample(
 private fun getCategoryWithTransactionsSample(
     category: List<Category>,
     person: Person,
-    accountAndOwnerWithTransactions: List<AccountAndOwnerWithTransactions>
+    accounts: List<Account>,
+    extendedTransactions: List<ExtendedTransaction>
 ) = CategoryWithTransactions.from(
     category = category,
     person = person,
-    accountAndOwnerWithTransactions = accountAndOwnerWithTransactions
+    accounts = accounts,
+    extendedTransactions = extendedTransactions
 )
 
 private fun getBudgetSample(
@@ -465,7 +469,8 @@ private fun getTransactionAndDetailsSample(
                             "${sourceAccount.name} hasta ${destinationAccount.name}, y " +
                             "categoría ${category?.name}",
                     categoryId = category?.id,
-                    aNombreDe = null
+                    aNombreDe = null,
+                    budgetDate = null
                 )
             )
         )

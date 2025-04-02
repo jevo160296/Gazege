@@ -21,6 +21,7 @@ data class TransactionAndDetails(
     val description get() = transactionDetails.description
     val categoryId get() = transactionDetails.categoryId
     val aNombreDe get() = transactionDetails.aNombreDe
+    val budgetDate get() = transactionDetails.budgetDate
 
     companion object {
         fun from(

@@ -60,7 +60,8 @@ data class TransactionWithDetails(
             amount: Double,
             description: String,
             categoryId: Int?,
-            aNombreDe: Int?
+            aNombreDe: Int?,
+            budgetDate: LocalDate?
         ) = NewTransactionWithDetails(
             transaction = Transaction(
                 sourceId = sourceId,
@@ -72,7 +73,8 @@ data class TransactionWithDetails(
                     amount = amount,
                     description = description,
                     categoryId = categoryId,
-                    aNombreDe = aNombreDe
+                    aNombreDe = aNombreDe,
+                    budgetDate = budgetDate
                 )
             )
         )
@@ -92,7 +94,8 @@ data class NewTransactionWithDetails(
                 amount = it.amount,
                 description = it.description,
                 categoryId = it.categoryId,
-                aNombreDe = it.aNombreDe
+                aNombreDe = it.aNombreDe,
+                budgetDate = it.budgetDate
             )
         }
 }
@@ -103,5 +106,6 @@ data class NewTransactionDetails(
     val amount: Double,
     val description: String,
     val categoryId: Int?,
-    val aNombreDe: Int?
+    val aNombreDe: Int?,
+    val budgetDate: LocalDate?
 )

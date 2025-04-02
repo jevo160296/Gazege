@@ -31,6 +31,7 @@ import com.jmml.gazege.core.entities.CategoryWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithSubCategories
 import com.jmml.gazege.core.entities.CategoryWithSubcategoriesAndBudgetWithCalculatedData
 import com.jmml.gazege.core.entities.CategoryWithTransactions
+import com.jmml.gazege.core.entities.ExtendedTransaction
 import com.jmml.gazege.core.entities.ITransactionListDetail
 import com.jmml.gazege.core.entities.ITransactionListDetailGrouped
 import com.jmml.gazege.core.entities.NewTransactionWithDetails
@@ -93,6 +94,7 @@ import com.jmml.gazege.ui.widgets.BooleanFilters
 import com.jmml.gazege.ui.widgets.DoubleFilter
 import com.jmml.gazege.ui.widgets.INCOME_FILTER
 import com.jmml.gazege.ui.widgets.OUTCOME_FILTER
+import com.jmml.gazege.ui.widgets.PROMISSORY_NOTE_FILTER
 import com.jmml.gazege.ui.widgets.TRANSFER_FILTER
 import com.jmml.gazege.ui.widgets.TextFilter
 import com.jmml.gazege.ui.widgets.booleanFilterOf
@@ -377,30 +379,6 @@ class MainViewModel(
             .filterNotNull()
             .shareInViewModel()
 
-    private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
-        categories
-            .combineDefault(principalPerson) { categories, principalPerson ->
-                object {
-                    val categories = categories
-                    val principalPerson = principalPerson
-                }
-            }
-            .combineDefault(accountAndOwnerWithTransactions) { combined, accountAndOwnerWithTransactions ->
-                if (combined.principalPerson != null) {
-                    if (accountAndOwnerWithTransactions is Result.Success) {
-                        CategoryWithTransactions.from(
-                            category = combined.categories,
-                            person = combined.principalPerson,
-                            accountAndOwnerWithTransactions = accountAndOwnerWithTransactions.data
-                        )
-                    } else null
-                } else {
-                    emptyList()
-                }
-            }
-            .filterNotNull()
-            .shareInViewModel()
-
     private val initialRange = today.map { today ->
         today.withDayOfMonth(1).let {
             Pair(it, it.plusMonths(1L).minusDays(1L))
@@ -444,6 +422,47 @@ class MainViewModel(
                 }
                 emit(Result.Success(result))
             }
+            .shareInViewModel()
+
+    private val budgetTransactions: SharedFlow<List<ExtendedTransaction>> =
+        repository.getBudgetTransactions(null, null).shareInViewModel()
+
+    private val categoryWithTransactions: SharedFlow<List<CategoryWithTransactions>> =
+        categories
+            .combineDefault(principalPerson) { categories, principalPerson ->
+                object {
+                    val categories = categories
+                    val principalPerson = principalPerson
+                }
+            }
+            .combineDefault(allAccount) { combined, allAccount ->
+                object {
+                    val categories = combined.categories
+                    val principalPerson = combined.principalPerson
+                    val accounts = allAccount
+                }
+            }
+            .combineDefault(budgetTransactions) { combined, budgetTransactions ->
+                object {
+                    val categories = combined.categories
+                    val principalPerson = combined.principalPerson
+                    val accounts = combined.accounts
+                    val extendedTransactions = budgetTransactions
+                }
+            }
+            .map { combined ->
+                if (combined.principalPerson != null) {
+                    CategoryWithTransactions.from(
+                        category = combined.categories,
+                        person = combined.principalPerson,
+                        accounts = combined.accounts,
+                        extendedTransactions = combined.extendedTransactions
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+            .filterNotNull()
             .shareInViewModel()
 
     private val categoryWithCalculatedData: SharedFlow<Result<List<CategoryWithCalculatedData>?>> =
@@ -590,7 +609,7 @@ class MainViewModel(
     private val transactionFilters: MutableStateFlow<BooleanFilters<String, Nothing>> =
         MutableStateFlow(
             booleanFilterOf(
-                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER, PROMISSORY_NOTE_FILTER),
                 true
             )
         )
@@ -771,7 +790,10 @@ class MainViewModel(
                         .applyIncomeFilter(filtersValue[INCOME_FILTER])
                         .applyOutcomeFilter(filtersValue[OUTCOME_FILTER])
                         .applyTransferFilter(filtersValue[TRANSFER_FILTER])
-                    val promissoryNotes = filteredTransactions.data.promissoryNotesViewModel
+                    val promissoryNotes = filteredTransactions
+                        .data
+                        .promissoryNotesViewModel
+                        .applyPromissoryNoteFilter(filtersValue[PROMISSORY_NOTE_FILTER])
                     Result.Success(
                         object {
                             val transactionsWithFilters = transactionsWithFilters
@@ -1041,7 +1063,8 @@ class MainViewModel(
                     destinationId = accountId,
                     date = today,
                     aNombreDe = null,
-                    categoryId = null
+                    categoryId = null,
+                    budgetDate = null
                 )
             } else {
                 TransactionWithDetails.new(
@@ -1051,7 +1074,8 @@ class MainViewModel(
                     destinationId = outcomeAccountId,
                     date = today,
                     aNombreDe = null,
-                    categoryId = null
+                    categoryId = null,
+                    budgetDate = null
                 )
             }
             repository.insertTransaction(transaccionAjuste)
@@ -1866,7 +1890,7 @@ class MainViewModel(
         fun rememberTransactionFiltersValue() = transactionFilters
             .collectAsState(
                 booleanFilterOf(
-                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER),
+                    listOf(INCOME_FILTER, TRANSFER_FILTER, OUTCOME_FILTER, PROMISSORY_NOTE_FILTER),
                     true
                 )
             )
@@ -2904,6 +2928,16 @@ class MainViewModel(
         ) = withContext(Dispatchers.Default) {
             filter {
                 it.transactionType != TransactionType.TRANSFER || transferFilterValue
+            }
+        }
+
+        suspend fun List<PromissoryNoteViewModel>.applyPromissoryNoteFilter(
+            promissoryNoteFilterValue: Boolean
+        ) = withContext(Dispatchers.Default) {
+            if (promissoryNoteFilterValue) {
+                this@applyPromissoryNoteFilter
+            } else {
+                emptyList<PromissoryNoteViewModel>()
             }
         }
 

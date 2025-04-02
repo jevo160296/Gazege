@@ -129,4 +129,7 @@
     <string name="por_concepto_de">por concepto de</string>
     <string name="Creado_el">Creado el</string>
     <string name="Items">Items</string>
+    <string name="Budget_date">Budget date</string>
+    <string name="Select_a_date">Select a date</string>
+    <string name="Budget_date_different">Budget date is different</string>
 </resources>

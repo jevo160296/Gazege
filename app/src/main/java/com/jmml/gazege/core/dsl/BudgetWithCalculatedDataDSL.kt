@@ -144,7 +144,8 @@ class BudgetWithCalculatedDataScope {
                         amount = amount,
                         description = description,
                         categoryId = category.id,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             )
@@ -164,7 +165,8 @@ class BudgetWithCalculatedDataScope {
                         amount = amount,
                         description = description,
                         categoryId = category.id,
-                        aNombreDe = null
+                        aNombreDe = null,
+                        budgetDate = null
                     )
                 )
             )
