@@ -62,8 +62,6 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
                             BudgetType.VARIABLE ->
                                 if (day < currentDate) {
                                     0.0
-                                } else if (day > currentDate) {
-                                    dVTS
                                 } else {
                                     max(0.0, dVTS - tTS)
                                 }
