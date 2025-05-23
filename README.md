@@ -18,6 +18,8 @@ erDiagram
     BUDGET
     CATEGORY
     PERSON
+    INVESTMENT
+    INVESTMENT_VALUATION
     TRANSACTION 1+--1 ACCOUNT : source
     TRANSACTION 1+--1 ACCOUNT : destination
     TRANSACTION_DETAILS 1+--1 CATEGORY : has
@@ -29,4 +31,6 @@ erDiagram
     CATEGORY  1--1 CATEGORY : parent
     PROMISSORY_NOTE 1--1 PERSON : source
     PROMISSORY_NOTE 1--1 PERSON : destination
+    INVESTMENT 1--1 ACCOUNT : details
+    INVESTMENT_VALUATION 1+--1 INVESTMENT : valuation
   ~~~
