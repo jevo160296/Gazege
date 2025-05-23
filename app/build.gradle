@@ -101,6 +101,7 @@ android {
             applicationIdSuffix '.nofull'
         }
     }
+    dynamicFeatures = [':brio']
 }
 
 dependencies {

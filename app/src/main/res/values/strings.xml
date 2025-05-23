@@ -132,4 +132,5 @@
     <string name="Budget_date">Budget date</string>
     <string name="Select_a_date">Select a date</string>
     <string name="Budget_date_different">Budget date is different</string>
+    <string name="title_brio" translatable="false">Gazege Brío</string>
 </resources>
