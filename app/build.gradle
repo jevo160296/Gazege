@@ -107,7 +107,7 @@ android {
 
 dependencies {
     implementation 'org.apache.commons:commons-csv:1.10.0'
-    implementation files('C:/Users/jevo1/AndroidStudioProjects/shared/zoo/build/outputs/aar/zoo-release.aar')
+    implementation "com.github.jevo160296:Shared:V1.0.1"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     androidTestImplementation "androidx.room:room-testing:$room_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
