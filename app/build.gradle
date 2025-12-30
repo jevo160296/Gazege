@@ -49,6 +49,7 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+        dynamicFeatures += [":brio"]
     }
 
     buildTypes {
