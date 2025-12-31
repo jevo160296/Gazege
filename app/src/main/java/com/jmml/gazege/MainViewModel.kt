@@ -2780,6 +2780,7 @@ class MainViewModel(
                         ).map { PromissoryNoteDocumentWithSignViewModel(it) })
                             .sortedByDescending { it.id }
                             .sortedByDescending { it.date }
+                            .filter { it.sign != 0 }
                         if (justPendingTransactions) {
                             var cumSum = 0.0
                             val filteredDocuments = allDocuments
