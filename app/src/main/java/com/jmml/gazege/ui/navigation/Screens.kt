@@ -21,6 +21,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.jmml.gazege.MainViewModel
+import com.jmml.gazege.brio.ui.navigation.brioNavGraph
+import com.jmml.gazege.ui.navigation.brio.navigateToBrioMain
 
 const val URI = "https://www.example.gazege"
 
@@ -92,6 +94,7 @@ fun MainNavHost(
                         navController.navigateToAddOneBudget()
                     }
                 },
+                onNavigateToBrioMain = navController::navigateToBrioMain,
                 onExportCategoryRequested = {
                     val categoryName = it.name
                     val categoryId = it.id ?: 0
@@ -202,6 +205,7 @@ fun MainNavHost(
                 viewModel = mainViewModel.viewModelEditOneBudget,
                 onNavigateUp = navController::navigateUp
             )
+            brioNavGraph()
         }
         AnimatedVisibility(
             visible = currentRoute != "main" && currentRoute?.isNotEmpty() == true,

@@ -43,6 +43,7 @@ fun NavGraphBuilder.screenMain(
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
+    onNavigateToBrioMain: () -> Unit,
     onExportCategoryRequested: (Category) -> Unit,
     onDataLoaded: () -> Unit
 ) {
@@ -118,6 +119,7 @@ fun NavGraphBuilder.screenMain(
                 onNavigateToAddCategory = onNavigateToAddCategory,
                 onNavigateToEditCategory = onNavigateToEditCategory,
                 onNavigateToAddBudget = onNavigateToAddBudget,
+                onNavigateToBrioMain = onNavigateToBrioMain,
                 onNavStatusChanged = { navPosition = it },
                 onRangeChanged = { startDate, endDate ->
                     viewModelMain.updateRange(

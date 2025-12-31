@@ -109,6 +109,7 @@ android {
 dependencies {
     implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation "com.github.jevo160296:Shared:V1.0.1"
+    implementation project(':brio')
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     androidTestImplementation "androidx.room:room-testing:$room_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"

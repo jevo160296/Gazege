@@ -132,6 +132,7 @@ fun MainFragment(
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Int?) -> Unit,
     onNavigateToAddBudget: (Int?) -> Unit,
+    onNavigateToBrioMain: () -> Unit,
     onNavStatusChanged: (NavPosition) -> Unit,
     onRangeChanged: (LocalDate?, LocalDate?) -> Unit,
     onSettingsClicked: () -> Unit,
@@ -282,6 +283,16 @@ fun MainFragment(
                                     onValueChange = onTodayChangeRequested
                                 )
                             }
+                        }
+                        IconButton(
+                            onClick = {
+                                onNavigateToBrioMain()
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.eye),
+                                contentDescription = "Go to Brío"
+                            )
                         }
                         IconButton(onClick = {
                             uriHandler.openUri("https://forms.gle/Qb1aek3QX9r24Gw26")
@@ -845,6 +856,7 @@ private fun DefaultPreview() {
                 onNavigateToAddCategory = {},
                 onNavigateToEditCategory = {},
                 onNavigateToAddBudget = {},
+                onNavigateToBrioMain = {},
                 onNavStatusChanged = {
                     navPosition = it
                 },
