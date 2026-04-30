@@ -526,6 +526,7 @@ private fun MainFragmentResponsiveContent(
                 LoadedPersonMonthSummaryView(
                     modifier = Modifier.fillMaxWidth(),
                     saldoActual = principalPersonSummaryState.saldoActual,
+                    disponibleHoy = principalPersonSummaryState.disponibleHoy,
                     ingresos = principalPersonSummaryState.ingresos,
                     egresos = principalPersonSummaryState.egresos,
                     flujo = principalPersonSummaryState.flujo,

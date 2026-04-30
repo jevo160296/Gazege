@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -78,6 +80,7 @@ import java.time.LocalDate
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
+import kotlin.math.max
 import kotlin.math.min
 
 @OptIn(
@@ -612,6 +615,105 @@ fun DateFilterItems(
 }
 
 @Composable
+fun HorizontalSlider(
+    modifier: Modifier = Modifier,
+    items: Map<String, @Composable (paddingValues: PaddingValues) -> Unit>,
+    selectedItem: String,
+    onItemClicked: (itemClicked: String) -> Unit,
+    onItemChanged: (newItemSelected: String) -> Unit
+) {
+    var backSize by rememberSaveable { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val indication = rememberRipple()
+    val onClickCenter = {
+        onItemClicked(selectedItem)
+    }
+    val onClickBack = {
+        if (selectedItem != items.keys.first()) {
+            val newSelectedItemIndex = items.keys.indexOf(selectedItem) - 1
+            val newSelectedItem = items.keys.elementAt(max(newSelectedItemIndex, 0))
+            onItemChanged(newSelectedItem)
+        }
+    }
+    val onClickNext = {
+        if (selectedItem != items.keys.last()) {
+            val newSelectedItemIndex = items.keys.indexOf(selectedItem) + 1
+            val newSelectedItem =
+                items.keys.elementAt(min(newSelectedItemIndex, items.keys.size - 1))
+            onItemChanged(newSelectedItem)
+        }
+    }
+    Box(
+        modifier = modifier
+            .height(IntrinsicSize.Min)
+            .width(IntrinsicSize.Max)
+            .indication(interactionSource, indication)
+            .hoverable(interactionSource)
+            .pointerInput(selectedItem) {
+                detectHorizontalDragGestures { change, dragAmount ->
+                    change.consume()
+                    if (dragAmount >= 10.0) onClickBack()
+                    if (dragAmount <= -10.0) onClickNext()
+                }
+            }
+            .pointerInput(selectedItem) {
+                val width = size.width.toDp()
+                val start = backSize.dp
+                val end = width - start
+                detectTapGestures(
+                    onPress = {
+                        val pressInteraction = PressInteraction.Press(it)
+                        interactionSource.emit(pressInteraction)
+                        tryAwaitRelease()
+                        interactionSource.emit(PressInteraction.Release(pressInteraction))
+                    }
+                ) { offset ->
+                    val x = offset.x.toDp()
+                    when {
+                        x <= start -> onClickBack()
+                        x in start..end -> onClickCenter()
+                        x >= end -> onClickNext()
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        items[selectedItem]?.invoke(
+            PaddingValues(horizontal = with(density) { (2 * backSize).toDp() })
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            GIcon(
+                modifier = Modifier.onSizeChanged {
+                    backSize = with(density) { it.width.toDp().value }
+                },
+                enabled = selectedItem != items.keys.first()
+            ) {
+                Icon(
+                    painter = painterResource(
+                        id = R.drawable.round_arrow_left_24
+                    ),
+                    contentDescription = "Left"
+                )
+            }
+            GIcon(enabled = selectedItem != items.keys.last()) {
+                Icon(
+                    painter = painterResource(
+                        id = R.drawable.round_arrow_right_24
+                    ),
+                    contentDescription = "Right"
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun PersonFilter(
     value: Boolean,
     onValueChanged: (newValue: Boolean) -> Unit
@@ -794,6 +896,68 @@ private fun FilterPreview() {
                 onDescriptionFilterStateChanged = { descriptionFilter = it }
             )
             Text("UI: ${valueFilterState.value}")
+        }
+    }
+}
+
+@Preview()
+@Composable
+private fun HorizontalSliderPreview() {
+    GazegeTheme {
+        var selectedItem: String by remember { mutableStateOf("first") }
+        var lastClickedItem: String by remember { mutableStateOf("") }
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)) {
+            Text(selectedItem)
+            Text(lastClickedItem)
+            HorizontalSlider(
+                items = mapOf(
+                    "first" to @Composable {
+                        Box(
+                            Modifier
+                                .padding(it)
+                                .background(MaterialTheme.colorScheme.primary))
+                        {
+                            Text(
+                                "Firstiary text",
+                                Modifier.background(MaterialTheme.colorScheme.primary),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    },
+                    "second" to @Composable {
+                        Box(
+                            Modifier
+                                .padding(it)
+                                .background(MaterialTheme.colorScheme.primary))
+                        {
+                            Text(
+                                "Secondary text",
+                                Modifier.background(MaterialTheme.colorScheme.primary),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    },
+                    "third" to @Composable {
+                        Box(
+                            Modifier
+                                .padding(it)
+                                .background(MaterialTheme.colorScheme.primary))
+                        {
+                            Text(
+                                "Third",
+                                Modifier.background(MaterialTheme.colorScheme.primary),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                ),
+                selectedItem = selectedItem,
+                onItemClicked = { lastClickedItem = it },
+                onItemChanged = { selectedItem = it }
+            )
         }
     }
 }
