@@ -152,6 +152,9 @@ data class CategoryWithSubcategoriesAndBudgetWithCalculatedData(
     val childrenLeftToPay: Double = subCategories
         .sumOf { it.leftToPay + it.childrenLeftToPay }
 
+    val childrenLeftToPayToday: Double = subCategories
+        .sumOf { it.leftToPayToday + it.childrenLeftToPayToday }
+
     fun <K, V> SortedMap<K, V>.runningReduce(operation: (acc: V, value: V) -> V): Map<K, V> =
         values
             .runningReduce(operation)
