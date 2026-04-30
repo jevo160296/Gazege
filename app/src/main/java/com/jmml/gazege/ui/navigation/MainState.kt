@@ -20,6 +20,8 @@ object LoadingPersonSummaryState : PersonSummaryState
 object EmptyPersonSummaryState : LoadedPersonSummaryState {
     override val saldoActual: Double
         get() = 0.0
+    override val disponibleHoy: Double
+        get() = 0.0
     override val ingresos: Double
         get() = 0.0
     override val egresos: Double
@@ -35,6 +37,7 @@ object EmptyPersonSummaryState : LoadedPersonSummaryState {
 
 sealed interface LoadedPersonSummaryState : PersonSummaryState {
     val saldoActual: Double
+    val disponibleHoy: Double
     val ingresos: Double
     val egresos: Double
     val deudasFlujo: Map<Person, Double>
@@ -79,6 +82,7 @@ sealed interface LoadedPersonSummaryState : PersonSummaryState {
 
 data class ReloadingPersonSummaryState(
     override val saldoActual: Double,
+    override val disponibleHoy: Double,
     override val ingresos: Double,
     override val egresos: Double,
     override val deudasFlujo: Map<Person, Double>,
@@ -91,6 +95,7 @@ data class ReloadingPersonSummaryState(
         ) = loadedPersonSummaryState.run {
             ReloadingPersonSummaryState(
                 saldoActual = saldoActual,
+                disponibleHoy = disponibleHoy,
                 ingresos = ingresos,
                 egresos = egresos,
                 deudasFlujo = deudasFlujo,
@@ -104,6 +109,7 @@ data class ReloadingPersonSummaryState(
 data class FullPersonSummaryState(
     val person: Person,
     override val saldoActual: Double,
+    override val disponibleHoy: Double,
     override val ingresos: Double,
     override val egresos: Double,
     override val deudasFlujo: Map<Person, Double>,
@@ -134,6 +140,8 @@ data class FullPersonSummaryState(
                 deudasFlujo.filterKeys { it.debtsIncludedInTotal }.toList().sumOf { it.second }
             val presupuestoTotal =
                 budgetWithCalculatedDatumAndCategories.sumOf { it.leftToPay + it.childrenLeftToPay }
+            val disponibleHoy =
+                budgetWithCalculatedDatumAndCategories.sumOf { it.leftToPayToday + it.childrenLeftToPayToday }
             return FullPersonSummaryState(
                 person = personWithAccounts.person,
                 saldoActual = personWithAccounts.let {
@@ -153,6 +161,7 @@ data class FullPersonSummaryState(
                 } else {
                     0.0
                 },
+                disponibleHoy = disponibleHoy,
                 ingresos = personWithAccounts.let { PersonDao.getIngresos(it, startDate, endDate) },
                 egresos = personWithAccounts.let { PersonDao.getEgresos(it, startDate, endDate) },
                 deudasFlujo = deudasFlujo,

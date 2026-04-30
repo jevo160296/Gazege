@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +17,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -78,6 +84,7 @@ fun LoadingDataView(
     enabled: Boolean = true,
     colors: CardColors = CardDefaults.cardColors(),
     isLoading: Boolean = true,
+    contentPaddingValues: PaddingValues = PaddingValues(0.dp),
     onClick: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition("Infinite transition")
@@ -108,7 +115,9 @@ fun LoadingDataView(
     ) {
         if (!bigTitle) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPaddingValues),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceAround
             ) {
@@ -117,7 +126,9 @@ fun LoadingDataView(
             }
         } else {
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPaddingValues),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -185,6 +196,7 @@ fun DataViewProgressBar(
 fun LoadedPersonMonthSummaryView(
     modifier: Modifier,
     saldoActual: Double,
+    disponibleHoy: Double,
     ingresos: Double,
     egresos: Double,
     flujo: Double,
@@ -199,27 +211,48 @@ fun LoadedPersonMonthSummaryView(
     )
     val disabledColors = CardDefaults.cardColors()
     val animatedSaldoActual by animateFloatAsState(saldoActual.toFloat(), label = "")
+    val animatedDisponibleHoy by animateFloatAsState(disponibleHoy.toFloat(), label = "")
     val animatedIngresos by animateFloatAsState(ingresos.toFloat(), label = "")
     val animatedEgresos by animateFloatAsState(egresos.toFloat(), label = "")
     val animatedFlujo by animateFloatAsState(flujo.toFloat(), label = "")
+    var selectedItem by remember { mutableStateOf("saldo_actual") }
     Column(
         modifier = modifier
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            LoadingDataView(
-                title = stringResource(R.string.Saldo_actual),
-                bigTitle = true,
-                value = doubleToMoneyString(animatedSaldoActual.toDouble()),
-                modifier = Modifier.weight(1f),
-                colors = enabledColors,
-                isLoading = loading,
-                onClick = onSaldoActualClick
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+            HorizontalSlider(
+                modifier = Modifier.fillMaxWidth(),
+                items = mapOf(
+                    "saldo_actual" to @Composable {
+                        LoadingDataView(
+                            title = stringResource(R.string.Saldo_actual),
+                            bigTitle = true,
+                            value = doubleToMoneyString(animatedSaldoActual.toDouble()),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPaddingValues = it,
+                            colors = enabledColors,
+                            isLoading = loading,
+                            onClick = onSaldoActualClick
+                        )
+                    },
+                    "disponible_hoy" to @Composable {
+                        LoadingDataView(
+                            title = stringResource(R.string.Disponible_hoy),
+                            bigTitle = true,
+                            value = doubleToMoneyString(animatedDisponibleHoy.toDouble()),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPaddingValues = it,
+                            colors = enabledColors,
+                            isLoading = loading,
+                            onClick = onSaldoActualClick
+                        )
+                    }
+                ),
+                selectedItem = selectedItem,
+                onItemClicked = { onSaldoActualClick() },
+                onItemChanged = { selectedItem = it }
             )
         }
         Row(
@@ -336,4 +369,19 @@ fun DataViewWithProgressBarPreview() {
 @Composable
 fun LoadingDataPreview() {
     LoadingDataView()
+}
+
+@Preview(apiLevel = 34)
+@Composable
+fun SummaryPreview() {
+    LoadedPersonMonthSummaryView(
+        modifier = Modifier,
+        saldoActual = 200.0,
+        disponibleHoy = 250.0,
+        ingresos = 100.0,
+        egresos = 100.0,
+        flujo = 0.0,
+        loading = false,
+        onSaldoActualClick = {}
+    )
 }

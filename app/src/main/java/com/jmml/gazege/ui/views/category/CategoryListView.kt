@@ -329,7 +329,12 @@ fun TreeScope<CategoryWithSubcategoriesAndBudgetWithCalculatedData, CategoryWith
                 categoryWithCalculatedData.childrenLeftToPay
             }
 
-    val availableToday = categoryWithCalculatedData.leftToPayToday
+    val availableToday = categoryWithCalculatedData.leftToPayToday +
+            if (isExpanded) {
+                0.0
+            } else {
+                categoryWithCalculatedData.childrenLeftToPayToday
+            }
 
     val pastForecast = categoryWithCalculatedData.pastForecast +
             (categoryWithCalculatedData.childrenPastForecast.takeUnless { isExpanded }
